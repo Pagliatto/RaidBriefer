@@ -86,7 +86,7 @@ The screens are drawn with **WebView2** (the same engine as Microsoft Edge), whi
 1. Install **Python 3.12+** (check "Add python.exe to PATH" on the first installer screen)
 2. Download this repository (`<> Code` → `Download ZIP`) and run `install.bat`
 3. Run `run.bat` for the program window, or `run-in-browser.bat` to open it in a browser
-4. Build the exe: `.venv\Scripts\python.exe tools\build_exe.py` → `build\RaidBriefer-windows.zip`
+4. Build the exe: `.venv\Scripts\python.exe tools\build_exe.py` → `build\RaidBriefer-vX.Y.Z-windows.zip`
 </details>
 
 ## First start

@@ -86,7 +86,7 @@ RaidBriefer는 아래 것들만 사용해요.
 1. **Python 3.12 이상** 설치 (설치 첫 화면에서 "Add python.exe to PATH" 체크)
 2. 이 저장소를 받고(`<> Code` → `Download ZIP`) `install.bat` 실행
 3. `run.bat` 으로 창 실행, `run-in-browser.bat` 으로 브라우저 실행
-4. exe 만들기: `.venv\Scripts\python.exe tools\build_exe.py` → `build\RaidBriefer-windows.zip`
+4. exe 만들기: `.venv\Scripts\python.exe tools\build_exe.py` → `build\RaidBriefer-vX.Y.Z-windows.zip`
 </details>
 
 ## 처음 켰을 때

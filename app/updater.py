@@ -26,8 +26,7 @@ from app.version import VERSION
 
 REPO = "Pagliatto/RaidBriefer"
 API = os.environ.get("RAIDBRIEFER_UPDATE_API", f"https://api.github.com/repos/{REPO}/releases/latest")
-ASSET = "RaidBriefer-windows.zip"  # 옛 이름 (모든 배포판에 같이 올림)
-ASSET_VERSIONED = re.compile(r"^RaidBriefer-v[\d.]+-windows\.zip$")  # 버전이 들어간 이름 (v1.0.3~)
+ASSET_VERSIONED = re.compile(r"^RaidBriefer-v[\d.]+-windows\.zip$")  # 배포 파일 이름 (버전 포함)
 WORK_DIR = paths.HOME_DIR / "_update"  # 받은 파일·예전 파일 백업 (끝나면 지움). 같은 드라이브라 옮기기가 빠름
 HELPER = paths.BUNDLE_DIR / "app" / "update_helper.cmd"
 
@@ -71,8 +70,7 @@ def check() -> dict:
         info = res.json()
         latest = info.get("tag_name", "").lstrip("vV")
         assets = info.get("assets", [])
-        asset = (next((a for a in assets if ASSET_VERSIONED.match(a.get("name", ""))), None)
-                 or next((a for a in assets if a.get("name") == ASSET), None))
+        asset = next((a for a in assets if ASSET_VERSIONED.match(a.get("name", ""))), None)
         _asset = asset
         _set(latest=latest, available=bool(latest) and _ver(latest) > _ver(VERSION) and asset is not None,
              page=info.get("html_url") or _state["page"])

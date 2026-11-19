@@ -1,4 +1,4 @@
-r"""RaidBriefer exe 만들기 → build/RaidBriefer-windows.zip
+r"""RaidBriefer exe 만들기 → build/RaidBriefer-vX.Y.Z-windows.zip
 
 사용법 (프로젝트 폴더에서):  .venv\Scripts\python.exe tools\build_exe.py
 
@@ -18,7 +18,6 @@ ROOT = Path(__file__).resolve().parent.parent
 BUILD = ROOT / "build"
 SRC = BUILD / "src"
 DIST = BUILD / "dist"
-ZIP = BUILD / "RaidBriefer-windows.zip"
 NAME = "RaidBriefer"
 
 # 배포 폴더에 들어가면 안 되는 것 (혹시 몰라 한 번 더 검사)
@@ -131,16 +130,12 @@ def main() -> None:
     if bad:
         sys.exit(f"[!] 들어가면 안 되는 파일이 있어요: {bad}")
 
-    # 4) 압축 (안에 RaidBriefer 폴더 하나)
-    with zipfile.ZipFile(ZIP, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
+    # 4) 압축 (안에 RaidBriefer 폴더 하나). 받는 사람이 버전을 알 수 있게 이름에 버전을 넣음
+    zip_path = BUILD / f"RaidBriefer-v{app_version}-windows.zip"
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
         for p in sorted(out.rglob("*")):
             z.write(p, Path(NAME) / p.relative_to(out))
-    # 받는 사람이 버전을 알 수 있게 이름에 버전을 넣은 zip (내용은 같음).
-    # 옛 이름(RaidBriefer-windows.zip)도 같이 올림: v1.0.0~1.0.2 의 자동 업데이트가 그 이름을 찾음
-    versioned = BUILD / f"RaidBriefer-v{app_version}-windows.zip"
-    shutil.copy(ZIP, versioned)
-    print(f"\n완료: {versioned.name}  ({versioned.stat().st_size / 1e6:.1f} MB)")
-    print(f"      + {ZIP.name} (옛 버전 자동 업데이트용, 같은 파일)")
+    print(f"\n완료: {zip_path.name}  ({zip_path.stat().st_size / 1e6:.1f} MB)")
 
 
 if __name__ == "__main__":
