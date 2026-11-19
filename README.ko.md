@@ -53,6 +53,7 @@
 RaidBriefer는 아래 것들만 사용해요.
 
 1. **tarkov.dev 공개 데이터**: 퀘스트, 맵, 아이템, 은신처 정보 (그리고 새 버전 확인을 위해 이 저장소의 최신 버전 번호만 물어봐요)
+   - tarkov.dev 에 아직 없는 퀘스트: 깃허브의 공개 [SPT](https://github.com/SP-Tushonka/server-csharp) 데이터 파일에서 퀘스트 이름·맵·이벤트 목록만 받아요 (데이터 파일만 받고, 모드는 쓰지 않아요)
 2. 게임이 남기는 **로그 파일**: **읽기만** 해요. 지금 어느 맵인지, 어떤 퀘스트를 받고 끝냈는지 알아내요.
 3. 게임이 켜져 있는지: 작업 관리자처럼 **실행 중인 프로그램 이름**(`EscapeFromTarkov.exe`)만 확인해요.
 
@@ -151,9 +152,9 @@ FHD(1920×1080) 모니터라면 반쪽 = **960×1080**이에요.
 ## 라이선스와 출처
 
 - 소스 코드: **MIT** ([LICENSE](LICENSE))
-- 스토리 데이터(`data/story/`): 공식 위키를 번역·요약한 것이라 **CC BY-NC-SA 3.0**
+- 스토리 데이터(`data/story/`)와 tarkov.dev 에 아직 없는 퀘스트(`data/manual_quests.json`): 공식 위키를 번역·요약한 것이라 **CC BY-NC-SA 3.0**
 - 지도 그림: tarkov.dev SVG Maps, **CC BY-NC-SA 4.0**
-- 데이터: [tarkov.dev](https://tarkov.dev) (The Hideout)
+- 데이터: [tarkov.dev](https://tarkov.dev) (The Hideout), 거기에 없는 퀘스트 이름·맵: [SPT](https://github.com/SP-Tushonka/server-csharp) 데이터 파일
 
 스토리 데이터와 지도 그림에 **비상업** 조건이 있어서, RaidBriefer는 **무료·비상업**으로만 배포할 수 있어요.
 자세한 출처와 라이선스는 [NOTICE.md](NOTICE.md)에 있어요.

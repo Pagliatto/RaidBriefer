@@ -80,6 +80,14 @@
     "filterAll": "All",
     "nightOnly": "Night only",
     "manualName": "Manual",
+    "wikiName": "Wiki",
+    "wikiNameHint": "Not on tarkov.dev yet, so this quest was written from the official wiki. It switches automatically once tarkov.dev has it.",
+    "blogName": "Blog",
+    "blogNameHint": "Not on tarkov.dev yet, so this quest was written from a guide blog. It switches automatically once tarkov.dev has it.",
+    "sptName": "SPT",
+    "sptNameHint": "Not on tarkov.dev yet, so the name comes from another public data source for now. It switches automatically once tarkov.dev has it.",
+    "unknownName": "Unconfirmed",
+    "unknownNameHint": "This quest has not been identified yet. Its name can be added once it is checked in game.",
     "added": "Added manually",
     "addedHint": "You added this quest in the first-time setup. It updates automatically once the game logs record it as completed or failed.",
     "inferred": "Inferred",
@@ -100,8 +108,9 @@
     "saveHideFailed": "Couldn't save your visibility setting. Make sure the program is running.",
     "saveCheckFailed": "Couldn't save your selection. Make sure the program is running.",
     "anyMap": "Any map",
+    "unknownMap": "Map unknown",
     "outOfRaid": "Outside a raid",
-    "manualNameHint": "Not on tarkov.dev yet, so this quest was added by hand. It switches to official data once available."
+    "manualNameHint": "Checked and written from the game itself. This takes priority over other data."
   },
   "story": {
     "stepUndo": "Revert to here",

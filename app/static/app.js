@@ -1,11 +1,13 @@
 // 홈 화면 동작: 탭 바꾸기, 퀘스트 목록 그리기, 맵으로 거르기
 const ALL_MAPS = "@any";        // 맵은 상관없지만 레이드에 들어가야 하는 퀘스트 (화면: 모든 맵)
 const OUT_OF_RAID = "@out";     // 레이드에 안 들어가도 되는 퀘스트 (무기 개조 등, 화면: 레이드 밖)
-const NOT_A_MAP = [ALL_MAPS, OUT_OF_RAID];  // 실제 맵이 아닌 이름들
-// 맵 이름 → 화면 글자 (서버가 보내는 '모든 맵'·'레이드 밖' 코드는 사전에서)
+const UNKNOWN_MAP = "@unknown"; // 아직 위치를 확인하지 못한 퀘스트
+const NOT_A_MAP = [ALL_MAPS, OUT_OF_RAID, UNKNOWN_MAP];  // 실제 맵이 아닌 이름들
+// 맵 이름 → 화면 글자 (서버가 보내는 특수 맵 코드는 사전에서)
 function mapLabel(name) {
   if (name === ALL_MAPS) return t("quest.anyMap");
   if (name === OUT_OF_RAID) return t("quest.outOfRaid");
+  if (name === UNKNOWN_MAP) return t("quest.unknownMap");
   return name;
 }
 const FILTER_ALL = "*";  // 맵 거르기에서 '전체'를 뜻하는 값 (화면 글자는 사전 quest.filterAll)
@@ -117,7 +119,7 @@ function renderMapFilter(items) {
   // 많이 걸린 맵 순서, "맵 무관"은 맨 뒤
   const names = [...counts.keys()].filter((n) => n !== FILTER_ALL && !NOT_A_MAP.includes(n))
     .sort((a, b) => counts.get(b) - counts.get(a));
-  NOT_A_MAP.forEach((n) => { if (counts.has(n)) names.push(n); });  // "모든 맵", "레이드 밖"은 맨 뒤
+  NOT_A_MAP.forEach((n) => { if (counts.has(n)) names.push(n); });  // 실제 맵이 아닌 필터는 맨 뒤
 
   const box = document.getElementById("map-filter");
   box.replaceChildren();
@@ -161,6 +163,15 @@ function goToQuests(ids) {
   });
 }
 
+function questSourceTag(source) {
+  const keys = { manual: "quest.manualName", wiki: "quest.wikiName", blog: "quest.blogName", spt: "quest.sptName", unknown: "quest.unknownName" };
+  const key = keys[source];
+  if (!key) return null;
+  const mark = el("span", `manual-mark source-${source}`, t(key));
+  mark.title = t(`${key}Hint`);
+  return mark;
+}
+
 function renderQuest(q) {
   // 상인별 색상: CSS의 .trader-prapor 같은 이름으로 색을 정해 둠
   const li = el("li", `quest trader-${q.trader_key || "etc"}`);
@@ -182,11 +193,8 @@ function renderQuest(q) {
   const meta = el("div", "quest-meta");
   q.maps.forEach((m) => meta.append(mapTag(m, q.night_maps)));
   if (q.level) meta.append(el("span", "", `Lv${q.level}+`));
-  if (q.manual) {
-    const mark = el("span", "manual-mark", t("quest.manualName"));
-    mark.title = t("quest.manualNameHint"); // 마우스를 올리면 설명
-    meta.append(mark);
-  }
+  const sourceTag = questSourceTag(q.source);
+  if (sourceTag) meta.append(sourceTag);
   if (q.added) {
     const mark = el("span", "inferred-mark", t("quest.added"));
     mark.title = t("quest.addedHint");

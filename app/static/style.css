@@ -601,6 +601,7 @@ main { flex: 1; padding: 16px 20px; }
   border: 1px dashed var(--text-faint);
   color: var(--text-faint);
 }
+.manual-mark.source-unknown { color: var(--warn); border-color: var(--warn); }
 .story-coming { color: var(--text-faint); font-size: 14px; text-align: center; margin: 16px 0; }
 .credit { color: var(--text-faint); font-size: 12px; margin-top: 16px; }
 

@@ -53,6 +53,7 @@ The goal is that you barely have to touch it.
 RaidBriefer only uses:
 
 1. **Public data from tarkov.dev**: quests, maps, items, hideout (plus the latest version number of this repository, to check for updates)
+   - For quests not on tarkov.dev yet: quest names, maps and the event list from the public [SPT](https://github.com/SP-Tushonka/server-csharp) data files on GitHub (only the data files are downloaded; no mod is used)
 2. The game's **log files** — **read only**. That's how it knows which map you're on and which quests you accepted or completed.
 3. Whether the game is running — it only checks the **process name** (`EscapeFromTarkov.exe`), like Task Manager.
 
@@ -151,9 +152,9 @@ For errors, these help a lot:
 ## License and credits
 
 - Source code: **MIT** ([LICENSE](LICENSE))
-- Storyline data (`data/story/`): summarized and translated from the official wiki — **CC BY-NC-SA 3.0**
+- Storyline data (`data/story/`) and quests not on tarkov.dev yet (`data/manual_quests.json`): summarized and translated from the official wiki — **CC BY-NC-SA 3.0**
 - Map images: tarkov.dev SVG Maps — **CC BY-NC-SA 4.0**
-- Data: [tarkov.dev](https://tarkov.dev) (The Hideout)
+- Data: [tarkov.dev](https://tarkov.dev) (The Hideout); quest names/maps missing there: [SPT](https://github.com/SP-Tushonka/server-csharp) data files
 
 Because the storyline data and map images are **non-commercial**, RaidBriefer may only be distributed **free and non-commercially**.
 Full credits and licenses are in [NOTICE.md](NOTICE.md).

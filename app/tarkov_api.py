@@ -14,12 +14,37 @@
 """
 
 import json
+import re
+import tempfile
+import threading
 import time
 from pathlib import Path
 
 from app import i18n, paths
 
 import requests
+
+# SPT 공개 데이터: tarkov.dev 에 없는 퀘스트의 이름·맵·이벤트 목록만 보완한다.
+# 로그에 나온 퀘스트에만 쓰고, 퀘스트를 새로 추가하지는 않는다.
+# 받기·실패는 update_all() 과 따로 (SPT 가 안 돼도 tarkov.dev 데이터는 그대로).
+SPT_BASE_URL = (
+    "https://github.com/SP-Tushonka/server-csharp/raw/refs/heads/5.0x-dev/"
+    "Libraries/SPTushonka.Server.Assets/SPT_Data/database/locales/global/"
+)
+SPT_QUESTS_URL = (
+    "https://github.com/SP-Tushonka/server-csharp/raw/refs/heads/5.0x-dev/"
+    "Libraries/SPTushonka.Server.Assets/SPT_Data/database/templates/quests.json"
+)
+SPT_QUEST_CONFIG_URL = (
+    "https://github.com/SP-Tushonka/server-csharp/raw/refs/heads/5.0x-dev/"
+    "Libraries/SPTushonka.Server.Assets/SPT_Data/configs/quest.json"
+)
+SPT_CHECK_SECONDS = 24 * 60 * 60
+SPT_RETRY_SECONDS = 60 * 60
+SPT_NAME_KEY = re.compile(r"([0-9a-fA-F]{24}) name")
+_spt_update_lock = threading.Lock()
+_spt_last_attempt = 0.0
+_spt_loaded: tuple | None = None
 
 BASE_URL = "https://json.tarkov.dev"
 GAME_MODE = "pve"  # PvE 모드
@@ -58,6 +83,160 @@ def _write_json(path: Path, value) -> None:
     temp = path.with_suffix(".tmp")
     temp.write_text(json.dumps(value, ensure_ascii=False), encoding="utf-8")
     temp.replace(path)
+
+
+def _read_spt_names() -> dict:
+    """저장해 둔 작은 파일만 읽는다 (받기를 기다리지 않음)."""
+    global _spt_loaded
+    path = CACHE_DIR / "spt_quest_names.json"
+    try:
+        mtime = path.stat().st_mtime_ns
+        hit = _spt_loaded
+        if hit and hit[0] == mtime:
+            return hit[1]
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(data, dict):
+            return {}
+        if not all(isinstance(data.get(lang), dict) for lang in ("ko", "en")):
+            return {}
+        _spt_loaded = (mtime, data)
+        return data
+    except (OSError, ValueError):
+        return {}
+
+
+def update_spt_names() -> None:
+    """이름·위치·이벤트를 각각 하루마다 갱신하고, 실패하면 한 시간 뒤 다시 시도한다."""
+    global _spt_last_attempt, _spt_loaded
+    if not _spt_update_lock.acquire(blocking=False):
+        return
+    try:
+        saved = _read_spt_names()
+        now = time.time()
+
+        def due(key: str) -> bool:
+            checked_at = saved.get(key, 0)
+            if not isinstance(checked_at, (int, float)):
+                return True
+            return now - checked_at >= SPT_CHECK_SECONDS
+
+        names_due = due("checked_at")
+        locations_due = due("location_checked_at")
+        events_due = due("event_checked_at")
+        if not names_due and not locations_due and not events_due:
+            return
+        if now - _spt_last_attempt < SPT_RETRY_SECONDS:
+            return
+        _spt_last_attempt = now
+        names = {"ko": {}, "en": {}, **saved}
+        changed = False
+        if names_due:
+            try:
+                downloaded = {}
+                blank = []
+                for lang, filename in (("ko", "kr.json"), ("en", "en.json")):
+                    with requests.get(SPT_BASE_URL + filename, timeout=60) as response:
+                        response.raise_for_status()
+                        locale = response.json()
+                    if not isinstance(locale, dict):
+                        raise ValueError("Invalid SPT locale")
+                    downloaded[lang] = {
+                        match[1]: value
+                        for key, value in locale.items()
+                        if (match := SPT_NAME_KEY.fullmatch(key))
+                        and isinstance(value, str) and value.strip()
+                    }
+                    if not downloaded[lang]:
+                        raise ValueError("Empty SPT names")
+                    if lang == "en":
+                        blank = [
+                            match[1] for key, value in locale.items()
+                            if (match := SPT_NAME_KEY.fullmatch(key))
+                            and isinstance(value, str) and not value.strip()
+                        ]
+                # 두 언어가 모두 성공해야 이름과 그 확인 시각을 갱신한다.
+                names.update(downloaded, blank=blank, checked_at=now)
+                changed = True
+            except Exception:
+                pass  # 이름 실패와 관계없이 위치·이벤트는 별도로 시도한다.
+        if locations_due:
+            try:
+                # 큰 원본은 스트리밍으로 임시 파일에 받고, 성공/실패 모두 닫으며 삭제한다.
+                with tempfile.TemporaryFile() as source:
+                    with requests.get(SPT_QUESTS_URL, timeout=60, stream=True) as response:
+                        response.raise_for_status()
+                        for chunk in response.iter_content(chunk_size=64 * 1024):
+                            source.write(chunk)
+                    source.seek(0)
+                    quests = json.load(source)
+                if not isinstance(quests, dict):
+                    raise ValueError("Invalid SPT quests")
+                locations = {
+                    quest_id: quest["location"]
+                    for quest_id, quest in quests.items()
+                    if isinstance(quest, dict)
+                    and isinstance(quest.get("location"), str) and quest["location"].strip()
+                }
+                if not locations:
+                    raise ValueError("Empty SPT locations")
+                names.update(location=locations, location_checked_at=now)
+                changed = True
+            except Exception:
+                pass  # 이전 위치를 유지하고, 성공한 이름은 저장한다.
+        if events_due:
+            try:
+                with requests.get(SPT_QUEST_CONFIG_URL, timeout=60) as response:
+                    response.raise_for_status()
+                    config = response.json()
+                if not isinstance(config, dict) or not isinstance(config.get("eventQuests"), dict):
+                    raise ValueError("Invalid SPT event quests")
+                names.update(event=list(config["eventQuests"]), event_checked_at=now)
+                changed = True
+            except Exception:
+                pass  # 이전 이벤트 목록을 유지하고, 성공한 이름·위치는 저장한다.
+        if not changed:
+            return
+        CACHE_DIR.mkdir(exist_ok=True)
+        path = CACHE_DIR / "spt_quest_names.json"
+        temp = path.with_suffix(".tmp")
+        temp.write_text(json.dumps(names, ensure_ascii=False, indent=2), encoding="utf-8")
+        temp.replace(path)
+        _spt_loaded = None
+    except Exception:
+        pass  # 이름 보완 실패가 실행이나 퀘스트 목록을 막지 않게 한다.
+    finally:
+        _spt_update_lock.release()
+
+
+def spt_blank_name(quest_id: str) -> bool:
+    """SPT 영어 이름이 빈 퀘스트인지 확인한다. 이전 캐시는 빈 목록으로 본다."""
+    return quest_id in _read_spt_names().get("blank", [])
+
+
+def spt_event_quest(quest_id: str) -> bool:
+    """SPT 이벤트 퀘스트인지 확인한다. 이전 캐시는 빈 목록으로 본다."""
+    events = _read_spt_names().get("event", [])
+    return isinstance(events, list) and quest_id in events
+
+
+def spt_quest_location(quest_id: str) -> str | None:
+    """저장된 퀘스트 맵 id. 옛 저장본에는 맵이 없을 수 있다."""
+    locations = _read_spt_names().get("location", {})
+    if isinstance(locations, dict):
+        location = locations.get(quest_id)
+        if isinstance(location, str) and location.strip():
+            return location
+    return None
+
+
+def spt_quest_name(quest_id: str, lang: str) -> str | None:
+    """저장된 이름 그대로. 한국어가 없으면 영어."""
+    names = _read_spt_names()
+    for language in (("ko", "en") if lang == "ko" else ("en",)):
+        name = names.get(language, {}).get(quest_id)
+        if isinstance(name, str) and name.strip():
+            return name
+    return None
 
 
 def _read_meta() -> dict:

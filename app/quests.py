@@ -5,6 +5,8 @@
 
 import json
 import re
+import threading
+import time
 from pathlib import Path
 
 from app import i18n, paths, progress, quest_log, tarkov_api
@@ -12,8 +14,11 @@ from app import i18n, paths, progress, quest_log, tarkov_api
 NO_MAP = "@none"        # 계산 중에만 쓰고, 화면에는 아래 둘 중 하나로 바꿔서 보냄
 ALL_MAPS = "@any"      # 맵은 상관없지만 레이드에 들어가야 하는 퀘스트
 OUT_OF_RAID = "@out"  # 레이드에 안 들어가도 되는 퀘스트 (무기 개조 등)
+UNKNOWN_MAP = "@unknown"  # 아직 위치를 확인하지 못한 퀘스트
 OVERRIDES_FILE = paths.DATA_DIR / "ko_overrides.json"
 HANGUL = re.compile("[가-힣]")  # i18n-ok: 한글이 있는지 검사
+_spt_last_started = 0.0
+_spt_start_lock = threading.Lock()
 
 
 def _load_overrides() -> dict:
@@ -299,23 +304,42 @@ def infer_completed(status: dict, tasks: dict) -> dict:
     return inferred
 
 
+def _has_manual_objectives(entry: dict) -> bool:
+    """빈 목표 목록도 명시적인 수정값으로 인정한다."""
+    return any(entry.get(key) is not None for key in ("objectives", "objective", "objective_en"))
+
+
+def _manual_trader(entry: dict, trader_names: dict) -> tuple[str, str]:
+    """이름표의 한국어 상인 이름을 화면 언어로 바꾼다."""
+    ko_traders = tarkov_api.Translator("traders", lang="ko")
+    trader_id = next((t["id"] for t in tarkov_api.load("traders").values()
+                      if ko_traders(t["name"]) == entry["trader"]), None)
+    return trader_names.get(trader_id, (entry["trader"], ""))
+
+
 def catalog() -> list[dict]:
     """처음 설정에서 고를 수 있는 전체 퀘스트 (이름·상인·레벨). 로그로 이미 아는 것은 화면에서 거름"""
     tarkov_api.update_all()
     tasks, tr = tarkov_api.get_tasks()
+    manual = quest_log.load_manual_quests()
     trader_names = _trader_names()
     result = []
     for quest_id, task in tasks.items():
+        m = manual.get(quest_id, {})
+        game = m if m.get("from") == "game" else {}
         trader, trader_key = trader_names.get(task.get("trader"), ("?", ""))
-        name = tr(task["name"])
-        english = tr.en.get(task["name"], "")
+        if game.get("trader"):
+            trader, trader_key = _manual_trader(game, trader_names)
+        name = quest_log.quest_name(quest_id, tasks, tr, manual)
+        english = game.get("name_en") or tr.en.get(task["name"], "")
         result.append({
             "id": quest_id,
             "name": name,
+            "source": "manual" if _has_manual_objectives(game) else "dev",
             "en": english if english != name else "",  # 영어 이름으로도 찾을 수 있게
             "trader": trader,
             "trader_key": trader_key,
-            "level": task.get("minPlayerLevel"),
+            "level": game["level"] if game.get("level") is not None else task.get("minPlayerLevel"),
         })
     result.sort(key=lambda q: (q["level"] or 0, q["name"]))
     return result
@@ -323,6 +347,15 @@ def catalog() -> list[dict]:
 
 def build() -> dict:
     """화면용 퀘스트 정보를 만든다."""
+    global _spt_last_started
+    with _spt_start_lock:
+        now = time.time()
+        if now - _spt_last_started >= tarkov_api.SPT_RETRY_SECONDS:
+            try:
+                threading.Thread(target=tarkov_api.update_spt_names, daemon=True).start()
+                _spt_last_started = now
+            except RuntimeError:
+                pass  # 이름 보완 실패가 퀘스트 목록을 막지 않게 한다.
     message = tarkov_api.update_all()
     tasks, tr = tarkov_api.get_tasks()
     manual = quest_log.load_manual_quests()
@@ -347,15 +380,38 @@ def build() -> dict:
     for quest_id in inferred:
         status[quest_id] = {"status": "완료", "time": None}
 
+    # 수동 데이터의 same_as 연결도 포함해, dev·수동 퀘스트는 숨기지 않는다.
+    hidden_quests = {
+        quest_id for quest_id in set(status) | set(log_gap)
+        if quest_id not in tasks and quest_id not in manual
+        and (tarkov_api.spt_blank_name(quest_id) or tarkov_api.spt_event_quest(quest_id))
+    }
+    log_gap = [quest_id for quest_id in log_gap if quest_id not in hidden_quests]
+
     for quest_id, info in status.items():
+        if quest_id in hidden_quests:
+            continue
         # tarkov.dev 정보 찾기 (옛 id로 있는 경우 same_as 사용)
-        task = tasks.get(quest_id) or tasks.get(manual.get(quest_id, {}).get("same_as"))
+        m = manual.get(quest_id, {})
+        task = tasks.get(quest_id) or tasks.get(m.get("same_as"))
+        # 게임 직접 확인값만 dev를 덮는다. 위키·블로그는 dev가 없을 때만 사용한다.
+        details = m if m.get("from") == "game" or not task else {}
+        if _has_manual_objectives(details) and details.get("from") == "game":
+            source = "manual"
+        elif task is not None:
+            source = "dev"
+        elif _has_manual_objectives(details) and details.get("from") in {"wiki", "blog"}:
+            source = details["from"]
+        elif tarkov_api.spt_quest_name(quest_id, tr.lang):
+            source = "spt"
+        else:
+            source = "unknown"
         entry = {
             "id": quest_id,
             "name": quest_log.quest_name(quest_id, tasks, tr, manual),
             # 정렬용. 추정한 것은 기록 시각이 없어서 맨 아래로
             "time": info["time"].strftime("%m-%d %H:%M") if info["time"] else "",
-            "manual": task is None,
+            "source": source,
         }
         if tr.lang == "ko":  # 한국어 화면: 영어 이름도 같이 (제목 옆에 작게). 이름이 원래 영어면 생략
             name_en = quest_log.quest_name_en(quest_id, tasks, tr, manual)
@@ -380,33 +436,52 @@ def build() -> dict:
                     objective["where"] = where
             # 레이드 안에서 하는 목표가 있나 (맵 무관 퀘스트를 고른 맵에 같이 보여줄지 판단)
             entry["raid"] = any(o["type"] in RAID_OBJECTIVES for o in task.get("objectives", []))
-            # 이름표(manual_quests.json)에 "raid"를 직접 적어 두었으면 그 값을 따름 (사용자 확인값)
-            if "raid" in manual.get(quest_id, {}):
-                entry["raid"] = manual[quest_id]["raid"]
         else:
-            m = manual.get(quest_id, {})
-            # 직접 적은 이름표는 상인을 한글로 적었으니 한글 이름으로 상인을 찾고, 화면에는 고른 언어 이름으로
-            ko_traders = tarkov_api.Translator("traders", lang="ko")
-            trader_id = next((t["id"] for t in tarkov_api.load("traders").values()
-                              if ko_traders(t["name"]) == m.get("trader")), None)
-            entry["trader"], entry["trader_key"] = trader_names.get(trader_id, (m.get("trader", "?"), ""))
-            english = i18n.current_lang() != "ko"
-            # 이름표에 맵(구분값 목록)·목표·준비물·레벨을 적어 두었으면 그것을 씀
-            keyed = {mm["normalizedName"]: mm["id"] for mm in tarkov_api.load("maps")["maps"].values()}
-            names = [map_names.get(keyed.get(k), (None, False))[0] for k in m.get("maps", [])]
-            entry["maps"], entry["night_maps"] = ([n for n in names if n] or [NO_MAP]), []
-            entry["level"] = m.get("level")
-            entry["wiki"] = m.get("link")
-            if m.get("objectives"):
-                entry["objectives"] = [
-                    {"optional": False, "text": o.get("original") or o["text"]} if english else {"optional": False, **o}
-                    for o in m["objectives"]]
+            location = tarkov_api.spt_quest_location(quest_id)
+            if location in map_names:
+                entry["maps"], entry["night_maps"] = _quest_maps({"map": location}, map_names)
             else:
-                text = (m.get("objective_en") if english else None) or m.get("objective")
+                entry["maps"] = [NO_MAP if location == "any" else UNKNOWN_MAP]
+                entry["night_maps"] = []
+            entry["level"] = None
+            entry["wiki"] = None
+            entry["objectives"], entry["prep"] = [], []
+            entry["raid"] = True
+
+        # 상인: 게임 → dev → 위키·블로그 → 로그. dev 항목이 있으면 위키·블로그는 제외.
+        if details.get("trader"):
+            entry["trader"], entry["trader_key"] = _manual_trader(details, trader_names)
+        elif not task or not task.get("trader"):
+            entry["trader"], entry["trader_key"] = trader_names.get(info.get("trader_id"), ("?", ""))
+
+        # 맵: 게임 → dev → SPT → 위키·블로그 → 미확인. 빈 게임 목록도 직접 지정값이다.
+        if (details.get("from") == "game" and details.get("maps") is not None
+                or details.get("maps") and entry["maps"] == [UNKNOWN_MAP]):
+            keyed = {mm["normalizedName"]: mm["id"] for mm in tarkov_api.load("maps")["maps"].values()}
+            entry["maps"], entry["night_maps"] = _quest_maps(
+                {"objectives": [{"maps": [keyed.get(k) for k in details["maps"]]}]}, map_names)
+
+        # 목표·준비물·레벨·링크는 각각 있는 필드만 덮어쓴다 (빈 목록 / 레벨 0 포함).
+        english = i18n.current_lang() != "ko"
+        if details.get("level") is not None:
+            entry["level"] = details["level"]
+        if details.get("link") is not None:
+            entry["wiki"] = details["link"]
+        if _has_manual_objectives(details):
+            if details.get("objectives") is not None:
+                entry["objectives"] = [
+                    {"optional": o.get("optional", False), "text": o.get("original") or o["text"]} if english
+                    else {"optional": False, **o}
+                    for o in details["objectives"]]
+            else:
+                text = (details.get("objective_en") if english else None) or details.get("objective")
                 entry["objectives"] = [{"text": text, "optional": False}] if text else []
+        if details.get("prep") is not None:
             entry["prep"] = [{"count": None, "fir": False, **p, "text": (p.get("text_en") if english else None) or p["text"]}
-                             for p in m.get("prep", [])]
-            entry["raid"] = m.get("raid", True)  # 직접 적은 이름표는 따로 안 적으면 레이드 퀘스트로 봄
+                             for p in details["prep"]]
+        # raid는 기존 사용자 확인값 우선 규칙을 유지한다.
+        if "raid" in m:
+            entry["raid"] = m["raid"]
         # 맵이 없는 퀘스트: 레이드에서 하는 거면 "모든 맵", 아니면 "레이드 밖"
         if entry["maps"] == [NO_MAP]:
             entry["maps"] = [ALL_MAPS if entry.get("raid") else OUT_OF_RAID]

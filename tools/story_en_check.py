@@ -54,7 +54,7 @@ def main() -> int:
         data = json.loads(path.read_text(encoding="utf-8"))
         rel = path.relative_to(ROOT).as_posix()
         head = subprocess.run(["git", "show", f"HEAD:{rel}"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8")
-        if head.returncode == 0 and strip_en(data) != json.loads(head.stdout):
+        if head.returncode == 0 and strip_en(data) != strip_en(json.loads(head.stdout)):  # _en 은 양쪽 다 빼고 비교
             problems.append(f"{rel}: '_en' 칸 말고 다른 내용이 바뀜 (원래 칸·순서·값은 그대로 둬야 함)")
         walk(data, path.stem, problems, counts)
     print(f"영어 칸: {counts['done']} / {counts['need']}")

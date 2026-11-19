@@ -14,6 +14,7 @@ belong to Battlestate Games Limited.
 |---|---|
 | 소스 코드 (`app/`, `tools/`, 배치 파일) | **MIT** — `LICENSE` 참고 |
 | 스토리 데이터 (`data/story/`) | **CC BY-NC-SA 3.0** — 공식 위키 내용을 번역·요약한 2차 저작물 (아래 참고) |
+| tarkov.dev 에 없는 퀘스트 (`data/manual_quests.json`) | **CC BY-NC-SA 3.0** — 공식 위키의 퀘스트 목표를 옮기고 번역한 것 (항목마다 위키 주소) |
 | 로고·아이콘 (`docs/logo/`, `app/static/icons/`) | MIT (이 프로젝트에서 만든 것) |
 
 **비상업 조건**: 스토리 데이터와 지도 그림이 "비상업(NC)" 조건이라, RaidBriefer 를 유료로 팔거나 광고를 붙여 배포하면 안 됩니다.
@@ -23,6 +24,8 @@ belong to Battlestate Games Limited.
 ### 데이터 (실행할 때 인터넷에서 받음, 저장소에는 넣지 않음)
 - **tarkov.dev** (The Hideout) — 퀘스트·맵·아이템·은신처 데이터 `https://json.tarkov.dev`, 아이템 아이콘 `https://assets.tarkov.dev`
   - https://tarkov.dev · https://github.com/the-hideout
+- **SPT** (`SP-Tushonka/server-csharp`) — tarkov.dev 에 아직 없는 퀘스트의 이름(번역 파일)·맵·이벤트 목록. 깃허브에서 데이터 파일만 받고, 필요한 칸만 골라 `cache/` 에 저장
+  - https://github.com/SP-Tushonka/server-csharp
 - **tarkov.dev 지도 설정** — `the-hideout/tarkov-dev` 의 `src/data/maps.json` (MIT)
 - **지도 그림 (SVG Maps)** — `the-hideout/tarkov-dev-svg-maps`, **CC BY-NC-SA 4.0**. 그린 사람(예: Shebuka)은 프로그램 지도 오른쪽 아래에 표시
   - https://github.com/the-hideout/tarkov-dev-svg-maps

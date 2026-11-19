@@ -14,7 +14,7 @@ import re
 from datetime import datetime
 from pathlib import Path
 
-from app import i18n, paths, settings
+from app import i18n, paths, settings, tarkov_api
 
 
 # ---------- 가장 최근 프레스티지(초기화) 찾기 ----------
@@ -74,24 +74,28 @@ def load_manual_quests() -> dict:
 
 
 def quest_name(quest_id: str, tasks: dict, tr, manual: dict) -> str:
-    """퀘스트 이름: tarkov.dev → 직접 적은 이름표(same_as 포함) → id 순서로 찾는다."""
-    if quest_id in tasks:
-        return tr(tasks[quest_id]["name"])
-    same_as = manual.get(quest_id, {}).get("same_as")
-    if same_as in tasks:
-        return tr(tasks[same_as]["name"])  # tarkov.dev에는 옛 id로 있는 같은 퀘스트
-    if quest_id in manual:
-        m = manual[quest_id]
-        name = (m.get("name_en") if i18n.current_lang() != "ko" else None) or m["name"]
-        return name  # 게임에 나오는 이름 그대로 (직접 적은 이름이라는 표시는 화면의 manual 태그로)
-    return i18n.t("server.unknownQuest", id=quest_id)
+    """퀘스트 이름: 게임 직접 확인 → dev(same_as 포함) → SPT → 위키·블로그 → id."""
+    m = manual.get(quest_id, {})
+    lang = i18n.current_lang()
+    name = m.get("name" if lang == "ko" else "name_en")
+    if m.get("from") == "game" and name:
+        return name
+    task = tasks.get(quest_id) or tasks.get(m.get("same_as"))
+    if task:
+        return tr(task["name"])
+    return (tarkov_api.spt_quest_name(quest_id, lang)
+            or name or m.get("name")
+            or i18n.t("server.unknownQuest", id=quest_id))
 
 def quest_name_en(quest_id: str, tasks: dict, tr, manual: dict) -> str | None:
     """퀘스트의 영어 이름 (한국어 화면에서 제목 옆에 작게 보여 줌)"""
-    task = tasks.get(quest_id) or tasks.get(manual.get(quest_id, {}).get("same_as"))
-    if task:
-        return tr.en.get(task["name"])
-    return manual.get(quest_id, {}).get("name_en")
+    m = manual.get(quest_id, {})
+    if m.get("from") == "game" and m.get("name_en"):
+        return m["name_en"]
+    task = tasks.get(quest_id) or tasks.get(m.get("same_as"))
+    return ((tr.en.get(task["name"]) if task else None)
+            or tarkov_api.spt_quest_name(quest_id, "en")
+            or (m.get("name_en") if not task else None))
 
 
 # 로그 한 줄의 시작: "2026-11-08 13:32:44.478|..."
@@ -144,10 +148,15 @@ def read_quest_events(since: datetime | None = None) -> list[dict]:
             kind = message.get("type")
             if kind not in STATUS_NAMES:
                 continue
+            parts = message.get("templateId", "").split(" ")
+            # 일반 퀘스트는 id와 알림 종류 두 부분뿐이다.
+            # 네 부분인 반복 과제와 '<id> 0' 같은 보상 메시지는 뺀다.
+            if len(parts) != 2 or parts[1] not in {"description", "successMessageText", "failMessageText"}:
+                continue
             when = datetime.fromtimestamp(message.get("dt", 0))
             if when < since:
                 continue
-            quest_id = message.get("templateId", "").split(" ")[0]
+            quest_id = parts[0]
             if quest_id in REPEATABLE_TEMPLATES:
                 continue  # 반복 과제는 진행에 영향이 없어서 뺌
             # 같은 알림이 두 번 기록될 수 있어서 메시지 고유번호(_id)로 중복 제거
@@ -155,6 +164,7 @@ def read_quest_events(since: datetime | None = None) -> list[dict]:
                 "quest_id": quest_id,
                 "type": kind,
                 "time": when,
+                "trader_id": note.get("dialogId"),
             }
     return sorted(events.values(), key=lambda e: e["time"])
 
@@ -172,12 +182,14 @@ def missing_starts(events: list[dict]) -> set[str]:
 
 
 def status_from_events(events: list[dict]) -> dict[str, dict]:
-    """퀘스트 기록들 → 퀘스트 id → {상태, 마지막 기록 시각}"""
+    """시간순 기록 → 퀘스트 id → {상태, 마지막 시각, 마지막 비어 있지 않은 상인 id}"""
     status = {}
     for event in events:
         status[event["quest_id"]] = {
             "status": STATUS_NAMES[event["type"]],
             "time": event["time"],
+            "trader_id": (event.get("trader_id")
+                          or status.get(event["quest_id"], {}).get("trader_id")),
         }
     return status
 

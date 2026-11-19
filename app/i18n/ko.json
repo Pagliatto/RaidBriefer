@@ -80,6 +80,14 @@
     "filterAll": "전체",
     "nightOnly": "야간에만 가능",
     "manualName": "수동",
+    "wikiName": "위키",
+    "wikiNameHint": "tarkov.dev 에 아직 없어서 공식 위키를 보고 적어 둔 퀘스트예요. tarkov.dev 에 생기면 자동으로 바뀌어요.",
+    "blogName": "블로그",
+    "blogNameHint": "tarkov.dev 에 아직 없어서 공략 블로그를 보고 적어 둔 퀘스트예요. tarkov.dev 에 생기면 자동으로 바뀌어요.",
+    "sptName": "SPT",
+    "sptNameHint": "tarkov.dev 에 아직 없어서 다른 공개 데이터의 이름을 임시로 보여 줘요. tarkov.dev 에 생기면 자동으로 바뀌어요.",
+    "unknownName": "미확인",
+    "unknownNameHint": "어떤 퀘스트인지 아직 확인되지 않았어요. 게임에서 확인되면 이름을 넣을 수 있어요.",
     "added": "직접 추가",
     "addedHint": "처음 설정에서 직접 추가한 퀘스트예요. 게임 로그에 완료·실패 기록이 생기면 자동으로 바뀌어요.",
     "inferred": "자동 추정",
@@ -100,8 +108,9 @@
     "saveHideFailed": "숨기기를 저장하지 못했어요. 프로그램이 켜져 있는지 확인해 주세요.",
     "saveCheckFailed": "체크를 저장하지 못했어요. 프로그램이 켜져 있는지 확인해 주세요.",
     "anyMap": "모든 맵",
+    "unknownMap": "맵 미확인",
     "outOfRaid": "레이드 밖",
-    "manualNameHint": "tarkov.dev 에 아직 없어서 직접 적어 둔 퀘스트예요. 정보가 생기면 자동으로 바뀌어요."
+    "manualNameHint": "게임 화면을 보고 직접 확인해 적은 내용이에요. 다른 데이터보다 우선해요."
   },
   "story": {
     "stepUndo": "여기까지로 되돌리기",

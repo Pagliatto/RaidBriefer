@@ -141,7 +141,10 @@ const SETUP_RESULT_LIMIT = 40; // 검색 결과는 너무 길지 않게
 // 상인 색이 들어간 퀘스트 한 줄
 function setupQuestRow(q, button) {
   const row = el("div", `setup-quest trader-${q.trader_key || "etc"}`);
-  row.append(el("span", "setup-quest-name", q.name), el("span", "setup-quest-trader", q.trader));
+  const name = el("span", "setup-quest-name", q.name);
+  const sourceTag = questSourceTag(q.source);
+  if (sourceTag) name.append(" ", sourceTag);
+  row.append(name, el("span", "setup-quest-trader", q.trader));
   if (button) row.append(button);
   return row;
 }
@@ -172,7 +175,12 @@ function toggleTraderPop(chip, quests) {
   pop.addEventListener("click", (e) => e.stopPropagation()); // 목록 안을 눌러도(휠·스크롤) 안 닫힘
   const list = el("ul");
   quests.slice().sort((a, b) => a.name.localeCompare(b.name, "ko"))
-    .forEach((q) => list.append(el("li", q.added ? "added" : "", q.added ? t("setup.addedSuffix", { name: q.name }) : q.name)));
+    .forEach((q) => {
+      const item = el("li", q.added ? "added" : "", q.added ? t("setup.addedSuffix", { name: q.name }) : q.name);
+      const sourceTag = questSourceTag(q.source);
+      if (sourceTag) item.append(" ", sourceTag);
+      list.append(item);
+    });
   pop.append(list);
   const wrap = chip.parentElement;
   wrap.append(pop);
