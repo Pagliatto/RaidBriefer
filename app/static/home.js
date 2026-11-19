@@ -149,7 +149,7 @@ function renderHomeDetail(name, info) {
     const li = el("li", `trader-${q.trader_key || "etc"} go-source`);
     li.title = t("home.questDetailHint");
     li.addEventListener("click", () => goToQuests([q.id]));
-    li.append(el("span", "home-quest-name", q.name), el("span", "quest-trader", q.trader));
+    li.append(el("span", "home-quest-name", q.name), ...(q.name_en ? [el("span", "quest-name-en", q.name_en)] : []), el("span", "quest-trader", q.trader));
     if (q.night_maps && q.night_maps.includes(name)) li.append(mapTag(name, q.night_maps));
     ul.append(li);
   });
@@ -164,7 +164,7 @@ function renderHomeDetail(name, info) {
       const li = el("li", `trader-${q.trader_key || "etc"} go-source`);
       li.title = t("home.questDetailHint");
       li.addEventListener("click", () => goToQuests([q.id]));
-      li.append(el("span", "home-quest-name", q.name), el("span", "quest-trader", q.trader));
+      li.append(el("span", "home-quest-name", q.name), ...(q.name_en ? [el("span", "quest-name-en", q.name_en)] : []), el("span", "quest-trader", q.trader));
       ul2.append(li);
     });
     box.append(ul2);

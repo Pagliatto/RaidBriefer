@@ -38,7 +38,15 @@ async function sendSettings(body) {
   }
 }
 
+// 설정 탭 (일반 / 기록 관리 / 정보): 고른 탭의 칸만 보이게
+function showSettingsTab(name) {
+  document.querySelectorAll(".settings-tab").forEach((b) => b.classList.toggle("active", b.dataset.stab === name));
+  document.querySelectorAll(".settings-item[data-stab]").forEach((s) => { s.hidden = s.dataset.stab !== name; });
+}
+document.querySelectorAll(".settings-tab").forEach((b) => b.addEventListener("click", () => showSettingsTab(b.dataset.stab)));
+
 document.getElementById("settings-open").addEventListener("click", () => {
+  showSettingsTab("general"); // 열 때는 항상 '일반'부터
   settingsUI.dialog.showModal();
   sendSettings(null); // 열 때마다 지금 값과 확인 결과를 새로 보여줌
 });

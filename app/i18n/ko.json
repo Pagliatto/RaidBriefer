@@ -79,7 +79,7 @@
     "mapFilterLabel": "맵으로 거르기",
     "filterAll": "전체",
     "nightOnly": "야간에만 가능",
-    "manualName": "직접 적은 이름",
+    "manualName": "수동",
     "added": "직접 추가",
     "addedHint": "처음 설정에서 직접 추가한 퀘스트예요. 게임 로그에 완료·실패 기록이 생기면 자동으로 바뀌어요.",
     "inferred": "자동 추정",
@@ -95,13 +95,13 @@
     "empty": "해당하는 퀘스트가 없어요.",
     "footerPrestige": "프레스티지 {date} 이후 기록",
     "footerAllLogs": "남아 있는 로그 전체 기준",
-    "footerTranslate": " · 번역 필요 {n}개",
     "loadFailed": "정보를 불러오지 못했어요. {error}",
     "retryLater": "잠시 후 다시 시도해요.",
     "saveHideFailed": "숨기기를 저장하지 못했어요. 프로그램이 켜져 있는지 확인해 주세요.",
     "saveCheckFailed": "체크를 저장하지 못했어요. 프로그램이 켜져 있는지 확인해 주세요.",
     "anyMap": "모든 맵",
-    "outOfRaid": "레이드 밖"
+    "outOfRaid": "레이드 밖",
+    "manualNameHint": "tarkov.dev 에 아직 없어서 직접 적어 둔 퀘스트예요. 정보가 생기면 자동으로 바뀌어요."
   },
   "story": {
     "stepUndo": "여기까지로 되돌리기",
@@ -279,7 +279,10 @@
     "resetHelp": "숨긴 퀘스트, 제출 체크, 스토리 진행, 직접 추가한 퀘스트, 은신처 레벨·재료 체크, 에디션을 <b>모두 지우고</b>\n        처음 설정부터 다시 시작해요.<br>게임 설치 위치만 남아요. 되돌릴 수 없어요.",
     "reset": "전체 초기화",
     "langTitle": "언어 (Language)",
-    "langHelp": "화면과 게임 정보(퀘스트·아이템·맵 이름)의 언어예요. 바꾸면 화면을 다시 불러와요."
+    "langHelp": "화면과 게임 정보(퀘스트·아이템·맵 이름)의 언어예요. 바꾸면 화면을 다시 불러와요.",
+    "tabGeneral": "일반",
+    "tabRecords": "기록 관리",
+    "tabAbout": "정보"
   },
   "topbar": {
     "clockNight": "타르코프 게임 속 시각 (밤)",

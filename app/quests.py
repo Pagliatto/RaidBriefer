@@ -357,6 +357,10 @@ def build() -> dict:
             "time": info["time"].strftime("%m-%d %H:%M") if info["time"] else "",
             "manual": task is None,
         }
+        if tr.lang == "ko":  # 한국어 화면: 영어 이름도 같이 (제목 옆에 작게). 이름이 원래 영어면 생략
+            name_en = quest_log.quest_name_en(quest_id, tasks, tr, manual)
+            if name_en and name_en != entry["name"]:
+                entry["name_en"] = name_en
         if quest_id in added:
             entry["added"] = True
         if quest_id in inferred:

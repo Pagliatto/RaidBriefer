@@ -1652,3 +1652,12 @@ button.setup-trader-count.open .icon { transform: rotate(180deg); }
 
 /* 언어 고르기: 처음 설정 맨 위 오른쪽에 작게 */
 .setup-card .lang-pick { justify-content: flex-end; margin-bottom: 4px; }
+
+/* 설정 창 탭 (일반 / 기록 관리 / 정보) */
+.settings-tabs { display: flex; gap: 6px; padding: 10px 18px 0; }
+.settings-item[hidden] { display: none; }
+.settings-tabs + .settings-item { border-top: 0; }
+.settings[open] { min-height: min(640px, 90vh); } /* 탭을 바꿔도 창 높이가 튀지 않게 */
+
+/* 한국어 화면: 퀘스트 제목 옆 영어 이름 (작고 흐리게, 게임 밖 자료를 찾을 때 참고용) */
+.quest-name-en { margin-left: 6px; font-size: 12px; font-weight: 400; color: var(--text-faint); }

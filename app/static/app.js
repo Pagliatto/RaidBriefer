@@ -176,12 +176,17 @@ function renderQuest(q) {
   } else {
     name.textContent = q.name;
   }
+  if (q.name_en) name.append(el("span", "quest-name-en", q.name_en)); // 한국어 화면: 영어 이름 작게
   name.append(el("span", "quest-trader", q.trader));
 
   const meta = el("div", "quest-meta");
   q.maps.forEach((m) => meta.append(mapTag(m, q.night_maps)));
   if (q.level) meta.append(el("span", "", `Lv${q.level}+`));
-  if (q.manual) meta.append(el("span", "manual-mark", t("quest.manualName")));
+  if (q.manual) {
+    const mark = el("span", "manual-mark", t("quest.manualName"));
+    mark.title = t("quest.manualNameHint"); // 마우스를 올리면 설명
+    meta.append(mark);
+  }
   if (q.added) {
     const mark = el("span", "inferred-mark", t("quest.added"));
     mark.title = t("quest.addedHint");
@@ -280,7 +285,6 @@ function render() {
 
   let footer = data.data_message + " · " +
     (data.prestige_since ? t("quest.footerPrestige", { date: data.prestige_since }) : t("quest.footerAllLogs"));
-  if (data.needs_translation) footer += t("quest.footerTranslate", { n: data.needs_translation });
   document.getElementById("footer").textContent = footer;
 }
 

@@ -231,13 +231,20 @@
       <button class="settings-close" aria-label="{{ t('settings.close') }}" title="{{ t('settings.close') }}"><span data-icon="x"></span></button>
     </form>
 
-    <section class="settings-item">
+    <!-- 설정 탭: 일반 / 기록 관리 / 정보 (settings.js) -->
+    <div class="settings-tabs" role="tablist">
+      <button type="button" class="chip settings-tab active" data-stab="general">{{ t('settings.tabGeneral') }}</button>
+      <button type="button" class="chip settings-tab" data-stab="records">{{ t('settings.tabRecords') }}</button>
+      <button type="button" class="chip settings-tab" data-stab="about">{{ t('settings.tabAbout') }}</button>
+    </div>
+
+    <section class="settings-item" data-stab="general">
       <h3>{{ t('settings.langTitle') }}</h3>
       <p class="settings-help">{{ t('settings.langHelp') }}</p>
       <div class="edition-pick lang-pick" id="settings-lang"></div>
     </section>
 
-    <section class="settings-item">
+    <section class="settings-item" data-stab="general">
       <h3>{{ t('settings.dirTitle') }}</h3>
       <p class="settings-help">{{ t('settings.dirHelp')|safe }}</p>
       <input type="text" id="settings-game-dir" spellcheck="false" autocomplete="off">
@@ -248,18 +255,13 @@
       <p class="settings-result" id="settings-result"></p>
     </section>
 
-    <section class="settings-item">
+    <section class="settings-item" data-stab="general">
       <h3>{{ t('settings.editionTitle') }}</h3>
       <p class="settings-help">{{ t('settings.editionHelp')|safe }}</p>
       <div class="edition-pick" id="settings-edition"></div>
     </section>
 
-    <section class="settings-item">
-      <h3>{{ t('settings.runningTitle') }}</h3>
-      <p class="settings-help">{{ t('settings.runningHelp')|safe }}</p>
-    </section>
-
-    <section class="settings-item">
+    <section class="settings-item" data-stab="records" hidden>
       <h3>{{ t('settings.setupTitle') }}</h3>
       <p class="settings-help">{{ t('settings.setupHelp')|safe }}</p>
       <div class="settings-actions">
@@ -267,14 +269,22 @@
       </div>
     </section>
 
-    <section class="settings-item">
+    <section class="settings-item" data-stab="records" hidden>
+      <h3>{{ t('settings.resetTitle') }}</h3>
+      <p class="settings-help">{{ t('settings.resetHelp')|safe }}</p>
+      <div class="settings-actions">
+        <button type="button" id="settings-reset" class="danger">{{ t('settings.reset') }}</button>
+      </div>
+    </section>
+
+    <section class="settings-item" data-stab="about" hidden>
       <h3>{{ t('update.settingsTitle') }}</h3>
       <p class="settings-help"><b id="update-current"></b><br>
         <span id="update-status"></span><br>
         {{ t('update.settingsPrivacy') }}</p>
     </section>
 
-    <section class="settings-item">
+    <section class="settings-item" data-stab="about" hidden>
       <h3>{{ t('settings.reportTitle') }}</h3>
       <p class="settings-help">{{ t('settings.reportHelp')|safe }}</p>
       <div class="settings-actions">
@@ -282,13 +292,11 @@
       </div>
     </section>
 
-    <section class="settings-item">
-      <h3>{{ t('settings.resetTitle') }}</h3>
-      <p class="settings-help">{{ t('settings.resetHelp')|safe }}</p>
-      <div class="settings-actions">
-        <button type="button" id="settings-reset" class="danger">{{ t('settings.reset') }}</button>
-      </div>
+    <section class="settings-item" data-stab="about" hidden>
+      <h3>{{ t('settings.runningTitle') }}</h3>
+      <p class="settings-help">{{ t('settings.runningHelp')|safe }}</p>
     </section>
+
   </dialog>
 
   <!-- 오른쪽 아래: 맨 위로 / 맨 아래로 -->

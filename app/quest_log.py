@@ -83,8 +83,16 @@ def quest_name(quest_id: str, tasks: dict, tr, manual: dict) -> str:
     if quest_id in manual:
         m = manual[quest_id]
         name = (m.get("name_en") if i18n.current_lang() != "ko" else None) or m["name"]
-        return name + " *"  # * = 직접 적은 이름
+        return name  # 게임에 나오는 이름 그대로 (직접 적은 이름이라는 표시는 화면의 manual 태그로)
     return i18n.t("server.unknownQuest", id=quest_id)
+
+def quest_name_en(quest_id: str, tasks: dict, tr, manual: dict) -> str | None:
+    """퀘스트의 영어 이름 (한국어 화면에서 제목 옆에 작게 보여 줌)"""
+    task = tasks.get(quest_id) or tasks.get(manual.get(quest_id, {}).get("same_as"))
+    if task:
+        return tr.en.get(task["name"])
+    return manual.get(quest_id, {}).get("name_en")
+
 
 # 로그 한 줄의 시작: "2026-11-08 13:32:44.478|..."
 LINE_START = re.compile(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}")

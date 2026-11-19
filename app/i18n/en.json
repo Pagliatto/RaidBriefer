@@ -79,7 +79,7 @@
     "mapFilterLabel": "Filter by map",
     "filterAll": "All",
     "nightOnly": "Night only",
-    "manualName": "Manually named",
+    "manualName": "Manual",
     "added": "Added manually",
     "addedHint": "You added this quest in the first-time setup. It updates automatically once the game logs record it as completed or failed.",
     "inferred": "Inferred",
@@ -95,13 +95,13 @@
     "empty": "No matching quests.",
     "footerPrestige": "Records since prestige on {date}",
     "footerAllLogs": "Based on all remaining logs",
-    "footerTranslate": " · {n} need translation",
     "loadFailed": "Couldn't load the data. {error}",
     "retryLater": "Retrying shortly.",
     "saveHideFailed": "Couldn't save your visibility setting. Make sure the program is running.",
     "saveCheckFailed": "Couldn't save your selection. Make sure the program is running.",
     "anyMap": "Any map",
-    "outOfRaid": "Outside a raid"
+    "outOfRaid": "Outside a raid",
+    "manualNameHint": "Not on tarkov.dev yet, so this quest was added by hand. It switches to official data once available."
   },
   "story": {
     "stepUndo": "Revert to here",
@@ -279,7 +279,10 @@
     "resetHelp": "Hidden quests, hand-over checks, storyline progress, manually added quests, hideout levels and collected items, and your edition are <b>all deleted</b>\n        and you start again from the first-time setup.<br>Only the game folder is kept. This can't be undone.",
     "reset": "Reset everything",
     "langTitle": "Language (언어)",
-    "langHelp": "Language for the interface and game data (quest, item and map names). Changing it reloads the screen."
+    "langHelp": "Language for the interface and game data (quest, item and map names). Changing it reloads the screen.",
+    "tabGeneral": "General",
+    "tabRecords": "Records",
+    "tabAbout": "About"
   },
   "topbar": {
     "clockNight": "Tarkov in-game time (night)",

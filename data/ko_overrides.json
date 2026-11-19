@@ -279,5 +279,37 @@
   "671ac68e30609eb2c7e9a7f7": {
     "en": "Eliminate any target with an AA-12 shotgun",
     "ko": "[AA-12 산탄총]으로 아무 적 사살하기"
+  },
+  "6a5675112830d55110e00a8f": {
+    "en": "Eliminate Scavs on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)에서 스캐브 사살하기"
+  },
+  "64f6aafd67e11a7c6206e0d1": {
+    "en": "Locate and obtain the red vial at the TerraGroup office on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)의 테라그룹 사무실에서 [빨간 약병] 찾아서 획득하기"
+  },
+  "64f6aafd67e11a7c6206e0d2": {
+    "en": "Hand over the found item",
+    "ko": "찾은 물건 건네주기"
+  },
+  "63a7d767f32fa1316250c3da": {
+    "en": "Locate where the missing group was held captive on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)에서 실종된 일행이 붙잡혀 있던 곳 찾기"
+  },
+  "6a5a95f70cfa2d5efcf39d77": {
+    "en": "Locate the debtor on Streets of tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)에서 채무자 찾기"
+  },
+  "6a5a962ba945960673b0e2d2": {
+    "en": "Hand over the item: Chekannaya 15 apartment key",
+    "ko": "[체칸나야 15 아파트 열쇠] 건네주기"
+  },
+  "6672e47f25ab92726912c3e5": {
+    "en": "Locate and obtain the special version of the LEDX Skin Transilluminator in The Lab",
+    "ko": "연구소(The Lab)에서 특별 버전 [LEDX 피부 투과조명기] 찾아서 획득하기"
+  },
+  "6672e49679243c500ec02c2e": {
+    "en": "Hand over the found item",
+    "ko": "찾은 물건 건네주기"
   }
 }

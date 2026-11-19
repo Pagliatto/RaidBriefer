@@ -9,14 +9,14 @@
     "objective_en": "Eliminate 20 targets with an MPS Auto Assault-12 shotgun (any location)"
   },
   "6a763df2161e4b45b1015663": {
-    "name": "낯이 익은데... (A Familiar Face...)",
+    "name": "낯이 익은데...",
     "trader": "스키어",
     "maps": [
       "lighthouse"
     ],
     "objectives": [
       {
-        "text": "등대(Lighthouse)에서 [키라사-N] 또는 [NFM THOR CRV] 방탄복을 착용한 상태로 장갑 열차(Armored Train)를 통해 탈출하기",
+        "text": "Kirasa-N 또는 NFM THOR CRV 방탄복을 착용한 상태로 등대(Lighthouse)에서 장갑 열차를 통해 탈출하기",
         "original": "Extract from Lighthouse through the Armored Train while wearing a Kirasa-N or NFM THOR CRV body armor"
       }
     ],
