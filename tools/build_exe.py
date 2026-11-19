@@ -7,6 +7,7 @@ r"""RaidBriefer exe 만들기 → build/RaidBriefer-windows.zip
    → 고친 내용은 먼저 커밋한 뒤에 만들 것.
 """
 
+import re
 import shutil
 import subprocess
 import sys
@@ -48,6 +49,31 @@ Unofficial fan tool, not affiliated with Battlestate Games.
 """
 
 
+def version_file(version: str) -> Path:
+    """exe 파일 속성(오른쪽 클릭 → 속성 → 자세히)에 보이는 버전 정보"""
+    nums = [int("".join(c for c in part if c.isdigit()) or 0) for part in version.split(".")][:4]
+    nums += [0] * (4 - len(nums))
+    text = f"""VSVersionInfo(
+  ffi=FixedFileInfo(filevers={tuple(nums)}, prodvers={tuple(nums)}, mask=0x3f, flags=0x0, OS=0x40004, fileType=0x1, subtype=0x0, date=(0, 0)),
+  kids=[
+    StringFileInfo([StringTable('040904B0', [
+      StringStruct('CompanyName', 'Pagliatto'),
+      StringStruct('FileDescription', 'RaidBriefer {version} - Escape from Tarkov PvE companion (unofficial)'),
+      StringStruct('FileVersion', '{version}'),
+      StringStruct('InternalName', 'RaidBriefer'),
+      StringStruct('LegalCopyright', 'MIT License - github.com/Pagliatto/RaidBriefer'),
+      StringStruct('OriginalFilename', 'RaidBriefer.exe'),
+      StringStruct('ProductName', 'RaidBriefer'),
+      StringStruct('ProductVersion', '{version}')])]),
+    VarFileInfo([VarStruct('Translation', [1033, 1200])])
+  ]
+)
+"""
+    out = BUILD / "version_info.txt"
+    out.write_text(text, encoding="utf-8")
+    return out
+
+
 def run(cmd, **kw):
     print(">", " ".join(str(c) for c in cmd))
     subprocess.run(cmd, check=True, **kw)
@@ -79,10 +105,13 @@ def main() -> None:
 
     # 2) PyInstaller (폴더 방식: 켜지는 속도가 빠르고 백신 오탐이 적음)
     sep = ";"
+    app_version = re.search(r'VERSION = "([^"]+)"', (SRC / "app" / "version.py").read_text(encoding="utf-8")).group(1)
+    print("버전:", app_version)
     run([
         sys.executable, "-m", "PyInstaller", "--noconfirm", "--clean",
         "--name", NAME, "--windowed",
         "--icon", str(SRC / "app/static/icons/RaidBriefer.ico"),
+        "--version-file", str(version_file(app_version)),
         "--add-data", f"{SRC / 'app/templates'}{sep}app/templates",
         "--add-data", f"{SRC / 'app/static'}{sep}app/static",
         "--add-data", f"{SRC / 'app/i18n'}{sep}app/i18n",
@@ -95,7 +124,7 @@ def main() -> None:
     out = DIST / NAME
     for f in ("LICENSE", "NOTICE.md"):
         shutil.copy(SRC / f, out / f)
-    (out / "README.txt").write_text(README_TXT, encoding="utf-8-sig")
+    (out / "README.txt").write_text(f"RaidBriefer v{app_version}\n\n" + README_TXT, encoding="utf-8-sig")
 
     # 3) 기록이 섞이지 않았는지 검사
     bad = [p for p in out.rglob("*") if p.name in FORBIDDEN]
@@ -106,7 +135,12 @@ def main() -> None:
     with zipfile.ZipFile(ZIP, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
         for p in sorted(out.rglob("*")):
             z.write(p, Path(NAME) / p.relative_to(out))
-    print(f"\n완료: {ZIP}  ({ZIP.stat().st_size / 1e6:.1f} MB)")
+    # 받는 사람이 버전을 알 수 있게 이름에 버전을 넣은 zip (내용은 같음).
+    # 옛 이름(RaidBriefer-windows.zip)도 같이 올림: v1.0.0~1.0.2 의 자동 업데이트가 그 이름을 찾음
+    versioned = BUILD / f"RaidBriefer-v{app_version}-windows.zip"
+    shutil.copy(ZIP, versioned)
+    print(f"\n완료: {versioned.name}  ({versioned.stat().st_size / 1e6:.1f} MB)")
+    print(f"      + {ZIP.name} (옛 버전 자동 업데이트용, 같은 파일)")
 
 
 if __name__ == "__main__":

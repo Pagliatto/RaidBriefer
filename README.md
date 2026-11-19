@@ -12,7 +12,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Pagliatto/RaidBriefer/releases/latest/download/RaidBriefer-windows.zip"><b>⬇ Download (Windows, zip)</b></a>
+  <a href="https://github.com/Pagliatto/RaidBriefer/releases/latest"><b>⬇ Download the latest version (Windows)</b></a>
   &nbsp;·&nbsp; <a href="#install">How to install</a>
   &nbsp;·&nbsp; <a href="https://github.com/Pagliatto/RaidBriefer/releases">All releases</a>
 </p>
@@ -61,7 +61,7 @@ That's why it runs in its own window (for example on a second monitor).
 
 ## Install
 
-1. **[Download RaidBriefer-windows.zip](https://github.com/Pagliatto/RaidBriefer/releases/latest/download/RaidBriefer-windows.zip)**
+1. Open the **[latest release](https://github.com/Pagliatto/RaidBriefer/releases/latest)** and download **`RaidBriefer-vX.Y.Z-windows.zip`** (the file name shows the version).
 2. **Extract it** anywhere you like (e.g. `D:\RaidBriefer`).
    - Don't run it from inside the zip, or your records won't be saved.
 3. Double-click **`RaidBriefer.exe`** in the folder.

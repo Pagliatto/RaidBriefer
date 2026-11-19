@@ -12,6 +12,7 @@ exe 로 실행할 때만 직접 바꿀 수 있음. 소스로 실행하면 안내
 
 import hashlib
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -25,7 +26,8 @@ from app.version import VERSION
 
 REPO = "Pagliatto/RaidBriefer"
 API = os.environ.get("RAIDBRIEFER_UPDATE_API", f"https://api.github.com/repos/{REPO}/releases/latest")
-ASSET = "RaidBriefer-windows.zip"
+ASSET = "RaidBriefer-windows.zip"  # 옛 이름 (모든 배포판에 같이 올림)
+ASSET_VERSIONED = re.compile(r"^RaidBriefer-v[\d.]+-windows\.zip$")  # 버전이 들어간 이름 (v1.0.3~)
 WORK_DIR = paths.HOME_DIR / "_update"  # 받은 파일·예전 파일 백업 (끝나면 지움). 같은 드라이브라 옮기기가 빠름
 HELPER = paths.BUNDLE_DIR / "app" / "update_helper.cmd"
 
@@ -68,7 +70,9 @@ def check() -> dict:
         res.raise_for_status()
         info = res.json()
         latest = info.get("tag_name", "").lstrip("vV")
-        asset = next((a for a in info.get("assets", []) if a.get("name") == ASSET), None)
+        assets = info.get("assets", [])
+        asset = (next((a for a in assets if ASSET_VERSIONED.match(a.get("name", ""))), None)
+                 or next((a for a in assets if a.get("name") == ASSET), None))
         _asset = asset
         _set(latest=latest, available=bool(latest) and _ver(latest) > _ver(VERSION) and asset is not None,
              page=info.get("html_url") or _state["page"])
@@ -121,7 +125,7 @@ def _run() -> None:
     try:
         shutil.rmtree(WORK_DIR, ignore_errors=True)
         WORK_DIR.mkdir(parents=True)
-        zip_path = WORK_DIR / ASSET
+        zip_path = WORK_DIR / "update.zip"
         # 1) 받기
         sha = hashlib.sha256()
         with requests.get(_asset["browser_download_url"], headers={"User-Agent": f"RaidBriefer/{VERSION}"}, timeout=60, stream=True) as res:

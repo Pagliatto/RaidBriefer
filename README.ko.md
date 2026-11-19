@@ -12,7 +12,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Pagliatto/RaidBriefer/releases/latest/download/RaidBriefer-windows.zip"><b>⬇ 다운로드 (Windows, zip)</b></a>
+  <a href="https://github.com/Pagliatto/RaidBriefer/releases/latest"><b>⬇ 최신 버전 다운로드 (Windows)</b></a>
   &nbsp;·&nbsp; <a href="#설치">설치 방법</a>
   &nbsp;·&nbsp; <a href="https://github.com/Pagliatto/RaidBriefer/releases">모든 버전</a>
 </p>
@@ -61,7 +61,7 @@ RaidBriefer는 아래 것들만 사용해요.
 
 ## 설치
 
-1. **[RaidBriefer-windows.zip 받기](https://github.com/Pagliatto/RaidBriefer/releases/latest/download/RaidBriefer-windows.zip)**
+1. **[최신 배포판](https://github.com/Pagliatto/RaidBriefer/releases/latest)** 에서 **`RaidBriefer-vX.Y.Z-windows.zip`** 을 받으세요 (파일 이름에 버전이 들어 있어요).
 2. 원하는 곳에 **압축을 푸세요.** (예: `D:\RaidBriefer`)
    - 압축을 풀지 않고 zip 안에서 바로 실행하면 기록이 저장되지 않아요.
 3. 폴더 안의 **`RaidBriefer.exe`** 를 더블클릭하면 창이 떠요.
