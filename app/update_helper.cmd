@@ -14,14 +14,15 @@ set /a N=0
 tasklist /FI "PID eq %PID%" 2>nul | find "%PID%" >nul
 if errorlevel 1 goto closed
 set /a N+=1
-if %N% GEQ 30 goto start_old
-timeout /t 1 /nobreak >nul
+if %N% GEQ 30 goto fail_old
+rem wait ~1s (ping works even without a console; timeout fails when there is no input)
+ping -n 2 127.0.0.1 >nul
 goto wait
 
 :closed
 rem 2) move current program files to backup
 mkdir "%BAK%" 2>nul
-if exist "%DEST%\_internal" move "%DEST%\_internal" "%BAK%\_internal" >nul || goto start_old
+if exist "%DEST%\_internal" move "%DEST%\_internal" "%BAK%\_internal" >nul || goto fail_old
 if exist "%DEST%\RaidBriefer.exe" move "%DEST%\RaidBriefer.exe" "%BAK%\RaidBriefer.exe" >nul || goto restore
 
 rem 3) copy new program files (never into user_data / cache)
@@ -35,6 +36,9 @@ goto done
 if exist "%DEST%\_internal" rmdir /s /q "%DEST%\_internal"
 if exist "%BAK%\_internal" move "%BAK%\_internal" "%DEST%\_internal" >nul
 if exist "%BAK%\RaidBriefer.exe" move /y "%BAK%\RaidBriefer.exe" "%DEST%\RaidBriefer.exe" >nul
+
+:fail_old
+rem nothing was replaced (or it was put back) -> tell the program the update failed
 mkdir "%DEST%\user_data" 2>nul
 echo failed> "%DEST%\user_data\update_failed.txt"
 goto start_old
