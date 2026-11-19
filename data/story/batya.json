@@ -1,0 +1,722 @@
+{
+  "id": "batya",
+  "name": "Batya",
+  "library": "https://eftlibrary.com/story/batya",
+  "wiki": "https://escapefromtarkov.fandom.com/wiki/Batya",
+  "requirement": "다음 장소 중 하나를 방문하면 시작: 세관 스캐브 기지 2층 'жопа' 낙서 밑 매트리스 / 리저브 백색 퀸 레이더 돔 꼭대기 / 해안선 요양원 북쪽 벙커 / 삼림 USEC 캠프 큰 바위 위 매트리스",
+  "requirement_en": "Starts when you visit any of these locations: the mattress below the 'жопа' graffiti on the second floor of the Scav base on Customs / the top of the White Queen radar dome on Reserve / the bunker north of the Health Resort on Shoreline / the mattress on the large rock at the USEC camp on Woods",
+  "sections": [
+    {
+      "title": "BEAR 특수부대의 흔적 (보가티르 패치)",
+      "title_en": "Traces of the BEAR special squad (Bogatyrs patch)",
+      "map": null,
+      "tip": "보가티르 패치를 주워 읽기. 네 곳 중 아무 데나: 세관 새 주유소 남서쪽 언덕 위 오두막 소파 / 삼림 화물 호송대 BRDM 옆 바닥 / 리저브 백색 킹 항공관제센터 위쪽 지붕 소포 위 / 등대 BEAR 캠프 침낭 위. ⚠ 패치는 나중에 등대지기에게 내야 하니 레이드 밖 퀘스트 인벤토리로 옮겨 두기.",
+      "tip_en": "Pick up and read the Bogatyrs patch at any of four locations: the sofa in the cabin on the hill southwest of the new gas station on Customs / the ground beside the BRDM at the cargo convoy on Woods / a parcel on the upper roof of the White King airspace control center on Reserve / a sleeping bag at the BEAR camp on Lighthouse. ⚠ You will need to give the patch to Lightkeeper later, so move it to your off-raid quest inventory.",
+      "steps": [
+        {
+          "id": "batya-00",
+          "ko": "BEAR 특수부대의 흔적 찾기",
+          "en": "Locate the traces of the BEAR special squad",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "batya-01",
+          "ko": "보가티르 분대 패치 찾아서 획득하기",
+          "en": "(Optional) Locate and obtain the Bogatyr squad patch",
+          "optional": true,
+          "map": null
+        },
+        {
+          "id": "batya-02",
+          "ko": "상인들에게 보가티르 분대에 대해 알아보기 (예거)",
+          "en": "Learn more about the Bogatyr squad from the traders",
+          "optional": false,
+          "map": null
+        }
+      ],
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/2/2e/Hobby_Club_Customs_Stashing_Map.png/revision/latest/scale-to-width-down/480?cb=20250716194237",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/2/2e/Hobby_Club_Customs_Stashing_Map.png/revision/latest?cb=20250716194237",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Hobby_Club_Customs_Stashing_Map.png",
+          "caption": "세관 오두막 위치",
+          "caption_en": "Cabin location on Customs"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/e/e1/Bogatyrs_patch_Woods_map.jpg/revision/latest/scale-to-width-down/480?cb=20260219003659",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/e/e1/Bogatyrs_patch_Woods_map.jpg/revision/latest?cb=20260219003659",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Bogatyrs_patch_Woods_map.jpg",
+          "caption": "삼림 호송대 위치",
+          "caption_en": "Convoy location on Woods"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/9/96/Airspace_Control_Center_Map.jpg/revision/latest/scale-to-width-down/480?cb=20250120232611",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/9/96/Airspace_Control_Center_Map.jpg/revision/latest?cb=20250120232611",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Airspace_Control_Center_Map.jpg",
+          "caption": "리저브 항공관제센터",
+          "caption_en": "Airspace control center on Reserve"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/9/91/Bogatyrs_patch_Lighthouse_map.png/revision/latest/scale-to-width-down/480?cb=20260908235615",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/9/91/Bogatyrs_patch_Lighthouse_map.png/revision/latest?cb=20260908235615",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Bogatyrs_patch_Lighthouse_map.png",
+          "caption": "등대 BEAR 캠프 위치",
+          "caption_en": "BEAR camp location on Lighthouse"
+        }
+      ]
+    },
+    {
+      "title": "랴비나 초소 (삼림 제재소 북쪽)",
+      "title_en": "Ryabina outpost (north of the sawmill on Woods)",
+      "map": "woods",
+      "tip": "삼림 제재소 북쪽 랴비나 초소. 병 옆 팔레트 위 '보예보다의 인질 구출 보고서' 읽기. 옆 저격 둥지의 초록 상자 위 '스트렐레츠의 부적' 획득 → ⚠ 나중에 필요하니 퀘스트 인벤토리로 옮기기.",
+      "tip_en": "At the Ryabina outpost north of the sawmill on Woods, read Hostage evacuation report from Voevoda on the pallet beside the bottles. Pick up Strelets' amulet on the green crate in the nearby sniper nest. ⚠ You need it later, so move it to your quest inventory.",
+      "steps": [
+        {
+          "id": "batya-03",
+          "ko": "랴비나 초소 찾기",
+          "en": "Locate the Ryabina outpost",
+          "optional": false,
+          "map": "woods"
+        },
+        {
+          "id": "batya-04",
+          "ko": "보가티르 분대에 대한 정보 더 찾기",
+          "en": "Find more information about the Bogatyr squad",
+          "optional": false,
+          "map": "woods"
+        },
+        {
+          "id": "batya-05",
+          "ko": "보가티르 중 한 명의 기념품 찾아서 획득하기 (부적)",
+          "en": "(Optional) Locate and obtain a keepsake of one of the Bogatyrs",
+          "optional": true,
+          "map": "woods"
+        }
+      ],
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/e/ee/Ryabina_outpost_location.png/revision/latest/scale-to-width-down/480?cb=20260222000041",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/e/ee/Ryabina_outpost_location.png/revision/latest?cb=20260222000041",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Ryabina_outpost_location.png",
+          "caption": "랴비나 초소 위치",
+          "caption_en": "Ryabina outpost location"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/0/08/Batya_Ryabina_Camp_Note_2.png/revision/latest/scale-to-width-down/480?cb=20260221234157",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/0/08/Batya_Ryabina_Camp_Note_2.png/revision/latest?cb=20260221234157",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Batya_Ryabina_Camp_Note_2.png",
+          "caption": "인질 구출 보고서",
+          "caption_en": "Hostage evacuation report from Voevoda"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/3/37/Strelets_Amulet_2.png/revision/latest/scale-to-width-down/480?cb=20260221234147",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/3/37/Strelets_Amulet_2.png/revision/latest?cb=20260221234147",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Strelets_Amulet_2.png",
+          "caption": "스트렐레츠의 부적",
+          "caption_en": "Strelets' amulet"
+        }
+      ]
+    },
+    {
+      "title": "카루셀 초소 (인터체인지 ULTRA 몰)",
+      "title_en": "Carousel outpost (ULTRA mall on Interchange)",
+      "map": "interchange",
+      "tip": "인터체인지 ULTRA 몰 안 IDEA 계산대 맞은편. 침대 옆 바닥 '타란의 엽서', 침대 사이 '타란 인사기록', 무전기 탁자 위 '보예보다의 녹음기'와 '생각 테이프', 2층 책상 '보예보다 인사기록', 2층 안락의자 '스트렐레츠 인사기록'과 그 옆 병 근처 '스트렐레츠의 쪽지'(무전 코드 힌트). ⚠ 엽서·녹음기는 나중에 필요하니 퀘스트 인벤토리로.",
+      "tip_en": "Inside ULTRA mall on Interchange, opposite the IDEA checkouts. Taran's postcard is on the floor beside a bed; Taran's personal file is between the beds. Voevoda's audio recorder and Voevoda's thoughts audio tape are on the radio table. Upstairs, Voevoda's personal file is on a desk, Strelets' personal file is on an armchair, and Strelets' note is near the bottles beside it (a hint for the radio code). ⚠ Move the postcard and recorder to your quest inventory for later.",
+      "steps": [
+        {
+          "id": "batya-06",
+          "ko": "카루셀 초소 찾기",
+          "en": "Locate the Carousel outpost",
+          "optional": false,
+          "map": "interchange"
+        },
+        {
+          "id": "batya-07",
+          "ko": "보가티르 분대의 개인 메모 찾기",
+          "en": "Find the Bogatyr squad's personal notes",
+          "optional": false,
+          "map": "interchange"
+        },
+        {
+          "id": "batya-08",
+          "ko": "스트렐레츠에 대해 더 알아보기",
+          "en": "Learn more about Strelets",
+          "optional": false,
+          "map": "interchange"
+        },
+        {
+          "id": "batya-09",
+          "ko": "타란에 대해 더 알아보기",
+          "en": "Learn more about Taran",
+          "optional": false,
+          "map": "interchange"
+        },
+        {
+          "id": "batya-10",
+          "ko": "보가티르 중 한 명의 개인 물품 찾아서 획득하기 (엽서)",
+          "en": "(Optional) Locate and obtain a personal item of one of the Bogatyrs",
+          "optional": true,
+          "map": "interchange"
+        },
+        {
+          "id": "batya-11",
+          "ko": "보예보다에 대해 더 알아보기",
+          "en": "Learn more about Voevoda",
+          "optional": false,
+          "map": "interchange"
+        },
+        {
+          "id": "batya-12",
+          "ko": "보예보다의 개인 소지품 찾기 (생각 테이프)",
+          "en": "Find Voevoda's personal belongings",
+          "optional": false,
+          "map": "interchange"
+        },
+        {
+          "id": "batya-13",
+          "ko": "분대장의 녹음기 찾아서 획득하기",
+          "en": "(Optional) Locate and obtain the squad commander's recorder",
+          "optional": true,
+          "map": "interchange"
+        }
+      ],
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/6/66/Carousel_outpost.jpg/revision/latest/scale-to-width-down/480?cb=20260222031054",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/6/66/Carousel_outpost.jpg/revision/latest?cb=20260222031054",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Carousel_outpost.jpg",
+          "caption": "카루셀 초소 위치",
+          "caption_en": "Carousel outpost location"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/9/95/Carousel_outpost.png/revision/latest/scale-to-width-down/480?cb=20260222012447",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/9/95/Carousel_outpost.png/revision/latest?cb=20260222012447",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Carousel_outpost.png",
+          "caption": "카루셀 초소",
+          "caption_en": "Carousel outpost"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/5/5d/Batya_Carousel_Outpost_Taran%27s_postcard.png/revision/latest/scale-to-width-down/480?cb=20260222024346",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/5/5d/Batya_Carousel_Outpost_Taran%27s_postcard.png/revision/latest?cb=20260222024346",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Batya_Carousel_Outpost_Taran%27s_postcard.png",
+          "caption": "타란의 엽서",
+          "caption_en": "Taran's postcard"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/5/54/Batya_Carousel_Outpost_Voevoda%27s_audio_recorder.png/revision/latest/scale-to-width-down/480?cb=20260222024358",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/5/54/Batya_Carousel_Outpost_Voevoda%27s_audio_recorder.png/revision/latest?cb=20260222024358",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Batya_Carousel_Outpost_Voevoda%27s_audio_recorder.png",
+          "caption": "보예보다의 녹음기",
+          "caption_en": "Voevoda's audio recorder"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/4/4f/Batya_Carousel_Outpost_Strelets%27_note.png/revision/latest/scale-to-width-down/480?cb=20260222024437",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/4/4f/Batya_Carousel_Outpost_Strelets%27_note.png/revision/latest?cb=20260222024437",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Batya_Carousel_Outpost_Strelets%27_note.png",
+          "caption": "스트렐레츠의 쪽지",
+          "caption_en": "Strelets' note"
+        }
+      ]
+    },
+    {
+      "title": "그네즈도 초소 (인터체인지 ULTRA 몰 동쪽)",
+      "title_en": "Gnezdo outpost (east of ULTRA mall on Interchange)",
+      "map": "interchange",
+      "tip": "인터체인지 ULTRA 몰 동쪽. 텐트 안 무전기 탁자 '보고 오디오 테이프', 텐트 침대 '모레만 인사기록', 바위 밑 침낭 '신호 삼각측량 지도', 바위 밑 기타 옆 '분대 작전 보고서', 초록 천 덮인 팔레트 '코드 쪽지 첫 번째', 드럼통 옆 파란 의자 'Ultra 뒤 초소 BEAR 쪽지'.",
+      "tip_en": "East of ULTRA mall on Interchange. The Audio tape with report is on the radio table in the tent; Moreman's personal file is on the tent bed. The Map with triangulated signal is on the sleeping bag under the rock; the Bogatyr squad operations report is beside the guitar under the rock. The First piece of code note is on the pallet covered with green fabric; the BEAR note from the outpost behind Ultra is on the blue chair beside the barrel.",
+      "steps": [
+        {
+          "id": "batya-14",
+          "ko": "그네즈도 초소 찾기",
+          "en": "Locate the Gnezdo outpost",
+          "optional": false,
+          "map": "interchange"
+        },
+        {
+          "id": "batya-15",
+          "ko": "그네즈도 초소 수색하기",
+          "en": "Search the Gnezdo outpost",
+          "optional": false,
+          "map": "interchange"
+        },
+        {
+          "id": "batya-16",
+          "ko": "보가티르 분대에게 무슨 일이 있었는지 알아내기",
+          "en": "Figure out what happened to the Bogatyr squad",
+          "optional": false,
+          "map": "interchange"
+        },
+        {
+          "id": "batya-17",
+          "ko": "보가티르 분대가 어디서 매복당했는지 알아내기",
+          "en": "Figure out where the Bogatyr squad got ambushed",
+          "optional": false,
+          "map": "interchange"
+        },
+        {
+          "id": "batya-18",
+          "ko": "보가티르 분대의 활동에 대해 더 알아보기",
+          "en": "Learn more about the Bogatyr squad's activities",
+          "optional": false,
+          "map": "interchange"
+        },
+        {
+          "id": "batya-19",
+          "ko": "보가티르 분대원들에 대해 더 알아보기",
+          "en": "Learn more about the Bogatyr squad's members",
+          "optional": false,
+          "map": "interchange"
+        }
+      ],
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/8/8e/Gnezdo_outpost_Map.jpg/revision/latest/scale-to-width-down/480?cb=20260219222409",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/8/8e/Gnezdo_outpost_Map.jpg/revision/latest?cb=20260219222409",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Gnezdo_outpost_Map.jpg",
+          "caption": "그네즈도 초소 위치",
+          "caption_en": "Gnezdo outpost location"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/5/5e/Gnezdo_outpost.png/revision/latest/scale-to-width-down/480?cb=20260219224648",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/5/5e/Gnezdo_outpost.png/revision/latest?cb=20260219224648",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Gnezdo_outpost.png",
+          "caption": "그네즈도 초소",
+          "caption_en": "Gnezdo outpost"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/4/48/Gnezdo_-_Audio_tape_with_report.png/revision/latest/scale-to-width-down/480?cb=20260219225636",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/4/48/Gnezdo_-_Audio_tape_with_report.png/revision/latest?cb=20260219225636",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Gnezdo_-_Audio_tape_with_report.png",
+          "caption": "보고 테이프",
+          "caption_en": "Audio tape with report"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/4/46/Gnezdo_-_First_piece_of_code_note.png/revision/latest/scale-to-width-down/480?cb=20260219225744",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/4/46/Gnezdo_-_First_piece_of_code_note.png/revision/latest?cb=20260219225744",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Gnezdo_-_First_piece_of_code_note.png",
+          "caption": "코드 쪽지 첫 번째",
+          "caption_en": "First piece of code note"
+        }
+      ]
+    },
+    {
+      "title": "매복 장소 · 모레만의 무덤 (삼림 ZB-016 근처)",
+      "title_en": "Ambush site · Moreman's grave (near ZB-016 on Woods)",
+      "map": "woods",
+      "tip": "삼림 동쪽 ZB-016 탈출구 근처의 모레만 무덤. 장화 속 '코드 쪽지 두 번째', 십자가 옆 바닥 '모레만의 휴대폰', 십자가 옆 침낭 위 '모레만의 인식표'(⚠ 나중에 필요, 퀘스트 인벤토리로). 휴대폰으로 은신처 작업대 1레벨에서 '모레만 오디오 테이프 #1·#2' 제작해서 듣기(전기 필요).",
+      "tip_en": "Moreman's grave is near the ZB-016 extract in eastern Woods. The Second piece of code note is inside a boot; Moreman's phone is on the ground beside the cross; Moreman's dogtag is on the sleeping bag beside the cross (⚠ needed later; move it to your quest inventory). Use the phone at the Hideout's Workbench level 1 to craft Moreman's audio tapes #1 and #2, then listen to them. Power is required.",
+      "steps": [
+        {
+          "id": "batya-20",
+          "ko": "매복 장소 찾기",
+          "en": "Locate the ambush spot",
+          "optional": false,
+          "map": "woods"
+        },
+        {
+          "id": "batya-21",
+          "ko": "보가티르 분대에 대한 정보 더 얻기",
+          "en": "Obtain more information about the Bogatyr squad",
+          "optional": false,
+          "map": "woods"
+        },
+        {
+          "id": "batya-22",
+          "ko": "모레만의 시신 살펴보기",
+          "en": "Inspect Moreman's body",
+          "optional": false,
+          "map": "woods"
+        },
+        {
+          "id": "batya-23",
+          "ko": "모레만의 휴대폰 찾아서 획득하기",
+          "en": "(Optional) Locate and obtain Moreman's phone",
+          "optional": true,
+          "map": "woods"
+        },
+        {
+          "id": "batya-24",
+          "ko": "보가티르 중 한 명의 인식표 찾아서 획득하기",
+          "en": "(Optional) Locate and obtain a dogtag of one of the Bogatyrs",
+          "optional": true,
+          "map": "woods"
+        },
+        {
+          "id": "batya-25",
+          "ko": "모레만의 휴대폰에서 매복 정보 꺼내기 (은신처 작업대 제작)",
+          "en": "Retrieve more information about the ambush from Moreman's phone",
+          "optional": false,
+          "map": null
+        }
+      ],
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/4/4e/Batya_Woods_Ambush_Spot_Map.png/revision/latest/scale-to-width-down/480?cb=20260220234718",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/4/4e/Batya_Woods_Ambush_Spot_Map.png/revision/latest?cb=20260220234718",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Batya_Woods_Ambush_Spot_Map.png",
+          "caption": "무덤 위치",
+          "caption_en": "Grave location"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/0/01/Batya_Woods_Ambush_Spot.png/revision/latest/scale-to-width-down/480?cb=20260220231346",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/0/01/Batya_Woods_Ambush_Spot.png/revision/latest?cb=20260220231346",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Batya_Woods_Ambush_Spot.png",
+          "caption": "무덤",
+          "caption_en": "Grave"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/0/03/Moreman%27s_phone_Spawn.png/revision/latest/scale-to-width-down/480?cb=20260220235116",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/0/03/Moreman%27s_phone_Spawn.png/revision/latest?cb=20260220235116",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Moreman%27s_phone_Spawn.png",
+          "caption": "휴대폰",
+          "caption_en": "Phone"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/7/7b/Moreman%27s_dogtag_Spawn.png/revision/latest/scale-to-width-down/480?cb=20260220235122",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/7/7b/Moreman%27s_dogtag_Spawn.png/revision/latest?cb=20260220235122",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Moreman%27s_dogtag_Spawn.png",
+          "caption": "인식표",
+          "caption_en": "Dogtag"
+        }
+      ]
+    },
+    {
+      "title": "보가티르 분대와 무전 (은신처)",
+      "title_en": "Contact the Bogatyr squad by radio (hideout)",
+      "map": null,
+      "tip": "은신처 정보 수집 시설 3레벨 건설. 정보 수집 시설 무전기에서 주파수 '35.70' 입력 → 코드 '27.893.2000' 입력.",
+      "tip_en": "Build Intelligence Center level 3 in the hideout. On its radio, enter frequency '35.70', then code '27.893.2000'.",
+      "steps": [
+        {
+          "id": "batya-26",
+          "ko": "정보 수집 시설 3레벨 달성하기",
+          "en": "Obtain Intelligence Center level 3",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "batya-27",
+          "ko": "보가티르 분대와 연락하기",
+          "en": "Contact the Bogatyr squad",
+          "optional": false,
+          "map": null
+        }
+      ],
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/9/99/Batya_Contact_Voevoda_via_Intel_Center_3_2.png/revision/latest/scale-to-width-down/480?cb=20260224150545",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/9/99/Batya_Contact_Voevoda_via_Intel_Center_3_2.png/revision/latest?cb=20260224150545",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Batya_Contact_Voevoda_via_Intel_Center_3_2.png",
+          "caption": "주파수 35.70 입력",
+          "caption_en": "Enter frequency 35.70"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/5/52/Batya_Contact_Voevoda_via_Intel_Center_3_3.png/revision/latest/scale-to-width-down/480?cb=20260224151157",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/5/52/Batya_Contact_Voevoda_via_Intel_Center_3_3.png/revision/latest?cb=20260224151157",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Batya_Contact_Voevoda_via_Intel_Center_3_3.png",
+          "caption": "코드 27.893.2000 입력",
+          "caption_en": "Enter code 27.893.2000"
+        }
+      ]
+    },
+    {
+      "title": "등대지기에게 분대 유품 전달 (등대)",
+      "title_en": "Give the squad's keepsakes to Lightkeeper (Lighthouse)",
+      "map": "lighthouse",
+      "tip": "등대 반도 끝 등대 건물 3층의 등대지기. 다리는 즈랴치가 지키고 클레이모어가 깔려 있어서 암호화된 DSP 무전기가 필요(To the Light - Trust but Verify 퀘스트 라인). 즈랴치·추종자·등대지기와 친한 PMC를 공격하면 무전기가 풀림. 유품 5개(엽서·녹음기·부적·인식표·패치)를 레이드 퀘스트 인벤토리에 넣고 가서 전달.",
+      "tip_en": "Lightkeeper is on the third floor of the lighthouse building at the tip of the peninsula on Lighthouse. Zryachiy guards the bridge, which is covered in claymores, so you need an encoded Digital secure DSP radio transmitter (the To the Light - Trust but Verify quest line). Attacking Zryachiy, his followers, or PMCs on good terms with Lightkeeper decodes the transmitter. Put all 5 keepsakes (postcard, recorder, amulet, dogtag, and patch) in your in-raid quest inventory and hand them over.",
+      "steps": [
+        {
+          "id": "batya-28",
+          "ko": "등대지기 접근 권한 얻기",
+          "en": "Gain access to Lightkeeper",
+          "optional": false,
+          "map": "lighthouse"
+        },
+        {
+          "id": "batya-29",
+          "ko": "등대지기와 좋은 관계 유지하기",
+          "en": "Stay on good terms with Lightkeeper",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "batya-30",
+          "ko": "보가티르 분대의 유품 전부 등대지기에게 가져가기",
+          "en": "Bring all the Bogatyr squad's items to Lightkeeper",
+          "optional": false,
+          "map": "lighthouse"
+        }
+      ],
+      "prep": [
+        {
+          "kind": "가져가기",
+          "text": "Digital secure DSP radio transmitter (암호화된 DSP 무전기)",
+          "text_en": "Digital secure DSP radio transmitter (encoded)",
+          "count": null,
+          "fir": false
+        },
+        {
+          "kind": "제출",
+          "text": "Taran's postcard (타란의 엽서)",
+          "text_en": "Taran's postcard",
+          "count": null,
+          "fir": true
+        },
+        {
+          "kind": "제출",
+          "text": "Voevoda's audio recorder (보예보다의 녹음기)",
+          "text_en": "Voevoda's audio recorder",
+          "quest_item": true,
+          "count": null,
+          "fir": true
+        },
+        {
+          "kind": "제출",
+          "text": "Strelets' amulet (스트렐레츠의 부적)",
+          "text_en": "Strelets' amulet",
+          "count": null,
+          "fir": true
+        },
+        {
+          "kind": "제출",
+          "text": "Moreman's dogtag (모레만의 인식표)",
+          "text_en": "Moreman's dogtag",
+          "count": null,
+          "fir": true
+        },
+        {
+          "kind": "제출",
+          "text": "Bogatyrs patch (보가티르 패치)",
+          "text_en": "Bogatyrs patch",
+          "count": null,
+          "fir": true
+        }
+      ],
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/4/4b/LightkeeperMap.png/revision/latest/scale-to-width-down/480?cb=20230110141838",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/4/4b/LightkeeperMap.png/revision/latest?cb=20230110141838",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:LightkeeperMap.png",
+          "caption": "등대 위치",
+          "caption_en": "Lighthouse location"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/b/b0/Lightkeeper_Area_Door.png/revision/latest/scale-to-width-down/480?cb=20260329223819",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/b/b0/Lightkeeper_Area_Door.png/revision/latest?cb=20260329223819",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Lightkeeper_Area_Door.png",
+          "caption": "잠긴 구역 문",
+          "caption_en": "Locked area door"
+        }
+      ]
+    },
+    {
+      "title": "보예보다의 과제",
+      "title_en": "Voevoda's tasks",
+      "map": null,
+      "tip": "6~12시간 기다린 뒤 정보 수집 시설 무전기로 다시 연락(35.70 / 27.893.2000). 보예보다가 주는 과제: 경기관총 스킬 5, 돌격소총 스킬 10, 스트레스 저항력 10, 근력 15, 죽지 않고 아무 적 15명, 죽지 않고 PMC 4명. 다 끝나면 다시 무전으로 연락.",
+      "tip_en": "Wait 6–12 hours, then contact Voevoda again using the Intelligence Center radio (35.70 / 27.893.2000). His tasks: Light Machine Guns level 5, Assault Rifles level 10, Stress Resistance level 10, Strength level 15, kill any 15 enemies without dying, and kill 4 PMCs without dying. Contact him by radio again when all tasks are done.",
+      "steps": [
+        {
+          "id": "batya-31",
+          "ko": "보예보다가 연락할 때까지 기다리기 (6~12시간)",
+          "en": "Wait for Voevoda to reach out",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "batya-32",
+          "ko": "경기관총 스킬 5레벨 달성하기",
+          "en": "Reach the Light Machine Guns skill level 5",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "batya-33",
+          "ko": "돌격소총 스킬 10레벨 달성하기",
+          "en": "Reach the Assault Rifles skill level 10",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "batya-34",
+          "ko": "스트레스 저항력 스킬 10레벨 달성하기",
+          "en": "Reach the Stress Resistance skill level 10",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "batya-35",
+          "ko": "근력 스킬 15레벨 달성하기",
+          "en": "Reach the Strength skill level 15",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "batya-36",
+          "ko": "죽지 않고 아무 적 15명 사살하기",
+          "en": "Eliminate any 15 targets without dying",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "batya-37",
+          "ko": "죽지 않고 PMC 4명 사살하기",
+          "en": "Eliminate 4 PMC operatives without dying",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "batya-38",
+          "ko": "보예보다와 연락하기",
+          "en": "Contact Voevoda",
+          "optional": false,
+          "map": null
+        }
+      ]
+    },
+    {
+      "title": "배신자의 흔적 · 프라퍼 심문",
+      "title_en": "Traces of the traitors · Interrogate Prapor",
+      "map": null,
+      "tip": "등대 BEAR 캠프 무전기 탁자의 '프라퍼를 언급한 쪽지' 읽기(리저브 지휘 벙커, 인터체인지 ULTRA 동쪽 BEAR 캠프 조사는 선택). 그 뒤 상인 화면에서 프라퍼에게 가기.",
+      "tip_en": "Read the note mentioning Prapor on the radio table at the BEAR camp on Lighthouse. Investigating the command bunker on Reserve and the BEAR camp east of ULTRA on Interchange is optional. Then visit Prapor on his trader screen.",
+      "steps": [
+        {
+          "id": "batya-39",
+          "ko": "배신자들의 흔적 찾기",
+          "en": "Locate the traces of the traitors",
+          "optional": false,
+          "map": "lighthouse"
+        },
+        {
+          "id": "batya-40",
+          "ko": "리저브의 지휘 벙커 조사하기",
+          "en": "(Optional) Investigate the command bunker on Reserve",
+          "optional": true,
+          "map": "reserve"
+        },
+        {
+          "id": "batya-41",
+          "ko": "등대의 BEAR 캠프 조사하기",
+          "en": "(Optional) Investigate the BEAR camp on Lighthouse",
+          "optional": true,
+          "map": "lighthouse"
+        },
+        {
+          "id": "batya-42",
+          "ko": "인터체인지 ULTRA 몰 동쪽 BEAR 캠프 조사하기",
+          "en": "(Optional) Investigate the BEAR camp east of the Ultra mall on Interchange",
+          "optional": true,
+          "map": "interchange"
+        },
+        {
+          "id": "batya-43",
+          "ko": "프라퍼 심문하기",
+          "en": "Interrogate Prapor",
+          "optional": false,
+          "map": null
+        }
+      ],
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/7/78/Bogatyrs_patch_Lighthouse_BEAR_camp.png/revision/latest/scale-to-width-down/480?cb=20260908190604",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/7/78/Bogatyrs_patch_Lighthouse_BEAR_camp.png/revision/latest?cb=20260908190604",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Bogatyrs_patch_Lighthouse_BEAR_camp.png",
+          "caption": "등대 BEAR 캠프",
+          "caption_en": "BEAR camp on Lighthouse"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/f/f8/Note_mentioning_prapor.png/revision/latest/scale-to-width-down/480?cb=20260911135014",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/f/f8/Note_mentioning_prapor.png/revision/latest?cb=20260911135014",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Note_mentioning_prapor.png",
+          "caption": "무전기 탁자의 쪽지",
+          "caption_en": "Note on the radio table"
+        }
+      ]
+    },
+    {
+      "title": "컬티스트와 장군의 관계",
+      "title_en": "The Cultists' connection to the General",
+      "map": null,
+      "tip": "해안선 섬의 집 바닥의 '컬티스트 표시가 있는 보예보다 사진' 읽기 + '장군을 언급한 쪽지'를 삼림(제재소 서쪽 검문소 근처 숲의 표시된 원, 촛불 옆) 또는 세관(3층 기숙사 314호 마크방, 열쇠 필요) 중 한 곳에서 읽기.",
+      "tip_en": "Read Voevoda's photo with a cultist mark on the floor of the house on the island on Shoreline. Also read the note mentioning the General at either the marked circle in the woods near the checkpoint west of the sawmill on Woods (beside the candles), or the marked room 314 in the three-story dorm on Customs (key required).",
+      "steps": [
+        {
+          "id": "batya-44",
+          "ko": "컬티스트가 장군과 어떻게 연결되는지 알아내기",
+          "en": "Figure out how the cultists are connected to the General",
+          "optional": false,
+          "map": "shoreline"
+        }
+      ],
+      "prep": [
+        {
+          "kind": "열쇠",
+          "text": "Dorm room 314 marked key (세관에서 찾을 때만)",
+          "text_en": "Dorm room 314 marked key (only if searching on Customs)",
+          "count": null,
+          "fir": false
+        }
+      ],
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/3/37/WetJob2IslandMap.png/revision/latest/scale-to-width-down/480?cb=20260212220125",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/3/37/WetJob2IslandMap.png/revision/latest?cb=20260212220125",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:WetJob2IslandMap.png",
+          "caption": "해안선 섬 위치",
+          "caption_en": "Island location on Shoreline"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/0/04/Voevoda%27s_photo_with_a_cultist_mark_Spawn.png/revision/latest/scale-to-width-down/480?cb=20260301143458",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/0/04/Voevoda%27s_photo_with_a_cultist_mark_Spawn.png/revision/latest?cb=20260301143458",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Voevoda%27s_photo_with_a_cultist_mark_Spawn.png",
+          "caption": "보예보다 사진",
+          "caption_en": "Photo of Voevoda"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/0/05/WoodsSouthernMarkedCircleMap.png/revision/latest/scale-to-width-down/480?cb=20260301151110",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/0/05/WoodsSouthernMarkedCircleMap.png/revision/latest?cb=20260301151110",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:WoodsSouthernMarkedCircleMap.png",
+          "caption": "삼림 표시된 원 위치",
+          "caption_en": "Marked circle location on Woods"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/9/95/Note_mentioning_General_Woods_Spawn.png/revision/latest/scale-to-width-down/480?cb=20260301150111",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/9/95/Note_mentioning_General_Woods_Spawn.png/revision/latest?cb=20260301150111",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Note_mentioning_General_Woods_Spawn.png",
+          "caption": "촛불 옆 쪽지",
+          "caption_en": "Note beside the candles"
+        }
+      ]
+    },
+    {
+      "title": "등대지기와 대화 · 언허드 문서",
+      "title_en": "Talk to Lightkeeper · Documents on The Unheard",
+      "map": "lighthouse",
+      "tip": "등대지기를 찾아가 대화. 새 레이드에서 다시 등대지기 구역으로 가서 빨간 나무 상자 위 '요원 네트워크 배치 보고서' 읽기. 6시간 뒤 완료.",
+      "tip_en": "Visit Lightkeeper and talk to him. In a new raid, return to his area and read the Agent network deployment report on the red wooden crate. Completes after 6 hours.",
+      "steps": [
+        {
+          "id": "batya-45",
+          "ko": "등대지기와 대화하기",
+          "en": "Talk to Lightkeeper",
+          "optional": false,
+          "map": "lighthouse"
+        },
+        {
+          "id": "batya-46",
+          "ko": "등대지기가 언허드 문서를 준비할 때까지 기다리기",
+          "en": "Wait for Lightkeeper to prepare the documents on The Unheard",
+          "optional": false,
+          "map": "lighthouse"
+        }
+      ],
+      "reward": "14만 4천 경험치, 보예보다의 녹음기, 업적 This Is All (Not) Coincidence",
+      "reward_en": "144,000 XP, Voevoda's audio recorder, This Is All (Not) Coincidence achievement"
+    }
+  ]
+}

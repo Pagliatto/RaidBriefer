@@ -1,0 +1,310 @@
+{
+  "id": "blue-fire",
+  "name": "Blue Fire",
+  "library": "https://eftlibrary.com/story/blue-fire",
+  "wiki": "https://escapefromtarkov.fandom.com/wiki/Blue_Fire",
+  "requirement": "EMERCOM 전단 또는 Item #1156 쪽지를 주워 읽으면 시작 (예: 삼림 스캐브 기지/EMERCOM 캠프의 초록 컨테이너)",
+  "requirement_en": "Starts when you pick up and read an EMERCOM leaflet or an Item #1156 note (for example, in the green container at the Scav base/EMERCOM camp on Woods)",
+  "sections": [
+    {
+      "title": "메카닉에게 EMP 폭발에 대해 묻기",
+      "title_en": "Ask Mechanic about the EMP explosion",
+      "map": null,
+      "tip": "상인 화면에서 메카닉에게 EMP 폭발에 대해 물어보기. 메카닉이 아직 안 열렸으면 먼저 열어야 함(선택 목표).",
+      "tip_en": "Ask Mechanic about the EMP explosion on his trader screen. If he is still locked, unlock him first (optional objective).",
+      "steps": [
+        {
+          "id": "blue-fire-00",
+          "ko": "메카닉에게 EMP 폭발에 대해 묻기",
+          "en": "Talk to Mechanic about the EMP blast",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "blue-fire-01",
+          "ko": "메카닉 접근 권한 얻기",
+          "en": "(Optional) Gain access to Mechanic",
+          "optional": true,
+          "map": null
+        }
+      ]
+    },
+    {
+      "title": "장치 조각 찾기",
+      "title_en": "Find the device fragment",
+      "map": "streets-of-tarkov",
+      "tip": "타르코프 시내 두 곳 중 한 곳에서 획득(열쇠는 하나만 있으면 됨). ① LexOs 자동차 대리점 2층 잠긴 구역(Car dealership closed section key 필요, 주변에 클레이모어 많음) → 음식 용기 안. ② 체칸나야 13 아파트 표시된 방(Mysterious room marked key 필요) → 화분 안. 찾으면 메카닉에게 전달.",
+      "tip_en": "Find it at either of 2 locations on Streets of Tarkov; you only need one key. 1. The locked section on the second floor of the LexOs car dealership: inside a food container. Requires the Car dealership closed section key; there are many claymores nearby. 2. The marked room in the Chekannaya 13 apartment building: inside a flower pot. Requires the Mysterious room marked key. Give the fragment to Mechanic.",
+      "prep": [
+        {
+          "kind": "열쇠",
+          "text": "Car dealership closed section key 또는 Mysterious room marked key (둘 중 하나)",
+          "text_en": "Car dealership closed section key or Mysterious room marked key (either one)",
+          "count": null,
+          "fir": false
+        },
+        {
+          "kind": "제출",
+          "text": "Unknown device fragment",
+          "count": null,
+          "fir": false
+        }
+      ],
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/8/80/CarDealerMap.png/revision/latest/scale-to-width-down/480?cb=20230826213528",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/8/80/CarDealerMap.png/revision/latest?cb=20230826213528",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:CarDealerMap.png",
+          "caption": "LexOs 자동차 대리점 위치",
+          "caption_en": "LexOs car dealership location"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/1/15/CarDealerClosedSectionDoor.png/revision/latest/scale-to-width-down/480?cb=20230101015454",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/1/15/CarDealerClosedSectionDoor.png/revision/latest?cb=20230101015454",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:CarDealerClosedSectionDoor.png",
+          "caption": "잠긴 구역 철창문",
+          "caption_en": "Barred door to the locked section"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/2/2e/Blue_Fire_Device_Fragment_inside_LexOS_Sect..png/revision/latest/scale-to-width-down/480?cb=20260211224337",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/2/2e/Blue_Fire_Device_Fragment_inside_LexOS_Sect..png/revision/latest?cb=20260211224337",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Blue_Fire_Device_Fragment_inside_LexOS_Sect..png",
+          "caption": "음식 용기 속 장치",
+          "caption_en": "Device in the food container"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/3/33/Mysterious_marked_key_onmap.png/revision/latest/scale-to-width-down/480?cb=20230826234248",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/3/33/Mysterious_marked_key_onmap.png/revision/latest?cb=20230826234248",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Mysterious_marked_key_onmap.png",
+          "caption": "체칸나야 13 표시된 방 위치",
+          "caption_en": "Chekannaya 13 marked room location"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/1/13/Chek13_MRK_img.png/revision/latest/scale-to-width-down/480?cb=20260110175252",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/1/13/Chek13_MRK_img.png/revision/latest?cb=20260110175252",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Chek13_MRK_img.png",
+          "caption": "화분 속 장치",
+          "caption_en": "Device in the flower pot"
+        }
+      ],
+      "steps": [
+        {
+          "id": "blue-fire-02",
+          "ko": "장치 조각 찾아서 획득하기",
+          "en": "Locate and obtain the device fragment",
+          "optional": false,
+          "map": "streets-of-tarkov"
+        },
+        {
+          "id": "blue-fire-03",
+          "ko": "장치 조각 메카닉에게 전달하기",
+          "en": "Hand over the device fragment to Mechanic",
+          "optional": false,
+          "map": null
+        }
+      ]
+    },
+    {
+      "title": "연구소 서버실에 해킹 장치 설치",
+      "title_en": "Install the hacking device in The Lab server room",
+      "map": "the-lab",
+      "tip": "메카닉이 게임 우편으로 해킹 장치를 줌(교환으로 더 살 수 있음). 연구소 1층 서버실, 사무용 의자 옆에 숨기기. 연구소 출입 카드 필요.",
+      "tip_en": "Mechanic sends you the hacking device by in-game mail; more are available through barter. Stash it beside the office chair in the server room on The Lab's first floor. A TerraGroup Labs access keycard is required.",
+      "prep": [
+        {
+          "kind": "가져가기",
+          "text": "Local network hacking device (메카닉이 우편으로 지급)",
+          "text_en": "Local network hacking device (sent by Mechanic via in-game mail)",
+          "count": null,
+          "fir": false
+        },
+        {
+          "kind": "가져가기",
+          "text": "TerraGroup Labs access keycard (연구소 출입 카드)",
+          "text_en": "TerraGroup Labs access keycard",
+          "count": null,
+          "fir": false
+        }
+      ],
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/f/f2/Labs_Server_Room_Plant_Location.png/revision/latest/scale-to-width-down/480?cb=20260211234744",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/f/f2/Labs_Server_Room_Plant_Location.png/revision/latest?cb=20260211234744",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Labs_Server_Room_Plant_Location.png",
+          "caption": "설치 장소 (지도)",
+          "caption_en": "Installation spot (map)"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/5/5b/Labs_Server_Room_Plant_Location_2.png/revision/latest/scale-to-width-down/480?cb=20260806220902",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/5/5b/Labs_Server_Room_Plant_Location_2.png/revision/latest?cb=20260806220902",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Labs_Server_Room_Plant_Location_2.png",
+          "caption": "의자 옆 설치 장소",
+          "caption_en": "Installation spot beside the chair"
+        }
+      ],
+      "steps": [
+        {
+          "id": "blue-fire-04",
+          "ko": "연구소 서버실에 해킹 장치 설치하기",
+          "en": "Plant the hacking device in the server room in the Lab",
+          "optional": false,
+          "map": "the-lab"
+        }
+      ]
+    },
+    {
+      "title": "메카닉과 대화 · 조각 선택",
+      "title_en": "Talk to Mechanic · Decide what to do with the fragment",
+      "map": null,
+      "tip": "⚠ Item 1156 조각을 가질지 메카닉에게 줄지 선택. 가지면 업적 Better Served / 주면 150만 루블.",
+      "tip_en": "⚠ Choose whether to keep the Item 1156 fragment or give it to Mechanic. Keep it: Better Served achievement. Give it to him: 1,500,000 Roubles.",
+      "steps": [
+        {
+          "id": "blue-fire-05",
+          "ko": "메카닉과 대화하기",
+          "en": "Talk to Mechanic",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "blue-fire-06",
+          "ko": "Item 1156 조각을 가질지 메카닉에게 줄지 선택하기",
+          "en": "Keep the fragment of Item 1156 for yourself or hand it over to Mechanic",
+          "optional": false,
+          "map": null
+        }
+      ]
+    },
+    {
+      "title": "Item 1156 단서 찾기",
+      "title_en": "Find a clue about Item 1156",
+      "map": null,
+      "tip": "Item #1156 쪽지를 주워 읽기. 세 곳 중 아무 데나: ① 그라운드 제로 21+ 테라그룹 본관 2층 4번 사무실(TerraGroup science office key 필요) ② 등대 북쪽 파란 별장 1층 가운데 계단 근처 책장 ③ 연구소 2층 O22 사무실 책상.",
+      "tip_en": "Pick up and read the Item #1156 note at any of 3 locations: 1. Office 4 on the second floor of the TerraGroup main building on Ground Zero 21+ (TerraGroup science office key required). 2. The bookshelf near the central stairs on the first floor of the northern blue chalet on Lighthouse. 3. The desk in office O22 on The Lab's second floor.",
+      "prep": [
+        {
+          "kind": "열쇠",
+          "text": "TerraGroup science office key (그라운드 제로에서 찾을 때만)",
+          "text_en": "TerraGroup science office key (only if searching on Ground Zero)",
+          "count": null,
+          "fir": false
+        }
+      ],
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/e/e8/Saving_the_Mole_Map.png/revision/latest/scale-to-width-down/480?cb=20240325024052",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/e/e8/Saving_the_Mole_Map.png/revision/latest?cb=20240325024052",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Saving_the_Mole_Map.png",
+          "caption": "그라운드 제로 테라그룹 건물",
+          "caption_en": "TerraGroup building on Ground Zero"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/1/18/BlueChaletMapKTT.png/revision/latest/scale-to-width-down/480?cb=20230115032329",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/1/18/BlueChaletMapKTT.png/revision/latest?cb=20230115032329",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:BlueChaletMapKTT.png",
+          "caption": "등대 파란 별장 위치",
+          "caption_en": "Blue chalet location on Lighthouse"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/b/b6/BlueFire2.png/revision/latest/scale-to-width-down/480?cb=20260212125448",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/b/b6/BlueFire2.png/revision/latest?cb=20260212125448",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:BlueFire2.png",
+          "caption": "등대 별장 책장의 쪽지",
+          "caption_en": "Note on the chalet bookshelf on Lighthouse"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/1/17/Blue_Fire_Office_in_the_laboratory_map.png/revision/latest/scale-to-width-down/480?cb=20260212130828",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/1/17/Blue_Fire_Office_in_the_laboratory_map.png/revision/latest?cb=20260212130828",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Blue_Fire_Office_in_the_laboratory_map.png",
+          "caption": "연구소 O22 사무실 위치",
+          "caption_en": "Office O22 location in The Lab"
+        }
+      ],
+      "steps": [
+        {
+          "id": "blue-fire-07",
+          "ko": "Item 1156에 대한 단서 찾기",
+          "en": "Find a lead on Item 1156",
+          "optional": false,
+          "map": null
+        }
+      ]
+    },
+    {
+      "title": "Rus Post 우체국과 우편 차량",
+      "title_en": "Rus Post office and mail vehicle",
+      "map": "streets-of-tarkov",
+      "tip": "타르코프 시내 우체국에서 오디오 테이프 3개를 주워 듣기(카운터 뒤 화면 있는 책상 / 창고 옆 커피 자판기 위 / 카운터 뒤 복도로 들어가는 안쪽 사무실 책상). 우체국 앞 우편 차량 뒷바퀴(오른쪽) 옆 바닥에 차 열쇠가 항상 있음 → 차 뒤칸에서 Item #1156 설계도 주워 읽기.",
+      "tip_en": "Pick up and listen to 3 audio tapes in the post office on Streets of Tarkov: on the desk with a screen behind the counter / on the coffee machine beside the storage room / on the desk in the inner office reached through the corridor behind the counter. The vehicle key always spawns on the ground beside the right rear wheel of the mail vehicle in front of the post office. Open the rear compartment, then pick up and read the Item #1156 specification.",
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/9/9a/PostOfficeMap.png/revision/latest/scale-to-width-down/480?cb=20230827004148",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/9/9a/PostOfficeMap.png/revision/latest?cb=20230827004148",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:PostOfficeMap.png",
+          "caption": "우체국 위치",
+          "caption_en": "Post office location"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/3/34/Rus_Post_audio_tape_1_spawn.png/revision/latest/scale-to-width-down/480?cb=20260212140659",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/3/34/Rus_Post_audio_tape_1_spawn.png/revision/latest?cb=20260212140659",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Rus_Post_audio_tape_1_spawn.png",
+          "caption": "테이프 1",
+          "caption_en": "Tape 1"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/3/39/Rus_Post_audio_tape_2_spawn.png/revision/latest/scale-to-width-down/480?cb=20260212141608",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/3/39/Rus_Post_audio_tape_2_spawn.png/revision/latest?cb=20260212141608",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Rus_Post_audio_tape_2_spawn.png",
+          "caption": "테이프 2",
+          "caption_en": "Tape 2"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/9/99/Rus_Post_audio_tape_3_spawn.png/revision/latest/scale-to-width-down/480?cb=20260213125956",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/9/99/Rus_Post_audio_tape_3_spawn.png/revision/latest?cb=20260213125956",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Rus_Post_audio_tape_3_spawn.png",
+          "caption": "테이프 3",
+          "caption_en": "Tape 3"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/4/49/RusPostCarKeySpawn.png/revision/latest/scale-to-width-down/480?cb=20251128000241",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/4/49/RusPostCarKeySpawn.png/revision/latest?cb=20251128000241",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:RusPostCarKeySpawn.png",
+          "caption": "바퀴 옆 차 열쇠",
+          "caption_en": "Vehicle key beside the wheel"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/1/1e/The_Ticket_Item_1156_Specification_Spawn.png/revision/latest/scale-to-width-down/480?cb=20260212145704",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/1/1e/The_Ticket_Item_1156_Specification_Spawn.png/revision/latest?cb=20260212145704",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:The_Ticket_Item_1156_Specification_Spawn.png",
+          "caption": "설계도",
+          "caption_en": "Blueprint"
+        }
+      ],
+      "reward": "11만 2천 경험치, 업적 Inferno",
+      "reward_en": "112,000 XP; Inferno achievement",
+      "steps": [
+        {
+          "id": "blue-fire-08",
+          "ko": "Rus Post 우체국 조사하기 (테이프 3개)",
+          "en": "Investigate the Rus Post office",
+          "optional": false,
+          "map": "streets-of-tarkov"
+        },
+        {
+          "id": "blue-fire-09",
+          "ko": "Rus Post 우편 차량 찾기",
+          "en": "Locate the Rus Post Car",
+          "optional": false,
+          "map": "streets-of-tarkov"
+        },
+        {
+          "id": "blue-fire-10",
+          "ko": "Item 1156 설계도 획득하기",
+          "en": "Obtain the blueprint for Item 1156",
+          "optional": false,
+          "map": "streets-of-tarkov"
+        }
+      ]
+    }
+  ]
+}

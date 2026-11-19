@@ -1,0 +1,429 @@
+"""화면에 보여줄 퀘스트 목록을 만드는 파일.
+
+로그(quest_log)로 알아낸 상태 + tarkov.dev 정보(이름, 상인, 맵)를 합친다.
+"""
+
+import json
+import re
+from pathlib import Path
+
+from app import i18n, paths, progress, quest_log, tarkov_api
+
+NO_MAP = "@none"        # 계산 중에만 쓰고, 화면에는 아래 둘 중 하나로 바꿔서 보냄
+ALL_MAPS = "@any"      # 맵은 상관없지만 레이드에 들어가야 하는 퀘스트
+OUT_OF_RAID = "@out"  # 레이드에 안 들어가도 되는 퀘스트 (무기 개조 등)
+OVERRIDES_FILE = paths.DATA_DIR / "ko_overrides.json"
+HANGUL = re.compile("[가-힣]")  # i18n-ok: 한글이 있는지 검사
+
+
+def _load_overrides() -> dict:
+    """우리가 번역한 퀘스트 목표 (data/ko_overrides.json)"""
+    try:
+        data = json.loads(OVERRIDES_FILE.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+    return {k: v for k, v in data.items() if not k.startswith("_")}
+
+
+def _objective_text(key: str, task_tr, overrides: dict) -> dict:
+    """목표 문장 고르기.
+
+    1) 게임 공식 한글이 있으면 그것
+    2) 없으면 영어 원문 + 우리 번역 (번역할 때 원문과 지금 원문이 같을 때만)
+    3) 우리 번역도 없거나 원문이 바뀌었으면 영어 원문만 (needs_translation=True)
+    """
+    if task_tr.lang != "ko":  # 영어 등: 그 언어 문장 그대로 (우리 한국어 번역은 안 씀)
+        return {"text": task_tr.main.get(key) or task_tr.en.get(key) or key}
+    official = task_tr.main.get(key)
+    if official and HANGUL.search(official):
+        return {"text": official}
+    original = task_tr.en.get(key) or key
+    ours = overrides.get(key)
+    if ours and ours.get("en") == original:
+        return {"text": ours["ko"], "original": original}
+    return {"text": original, "needs_translation": True}
+
+
+# PvE에서 맵 정리 (지도 구분값 기준)
+# - 오염된 공장/연구소는 이벤트 맵이라 뺀다
+# - 그라운드 제로 21+ 는 레벨 구분용(PvP/시즌용)이라 PvE에서는 같은 맵
+# - 튜토리얼: tarkov.dev가 일반 그라운드 제로를 튜토리얼로 잘못 적은 경우가 있어서
+#   (예: 타르코프의 저격수 - 파트 1) 빼지 않고 그라운드 제로로 합친다
+# - 야간 공장: 공장과 같은 맵으로 합치고, 야간에만 되는 퀘스트는 달 표시
+# 빼는 맵: 이벤트 맵(오염된 공장·연구소), 위키에 없는 맵(연구소 Dark: 실제 플레이 0번, 2026-11-17 위키 확인)
+HIDDEN_MAPS = {"infected-factory", "infected-lab", "the-lab-dark"}
+MERGED_MAPS = {
+    "ground-zero-21": "ground-zero",
+    "ground-zero-tutorial": "ground-zero",
+    "night-factory": "factory",
+}
+# 낮·밤이 따로 나뉜 맵은 공장뿐 (위키). 다른 맵은 한 맵 안에서 낮·밤이 바뀜 → ☾ 표시는 야간 공장만
+NIGHT_MAPS = {"night-factory"}
+# 지도에 그리기엔 너무 큰 영역 (맵 거의 전체이거나 데이터가 이상함) → 서랍 목록에만
+MAX_ZONE_METERS = 300
+
+# 레이드 안에서 해야 하는 목표 종류 (무기 개조·아이템 제출·상인 레벨·스킬 등은 레이드 밖)
+RAID_OBJECTIVES = {
+    "shoot", "extract", "findItem", "findQuestItem", "useItem", "visit", "mark",
+    "plantItem", "plantQuestItem", "experience",
+}
+
+
+def _map_names() -> dict:
+    """지도 id → (한국어 이름, 야간 맵인가). 합치는 맵은 원래 맵 이름, 빼는 맵은 (None, False)"""
+    maps = tarkov_api.load("maps")["maps"]
+    tr = tarkov_api.Translator("maps")
+    by_key = {m["normalizedName"]: tr(m["name"]) for m in maps.values()}
+    names = {}
+    for m in maps.values():
+        key = m["normalizedName"]
+        if key in HIDDEN_MAPS:
+            names[m["id"]] = (None, False)
+        else:
+            names[m["id"]] = (by_key.get(MERGED_MAPS.get(key, key)), key in NIGHT_MAPS)
+    return names
+
+
+def _trader_names() -> dict:
+    """상인 id → (한국어 이름, 영어 구분값 예: prapor). 구분값은 화면 색상용."""
+    traders = tarkov_api.load("traders")
+    tr = tarkov_api.Translator("traders")
+    return {t["id"]: (tr(t["name"]), t.get("normalizedName", "")) for t in traders.values()}
+
+
+def _quest_maps(task: dict, map_names: dict) -> tuple[list[str], list[str]]:
+    """퀘스트에 관련된 맵 이름들 (퀘스트 자체 맵 + 목표들의 맵).
+
+    돌려주는 값: (맵 이름들, 야간에만 되는 맵 이름들)
+    예) 야간 공장만 적혀 있으면 → (["공장"], ["공장"])  → 화면에 달 표시
+    """
+    ids = []
+    if task.get("map"):
+        ids.append(task["map"])
+    for obj in task.get("objectives", []):
+        ids.extend(obj.get("maps") or [])
+    names, day, night = [], set(), set()
+    for map_id in ids:
+        name, is_night = map_names.get(map_id, (None, False))
+        if not name:
+            continue
+        (night if is_night else day).add(name)
+        if name not in names:
+            names.append(name)
+    night_only = [n for n in names if n in night and n not in day]
+    return (names or [NO_MAP]), night_only
+
+
+def _flat(value) -> list:
+    """[[a, b], [c]] 처럼 겹친 목록을 [a, b, c]로 편다.
+    {"id": ..., "name": ...} 모양이면 id만 꺼낸다."""
+    if isinstance(value, list):
+        out = []
+        for v in value:
+            out.extend(_flat(v))
+        return out
+    if isinstance(value, dict):
+        return [value["id"]] if value.get("id") else []
+    return [value] if value else []
+
+
+def _item_names(ids, item_tr) -> str:
+    """아이템 id 목록 → '이름 / 이름' (너무 많으면 '이름 외 N종')."""
+    names = []
+    for item_id in _flat(ids):
+        name = item_tr(f"{item_id} Name")
+        if name != f"{item_id} Name" and name not in names:
+            names.append(name)
+    if not names:
+        return ""
+    if len(names) <= 3:
+        return " / ".join(names)
+    return i18n.t("server.andMore", first=names[0], second=names[1], n=len(names) - 2)
+
+
+def _objectives_and_prep(task: dict, task_tr, item_tr, quest_items: dict, overrides: dict, map_names: dict | None = None):
+    """퀘스트 목표 문장들과, 가기 전에 챙길 준비물 목록을 만든다.
+
+    준비물 종류
+    - 가져가기 : 설치할 물건, 마커, 사용할 아이템
+    - 무기     : 지정된 무기로 처치, 무기 조립
+    - 착용     : 입고 있어야 하는 장비
+    - 열쇠     : 목표 장소에 필요한 열쇠
+    - 제출     : 상인에게 낼 아이템 (fir = 레이드에서 직접 찾은 것만 인정)
+    """
+    objectives = []
+    prep = {}  # (종류, 이름, 인레이드) → 개수 합계. 같은 물건이 여러 목표에 나오면 개수를 더한다.
+    keys = []  # 열쇠는 하나씩 따로, 중복 없이
+    key_maps = {}  # 열쇠 이름 → 필요한 맵 이름들 (None = 맵 정보 없음 → 어느 맵에서나 보여줌)
+
+    item_ids = {}  # (종류, 이름, 인레이드) → 아이템 id들 (지도에 바닥 생성 위치를 찍을 때 씀)
+
+    def add(kind, text, count=None, fir=False, ids=None):
+        if text:
+            k = (kind, text, fir)
+            prep[k] = prep.get(k, 0) + (count or 1)
+            if ids:
+                item_ids.setdefault(k, [])
+                item_ids[k] += [i for i in _flat(ids) if i not in item_ids[k]]
+
+    def map_display_names(map_ids):
+        names = []
+        for mid in map_ids or []:
+            mid = mid.get("id") if isinstance(mid, dict) else mid
+            name = (map_names or {}).get(mid, (None, False))[0]
+            if name and name not in names:
+                names.append(name)
+        return names
+
+    def add_keys(ids, map_ids=None):
+        maps = map_display_names(map_ids)
+        for key_id in _flat(ids):
+            name = _item_names([key_id], item_tr)
+            if not name:
+                continue
+            if name not in keys:
+                keys.append(name)
+                key_maps[name] = maps or None
+            elif key_maps.get(name) is not None:
+                # 이미 있는 열쇠: 맵을 합침 (맵 정보 없는 곳에서도 필요하면 어디서나)
+                key_maps[name] = (key_maps[name] + [m for m in maps if m not in key_maps[name]]) if maps else None
+
+    for o in task.get("objectives", []):
+        objective = _objective_text(o["description"], task_tr, overrides)
+        objective["optional"] = o.get("optional", False)
+        objectives.append(objective)
+        kind = o["type"]
+        count = o.get("count") or 1
+
+        if kind == "plantItem":
+            add("가져가기", _item_names(o.get("items"), item_tr), count)
+        elif kind == "mark":
+            add("가져가기", _item_names([o.get("markerItem")], item_tr), count)
+        elif kind == "useItem":
+            add("가져가기", _item_names(o.get("useAny"), item_tr), count)
+        elif kind == "shoot":
+            # 무기·착용은 개수 의미가 없어서 1개로 센다
+            add("무기", _item_names(o.get("usingWeapon"), item_tr))
+            add("무기", _item_names(o.get("usingWeaponMods"), item_tr))
+            add("착용", _item_names(o.get("wearing"), item_tr))
+        elif kind == "buildWeapon":
+            add("무기", _item_names([o.get("item")], item_tr))
+        elif kind == "giveItem":
+            add("제출", _item_names(o.get("items"), item_tr), count, o.get("foundInRaid", False), o.get("items"))
+        elif kind == "plantQuestItem":
+            qi = quest_items.get(o.get("questItem"), {})
+            add("가져가기", task_tr(qi.get("name", "")) if qi else "", count)
+
+        add_keys(o.get("requiredKeys"), o.get("maps"))
+
+    for needed in task.get("neededKeys") or []:
+        add_keys(needed.get("keys"), [needed.get("map")] if needed.get("map") else None)
+
+    # 화면에 보여줄 순서: 열쇠 → 가져가기 → 무기 → 착용 → 제출
+    order = {"가져가기": 1, "무기": 2, "착용": 3, "제출": 4}
+    # 열쇠에는 필요한 맵(maps)을 붙임 → 홈 '챙길 것'에서 고른 맵 열쇠만 보여줌
+    result = [{"kind": "열쇠", "text": k, "count": None, "fir": False, **({"maps": key_maps[k]} if key_maps.get(k) else {})}
+              for k in keys]
+    for (kind, text, fir), total in sorted(prep.items(), key=lambda x: order[x[0][0]]):
+        entry = {"kind": kind, "text": text, "count": total if total > 1 else None, "fir": fir}
+        if (kind, text, fir) in item_ids:
+            entry["ids"] = item_ids[(kind, text, fir)]
+        result.append(entry)
+    return objectives, result
+
+
+def _xz(position: dict) -> list[float]:
+    """게임 좌표 → [x, z] (지도는 위에서 내려다보는 평면)"""
+    return [round(position.get("x", 0), 2), round(position.get("z", 0), 2)]
+
+
+def _xzy(position: dict) -> list[float]:
+    """게임 좌표 → [x, z, 높이 y] (핀: 높이로 몇 층인지 판단)"""
+    return _xz(position) + [round(position.get("y", 0), 2)]
+
+
+def _where(objective: dict, map_names: dict) -> list[dict]:
+    """목표의 지도 위치들. [{"map": "세관", "points": [[x, z]], "outline": [[x, z], ...] 또는 없음}]
+    - zones           : 가야 할 곳·설치·표시할 곳 (영역 모양 outline 포함)
+    - possibleLocations: 퀘스트 아이템이 있을 수 있는 곳들"""
+    result = []
+    for zone in objective.get("zones") or []:
+        name = map_names.get(zone.get("map"), (None, False))[0]
+        if not (name and zone.get("position")):
+            continue
+        outline = [_xz(p) for p in zone.get("outline") or []]
+        if outline:
+            xs = [p[0] for p in outline]
+            zs = [p[1] for p in outline]
+            if max(max(xs) - min(xs), max(zs) - min(zs)) > MAX_ZONE_METERS:
+                continue  # 맵 거의 전체 같은 영역은 지도에 안 그림
+        spot = {"map": name, "points": [_xzy(zone["position"])]}
+        if outline:
+            spot["outline"] = outline
+            # 처치 구역은 '이 근처에서 싸움' 이라 화면에서 점선으로 옅게
+            spot["area"] = objective.get("type") == "shoot"
+        result.append(spot)
+    for loc in objective.get("possibleLocations") or []:
+        name = map_names.get(loc.get("map"), (None, False))[0]
+        if name and loc.get("positions"):
+            result.append({"map": name, "points": [_xzy(p) for p in loc["positions"]]})
+    # tarkov.dev 데이터에 같은 영역이 두 번 들어 있는 경우가 있어서(30개 퀘스트, 59건) 하나만 남김
+    unique, seen = [], set()
+    for spot in result:
+        key = (spot["map"], str(spot["points"]), str(spot.get("outline")))
+        if key not in seen:
+            seen.add(key)
+            unique.append(spot)
+    result = unique
+    return result
+
+
+def infer_completed(status: dict, tasks: dict) -> dict:
+    """로그에 기록이 없지만 '끝낸 게 확실한' 퀘스트를 찾는다.
+
+    어떤 퀘스트를 받았다면(진행 중·완료·실패 모두), 그 퀘스트의 선행 퀘스트는 이미 끝낸 것.
+    로그가 지워졌을 때(게임 재설치·포맷) 새 로그만으로 지난 진행을 메우는 용도.
+    - tarkov.dev 선행 조건 중 '완료해야 함'(["complete"])만 사용
+    - 이름표의 same_as(옛 id 정보를 빌려 씀)는 선행 조건이 바뀌었을 수 있어서 사용 안 함
+    돌려주는 값: 추정한 퀘스트 id → 그렇게 판단한 근거 퀘스트 id
+    """
+    inferred = {}
+    stack = list(status)
+    while stack:
+        quest_id = stack.pop()
+        for req in (tasks.get(quest_id) or {}).get("taskRequirements") or []:
+            prereq = req.get("task")
+            if req.get("status") == ["complete"] and prereq not in status and prereq not in inferred:
+                inferred[prereq] = quest_id
+                stack.append(prereq)
+    return inferred
+
+
+def catalog() -> list[dict]:
+    """처음 설정에서 고를 수 있는 전체 퀘스트 (이름·상인·레벨). 로그로 이미 아는 것은 화면에서 거름"""
+    tarkov_api.update_all()
+    tasks, tr = tarkov_api.get_tasks()
+    trader_names = _trader_names()
+    result = []
+    for quest_id, task in tasks.items():
+        trader, trader_key = trader_names.get(task.get("trader"), ("?", ""))
+        name = tr(task["name"])
+        english = tr.en.get(task["name"], "")
+        result.append({
+            "id": quest_id,
+            "name": name,
+            "en": english if english != name else "",  # 영어 이름으로도 찾을 수 있게
+            "trader": trader,
+            "trader_key": trader_key,
+            "level": task.get("minPlayerLevel"),
+        })
+    result.sort(key=lambda q: (q["level"] or 0, q["name"]))
+    return result
+
+
+def build() -> dict:
+    """화면용 퀘스트 정보를 만든다."""
+    message = tarkov_api.update_all()
+    tasks, tr = tarkov_api.get_tasks()
+    manual = quest_log.load_manual_quests()
+    map_names = _map_names()
+    trader_names = _trader_names()
+    item_tr = tarkov_api.Translator("items")
+    quest_items = tarkov_api.load("tasks").get("questItems", {})
+    overrides = _load_overrides()
+
+    groups = {"진행 중": [], "완료": [], "실패": []}
+    events = quest_log.read_quest_events()
+    status = quest_log.status_from_events(events)
+    # 로그 일부가 지워졌다는 단서 (직접 추가했거나 이미 확인한 것은 뺌)
+    known_ok = set(progress.get("added")) | set(progress.get("gap_ok"))
+    log_gap = sorted(quest_log.missing_starts(events) - known_ok)
+    # 처음 설정에서 직접 추가한 '진행 중' 퀘스트 (로그에 기록이 생기면 로그가 이김)
+    added = [q for q in progress.get("added") if q not in status]
+    for quest_id in added:
+        status[quest_id] = {"status": "진행 중", "time": None}
+    # 로그에 없지만 선행 퀘스트라서 끝낸 게 확실한 것 → 완료로 추가 ("자동 추정" 표시)
+    inferred = infer_completed(status, tasks)
+    for quest_id in inferred:
+        status[quest_id] = {"status": "완료", "time": None}
+
+    for quest_id, info in status.items():
+        # tarkov.dev 정보 찾기 (옛 id로 있는 경우 same_as 사용)
+        task = tasks.get(quest_id) or tasks.get(manual.get(quest_id, {}).get("same_as"))
+        entry = {
+            "id": quest_id,
+            "name": quest_log.quest_name(quest_id, tasks, tr, manual),
+            # 정렬용. 추정한 것은 기록 시각이 없어서 맨 아래로
+            "time": info["time"].strftime("%m-%d %H:%M") if info["time"] else "",
+            "manual": task is None,
+        }
+        if quest_id in added:
+            entry["added"] = True
+        if quest_id in inferred:
+            entry["inferred"] = True
+            entry["inferred_from"] = quest_log.quest_name(inferred[quest_id], tasks, tr, manual)
+        if task:
+            entry["trader"], entry["trader_key"] = trader_names.get(task.get("trader"), ("?", ""))
+            entry["maps"], entry["night_maps"] = _quest_maps(task, map_names)
+            entry["level"] = task.get("minPlayerLevel")
+            entry["wiki"] = task.get("wikiLink")
+            entry["objectives"], entry["prep"] = _objectives_and_prep(
+                task, tr, item_tr, quest_items, overrides, map_names)
+            # 목표마다 지도 위치 (목표 문장과 같은 순서)
+            for objective, raw in zip(entry["objectives"], task.get("objectives", [])):
+                where = _where(raw, map_names)
+                if where:
+                    objective["where"] = where
+            # 레이드 안에서 하는 목표가 있나 (맵 무관 퀘스트를 고른 맵에 같이 보여줄지 판단)
+            entry["raid"] = any(o["type"] in RAID_OBJECTIVES for o in task.get("objectives", []))
+            # 이름표(manual_quests.json)에 "raid"를 직접 적어 두었으면 그 값을 따름 (사용자 확인값)
+            if "raid" in manual.get(quest_id, {}):
+                entry["raid"] = manual[quest_id]["raid"]
+        else:
+            m = manual.get(quest_id, {})
+            # 직접 적은 이름표는 상인을 한글로 적었으니 한글 이름으로 상인을 찾고, 화면에는 고른 언어 이름으로
+            ko_traders = tarkov_api.Translator("traders", lang="ko")
+            trader_id = next((t["id"] for t in tarkov_api.load("traders").values()
+                              if ko_traders(t["name"]) == m.get("trader")), None)
+            entry["trader"], entry["trader_key"] = trader_names.get(trader_id, (m.get("trader", "?"), ""))
+            english = i18n.current_lang() != "ko"
+            # 이름표에 맵(구분값 목록)·목표·준비물·레벨을 적어 두었으면 그것을 씀
+            keyed = {mm["normalizedName"]: mm["id"] for mm in tarkov_api.load("maps")["maps"].values()}
+            names = [map_names.get(keyed.get(k), (None, False))[0] for k in m.get("maps", [])]
+            entry["maps"], entry["night_maps"] = ([n for n in names if n] or [NO_MAP]), []
+            entry["level"] = m.get("level")
+            entry["wiki"] = m.get("link")
+            if m.get("objectives"):
+                entry["objectives"] = [
+                    {"optional": False, "text": o.get("original") or o["text"]} if english else {"optional": False, **o}
+                    for o in m["objectives"]]
+            else:
+                text = (m.get("objective_en") if english else None) or m.get("objective")
+                entry["objectives"] = [{"text": text, "optional": False}] if text else []
+            entry["prep"] = [{"count": None, "fir": False, **p, "text": (p.get("text_en") if english else None) or p["text"]}
+                             for p in m.get("prep", [])]
+            entry["raid"] = m.get("raid", True)  # 직접 적은 이름표는 따로 안 적으면 레이드 퀘스트로 봄
+        # 맵이 없는 퀘스트: 레이드에서 하는 거면 "모든 맵", 아니면 "레이드 밖"
+        if entry["maps"] == [NO_MAP]:
+            entry["maps"] = [ALL_MAPS if entry.get("raid") else OUT_OF_RAID]
+        groups[info["status"]].append(entry)
+
+    # 최근에 받은/끝낸 것이 위로
+    for items in groups.values():
+        items.sort(key=lambda e: e["time"], reverse=True)
+
+    # 번역이 필요한 목표 개수 (원문이 바뀌었거나 새로 생긴 것)
+    needs = sum(1 for items in groups.values() for q in items
+                for o in q["objectives"] if o.get("needs_translation"))
+
+    return {
+        "data_message": message,
+        "needs_translation": needs,
+        # 가장 최근 프레스티지 (없으면 None → 화면에 "전체 로그 기준")
+        "prestige_since": (lambda p: p.strftime("%Y-%m-%d %H:%M") if p else None)(quest_log.last_prestige()),
+        # 시작 기록 없이 끝난 퀘스트 id들 → 화면에 '로그가 지워진 것 같아요' 안내
+        "log_gap": log_gap,
+        "in_progress": groups["진행 중"],
+        "completed": groups["완료"],
+        "failed": groups["실패"],
+    }

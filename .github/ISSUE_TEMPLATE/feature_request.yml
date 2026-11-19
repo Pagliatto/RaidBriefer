@@ -1,0 +1,27 @@
+name: Feature request (기능 제안)
+description: A feature you'd like, or something to improve (있으면 좋겠는 기능·바꾸면 좋을 점)
+title: "[Idea] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        RaidBriefer aims to be an **information-focused, hands-off helper**.
+        Features that could trigger the anti-cheat (BattlEye) — reading game memory, modifying game files, screen overlays — can't be made.
+        RaidBriefer 는 **정보 위주, 손이 거의 안 가는 도우미**를 목표로 해요. 안티치트(BattlEye)에 걸릴 수 있는 기능은 만들 수 없어요.
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like? (어떤 기능이면 좋겠나요?)
+      placeholder: e.g. Mark extracts I've already used on the map.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why do you need it? When would you use it? (왜 필요한가요?)
+      description: Tell us when it felt inconvenient while playing. (게임하면서 불편했던 순간)
+  - type: textarea
+    id: example
+    attributes:
+      label: Pictures or examples, if any (참고할 그림·예시)

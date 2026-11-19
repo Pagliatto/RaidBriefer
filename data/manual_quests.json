@@ -1,0 +1,33 @@
+{
+  "_설명": "tarkov.dev에 아직 없는 퀘스트의 이름표. 퀘스트 id를 키로 적는다. tarkov.dev에 생기면 그쪽 정보가 우선이다. same_as = 같은 퀘스트인데 tarkov.dev에는 다른 id로 있는 경우 그 id. 선택 항목: maps(맵 구분값 목록), objectives([{text, original}]), prep([{kind, text, count, fir}]), level. 내용은 위키 기준. raid(true/false) = 레이드 안에서 하는 퀘스트인지 직접 지정 (tarkov.dev에 있는 퀘스트에도 쓸 수 있음). 영어 화면용(선택): name_en, objective_en, prep[].text_en (objectives 는 original 이 영어 문장).",
+  "6aba40a15ef26da1360746b8": {
+    "same_as": "671a59e43d73dac1360765cc",
+    "name": "Dangerous Props",
+    "trader": "스키어",
+    "objective": "MPS Auto Assault-12 샷건으로 아무 타겟 20명 사살 (지역 상관없음)",
+    "link": "https://ytyler.tistory.com/451",
+    "objective_en": "Eliminate 20 targets with an MPS Auto Assault-12 shotgun (any location)"
+  },
+  "6a763df2161e4b45b1015663": {
+    "name": "낯이 익은데... (A Familiar Face...)",
+    "trader": "스키어",
+    "maps": [
+      "lighthouse"
+    ],
+    "objectives": [
+      {
+        "text": "등대(Lighthouse)에서 [키라사-N] 또는 [NFM THOR CRV] 방탄복을 착용한 상태로 장갑 열차(Armored Train)를 통해 탈출하기",
+        "original": "Extract from Lighthouse through the Armored Train while wearing a Kirasa-N or NFM THOR CRV body armor"
+      }
+    ],
+    "prep": [
+      {
+        "kind": "착용",
+        "text": "BNTI Kirasa-N 방탄복 또는 NFM THOR CRV 방탄복 (색상 무관)",
+        "text_en": "BNTI Kirasa-N or NFM THOR CRV body armor (any color)"
+      }
+    ],
+    "link": "https://escapefromtarkov.fandom.com/wiki/A_Familiar_Face...",
+    "name_en": "A Familiar Face..."
+  }
+}

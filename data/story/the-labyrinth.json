@@ -1,0 +1,317 @@
+{
+  "id": "the-labyrinth",
+  "name": "The Labyrinth",
+  "library": "https://eftlibrary.com/story/the-labyrinth",
+  "wiki": "https://escapefromtarkov.fandom.com/wiki/The_Labyrinth_(story_chapter)",
+  "requirement": "해안선 요양원 서관 지하의 미궁(The Labyrinth) 트랜짓을 찾으면 시작 (Knossos LLC facility key 필요)",
+  "requirement_en": "Starts when you find the Transit to The Labyrinth in the Health Resort west wing basement on Shoreline (Knossos LLC facility key required)",
+  "sections": [
+    {
+      "title": "예거에게 지하 시설 묻기 · 키카드 기다리기",
+      "title_en": "Ask Jaeger about the underground facility · Wait for keycards",
+      "map": null,
+      "tip": "상인 화면에서 예거에게 지하 시설에 대해 묻기(테라피스트에게 들어가는 방법 묻기는 선택). 12~24시간 기다린 뒤 다시 예거에게 미궁에 대해 물으면 Labrys 출입 키카드 2장을 우편으로 줌(교환으로 더 살 수 있음).",
+      "tip_en": "Ask Jaeger about the underground facility on his trader screen. Asking Therapist how to enter is optional. Wait 12–24 hours, then ask Jaeger about The Labyrinth again. He sends 2 Labrys access keycards by in-game mail; more are available through barter.",
+      "steps": [
+        {
+          "id": "the-labyrinth-00",
+          "ko": "상인들에게 지하 시설에 대해 묻기",
+          "en": "Ask the traders about the underground facility",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-labyrinth-01",
+          "ko": "테라피스트에게 지하 시설 들어가는 방법 묻기",
+          "en": "(Optional) Ask Therapist how to access the underground facility",
+          "optional": true,
+          "map": null
+        },
+        {
+          "id": "the-labyrinth-02",
+          "ko": "예거가 키카드를 모을 때까지 기다리기 (12~24시간)",
+          "en": "Wait for Jaeger to gather the keycards",
+          "optional": false,
+          "map": null
+        }
+      ]
+    },
+    {
+      "title": "미궁 들어가기 (해안선 요양원 서관 지하)",
+      "title_en": "Enter The Labyrinth (Health Resort west wing basement on Shoreline)",
+      "map": "shoreline",
+      "tip": "해안선 요양원 서관 지하의 트랜짓으로만 들어갈 수 있음. Knossos LLC 시설 열쇠로 문을 열고 Labrys 키카드로 트랜짓 이용. 미궁은 특별한 규칙(함정·경보 등)이 있으니 처음 가기 전에 확인.",
+      "tip_en": "The only entrance is the Transit in the Health Resort west wing basement on Shoreline. Unlock the door with the Knossos LLC facility key, then use a Labrys access keycard for the Transit. Check The Labyrinth's special rules, including traps and alarms, before your first visit.",
+      "steps": [
+        {
+          "id": "the-labyrinth-03",
+          "ko": "BEAR 분대에게 무슨 일이 있었는지 알아내기",
+          "en": "Figure out what happened to the BEAR squad",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-labyrinth-04",
+          "ko": "요양원 아래 지하 시설 입구 찾기",
+          "en": "(Optional) Locate the entrance to the underground facility beneath the Health Resort",
+          "optional": true,
+          "map": "shoreline"
+        },
+        {
+          "id": "the-labyrinth-05",
+          "ko": "시설 들어가기",
+          "en": "(Optional) Access the facility",
+          "optional": true,
+          "map": "the-labyrinth"
+        }
+      ],
+      "prep": [
+        {
+          "kind": "열쇠",
+          "text": "Knossos LLC facility key (크노소스 시설 열쇠)",
+          "text_en": "Knossos LLC facility key",
+          "count": null,
+          "fir": false
+        },
+        {
+          "kind": "가져가기",
+          "text": "Labrys access keycard (예거가 우편으로 지급)",
+          "text_en": "Labrys access keycard (sent by Jaeger via in-game mail)",
+          "count": null,
+          "fir": false
+        }
+      ],
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/e/e6/Vitamins1_Shoreline_outdoor_map.png/revision/latest/scale-to-width-down/480?cb=20241020215322",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/e/e6/Vitamins1_Shoreline_outdoor_map.png/revision/latest?cb=20241020215322",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Vitamins1_Shoreline_outdoor_map.png",
+          "caption": "요양원 서관 위치",
+          "caption_en": "Health Resort west wing location"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/b/be/The_Labyrinth_Transit_Map.png/revision/latest/scale-to-width-down/480?cb=20250328020348",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/b/be/The_Labyrinth_Transit_Map.png/revision/latest?cb=20250328020348",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:The_Labyrinth_Transit_Map.png",
+          "caption": "서관 지하 트랜짓 위치",
+          "caption_en": "West wing basement Transit location"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/9/9e/The_Labyrinth_Transit_Door.png/revision/latest/scale-to-width-down/480?cb=20251012162826",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/9/9e/The_Labyrinth_Transit_Door.png/revision/latest?cb=20251012162826",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:The_Labyrinth_Transit_Door.png",
+          "caption": "트랜짓 문",
+          "caption_en": "Transit door"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/5/58/The_Labyrinth_Transit.png/revision/latest/scale-to-width-down/480?cb=20251012163024",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/5/58/The_Labyrinth_Transit.png/revision/latest?cb=20251012163024",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:The_Labyrinth_Transit.png",
+          "caption": "트랜짓",
+          "caption_en": "Transit"
+        }
+      ]
+    },
+    {
+      "title": "BEAR 분대의 흔적 (미궁)",
+      "title_en": "Traces of the BEAR squad (The Labyrinth)",
+      "map": "the-labyrinth",
+      "tip": "2번 스폰 방 앞 바닥의 음식 용기에서 '레시의 명령서' 획득. 그 뒤 프로토타입 무기 구역(Item 1156)의 분대 집결지 조사. 고문실 옆에 분대장이 있고 그 옆에 '레시의 일기'.",
+      "tip_en": "Take Leshy's orders from the food container on the floor in front of spawn room 2. Then investigate the squad's regrouping point in the prototype weapon area (Item 1156). The squad leader is beside the torture room, with Leshy's diary next to him.",
+      "steps": [
+        {
+          "id": "the-labyrinth-06",
+          "ko": "미궁에서 BEAR 분대의 흔적 찾기",
+          "en": "(Optional) Locate the traces of the BEAR squad in The Labyrinth",
+          "optional": true,
+          "map": "the-labyrinth"
+        },
+        {
+          "id": "the-labyrinth-07",
+          "ko": "Item 1156의 BEAR 분대 집결지 조사하기",
+          "en": "(Optional) Investigate the BEAR squad regroup spot at Item 1156",
+          "optional": true,
+          "map": "the-labyrinth"
+        },
+        {
+          "id": "the-labyrinth-08",
+          "ko": "분대장 찾기",
+          "en": "(Optional) Locate the squad leader",
+          "optional": true,
+          "map": "the-labyrinth"
+        },
+        {
+          "id": "the-labyrinth-09",
+          "ko": "분대에 대한 정보 더 모으기 (레시의 일기)",
+          "en": "(Optional) Gather more information about the squad",
+          "optional": true,
+          "map": "the-labyrinth"
+        }
+      ],
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/4/4c/Leshy%27s_orders_location_map.png/revision/latest/scale-to-width-down/480?cb=20260202202531",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/4/4c/Leshy%27s_orders_location_map.png/revision/latest?cb=20260202202531",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Leshy%27s_orders_location_map.png",
+          "caption": "명령서 위치",
+          "caption_en": "Orders location"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/1/1c/Leshy%27s_orders_location_close.png/revision/latest/scale-to-width-down/480?cb=20260202202249",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/1/1c/Leshy%27s_orders_location_close.png/revision/latest?cb=20260202202249",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Leshy%27s_orders_location_close.png",
+          "caption": "명령서",
+          "caption_en": "Leshy's orders"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/5/5b/Labryrinth_missile_area_map.png/revision/latest/scale-to-width-down/480?cb=20260212011556",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/5/5b/Labryrinth_missile_area_map.png/revision/latest?cb=20260212011556",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Labryrinth_missile_area_map.png",
+          "caption": "프로토타입 무기 구역",
+          "caption_en": "Prototype weapon area"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/e/e6/Labryrinth_torture_room_map.png/revision/latest/scale-to-width-down/480?cb=20250329225017",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/e/e6/Labryrinth_torture_room_map.png/revision/latest?cb=20250329225017",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Labryrinth_torture_room_map.png",
+          "caption": "고문실 위치",
+          "caption_en": "Torture room location"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/8/81/Leshy%27s_diary_location_close.png/revision/latest/scale-to-width-down/480?cb=20260202203843",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/8/81/Leshy%27s_diary_location_close.png/revision/latest?cb=20260202203843",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Leshy%27s_diary_location_close.png",
+          "caption": "레시의 일기",
+          "caption_en": "Leshy's diary"
+        }
+      ]
+    },
+    {
+      "title": "연구원 시신 5구 · 잠긴 사무실 (미궁)",
+      "title_en": "Five lab staff bodies · Locked office (The Labyrinth)",
+      "map": "the-labyrinth",
+      "tip": "연구원 시신 5구 옆의 조수 메모 5개를 주워 읽기(4번째는 관찰실 열쇠 필요). 잠긴 사무실 = 관찰실(Observation room key 필요). 안의 연구원 오른손 아래 오디오 테이프를 주워 듣고 예거에게 전달.",
+      "tip_en": "Pick up and read the 5 assistant's notes beside the 5 lab staff bodies; the fourth requires the Observation room key. The locked office is the observation room and requires that key. Pick up and listen to the audio tape under the scientist's right hand inside, then give it to Jaeger.",
+      "steps": [
+        {
+          "id": "the-labyrinth-10",
+          "ko": "연구원 시신 5구 조사하기",
+          "en": "(Optional) Investigate the 5 lab staff bodies",
+          "optional": true,
+          "map": "the-labyrinth"
+        },
+        {
+          "id": "the-labyrinth-11",
+          "ko": "잠긴 사무실 들어가기",
+          "en": "(Optional) Access the locked office",
+          "optional": true,
+          "map": "the-labyrinth"
+        },
+        {
+          "id": "the-labyrinth-12",
+          "ko": "사무실의 오디오 테이프 듣기",
+          "en": "Listen to the audio tape from the office",
+          "optional": false,
+          "map": "the-labyrinth"
+        },
+        {
+          "id": "the-labyrinth-13",
+          "ko": "오디오 테이프 예거에게 전달하기",
+          "en": "Hand over the audio tape to Jaeger",
+          "optional": false,
+          "map": null
+        }
+      ],
+      "prep": [
+        {
+          "kind": "열쇠",
+          "text": "Observation room key (관찰실 열쇠)",
+          "text_en": "Observation room key",
+          "count": null,
+          "fir": false
+        },
+        {
+          "kind": "제출",
+          "text": "Deceased scientist's audio tape (죽은 연구원의 오디오 테이프)",
+          "text_en": "Deceased scientist's audio tape",
+          "quest_item": true,
+          "count": null,
+          "fir": true
+        }
+      ],
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/7/77/The_Labyrinth_Scientist_locations_map.png/revision/latest/scale-to-width-down/480?cb=20260202213523",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/7/77/The_Labyrinth_Scientist_locations_map.png/revision/latest?cb=20260202213523",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:The_Labyrinth_Scientist_locations_map.png",
+          "caption": "연구원 시신 위치",
+          "caption_en": "Lab staff body locations"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/f/f8/Observation_room_Map.png/revision/latest/scale-to-width-down/480?cb=20251130012739",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/f/f8/Observation_room_Map.png/revision/latest?cb=20251130012739",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Observation_room_Map.png",
+          "caption": "관찰실 위치",
+          "caption_en": "Observation room location"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/3/36/Observation_room_Door.png/revision/latest/scale-to-width-down/480?cb=20251130012409",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/3/36/Observation_room_Door.png/revision/latest?cb=20251130012409",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Observation_room_Door.png",
+          "caption": "관찰실 문",
+          "caption_en": "Observation room door"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/5/50/Deceased_scientist%27s_audio_tape_location_close.png/revision/latest/scale-to-width-down/480?cb=20260202214503",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/5/50/Deceased_scientist%27s_audio_tape_location_close.png/revision/latest?cb=20260202214503",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Deceased_scientist%27s_audio_tape_location_close.png",
+          "caption": "오디오 테이프",
+          "caption_en": "Audio tape"
+        }
+      ],
+      "reward": "50만 루블, AXMC .338 저격소총 + 탄창 2개 + .338 FMJ 탄약 팩 2개",
+      "reward_en": "500,000 Roubles, Accuracy International AXMC .338 LM bolt-action sniper rifle + 2 magazines + 2 .338 Lapua Magnum FMJ ammo packs"
+    },
+    {
+      "title": "미궁 시설 연구 보고서 (해안선 부두)",
+      "title_en": "Labyrinth facility research report (pier on Shoreline)",
+      "map": "shoreline",
+      "tip": "해안선 부두 옆 배수관에서 '미궁 시설 연구 보고서'를 주워 읽기.",
+      "tip_en": "Pick up and read the Labyrinth facility research report at the drain pipe beside the pier on Shoreline.",
+      "steps": [
+        {
+          "id": "the-labyrinth-14",
+          "ko": "미궁 시설 연구 보고서 읽기",
+          "en": "Read the Labyrinth facility research report",
+          "optional": false,
+          "map": "shoreline"
+        },
+        {
+          "id": "the-labyrinth-15",
+          "ko": "미궁 시설 연구 보고서 찾아서 획득하기",
+          "en": "(Optional) Locate and obtain the Labyrinth facility research report",
+          "optional": true,
+          "map": "shoreline"
+        }
+      ],
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/a/a1/Labyrinth_facility_research_report_location_map.png/revision/latest/scale-to-width-down/480?cb=20260202195552",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/a/a1/Labyrinth_facility_research_report_location_map.png/revision/latest?cb=20260202195552",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Labyrinth_facility_research_report_location_map.png",
+          "caption": "보고서 위치",
+          "caption_en": "Report location"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/e/ee/Labyrinth_facility_research_report_location_close.png/revision/latest/scale-to-width-down/480?cb=20260202194942",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/e/ee/Labyrinth_facility_research_report_location_close.png/revision/latest?cb=20260202194942",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Labyrinth_facility_research_report_location_close.png",
+          "caption": "보고서",
+          "caption_en": "Report"
+        }
+      ],
+      "reward": "16만 경험치, 업적 Theseus",
+      "reward_en": "160,000 XP; Theseus achievement"
+    }
+  ]
+}

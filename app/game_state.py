@@ -1,0 +1,96 @@
+"""지금 게임 상태(로비 / 맵 로딩 중 / 레이드 중)를 뒤에서 계속 지켜보는 파일.
+
+서버가 켜질 때 start() 를 한 번 부르면, 따로 돌아가는 일꾼(스레드)이
+app/map_watch.py 로 게임 로그를 1초마다 확인하고 최신 상태를 기억해 둔다.
+화면은 /api/state 로 그 값을 물어본다.
+"""
+
+import subprocess
+import threading
+import time
+
+from app import map_watch, tarkov_api
+
+GAME_OFF = "off"  # 게임 꺼짐 (화면 글자는 사전)
+GAME_EXE = "EscapeFromTarkov.exe"
+
+_lock = threading.Lock()
+_state = {"status": map_watch.LOBBY, "map_id": None, "map_name": None, "since": None, "raid_minutes": None, "cancelled": False}
+_game_running = False
+_raid_minutes = {}  # 지도 id → 레이드 제한 시간(분), tarkov.dev 맵 정보
+_started = False
+
+
+def _on_change(s: map_watch.MapState) -> None:
+    with _lock:
+        _state.update(
+            status=s.status,
+            map_id=s.map_id,
+            map_name=s.map_name,
+            # 화면(자바스크립트)이 쓰기 쉬운 밀리초 시각. 로그 시각은 이 PC의 시간대 기준
+            since=int(s.since.timestamp() * 1000) if s.since else None,
+            raid_minutes=_raid_minutes.get(s.map_id),
+            cancelled=s.cancelled,
+        )
+
+
+def _run() -> None:
+    try:
+        tarkov_api.update_all()
+        for m in tarkov_api.load("maps")["maps"].values():
+            _raid_minutes[m["id"]] = m.get("raidDuration")
+        map_watch.watch(interval=1.0, on_change=_on_change)
+    except Exception as error:  # 일꾼이 죽어도 서버는 계속 돌게
+        print(f"게임 상태 확인을 멈췄어요: {error}")  # i18n-ok: 개발용 콘솔
+
+
+def is_game_running() -> bool:
+    """작업 관리자처럼 '실행 중인 프로그램 이름'만 확인 (게임 메모리·파일은 건드리지 않음)"""
+    try:
+        out = subprocess.run(
+            ["tasklist", "/FI", f"IMAGENAME eq {GAME_EXE}", "/NH", "/FO", "CSV"],
+            capture_output=True, timeout=10,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),  # 검은 창이 번쩍이지 않게
+        ).stdout
+        # 한국어 윈도우는 cp949 글자로 답함. 찾는 이름은 영어라 깨진 글자는 무시
+        return GAME_EXE.lower() in out.decode("ascii", errors="ignore").lower()
+    except (OSError, subprocess.SubprocessError):
+        return False
+
+
+def _watch_process() -> None:
+    global _game_running
+    while True:
+        _game_running = is_game_running()
+        time.sleep(3)
+
+
+def start() -> None:
+    """서버 시작 때 한 번만 부르면 됨"""
+    global _started
+    if _started:
+        return
+    _started = True
+    threading.Thread(target=_run, name="game-state", daemon=True).start()
+    threading.Thread(target=_watch_process, name="game-process", daemon=True).start()
+
+
+def _map_name(map_id: str | None, fallback: str | None) -> str | None:
+    """지도 id → 지금 고른 언어의 맵 이름 (언어를 바꾸면 바로 반영)"""
+    if not map_id:
+        return fallback
+    try:
+        maps = tarkov_api.load("maps")["maps"]
+        info = maps.get(map_id)
+        return tarkov_api.Translator("maps")(info["name"]) if info else fallback
+    except Exception:
+        return fallback
+
+
+def get() -> dict:
+    with _lock:
+        state = dict(_state)
+    state["map_name"] = _map_name(state.get("map_id"), state.get("map_name"))
+    if not _game_running:  # 게임이 꺼져 있으면 로그 상태와 상관없이 '게임 꺼짐'
+        state.update(status=GAME_OFF, map_id=None, map_name=None, since=None, raid_minutes=None, cancelled=False)
+    return state

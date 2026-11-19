@@ -1,0 +1,77 @@
+name: Bug report (버그 신고)
+description: Something looks wrong, doesn't work, or shows wrong info (화면 이상·작동 안 함·정보 오류)
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! Filling in the fields below helps a lot. / 신고해 주셔서 고마워요!
+        ⚠ **Don't upload game log files (the Logs folder).** They contain your login information.
+        ⚠ **게임 로그 파일(Logs 폴더)은 올리지 마세요.** 로그인 정보가 들어 있어요.
+  - type: dropdown
+    id: screen
+    attributes:
+      label: Where did it happen? (어느 화면에서 생겼나요?)
+      options:
+        - Home (홈)
+        - Quests (퀘스트)
+        - Storyline (스토리)
+        - Hideout (은신처)
+        - Map (지도)
+        - Top bar — game status, raid time (상단바)
+        - First-time setup / Settings (처음 설정·설정 창)
+        - Automatic map switching — entering/leaving a raid, transit (맵 자동 전환)
+        - Update (업데이트)
+        - Starting / installing the program (실행·설치)
+        - Not sure (잘 모르겠어요)
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened? (무슨 일이 있었나요?)
+      description: What did you do, and what happened? (무엇을 했더니 어떻게 됐는지)
+      placeholder: e.g. I loaded into Customs but the map switched to Shoreline.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What should have happened? (원래는 어떻게 되어야 하나요?)
+      placeholder: e.g. It should switch to the Customs map.
+  - type: input
+    id: when
+    attributes:
+      label: When did it happen? (언제 생겼나요?)
+      description: For map or quest problems, the approximate time helps find the cause. (맵·퀘스트 문제는 시간이 있으면 원인을 찾기 쉬워요)
+      placeholder: e.g. Nov 19, around 11:15 PM
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot (화면 사진)
+      description: Drag and drop an image here. (사진을 끌어다 놓으면 올라가요)
+  - type: textarea
+    id: errorlog
+    attributes:
+      label: Error log, if any (오류 기록)
+      description: If `user_data/error.log` exists in your RaidBriefer folder, paste its contents. (`user_data/error.log` 내용)
+      render: text
+  - type: input
+    id: version
+    attributes:
+      label: RaidBriefer version (버전)
+      description: Shown in Settings → Version. (설정 → 버전)
+      placeholder: e.g. 1.0.0
+  - type: dropdown
+    id: language
+    attributes:
+      label: Language (언어)
+      options:
+        - English
+        - 한국어
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version (윈도우 버전)
+      placeholder: e.g. Windows 11

@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RaidBriefer</title>
+  <link rel="icon" type="image/x-icon" href="{{ url_for('favicon', ext='ico') }}">
+  <link rel="icon" type="image/svg+xml" sizes="any" href="{{ url_for('favicon', ext='svg') }}">
+  <!-- 지도 그리기 도구 Leaflet (BSD 라이선스) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <!-- 글꼴 Pretendard (OFL 라이선스, 쓰는 글자만 받는 방식) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <!-- 화면 글자 사전 (app/i18n/<언어>.json). i18n.js 의 t() 가 씀 -->
+  <script>window.I18N = {{ i18n|tojson }};</script>
+</head>
+<body>
+  <!-- 위에 고정: 상단바 + 큰 탭 (어느 탭에서나 보임) -->
+  <div class="sticky-top" id="sticky-top">
+    <header class="topbar">
+      <h1>RaidBriefer</h1>
+      <!-- 게임 상태: 로비 / 로딩 / 레이드 중 · 맵 (topbar.js 가 2초마다 갱신) -->
+      <span class="state-pill" id="raid-state" data-status="off"><i class="dot"></i><span id="raid-state-text">{{ t('topbar.stateOff') }}</span></span>
+      <span class="raid-time" id="raid-time" hidden>
+        <span class="label">{{ t('topbar.elapsed') }}</span> <b id="raid-elapsed">0:00</b>
+        <span class="label">{{ t('topbar.left') }}</span> <b id="raid-left">0:00</b>
+      </span>
+      <!-- 타르코프 게임 속 시각 (레이드 시간대 두 개) -->
+      <span class="tarkov-clock" title="{{ t('topbar.clockHint') }}">
+        <span id="clock-a">--:--</span>
+        <span id="clock-b">--:--</span>
+      </span>
+      <button type="button" class="settings-button" id="settings-open" aria-label="{{ t('topbar.settings') }}" title="{{ t('topbar.settings') }}"><span data-icon="settings" data-size="17"></span></button>
+    </header>
+    <!-- 남은 레이드 시간: 왼쪽부터 줄어들어 오른쪽 끝으로 모임 -->
+    <div class="raid-bar" id="raid-bar" hidden><div class="raid-bar-fill" id="raid-bar-fill"></div></div>
+
+    <!-- 큰 탭: 홈 / 퀘스트 / 스토리 -->
+    <nav class="tabs" role="tablist">
+      <button class="tab active" data-tab="home" role="tab" aria-selected="true">{{ t('tabs.home') }}</button>
+      <button class="tab" data-tab="quest" role="tab" aria-selected="false">{{ t('tabs.quest') }}</button>
+      <button class="tab" data-tab="story" role="tab" aria-selected="false">{{ t('tabs.story') }}</button>
+      <button class="tab" data-tab="hideout" role="tab" aria-selected="false">{{ t('tabs.hideout') }}</button>
+      <button class="tab" data-tab="map" role="tab" aria-selected="false">{{ t('tabs.map') }}</button>
+    </nav>
+    <!-- 새 버전 안내 (로비·게임 꺼짐일 때만, update.js) -->
+    <div class="update-banner" id="update-banner" hidden>
+      <span class="update-text" id="update-text"></span>
+      <span class="update-actions">
+        <button type="button" class="primary" id="update-apply">{{ t('update.apply') }}</button>
+        <a class="update-link" id="update-notes" href="#" target="_blank" rel="noopener">{{ t('update.notes') }}</a>
+        <button type="button" class="update-later" id="update-later">{{ t('update.later') }}</button>
+      </span>
+    </div>
+  </div>
+
+  <main>
+    <!-- 홈 탭: 레이드 전 요약 -->
+    <section id="tab-home" class="panel">
+      <!-- 로그 일부가 지워진 것 같을 때만 뜸 (시작 기록 없이 끝난 퀘스트가 있음) -->
+      <div class="gap-banner" id="gap-banner" hidden>
+        <div>
+          <b>{{ t('home.gapTitle') }}</b>
+          <p>{{ t('home.gapBody', count='<span id="gap-count">0</span>')|safe }}</p>
+        </div>
+        <button type="button" id="gap-check">{{ t('home.gapCheck') }}</button>
+      </div>
+      <h2 class="home-title">{{ t('home.collectTitle') }} <small>{{ t('home.collectHint') }}</small></h2>
+      <div class="home-collect" id="home-collect"></div>
+      <h2 class="home-title">{{ t('home.whereTitle') }}</h2>
+      <div class="home-maps" id="home-maps"><p class="empty">{{ t('common.loading') }}</p></div>
+      <div class="home-detail" id="home-detail"></div>
+      <h2 class="home-title">{{ t('home.storyTitle') }}</h2>
+      <div class="home-story" id="home-story"></div>
+    </section>
+
+    <!-- 퀘스트 탭 -->
+    <section id="tab-quest" class="panel" hidden>
+      <div class="subtabs">
+        <button class="subtab active" data-list="in_progress">{{ t('quest.listInProgress') }} <b id="count-in_progress">-</b></button>
+        <button class="subtab" data-list="completed">{{ t('quest.listCompleted') }} <b id="count-completed">-</b></button>
+        <button class="subtab" data-list="failed">{{ t('quest.listFailed') }} <b id="count-failed">-</b></button>
+        <button class="subtab" data-list="hidden" title="{{ t('quest.listHiddenHint') }}">{{ t('quest.listHidden') }} <b id="count-hidden">-</b></button>
+      </div>
+
+      <div class="map-filter" id="map-filter" aria-label="{{ t('quest.mapFilterLabel') }}"></div>
+
+      <p class="notice" id="notice" hidden></p>
+      <ul class="quest-list" id="quest-list">
+        <li class="empty">{{ t('common.loading') }}</li>
+      </ul>
+    </section>
+
+    <!-- 은신처 탭: 시설별 레벨 조정, 다음 레벨 재료·조건, 재료 '모았음' 체크 -->
+    <section id="tab-hideout" class="panel" hidden>
+      <div class="ho-summary" id="ho-summary"><p class="empty">{{ t('common.loading') }}</p></div>
+      <div class="ho-totals" id="ho-totals" hidden></div>
+      <div id="ho-list"></div>
+    </section>
+
+    <!-- 지도 탭: 지도가 주인공, 퀘스트는 오른쪽 서랍 (열면 지도가 좁아짐, 덮지 않음) -->
+    <section id="tab-map" class="panel" hidden>
+      <div class="map-bar">
+        <button type="button" class="layer-toggle-btn" id="layer-toggle-btn" aria-expanded="false" title="{{ t('map.layerToggleHint') }}"><span data-icon="layers" data-size="15"></span> {{ t('map.layerToggle') }}</button>
+        <select id="map-select" aria-label="{{ t('map.selectLabel') }}"></select>
+        <span class="map-auto" id="map-auto" hidden>{{ t('map.auto') }}</span>
+        <!-- 먹을 것: 아직 제출 안 한 인레이드 아이템을 아이콘으로 (서랍을 접어도 보임) -->
+        <div class="loot-strip" id="loot-bar" hidden></div>
+        <button type="button" class="drawer-toggle" id="drawer-toggle" aria-expanded="true">{{ t('map.drawer') }} <b id="drawer-count">0</b> <span class="drawer-arrow" data-icon="chevron-right" data-size="15"></span></button>
+      </div>
+      <div class="map-layout">
+        <!-- 왼쪽 서랍: 지도에 표시할 것 ON/OFF (열면 지도가 좁아짐) -->
+        <aside class="layer-drawer" id="layer-drawer">
+          <div class="layer-title">{{ t('map.layerTitle') }}</div>
+          <div class="layer-list" id="layer-list"></div>
+        </aside>
+        <div class="map-view" id="map-view"><p class="empty">{{ t('map.loadingMap') }}</p></div>
+        <aside class="map-drawer" id="map-drawer">
+          <ul class="drawer-list" id="drawer-list"></ul>
+        </aside>
+      </div>
+    </section>
+
+    <!-- 스토리 탭 -->
+    <section id="tab-story" class="panel" hidden>
+      <p class="notice" id="story-notice" hidden></p>
+      <div id="story-list">
+        <p class="empty">{{ t('common.loading') }}</p>
+      </div>
+      <p class="credit" id="story-credit"></p>
+    </section>
+  </main>
+
+  <footer class="footer" id="footer"></footer>
+
+  <!-- 화면이 바뀔 때 잠깐 보여주는 안내 (예: "세관 불러오는 중") -->
+  <div class="transition" id="transition" hidden>
+    <div class="transition-box">
+      <div class="transition-map" id="transition-map"></div>
+      <div class="transition-text" id="transition-text"></div>
+      <div class="transition-bar"><i></i></div>
+    </div>
+  </div>
+
+  <!-- 처음 설정: 프로그램을 처음 켤 때만 뜸 (⚙ 설정에서 다시 열 수 있음) -->
+  <section class="setup" id="setup" hidden>
+    <h1 class="setup-title">{{ t('setup.title') }}</h1>
+    <p class="setup-sub">{{ t('setup.sub')|safe }}</p>
+
+    <ol class="setup-steps" id="setup-steps">
+      <li data-step="1">{{ t('setup.step1') }}</li>
+      <li data-step="2">{{ t('setup.step2') }}</li>
+      <li data-step="3">{{ t('setup.step3') }}</li>
+    </ol>
+
+    <!-- 1단계: 게임 설치 위치 -->
+    <div class="setup-card" data-page="1">
+      <div class="edition-pick lang-pick" id="setup-lang" aria-label="{{ t('settings.langTitle') }}"></div>
+      <h2>{{ t('setup.step1') }}</h2>
+      <p class="settings-help">{{ t('setup.dirHelp')|safe }}</p>
+      <div class="setup-found" id="setup-found">
+        <span class="setup-found-icon" id="setup-found-icon">…</span>
+        <div>
+          <b id="setup-found-title">{{ t('setup.finding') }}</b>
+          <div class="setup-found-path" id="setup-found-path"></div>
+        </div>
+      </div>
+      <details class="setup-manual" id="setup-manual">
+        <summary>{{ t('setup.otherPlace') }}</summary>
+        <input type="text" id="setup-game-dir" spellcheck="false" autocomplete="off"
+               placeholder="{{ t('setup.dirPlaceholder') }}">
+        <div class="settings-actions">
+          <button type="button" id="setup-check">{{ t('setup.checkHere') }}</button>
+          <button type="button" id="setup-find">{{ t('setup.findAgain') }}</button>
+        </div>
+      </details>
+      <div class="setup-nav">
+        <button type="button" class="primary" id="setup-next-1" disabled>{{ t('setup.next') }}</button>
+      </div>
+    </div>
+
+    <!-- 2단계: 진행 중인 퀘스트 확인 + 빠진 것 추가 -->
+    <div class="setup-card" data-page="2" hidden>
+      <h2>{{ t('setup.step2') }}</h2>
+      <!-- 목록 대신 개수로 물어봄: 맞으면 끝, 틀리면 빠진 것만 추가 -->
+      <div class="setup-ask">
+        <p class="setup-ask-count" id="setup-ask-count">{{ t('common.loading') }}</p>
+        <div class="setup-trader-counts" id="setup-trader-counts"></div>
+        <p class="settings-help">{{ t('setup.questHelp')|safe }}</p>
+        <div class="setup-ask-buttons">
+          <button type="button" class="primary" id="setup-yes">{{ t('setup.yes') }}</button>
+          <button type="button" id="setup-no">{{ t('setup.no') }}</button>
+        </div>
+      </div>
+
+      <!-- '아니요'를 눌렀을 때만 펼침 -->
+      <div class="setup-fix" id="setup-fix" hidden>
+        <h3 class="setup-h3">{{ t('setup.addedTitle') }} <b id="setup-added-count">0</b></h3>
+        <div class="setup-quests" id="setup-added-quests"></div>
+
+        <h3 class="setup-h3">{{ t('setup.addTitle') }}</h3>
+        <p class="settings-help">{{ t('setup.addHelp')|safe }}</p>
+        <input type="search" class="setup-search" id="setup-search" placeholder="{{ t('setup.searchPlaceholder') }}" autocomplete="off">
+        <div class="map-filter setup-traders" id="setup-traders"></div>
+        <ul class="setup-results" id="setup-results"></ul>
+      </div>
+
+      <div class="setup-nav">
+        <button type="button" id="setup-back-2">{{ t('setup.back') }}</button>
+        <button type="button" class="primary" id="setup-finish">{{ t('setup.next') }}</button>
+      </div>
+    </div>
+
+    <!-- 3단계: 은신처 시설 레벨 (건설 기록은 로그에 없어서 처음 한 번 맞춤) -->
+    <div class="setup-card" data-page="3" hidden>
+      <h2>{{ t('setup.step3') }}</h2>
+      <p class="settings-help">{{ t('setup.hideoutHelp')|safe }}</p>
+      <div class="edition-pick" id="setup-edition"></div>
+      <div class="setup-ho" id="setup-ho"><p class="empty">{{ t('common.loading') }}</p></div>
+      <div class="setup-nav">
+        <button type="button" id="setup-back-3">{{ t('setup.back') }}</button>
+        <button type="button" class="primary" id="setup-finish-3">{{ t('setup.finish') }}</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 설정 창 (⚙ 버튼) -->
+  <dialog class="settings" id="settings">
+    <form method="dialog" class="settings-head">
+      <h2>{{ t('settings.title') }}</h2>
+      <button class="settings-close" aria-label="{{ t('settings.close') }}" title="{{ t('settings.close') }}"><span data-icon="x"></span></button>
+    </form>
+
+    <section class="settings-item">
+      <h3>{{ t('settings.langTitle') }}</h3>
+      <p class="settings-help">{{ t('settings.langHelp') }}</p>
+      <div class="edition-pick lang-pick" id="settings-lang"></div>
+    </section>
+
+    <section class="settings-item">
+      <h3>{{ t('settings.dirTitle') }}</h3>
+      <p class="settings-help">{{ t('settings.dirHelp')|safe }}</p>
+      <input type="text" id="settings-game-dir" spellcheck="false" autocomplete="off">
+      <div class="settings-actions">
+        <button type="button" id="settings-save" class="primary">{{ t('settings.save') }}</button>
+        <button type="button" id="settings-find">{{ t('settings.find') }}</button>
+      </div>
+      <p class="settings-result" id="settings-result"></p>
+    </section>
+
+    <section class="settings-item">
+      <h3>{{ t('settings.editionTitle') }}</h3>
+      <p class="settings-help">{{ t('settings.editionHelp')|safe }}</p>
+      <div class="edition-pick" id="settings-edition"></div>
+    </section>
+
+    <section class="settings-item">
+      <h3>{{ t('settings.runningTitle') }}</h3>
+      <p class="settings-help">{{ t('settings.runningHelp')|safe }}</p>
+    </section>
+
+    <section class="settings-item">
+      <h3>{{ t('settings.setupTitle') }}</h3>
+      <p class="settings-help">{{ t('settings.setupHelp')|safe }}</p>
+      <div class="settings-actions">
+        <button type="button" id="settings-setup">{{ t('settings.setupAgain') }}</button>
+      </div>
+    </section>
+
+    <section class="settings-item">
+      <h3>{{ t('update.settingsTitle') }}</h3>
+      <p class="settings-help"><b id="update-current"></b><br>
+        <span id="update-status"></span><br>
+        {{ t('update.settingsPrivacy') }}</p>
+    </section>
+
+    <section class="settings-item">
+      <h3>{{ t('settings.reportTitle') }}</h3>
+      <p class="settings-help">{{ t('settings.reportHelp')|safe }}</p>
+      <div class="settings-actions">
+        <a class="settings-link" href="https://github.com/Pagliatto/RaidBriefer/issues/new/choose" target="_blank" rel="noopener">{{ t('settings.reportOpen') }}</a>
+      </div>
+    </section>
+
+    <section class="settings-item">
+      <h3>{{ t('settings.resetTitle') }}</h3>
+      <p class="settings-help">{{ t('settings.resetHelp')|safe }}</p>
+      <div class="settings-actions">
+        <button type="button" id="settings-reset" class="danger">{{ t('settings.reset') }}</button>
+      </div>
+    </section>
+  </dialog>
+
+  <!-- 오른쪽 아래: 맨 위로 / 맨 아래로 -->
+  <div class="scroll-buttons">
+    <button type="button" id="to-top" aria-label="{{ t('common.toTop') }}" title="{{ t('common.toTop') }}"><span data-icon="chevron-up" data-size="20"></span></button>
+    <button type="button" id="to-bottom" aria-label="{{ t('common.toBottom') }}" title="{{ t('common.toBottom') }}"><span data-icon="chevron-down" data-size="20"></span></button>
+  </div>
+
+  <script src="{{ url_for('static', filename='i18n.js') }}"></script>
+  <script src="{{ url_for('static', filename='icons.js') }}"></script>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+  <script src="{{ url_for('static', filename='story.js') }}"></script>
+  <script src="{{ url_for('static', filename='home.js') }}"></script>
+  <script src="{{ url_for('static', filename='topbar.js') }}"></script>
+  <script src="{{ url_for('static', filename='settings.js') }}"></script>
+  <script src="{{ url_for('static', filename='update.js') }}"></script>
+  <script src="{{ url_for('static', filename='setup.js') }}"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="{{ url_for('static', filename='map.js') }}"></script>
+  <script src="{{ url_for('static', filename='hideout.js') }}"></script>
+</body>
+</html>

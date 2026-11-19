@@ -1,0 +1,1497 @@
+{
+  "id": "the-ticket",
+  "name": "The Ticket",
+  "library": "https://eftlibrary.com/story/roadmap",
+  "wiki": "https://escapefromtarkov.fandom.com/wiki/The_Ticket",
+  "requirement": "Falling Skies 완료 후 시작. 중간 갈림길 선택에 따라 4가지 엔딩으로 나뉨",
+  "requirement_en": "Starts after completing Falling Skies. Choices along the way lead to 4 different endings",
+  "sections": [
+    {
+      "title": "정보 수집 시설 · Mr. Kerman",
+      "title_en": "Intelligence Center · Mr. Kerman",
+      "map": null,
+      "tip": "Falling Skies를 끝내면 열림. Mr. Kerman은 은신처 정보 수집 시설의 노트북 화면에서 대화.",
+      "tip_en": "Unlocks after completing Falling Skies. Talk to Mr. Kerman through the laptop screen in the hideout Intelligence Center.",
+      "steps": [
+        {
+          "id": "the-ticket-a-01",
+          "ko": "정보 수집 시설 1레벨 달성하기",
+          "en": "Obtain Intelligence Center level 1",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-a-02",
+          "ko": "Mr. Kerman과 대화하기",
+          "en": "Talk to Mr. Kerman",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-a-03",
+          "ko": "Mr. Kerman의 연락 기다리기 (2~6시간)",
+          "en": "Wait for Mr. Kerman to reach out",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-a-04",
+          "ko": "프라퍼와 대화하기",
+          "en": "Talk to Prapor",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-a-05",
+          "ko": "Mr. Kerman과 대화하기",
+          "en": "Talk to Mr. Kerman",
+          "optional": false,
+          "map": null
+        }
+      ]
+    },
+    {
+      "title": "등대지기에게서 장갑 케이스 되찾기",
+      "title_en": "Retrieve the armored case from Lightkeeper",
+      "map": "lighthouse",
+      "tip": "Falling Skies에서 케이스를 프라퍼에게 줬기 때문에 나오는 구간. 등대 프라퍼 부하 야영지의 쪽지(두 곳 중 하나). 등대지기는 등대 건물 3층(DSP 무전기 필요). 15명 처치는 트랜짓을 써도 되지만 처치는 인터체인지에서만 인정, 처치 못 하고 나오면 신호탄부터 다시. 케이스 받으려면 특수 슬롯 1칸 비우기.",
+      "tip_en": "This section appears because you gave the case to Prapor in Falling Skies. Find the note at one of 2 spots in Prapor's men's camp on Lighthouse. Lightkeeper is on the lighthouse building's third floor; a DSP radio transmitter is required. You may use Transit during the 15-kill task, but only kills on Interchange count. If you leave without getting the kills, start again from the flare. Keep 1 special equipment slot empty to receive the case.",
+      "steps": [
+        {
+          "id": "the-ticket-b-01",
+          "ko": "등대에서 프라퍼 부하들의 야영지 찾기",
+          "en": "Locate the camp of Prapor's people on Lighthouse",
+          "optional": false,
+          "map": "lighthouse"
+        },
+        {
+          "id": "the-ticket-b-02",
+          "ko": "프라퍼 부하들의 의도에 대한 단서 찾기",
+          "en": "Find any clues about Prapor's people's intentions",
+          "optional": false,
+          "map": "lighthouse"
+        },
+        {
+          "id": "the-ticket-b-03",
+          "ko": "Mr. Kerman과 대화하기",
+          "en": "Talk to Mr. Kerman",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-b-04",
+          "ko": "등대지기와 대화하기",
+          "en": "Talk to Lightkeeper",
+          "optional": false,
+          "map": "lighthouse"
+        },
+        {
+          "id": "the-ticket-b-05",
+          "ko": "등대지기 접근 권한 얻기",
+          "en": "Gain access to Lightkeeper",
+          "optional": false,
+          "map": "lighthouse"
+        },
+        {
+          "id": "the-ticket-b-06",
+          "ko": "등대지기와 좋은 관계 유지하기",
+          "en": "Stay on good terms with Lightkeeper",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-b-07",
+          "ko": "테라그룹 'Blue Folders' 자료 3개 얻기",
+          "en": "Obtain 3 TerraGroup \"Blue Folders\" materials",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-b-08",
+          "ko": "찾은 자료 등대지기에게 가져가기",
+          "en": "Bring the found items to Lightkeeper",
+          "optional": false,
+          "map": "lighthouse"
+        },
+        {
+          "id": "the-ticket-b-09",
+          "ko": "인터체인지 ULTRA 정문 앞에서 노란 신호탄 쏘기",
+          "en": "Launch a yellow signal flare in front of ULTRA's main entrance on Interchange",
+          "optional": false,
+          "map": "interchange"
+        },
+        {
+          "id": "the-ticket-b-10",
+          "ko": "인터체인지에서 한 레이드에 아무 적 15명 사살하기",
+          "en": "Eliminate any 15 targets in one raid on Interchange",
+          "optional": false,
+          "map": "interchange"
+        },
+        {
+          "id": "the-ticket-b-11",
+          "ko": "등대지기와 대화하기 (케이스 받기)",
+          "en": "Talk to Lightkeeper",
+          "optional": false,
+          "map": "lighthouse"
+        }
+      ],
+      "prep": [
+        {
+          "kind": "제출",
+          "text": "TerraGroup \"Blue Folders\" materials",
+          "count": 3,
+          "fir": false
+        },
+        {
+          "kind": "가져가기",
+          "text": "노란 신호탄 (RSP-30 Yellow)",
+          "text_en": "RSP-30 reactive signal cartridge (Yellow)",
+          "count": null,
+          "fir": false
+        },
+        {
+          "kind": "가져가기",
+          "text": "Digital secure DSP radio transmitter (등대지기 접근)",
+          "text_en": "Digital secure DSP radio transmitter (access to Lightkeeper)",
+          "count": null,
+          "fir": false
+        }
+      ],
+      "when": {
+        "falling-skies@case": "given"
+      }
+    },
+    {
+      "title": "장갑 케이스 열기 · '티켓'",
+      "title_en": "Open the armored case · The ticket",
+      "map": null,
+      "tip": "연구소에서 실험용 신호 교란기를 찾아 은신처 작업대 1레벨에서 장갑 케이스 제작(열기). 케이스를 우클릭 → 풀기(unpack)하면 크루글로프의 RFID 키카드와 핸드북에 RFID 카드 설명서. ⚠ 다음 Mr. Kerman 대화가 되돌릴 수 없는 선택.",
+      "tip_en": "Find an Experimental signal jammer in The Lab, then use the Armored case craft at the Hideout's Workbench level 1 to open the case. Right-click the case and select Unpack to receive Kruglov's RFID keycard and the RFID card manual in the Handbook. ⚠ The next conversation with Mr. Kerman contains an irreversible choice.",
+      "steps": [
+        {
+          "id": "the-ticket-c-01",
+          "ko": "장갑 케이스 열기",
+          "en": "Unlock the armored case",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-c-02",
+          "ko": "'티켓' 얻기",
+          "en": "Obtain the \"Ticket\"",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-c-03",
+          "ko": "메카닉에게 도움 요청하기",
+          "en": "Ask Mechanic for help",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-c-04",
+          "ko": "실험용 신호 교란기 얻기",
+          "en": "Obtain the Experimental signal jammer",
+          "optional": false,
+          "map": "the-lab"
+        },
+        {
+          "id": "the-ticket-c-05",
+          "ko": "연구소 접근 권한 얻기",
+          "en": "(Optional) Gain access to The Lab",
+          "optional": true,
+          "map": null
+        },
+        {
+          "id": "the-ticket-c-06",
+          "ko": "연구소 출입 카드 얻기",
+          "en": "(Optional) Obtain the TerraGroup Labs access keycard",
+          "optional": true,
+          "map": null
+        },
+        {
+          "id": "the-ticket-c-07",
+          "ko": "실험용 신호 교란기로 케이스 열기 (작업대 제작)",
+          "en": "Use the Experimental signal jammer to unlock the case",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-c-08",
+          "ko": "장갑 케이스의 설명서 읽기 (핸드북)",
+          "en": "Read the instructions from the armored case",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-c-09",
+          "ko": "Mr. Kerman에게 연락하기",
+          "en": "Contact Mr. Kerman",
+          "optional": false,
+          "map": null
+        }
+      ],
+      "prep": [
+        {
+          "kind": "가져가기",
+          "text": "TerraGroup Labs access keycard (연구소 출입 카드)",
+          "text_en": "TerraGroup Labs access keycard",
+          "count": null,
+          "fir": false
+        }
+      ]
+    },
+    {
+      "choice": {
+        "id": "kerman",
+        "title": "Mr. Kerman의 제안",
+        "title_en": "Mr. Kerman's offer",
+        "question": "⚠ 되돌릴 수 없는 선택. 키카드 활성화를 돕겠다는 Mr. Kerman의 제안을 받아들일까?",
+        "question_en": "⚠ This choice is irreversible. Accept Mr. Kerman's offer to help activate the keycard?",
+        "options": [
+          {
+            "id": "accept",
+            "label": "제안 수락",
+            "label_en": "Accept the offer",
+            "desc": "구원자·채무자·타락 엔딩으로 이어짐",
+            "desc_en": "Leads to the Savior, Debtor, or Fallen ending"
+          },
+          {
+            "id": "refuse",
+            "label": "제안 거절",
+            "label_en": "Reject the offer",
+            "desc": "생존자 엔딩 (프라퍼 루트)",
+            "desc_en": "Survivor ending (Prapor route)"
+          }
+        ]
+      }
+    },
+    {
+      "title": "연구소 마스터 패스",
+      "title_en": "The Lab master pass",
+      "map": "the-lab",
+      "tip": "연구소 R22 크루글로프 사무실 금고에 마스터 키카드(검은 키카드 2번 사용 필요) → 퀘스트 인벤토리로 옮기기. 'RFID 암호화 장치 얻기'는 원래 실패하는 목표: 연구소에서 총 30분 이상 살아 있으면(여러 레이드 합산) 실패로 바뀌고 Kerman이 메카닉에게 가라고 연락.",
+      "tip_en": "The TerraGroup Labs master keycard is in the safe in Kruglov's office R22 in The Lab. Requires 2 uses of the TerraGroup Labs keycard (Black). Move the master keycard to your quest inventory. The objective to obtain the RFID encryption device is meant to fail: after spending at least 30 minutes alive in The Lab across multiple raids, it changes to failed and Kerman contacts you to send you to Mechanic.",
+      "steps": [
+        {
+          "id": "the-ticket-d-01",
+          "ko": "Mr. Kerman의 제안 수락하기",
+          "en": "Accept Mr. Kerman's offer",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-d-02",
+          "ko": "케이스의 RFID 카드 활성화하기",
+          "en": "Activate the RFID card from the case",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-d-03",
+          "ko": "태양광 발전기 1레벨 달성하기",
+          "en": "(Optional) Obtain Solar Power level 1",
+          "optional": true,
+          "map": null
+        },
+        {
+          "id": "the-ticket-d-04",
+          "ko": "빈 RFID 키카드 얻기",
+          "en": "(Optional) Obtain a Blank RFID keycard",
+          "optional": true,
+          "map": null
+        },
+        {
+          "id": "the-ticket-d-05",
+          "ko": "연구소 마스터 패스 얻기",
+          "en": "Obtain the Laboratory master pass",
+          "optional": false,
+          "map": "the-lab"
+        },
+        {
+          "id": "the-ticket-d-06",
+          "ko": "마스터 패스로 크루글로프의 키카드 활성화하기",
+          "en": "Use the Laboratory master pass to activate Kruglov's keycard",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-d-07",
+          "ko": "연구소 접근 권한 얻기",
+          "en": "(Optional) Gain access to The Lab",
+          "optional": true,
+          "map": null
+        },
+        {
+          "id": "the-ticket-d-08",
+          "ko": "RFID 카드 암호화 장치 얻기 (일부러 실패하는 목표)",
+          "en": "Obtain an RFID card encryption device",
+          "optional": false,
+          "map": "the-lab"
+        },
+        {
+          "id": "the-ticket-d-09",
+          "ko": "Mr. Kerman과 대화하기",
+          "en": "Talk to Mr. Kerman",
+          "optional": false,
+          "map": null
+        }
+      ],
+      "prep": [
+        {
+          "kind": "열쇠",
+          "text": "TerraGroup Labs keycard (Black) - 2번 사용",
+          "text_en": "TerraGroup Labs keycard (Black) - 2 uses",
+          "count": null,
+          "fir": false
+        },
+        {
+          "kind": "가져가기",
+          "text": "TerraGroup Labs access keycard",
+          "count": null,
+          "fir": false
+        }
+      ],
+      "when": {
+        "kerman": "accept"
+      }
+    },
+    {
+      "title": "일렉트로닉의 RFID 암호화 장치 → 터미널 인터폰",
+      "title_en": "Elektronik's RFID encryption device → Terminal intercom",
+      "map": "streets-of-tarkov",
+      "tip": "비트코인 40개(인레이드 아니어도 됨, 창고에 다 있어야 전달 가능) → 일렉트로닉 열쇠 받음. 시내 일렉트로닉 아파트 거실 커피 테이블 밑 RFID 암호화 장치(전달 전에는 안 나타남). 정보 수집 시설 1레벨에서 '활성화된 크루글로프 RFID 키카드' 제작. 해안선 터미널 입구 인터폰에 키카드 → 아직 못 들어가고 Kerman이 대화를 원함.",
+      "tip_en": "Hand over 40 Physical bitcoins; they do not need to be Found in Raid, but all must be in your stash to hand them over. Receive Elektronik's key. The RFID encryption device is under the living room coffee table in Elektronik's apartment on Streets of Tarkov; it does not appear before the hand-in. Craft the Activated Kruglov's RFID keycard at Intelligence Center level 1. Use it at the Terminal entrance intercom on Shoreline. You still cannot enter, and Kerman wants to talk.",
+      "steps": [
+        {
+          "id": "the-ticket-e-01",
+          "ko": "메카닉과 대화하기",
+          "en": "Talk to Mechanic",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-e-02",
+          "ko": "메카닉의 답 기다리기 (6~12시간)",
+          "en": "Wait for a response from Mechanic",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-e-03",
+          "ko": "메카닉에게 비트코인 40개 전달하기",
+          "en": "Hand over 40 Physical Bitcoins to Mechanic",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-e-04",
+          "ko": "비트코인 농장 1레벨 달성하기",
+          "en": "(Optional) Obtain Bitcoin Farm level 1",
+          "optional": true,
+          "map": null
+        },
+        {
+          "id": "the-ticket-e-05",
+          "ko": "일렉트로닉 비용용 비트코인 40개 모으기",
+          "en": "(Optional) Obtain 40 Physical Bitcoins to pay for Elektronik's services",
+          "optional": true,
+          "map": null
+        },
+        {
+          "id": "the-ticket-e-06",
+          "ko": "RFID 암호화 장치 회수해 크루글로프 키카드 활성화하기",
+          "en": "Collect the RFID card encryption device to activate Kruglov's keycard",
+          "optional": false,
+          "map": "streets-of-tarkov"
+        },
+        {
+          "id": "the-ticket-e-07",
+          "ko": "타르코프 시내 접근 권한 얻기",
+          "en": "(Optional) Gain access to Streets of Tarkov",
+          "optional": true,
+          "map": null
+        },
+        {
+          "id": "the-ticket-e-08",
+          "ko": "시내의 아파트 들어가기 (일렉트로닉)",
+          "en": "(Optional) Access Kruglov's apartment on Streets of Tarkov",
+          "optional": true,
+          "map": "streets-of-tarkov"
+        },
+        {
+          "id": "the-ticket-e-09",
+          "ko": "항구 터미널 입구 도착하기",
+          "en": "Arrive at the entrance pathway to the port Terminal",
+          "optional": false,
+          "map": "shoreline"
+        },
+        {
+          "id": "the-ticket-e-10",
+          "ko": "인터폰 리더기에 키카드 대기",
+          "en": "Swipe the keycard at the intercom reader",
+          "optional": false,
+          "map": "shoreline"
+        }
+      ],
+      "prep": [
+        {
+          "kind": "제출",
+          "text": "Physical Bitcoin",
+          "count": 40,
+          "fir": false
+        }
+      ],
+      "when": {
+        "kerman": "accept"
+      }
+    },
+    {
+      "choice": {
+        "id": "evidence",
+        "title": "테라그룹의 비리 찾기 (Mr. Kerman)",
+        "title_en": "Find evidence against TerraGroup (Mr. Kerman)",
+        "question": "⚠ 되돌릴 수 없는 선택. Mr. Kerman이 테라그룹 비리를 찾아달라고 함. 어떻게 할까?",
+        "question_en": "⚠ This choice is irreversible. Mr. Kerman asks you to find evidence of TerraGroup's wrongdoing. What will you do?",
+        "options": [
+          {
+            "id": "savior",
+            "label": "증거 모두 전달",
+            "label_en": "Hand over all the evidence",
+            "desc": "주요 증거 8개 전달 → 구원자(Savior) 엔딩. ⚠ Choose Your Friends Wisely를 끝내면 불가능",
+            "desc_en": "Hand over 8 pieces of major evidence → Savior ending. ⚠ Unavailable after completing Choose Your Friends Wisely",
+            "blocked_when": {
+              "quest:67460662d0fbbc74ca0f7229": true
+            },
+            "blocked_note": "Choose Your Friends Wisely를 끝내서 구원자 길은 막혀 있어요 (고르면 생존자로 바뀜)",
+            "blocked_note_en": "Completing Choose Your Friends Wisely has blocked the Savior route (selecting it switches to Survivor)"
+          },
+          {
+            "id": "debtor",
+            "label": "2개까지만 전달하고 그만두기",
+            "label_en": "Hand over no more than 2, then stop",
+            "desc": "주요 증거 2개 이하 → 채무자(Debtor) 엔딩",
+            "desc_en": "Hand over 2 or fewer pieces of major evidence → Debtor ending"
+          },
+          {
+            "id": "fallen",
+            "label": "증거 찾기 거절",
+            "label_en": "Refuse to find evidence",
+            "desc": "타락(Fallen) 엔딩 (프라퍼 루트)",
+            "desc_en": "Fallen ending (Prapor route)"
+          }
+        ]
+      },
+      "when": {
+        "kerman": "accept"
+      }
+    },
+    {
+      "title": "테라그룹 증거 모으기",
+      "title_en": "Collect evidence against TerraGroup",
+      "map": null,
+      "tip": "주요 증거 9개 중 8개면 됨 — 각 스토리 챕터에서 얻는 것: 코즐로프 테이프(Accidental Witness), 요원 네트워크 보고서(Batya), Item #1156 설계도(Blue Fire), 쇄빙선 기록 데이터(Boreas), 미궁 연구 보고서(The Labyrinth), 워든 언급 문서·연료 촉매 시험 보고서(The Unheard), ARRS 사양서(They Are Already Here), A. 여사 대화 녹취록(시내 카디널 아파트 침실 금고, 검은 키카드 필요하지만 소모 안 됨).",
+      "tip_en": "You need 8 of the 9 pieces of major evidence. Obtain them through the story chapters: Kozlov's Audio tape with incriminating evidence (Accidental Witness), Agent network deployment report (Batya), Item #1156 specification (Blue Fire), Icebreaker archive data (Boreas), Labyrinth facility research report (The Labyrinth), Document mentioning the Warden and Fuel catalyst test report (The Unheard), ARRS system specifications (They Are Already Here), and Transcript of conversation with Ms. A. (bedroom safe in the Cardinal apartments on Streets of Tarkov; a black keycard is required but is not consumed).",
+      "steps": [
+        {
+          "id": "the-ticket-f-01",
+          "ko": "Mr. Kerman과 대화하기",
+          "en": "Talk to Mr. Kerman",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-f-02",
+          "ko": "Mr. Kerman을 위해 테라그룹 비리 찾기에 동의하기",
+          "en": "Agree to find dirt on TerraGroup for Mr. Kerman",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-f-03",
+          "ko": "정보 수집 시설 3레벨 달성하기",
+          "en": "Obtain Intelligence Center level 3",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-f-04",
+          "ko": "Mr. Kerman이 준 두 번째 기회 날리지 않기 (They Are Already Here 증거를 놓친 경우)",
+          "en": "Don't waste the second chance from Mr. Kerman",
+          "optional": false,
+          "map": null,
+          "when": {
+            "done:they-are-already-here": false
+          }
+        },
+        {
+          "id": "the-ticket-f-05",
+          "ko": "주요 증거 8개 Mr. Kerman에게 전달하기 (채무자는 2개까지만)",
+          "en": "Deliver the 8 major TerraGroup evidence to Mr. Kerman",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-f-06",
+          "ko": "부가 증거 36개 전달하기",
+          "en": "(Optional) Deliver the 36 minor TerraGroup evidence to Mr. Kerman",
+          "optional": true,
+          "map": null
+        }
+      ],
+      "when": {
+        "evidence": [
+          "savior",
+          "debtor"
+        ]
+      }
+    },
+    {
+      "title": "펜스의 과제 (구원자)",
+      "title_en": "Fence's tasks (Savior)",
+      "map": null,
+      "tip": "증거를 다 넘기면 12~24시간 뒤 펜스가 연락. PvE에서는 협동 탈출 대신 '한 레이드에서 스캐브를 죽이지 않고 PMC 5명'(인터체인지, 해안선 각각). 과제를 끝내면 펜스가 Mr. Kerman 해시 코드가 담긴 플래시 드라이브를 우편으로 보냄. 태양광 발전기 1레벨은 건설 72시간(tarkov.dev 은신처 정보)이니 미리 시작. ⚠ BTR 운전수 퀘스트에서 Choose Your Friends Wisely를 끝내면 'BTR 평판 0.4' 목표가 실패하고 구원자 길이 끝나서 생존자 엔딩으로 바뀜 (The Price of Independence 쪽을 해야 함).",
+      "tip_en": "Fence contacts you 12–24 hours after you hand over all the evidence. In PvE, instead of co-op extracts, kill 5 PMCs in one raid without killing any Scavs, once on Interchange and once on Shoreline. After completing the tasks, Fence mails a flash drive containing Mr. Kerman's hash code. Solar Power level 1 takes 72 hours to build according to tarkov.dev hideout data, so start early. ⚠ Completing the BTR Driver quest Choose Your Friends Wisely fails the 'BTR reputation 0.4' objective, ends the Savior route, and switches to Survivor. You need to take The Price of Independence route.",
+      "steps": [
+        {
+          "id": "the-ticket-g-01",
+          "ko": "Mr. Kerman과 협상하기",
+          "en": "Negotiate with Mr. Kerman",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-g-02",
+          "ko": "증거를 다 넘겼다고 Mr. Kerman에게 확인하기",
+          "en": "Confirm with Mr. Kerman that all the evidence has been delivered",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-g-03",
+          "ko": "Mr. Kerman의 믿을 만한 연락책 기다리기",
+          "en": "Wait for Mr. Kerman's trusted contact to get in touch",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-g-04",
+          "ko": "펜스와 대화하기",
+          "en": "Talk to Fence",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-g-05",
+          "ko": "펜스 평판 4.0 달성하기",
+          "en": "Reach 4.0 reputation with Fence",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-g-06",
+          "ko": "펜스의 과제 끝내기",
+          "en": "Complete Fence's assignments",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-g-07",
+          "ko": "펜스 평판 4.0 이상 유지하기",
+          "en": "Keep the standing with Fence above 4.0",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-g-08",
+          "ko": "삼림 우정의 다리 협동 탈출 (PvE: 인터체인지에서 스캐브 안 죽이고 PMC 5명)",
+          "en": "Extract through the Friendship Bridge (Co-Op) on Woods",
+          "optional": false,
+          "map": "interchange"
+        },
+        {
+          "id": "the-ticket-g-09",
+          "ko": "리저브 스캐브 랜드 협동 탈출 (PvE: 해안선에서 스캐브 안 죽이고 PMC 5명)",
+          "en": "Extract through the Scav Lands (Co-Op) on Reserve",
+          "optional": false,
+          "map": "shoreline"
+        },
+        {
+          "id": "the-ticket-g-10",
+          "ko": "BTR 운전수 평판 0.4 달성하기",
+          "en": "Reach 0.4 standing with BTR Driver",
+          "optional": false,
+          "map": null,
+          "when": {
+            "quest:67460662d0fbbc74ca0f7229": false
+          }
+        },
+        {
+          "id": "the-ticket-g-11",
+          "ko": "펜스에게 과제를 끝냈다고 말하기",
+          "en": "Tell Fence that the assignment is complete",
+          "optional": false,
+          "map": null,
+          "when": {
+            "quest:67460662d0fbbc74ca0f7229": false
+          }
+        },
+        {
+          "id": "the-ticket-g-12",
+          "ko": "태양광 발전기 1레벨 달성하기 (건설 72시간)",
+          "en": "Obtain Solar Power level 1",
+          "optional": false,
+          "map": null,
+          "when": {
+            "quest:67460662d0fbbc74ca0f7229": false
+          }
+        }
+      ],
+      "when": {
+        "evidence": "savior"
+      }
+    },
+    {
+      "notice": true,
+      "title": "⛔ 구원자 길이 끝났어요 → 생존자 엔딩으로",
+      "title_en": "⛔ Savior route ended → Survivor ending",
+      "tip": "게임 로그에서 Choose Your Friends Wisely 완료가 확인됐어요. 'BTR 운전수 평판 0.4' 목표가 실패해서 구원자 길이 끝나고, 아래 생존자 길(프라퍼)로 이어져요.",
+      "tip_en": "The game log confirms that you completed Choose Your Friends Wisely. The 'BTR Driver reputation 0.4' objective has failed, ending the Savior route. Continue along the Survivor route with Prapor below.",
+      "when": {
+        "evidence": "savior",
+        "quest:67460662d0fbbc74ca0f7229": true
+      }
+    },
+    {
+      "title": "등대지기의 과제 (채무자)",
+      "title_en": "Lightkeeper's tasks (Debtor)",
+      "map": "lighthouse",
+      "tip": "주요 증거를 2개까지만 낸 뒤 협력 중단. 지형 정보 문서(등대·삼림·세관·그라운드 제로·공장 각 1개)로 군용 플래시 드라이브를 만들어 등대지기에게. 부적(Sacred Amulet) 6개는 컬티스트 마크방에 있음: 세관 3층 기숙사 314호 / 시내 북쪽 폐공장 마크방 / 시내 체칸나야 13 수상한 방(Mysterious room) / 리저브 RB-VO·RB-PKPM·RB-BK. 6개를 등대지기 섬의 보관실(Lighthouse island stash key로 여는 2층 방)에 숨기기.",
+      "tip_en": "Stop cooperating after handing over no more than 2 pieces of major evidence. Use topographic survey documents, 1 each from Lighthouse, Woods, Customs, Ground Zero, and Factory, to craft a Military flash drive for Lightkeeper. Find 6 Sacred Amulets in Cultist marked rooms: room 314 in the three-story dorm on Customs / the northern abandoned factory marked room on Streets of Tarkov / the Mysterious room in Chekannaya 13 on Streets of Tarkov / RB-VO, RB-PKPM, and RB-BK on Reserve. Stash all 6 in the storage room on Lightkeeper's island, a second-floor room opened with the Lighthouse island stash key.",
+      "steps": [
+        {
+          "id": "the-ticket-h-01",
+          "ko": "상인들에게 타르코프를 떠나는 방법 묻기",
+          "en": "Ask the traders how to leave Tarkov",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-h-02",
+          "ko": "정리한 데이터가 담긴 군용 플래시 드라이브 등대지기에게 전달하기",
+          "en": "Hand over the military flash drive with compiled data to Lightkeeper",
+          "optional": false,
+          "map": "lighthouse"
+        },
+        {
+          "id": "the-ticket-h-03",
+          "ko": "군용 플래시 드라이브에 데이터 기록하기 (정보 수집 시설)",
+          "en": "(Optional) Record the compiled data to a military flash drive",
+          "optional": true,
+          "map": null
+        },
+        {
+          "id": "the-ticket-h-04",
+          "ko": "등대 지형 정보 문서 얻기",
+          "en": "(Optional) Obtain the topographic intel documents on Lighthouse",
+          "optional": true,
+          "map": "lighthouse"
+        },
+        {
+          "id": "the-ticket-h-05",
+          "ko": "삼림 지형 정보 문서 얻기",
+          "en": "(Optional) Obtain the topographic intel documents on Woods",
+          "optional": true,
+          "map": "woods"
+        },
+        {
+          "id": "the-ticket-h-06",
+          "ko": "세관 지형 정보 문서 얻기",
+          "en": "(Optional) Obtain the topographic intel documents on Customs",
+          "optional": true,
+          "map": "customs"
+        },
+        {
+          "id": "the-ticket-h-07",
+          "ko": "그라운드 제로 지형 정보 문서 얻기",
+          "en": "(Optional) Obtain the topographic intel documents on Ground Zero",
+          "optional": true,
+          "map": "ground-zero"
+        },
+        {
+          "id": "the-ticket-h-08",
+          "ko": "공장 지형 정보 문서 얻기",
+          "en": "(Optional) Obtain the topographic intel documents on Factory",
+          "optional": true,
+          "map": "factory"
+        },
+        {
+          "id": "the-ticket-h-09",
+          "ko": "삼림에서 PMC 30명 사살하기",
+          "en": "Eliminate 30 PMCs on Woods",
+          "optional": false,
+          "map": "woods"
+        },
+        {
+          "id": "the-ticket-h-10",
+          "ko": "PMC 인식표 100개 등대지기에게 전달하기",
+          "en": "Hand over 100 PMC dogtags to Lightkeeper",
+          "optional": false,
+          "map": "lighthouse"
+        },
+        {
+          "id": "the-ticket-h-11",
+          "ko": "PMC 인식표 100개 모으기",
+          "en": "(Optional) Obtain 100 PMC dogtags",
+          "optional": true,
+          "map": null
+        },
+        {
+          "id": "the-ticket-h-12",
+          "ko": "첫 번째 부적을 등대지기 보관실에 숨기기",
+          "en": "Stash the first amulet in Lightkeeper's stash room on Lighthouse",
+          "optional": false,
+          "map": "lighthouse"
+        },
+        {
+          "id": "the-ticket-h-13",
+          "ko": "세관 마크방에서 부적 얻기",
+          "en": "(Optional) Obtain the amulet from the marked room on Customs",
+          "optional": true,
+          "map": "customs"
+        },
+        {
+          "id": "the-ticket-h-14",
+          "ko": "두 번째 부적 숨기기",
+          "en": "Stash the second amulet in Lightkeeper's stash room on Lighthouse",
+          "optional": false,
+          "map": "lighthouse"
+        },
+        {
+          "id": "the-ticket-h-15",
+          "ko": "시내 첫 번째 마크방에서 부적 얻기",
+          "en": "(Optional) Obtain the amulet from the first marked room on Streets of Tarkov",
+          "optional": true,
+          "map": "streets-of-tarkov"
+        },
+        {
+          "id": "the-ticket-h-16",
+          "ko": "세 번째 부적 숨기기",
+          "en": "Stash the third amulet in Lightkeeper's stash room on Lighthouse",
+          "optional": false,
+          "map": "lighthouse"
+        },
+        {
+          "id": "the-ticket-h-17",
+          "ko": "시내 두 번째 마크방에서 부적 얻기",
+          "en": "(Optional) Obtain the amulet from the second marked room on Streets of Tarkov",
+          "optional": true,
+          "map": "streets-of-tarkov"
+        },
+        {
+          "id": "the-ticket-h-18",
+          "ko": "네 번째 부적 숨기기",
+          "en": "Stash the fourth amulet in Lightkeeper's stash room on Lighthouse",
+          "optional": false,
+          "map": "lighthouse"
+        },
+        {
+          "id": "the-ticket-h-19",
+          "ko": "리저브 첫 번째 마크방에서 부적 얻기",
+          "en": "(Optional) Obtain the amulet from the first marked room on Reserve",
+          "optional": true,
+          "map": "reserve"
+        },
+        {
+          "id": "the-ticket-h-20",
+          "ko": "다섯 번째 부적 숨기기",
+          "en": "Stash the fifth amulet in Lightkeeper's stash room on Lighthouse",
+          "optional": false,
+          "map": "lighthouse"
+        },
+        {
+          "id": "the-ticket-h-21",
+          "ko": "리저브 두 번째 마크방에서 부적 얻기",
+          "en": "(Optional) Obtain the amulet from the second marked room on Reserve",
+          "optional": true,
+          "map": "reserve"
+        },
+        {
+          "id": "the-ticket-h-22",
+          "ko": "여섯 번째 부적 숨기기",
+          "en": "Stash the sixth amulet in Lightkeeper's stash room on Lighthouse",
+          "optional": false,
+          "map": "lighthouse"
+        },
+        {
+          "id": "the-ticket-h-23",
+          "ko": "리저브 세 번째 마크방에서 부적 얻기",
+          "en": "(Optional) Obtain the amulet from the third marked room on Reserve",
+          "optional": true,
+          "map": "reserve"
+        },
+        {
+          "id": "the-ticket-h-24",
+          "ko": "등대지기에게 보고하기",
+          "en": "Report to Lightkeeper",
+          "optional": false,
+          "map": "lighthouse"
+        }
+      ],
+      "prep": [
+        {
+          "kind": "제출",
+          "text": "PMC 인식표 (dogtag)",
+          "text_en": "PMC dogtags",
+          "count": 100,
+          "fir": false
+        },
+        {
+          "kind": "열쇠",
+          "text": "Dorm room 314 marked key (세관)",
+          "text_en": "Dorm room 314 marked key (Customs)",
+          "count": null,
+          "fir": false
+        },
+        {
+          "kind": "열쇠",
+          "text": "Abandoned factory marked key (시내)",
+          "text_en": "Abandoned factory marked key (Streets of Tarkov)",
+          "count": null,
+          "fir": false
+        },
+        {
+          "kind": "열쇠",
+          "text": "Mysterious room marked key (시내)",
+          "text_en": "Mysterious room marked key (Streets of Tarkov)",
+          "count": null,
+          "fir": false
+        },
+        {
+          "kind": "열쇠",
+          "text": "RB-VO / RB-PKPM / RB-BK marked key (리저브)",
+          "text_en": "RB-VO marked key / RB-PKPM marked key / RB-BK marked key (Reserve)",
+          "count": null,
+          "fir": false
+        },
+        {
+          "kind": "열쇠",
+          "text": "Lighthouse island stash key (등대지기 섬 보관실)",
+          "text_en": "Lighthouse island stash key (storage room on Lightkeeper's island)",
+          "count": null,
+          "fir": false
+        }
+      ],
+      "when": {
+        "evidence": "debtor"
+      },
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/5/5f/TheCultPart2DormsMap.png/revision/latest/scale-to-width-down/480?cb=20230311024204",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/5/5f/TheCultPart2DormsMap.png/revision/latest?cb=20230311024204",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:TheCultPart2DormsMap.png",
+          "caption": "세관 314호 위치",
+          "caption_en": "Room 314 location on Customs"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/f/f2/TheTicketAmulet1Spawn1.png/revision/latest/scale-to-width-down/480?cb=20260117123057",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/f/f2/TheTicketAmulet1Spawn1.png/revision/latest?cb=20260117123057",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:TheTicketAmulet1Spawn1.png",
+          "caption": "세관 부적 위치 예시",
+          "caption_en": "Example Sacred Amulet spawn on Customs"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/2/20/AbandonedFactoryNorthernBuilding.png/revision/latest/scale-to-width-down/480?cb=20230825212659",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/2/20/AbandonedFactoryNorthernBuilding.png/revision/latest?cb=20230825212659",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:AbandonedFactoryNorthernBuilding.png",
+          "caption": "시내 폐공장 마크방 위치",
+          "caption_en": "Abandoned factory marked room location on Streets of Tarkov"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/3/33/Mysterious_marked_key_onmap.png/revision/latest/scale-to-width-down/480?cb=20230826234248",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/3/33/Mysterious_marked_key_onmap.png/revision/latest?cb=20230826234248",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Mysterious_marked_key_onmap.png",
+          "caption": "시내 수상한 방 위치",
+          "caption_en": "Mysterious room location on Streets of Tarkov"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/5/50/RB-VO_lock_location.png/revision/latest/scale-to-width-down/480?cb=20260215200438",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/5/50/RB-VO_lock_location.png/revision/latest?cb=20260215200438",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:RB-VO_lock_location.png",
+          "caption": "리저브 RB-VO 위치",
+          "caption_en": "RB-VO location on Reserve"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/1/1e/RB-PKPM.png/revision/latest/scale-to-width-down/480?cb=20250319211825",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/1/1e/RB-PKPM.png/revision/latest?cb=20250319211825",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:RB-PKPM.png",
+          "caption": "리저브 RB-PKPM 위치",
+          "caption_en": "RB-PKPM location on Reserve"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/6/6c/RB-BK_lock_location.png/revision/latest/scale-to-width-down/480?cb=20260215201131",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/6/6c/RB-BK_lock_location.png/revision/latest?cb=20260215201131",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:RB-BK_lock_location.png",
+          "caption": "리저브 RB-BK 위치",
+          "caption_en": "RB-BK location on Reserve"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/6/63/Lighthouse_Island_Stash_Map.png/revision/latest/scale-to-width-down/480?cb=20251026152245",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/6/63/Lighthouse_Island_Stash_Map.png/revision/latest?cb=20251026152245",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Lighthouse_Island_Stash_Map.png",
+          "caption": "등대지기 섬 보관실 위치",
+          "caption_en": "Storage room location on Lightkeeper's island"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/0/09/Lighthouse_Island_Stash_Door.png/revision/latest/scale-to-width-down/480?cb=20260908155753",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/0/09/Lighthouse_Island_Stash_Door.png/revision/latest?cb=20260908155753",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Lighthouse_Island_Stash_Door.png",
+          "caption": "보관실 문 (2층)",
+          "caption_en": "Storage room door (second floor)"
+        }
+      ]
+    },
+    {
+      "title": "프라퍼의 과제 (타락)",
+      "title_en": "Prapor's tasks (Fallen)",
+      "map": null,
+      "tip": "Falling Skies에서 장갑 케이스를 가졌다면 먼저 프라퍼의 과제(군용·고급 전자제품 50, 보안 컨테이너 Theta·Epsilon·Kappa 중 하나, 수리 키트 40 — 무기·방어구 키트 섞어도 되고 내구도 100% 아니어도 됨). 그다음 리저브 RB-PKPTS 방의 위험 화물 케이스 → 100만 달러 → 해시 코드(정보 수집 시설 1레벨에서 프라퍼 해시 코드 키카드 제작). 태양광 발전기 1레벨 건설 72시간이니 미리 시작.",
+      "tip_en": "If you kept the armored case in Falling Skies, first complete Prapor's tasks: 50 military or advanced electronic items, one secure container (Theta, Epsilon, or Kappa), and 40 repair kits. Weapon and armor repair kits can be mixed, and they do not need 100% durability. Then retrieve the Case with dangerous cargo from room RB-PKPTS on Reserve, hand over 1,000,000 Dollars, and obtain the hash code. Craft the keycard with Prapor's hash code at Intelligence Center level 1. Solar Power level 1 takes 72 hours to build, so start early.",
+      "steps": [
+        {
+          "id": "the-ticket-i-01",
+          "ko": "Mr. Kerman과 대화하기",
+          "en": "Talk to Mr. Kerman",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-i-02",
+          "ko": "상인들에게 타르코프를 떠나는 방법 묻기",
+          "en": "Ask the traders how to leave Tarkov",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-i-03",
+          "ko": "프라퍼의 과제 끝내기 (장갑 케이스를 가진 경우)",
+          "en": "Complete Prapor's tasks",
+          "optional": false,
+          "map": null,
+          "when": {
+            "falling-skies@case": "kept"
+          }
+        },
+        {
+          "id": "the-ticket-i-04",
+          "ko": "군용·고급 전자제품 프라퍼에게 전달하기",
+          "en": "Hand over any military or advanced electronics to Prapor",
+          "optional": false,
+          "map": null,
+          "when": {
+            "falling-skies@case": "kept"
+          }
+        },
+        {
+          "id": "the-ticket-i-05",
+          "ko": "군용·고급 전자제품 50개 모으기",
+          "en": "(Optional) Obtain any 50 military or advanced electronics",
+          "optional": true,
+          "map": null,
+          "when": {
+            "falling-skies@case": "kept"
+          }
+        },
+        {
+          "id": "the-ticket-i-06",
+          "ko": "보안 컨테이너 Theta·Epsilon·Kappa 중 하나 전달하기",
+          "en": "Hand over Secure container Theta, Epsilon or Kappa to Prapor",
+          "optional": false,
+          "map": null,
+          "when": {
+            "falling-skies@case": "kept"
+          }
+        },
+        {
+          "id": "the-ticket-i-07",
+          "ko": "보안 컨테이너 Kappa 얻기",
+          "en": "(Optional) Obtain Secure container Kappa",
+          "optional": true,
+          "map": null,
+          "when": {
+            "falling-skies@case": "kept"
+          }
+        },
+        {
+          "id": "the-ticket-i-08",
+          "ko": "보안 컨테이너 Epsilon 얻기",
+          "en": "(Optional) Obtain Secure container Epsilon",
+          "optional": true,
+          "map": null,
+          "when": {
+            "falling-skies@case": "kept"
+          }
+        },
+        {
+          "id": "the-ticket-i-09",
+          "ko": "보안 컨테이너 Theta 얻기",
+          "en": "(Optional) Obtain Secure container Theta",
+          "optional": true,
+          "map": null,
+          "when": {
+            "falling-skies@case": "kept"
+          }
+        },
+        {
+          "id": "the-ticket-i-10",
+          "ko": "무기·방어구 수리 키트 40개 전달하기",
+          "en": "Hand over 40 weapon and armor repair kits to Prapor",
+          "optional": false,
+          "map": null,
+          "when": {
+            "falling-skies@case": "kept"
+          }
+        },
+        {
+          "id": "the-ticket-i-11",
+          "ko": "내구도 100% 수리 키트 40개 모으기",
+          "en": "(Optional) Obtain 40 weapon and armor repair kits with full durability",
+          "optional": true,
+          "map": null,
+          "when": {
+            "falling-skies@case": "kept"
+          }
+        },
+        {
+          "id": "the-ticket-i-12",
+          "ko": "위험 화물 케이스 프라퍼에게 전달하기",
+          "en": "Hand over Case with dangerous cargo to Prapor",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-i-13",
+          "ko": "위험 화물 케이스 찾기 (리저브 RB-PKPTS)",
+          "en": "(Optional) Locate and obtain the Case with dangerous cargo",
+          "optional": true,
+          "map": "reserve"
+        },
+        {
+          "id": "the-ticket-i-14",
+          "ko": "프라퍼에게 보고하기",
+          "en": "Report to Prapor",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-i-15",
+          "ko": "프라퍼에게 100만 달러 전달하기",
+          "en": "Hand over 1,000,000 Dollars to Prapor",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-i-16",
+          "ko": "100만 달러 모으기",
+          "en": "(Optional) Collect the required amount in USD: 1,000,000",
+          "optional": true,
+          "map": null
+        },
+        {
+          "id": "the-ticket-i-17",
+          "ko": "프라퍼의 정보 기다리기",
+          "en": "Wait for the info from Prapor",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-i-18",
+          "ko": "프라퍼에게서 갱신된 해시 코드 받기",
+          "en": "Collect the updated hash codes from Prapor",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-i-19",
+          "ko": "태양광 발전기 1레벨 달성하기 (건설 72시간)",
+          "en": "Obtain Solar Power level 1",
+          "optional": false,
+          "map": null
+        }
+      ],
+      "prep": [
+        {
+          "kind": "제출",
+          "text": "달러 (USD)",
+          "text_en": "Dollars (USD)",
+          "count": 1000000,
+          "fir": false
+        },
+        {
+          "kind": "제출",
+          "text": "Case with dangerous cargo (위험 화물 케이스)",
+          "text_en": "Case with dangerous cargo",
+          "quest_item": true,
+          "count": null,
+          "fir": false
+        },
+        {
+          "kind": "열쇠",
+          "text": "RB-PKPTS key (리저브)",
+          "text_en": "RB-PKPTS key (Reserve)",
+          "count": null,
+          "fir": false
+        }
+      ],
+      "when": {
+        "evidence": "fallen"
+      }
+    },
+    {
+      "title": "프라퍼에게 돈과 과제 (생존자)",
+      "title_en": "Pay Prapor and complete his tasks (Survivor)",
+      "map": null,
+      "tip": "Mr. Kerman 제안을 거절했거나, 구원자 길이 막혀서(Choose Your Friends Wisely 완료) 오는 길. 케이스를 프라퍼에게 줬으면 3억 루블, 가졌으면 5억 루블. 프라퍼의 과제 3개(증거 폴더 4개 → 정보 수집 시설 1레벨에서 SSD 제작, 시내 50명, 한 레이드 PMC 4명)를 순서대로 72시간 안에 끝내야 함. 못 끝내면 카파 컨테이너를 내야 계속 진행.",
+      "tip_en": "This route follows rejecting Mr. Kerman's offer or losing access to the Savior route by completing Choose Your Friends Wisely. Pay 300,000,000 Roubles if you gave Prapor the case, or 500,000,000 if you kept it. Complete Prapor's 3 tasks in order within 72 hours: collect 4 evidence folders and craft an SSD at Intelligence Center level 1, kill 50 enemies on Streets of Tarkov, then kill 4 PMCs in one raid. If you miss the deadline, you must hand over a Kappa container to continue.",
+      "steps": [
+        {
+          "id": "the-ticket-j-01",
+          "ko": "항구 터미널 입구 도착하기",
+          "en": "Arrive at the entrance pathway to the port Terminal",
+          "optional": false,
+          "map": "shoreline"
+        },
+        {
+          "id": "the-ticket-j-02",
+          "ko": "인터폰 리더기에 키카드 대기",
+          "en": "Swipe the keycard at the intercom reader",
+          "optional": false,
+          "map": "shoreline"
+        },
+        {
+          "id": "the-ticket-j-03",
+          "ko": "프라퍼와 대화하기",
+          "en": "Talk to Prapor",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-j-04",
+          "ko": "프라퍼에게 3억 루블 전달하기 (케이스를 프라퍼에게 준 경우)",
+          "en": "Hand over the cash to Prapor",
+          "optional": false,
+          "map": null,
+          "when": {
+            "falling-skies@case": "given"
+          }
+        },
+        {
+          "id": "the-ticket-j-05",
+          "ko": "3억 루블 모으기",
+          "en": "(Optional) Collect the required amount in RUB: 300,000,000",
+          "optional": true,
+          "map": null,
+          "when": {
+            "falling-skies@case": "given"
+          }
+        },
+        {
+          "id": "the-ticket-j-06",
+          "ko": "프라퍼에게 5억 루블 전달하기 (케이스를 가진 경우)",
+          "en": "Hand over the cash to Prapor",
+          "optional": false,
+          "map": null,
+          "when": {
+            "falling-skies@case": "kept"
+          }
+        },
+        {
+          "id": "the-ticket-j-07",
+          "ko": "5억 루블 모으기",
+          "en": "(Optional) Collect the required amount in RUB: 500,000,000",
+          "optional": true,
+          "map": null,
+          "when": {
+            "falling-skies@case": "kept"
+          }
+        },
+        {
+          "id": "the-ticket-j-08",
+          "ko": "프라퍼의 과제를 시간 안에 끝내기 (72시간)",
+          "en": "Complete all Prapor's tasks in time",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-j-09",
+          "ko": "증거 폴더를 디지털로 바꿔 SSD에 저장하기",
+          "en": "Convert the evidence folders to digital format and save them to an SSD",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-j-10",
+          "ko": "테라그룹 연구소 증거 폴더 (보고서) 얻기",
+          "en": "(Optional) Obtain the item: Folder with TerraGroup Labs evidence (Reports)",
+          "optional": true,
+          "map": "the-lab"
+        },
+        {
+          "id": "the-ticket-j-11",
+          "ko": "테라그룹 증거 폴더 (직원) 얻기",
+          "en": "(Optional) Obtain the item: Folder with TerraGroup evidence (Staff)",
+          "optional": true,
+          "map": null
+        },
+        {
+          "id": "the-ticket-j-12",
+          "ko": "테라그룹 연구소 증거 폴더 (개발) 얻기",
+          "en": "(Optional) Obtain the item: Folder with TerraGroup Labs evidence (Developments)",
+          "optional": true,
+          "map": "the-lab"
+        },
+        {
+          "id": "the-ticket-j-13",
+          "ko": "테라그룹 증거 폴더 (재무) 얻기",
+          "en": "(Optional) Obtain the item: Folder with TerraGroup evidence (Finances)",
+          "optional": true,
+          "map": null
+        },
+        {
+          "id": "the-ticket-j-14",
+          "ko": "타르코프 시내에서 아무 적 50명 사살하기",
+          "en": "Eliminate any 50 targets on Streets of Tarkov",
+          "optional": false,
+          "map": "streets-of-tarkov"
+        },
+        {
+          "id": "the-ticket-j-15",
+          "ko": "한 레이드에서 PMC 4명 사살하기",
+          "en": "Eliminate 4 PMC operatives in one raid",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-j-16",
+          "ko": "프라퍼에게 보고하기",
+          "en": "Report to Prapor",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-ticket-j-17",
+          "ko": "보안 컨테이너 Kappa 프라퍼에게 전달하기 (72시간 안에 못 끝낸 경우)",
+          "en": "Hand over Secure container Kappa to Prapor",
+          "optional": false,
+          "map": null,
+          "manual": true
+        }
+      ],
+      "when_any": [
+        {
+          "kerman": "refuse"
+        },
+        {
+          "evidence": "savior",
+          "quest:67460662d0fbbc74ca0f7229": true
+        }
+      ]
+    },
+    {
+      "title": "터미널 → 타르코프 탈출",
+      "title_en": "Terminal → Escape Tarkov",
+      "map": "terminal",
+      "tip": "해안선 터미널 입구 인터폰에서 21:00~06:00 사이에 엔딩별 출입 아이템 사용(생존자는 인터폰 호출 버튼). 첫 대전차 장애물 너머로 아이템 없이 가거나, 도로를 벗어나거나, 무기를 다시 들면 사살당함. 구원자는 Alpha-1 컨테이너를 퀘스트 인벤토리에 넣어야 트랜짓 가능. 터미널 안: 무기고에서 장비 회수 → 항구 건물(MS) 안 쓰러진 ATM 위 무기 상자의 블랙 디비전 키카드 → 관리동 통과 → 연료 저장소 철문(SZ-1 폭약/근력 엘리트/2명이 밀기) → 배전반 수리(인원 수에 따라 1~3개, 공구 세트 3개가 고정 위치) → 펌프장 물 빼기 → 금고의 부두 문 열쇠 → 부두 Zubr 보트 탈출.",
+      "tip_en": "Between 21:00 and 06:00, use the entry item for your ending at the Terminal entrance intercom on Shoreline. For Survivor, press the intercom call button. You will be killed if you pass the first anti-tank obstacle without the item, leave the road, or draw your weapon again. For Savior, put the Alpha-1 container in your quest inventory to use the Transit. Inside Terminal: retrieve your equipment from the armory, take the Black Division keycard from the weapon crate on the toppled ATM inside the port building (MS), and pass through the administration building. Open the fuel storage iron door using an SZ-1 explosive charge, elite Strength, or 2 players pushing. Repair 1–3 electrical panels depending on player count; 3 Toolsets have fixed spawns. Drain the pumping station, take the pier gate key from the safe, then extract via the Zubr boat at the pier.",
+      "steps": [
+        {
+          "id": "the-ticket-z-01",
+          "ko": "항구 터미널 입구 도착하기",
+          "en": "Arrive at the entrance pathway to the port Terminal",
+          "optional": false,
+          "map": "shoreline"
+        },
+        {
+          "id": "the-ticket-z-02",
+          "ko": "Kerman 해시 코드가 담긴 재프로그래밍 RFID 키카드 가져가기 (구원자)",
+          "en": "(Optional) Bring the Reprogrammed RFID keycard with Mr. Kerman's hash codes",
+          "optional": true,
+          "map": null
+        },
+        {
+          "id": "the-ticket-z-03",
+          "ko": "이름 없는 RFID 키카드 가져가기 (채무자)",
+          "en": "(Optional) Bring the RFID keycard with unknown name",
+          "optional": true,
+          "map": null
+        },
+        {
+          "id": "the-ticket-z-04",
+          "ko": "항구 검문소용 프라퍼의 편지 가져가기 (생존자)",
+          "en": "(Optional) Bring the Prapor's letter for the port checkpoint",
+          "optional": true,
+          "map": null
+        },
+        {
+          "id": "the-ticket-z-05",
+          "ko": "프라퍼 해시 코드가 담긴 재프로그래밍 RFID 키카드 가져가기 (타락)",
+          "en": "(Optional) Bring the Reprogrammed RFID keycard with Prapor's hash codes",
+          "optional": true,
+          "map": null
+        },
+        {
+          "id": "the-ticket-z-06",
+          "ko": "인터폰 리더기에 키카드 대기",
+          "en": "Swipe the keycard at the intercom reader",
+          "optional": false,
+          "map": "shoreline"
+        },
+        {
+          "id": "the-ticket-z-07",
+          "ko": "항구 터미널 들어가기",
+          "en": "Access the port Terminal",
+          "optional": false,
+          "map": "terminal"
+        },
+        {
+          "id": "the-ticket-z-08",
+          "ko": "테라그룹 증거가 담긴 Alpha-1 보안 컨테이너 가져가기 (구원자)",
+          "en": "(Optional) Bring the Secure container Alpha-1 with TerraGroup evidence",
+          "optional": true,
+          "map": null
+        },
+        {
+          "id": "the-ticket-z-09",
+          "ko": "보안 검사 통과하기",
+          "en": "Pass the security check",
+          "optional": false,
+          "map": "terminal"
+        },
+        {
+          "id": "the-ticket-z-10",
+          "ko": "타르코프 탈출하기",
+          "en": "Escape from Tarkov",
+          "optional": false,
+          "map": "terminal"
+        },
+        {
+          "id": "the-ticket-z-11",
+          "ko": "압수된 장비가 있는 무기고 찾기",
+          "en": "(Optional) Locate the armory with the confiscated equipment",
+          "optional": true,
+          "map": "terminal"
+        },
+        {
+          "id": "the-ticket-z-12",
+          "ko": "Alpha-1 보안 컨테이너 되찾기",
+          "en": "(Optional) Retrieve the Secure container Alpha-1",
+          "optional": true,
+          "map": "terminal"
+        },
+        {
+          "id": "the-ticket-z-13",
+          "ko": "통로를 여는 키카드 얻기",
+          "en": "(Optional) Obtain the keycard to unlock the service passage",
+          "optional": true,
+          "map": "terminal"
+        },
+        {
+          "id": "the-ticket-z-14",
+          "ko": "터미널 하역 구역으로 가는 출구 찾기",
+          "en": "(Optional) Locate the exit leading to the Terminal loading zone",
+          "optional": true,
+          "map": "terminal"
+        },
+        {
+          "id": "the-ticket-z-15",
+          "ko": "항구 건물 안 통로 열기",
+          "en": "(Optional) Unlock the service passage inside the seaport building",
+          "optional": true,
+          "map": "terminal"
+        },
+        {
+          "id": "the-ticket-z-16",
+          "ko": "터미널 하역 구역 들어가기",
+          "en": "(Optional) Access the Terminal loading zone",
+          "optional": true,
+          "map": "terminal"
+        },
+        {
+          "id": "the-ticket-z-17",
+          "ko": "연료 저장소로 가는 길 찾기",
+          "en": "(Optional) Locate the way into the fuel depot",
+          "optional": true,
+          "map": "terminal"
+        },
+        {
+          "id": "the-ticket-z-18",
+          "ko": "펌프장 전원 복구 방법 알아내기",
+          "en": "(Optional) Figure out how to restore power to the pumping station",
+          "optional": true,
+          "map": "terminal"
+        },
+        {
+          "id": "the-ticket-z-19",
+          "ko": "배전반 도면 얻기",
+          "en": "(Optional) Obtain the diagram of the electrical panels",
+          "optional": true,
+          "map": "terminal"
+        },
+        {
+          "id": "the-ticket-z-20",
+          "ko": "펌프장 물 빼기",
+          "en": "(Optional) Drain the water in the pumping station",
+          "optional": true,
+          "map": "terminal"
+        },
+        {
+          "id": "the-ticket-z-21",
+          "ko": "부두로 가는 문 열쇠 얻기",
+          "en": "(Optional) Obtain the key to the gate blocking the road to the pier",
+          "optional": true,
+          "map": "terminal"
+        },
+        {
+          "id": "the-ticket-z-22",
+          "ko": "부두로 나가는 출구 찾기",
+          "en": "(Optional) Locate the exit leading to the pier",
+          "optional": true,
+          "map": "terminal"
+        },
+        {
+          "id": "the-ticket-z-23",
+          "ko": "부두 대피 지역 도착하기",
+          "en": "(Optional) Reach the evacuation area at the pier",
+          "optional": true,
+          "map": "terminal"
+        }
+      ],
+      "prep": [
+        {
+          "kind": "가져가기",
+          "text": "엔딩별 출입 아이템 (키카드 / 이름 없는 RFID 키카드 / 프라퍼의 편지)",
+          "text_en": "Entry item for your ending (keycard / unnamed RFID keycard / Prapor's letter)",
+          "count": null,
+          "fir": false
+        },
+        {
+          "kind": "가져가기",
+          "text": "Secure container Alpha-1 with TerraGroup evidence (구원자만)",
+          "text_en": "Secure container Alpha-1 with TerraGroup evidence (Savior only)",
+          "count": null,
+          "fir": false
+        },
+        {
+          "kind": "가져가기",
+          "text": "공구 세트 (배전반 수리용, 터미널 안에도 있음)",
+          "text_en": "Toolset (for electrical panel repairs; also available inside Terminal)",
+          "count": null,
+          "fir": false
+        }
+      ],
+      "reward": "엔딩 4종: 구원자 / 채무자 / 생존자 / 타락",
+      "reward_en": "4 endings: Savior / Debtor / Survivor / Fallen"
+    }
+  ]
+}

@@ -1,0 +1,283 @@
+{
+  "_설명": "게임 공식 한글이 없는 퀘스트 목표의 우리 번역. 규칙은 data/translation_rules.md. en = 번역할 때의 원문(바뀌면 이 번역은 안 씀)",
+  "665eed28bdbf7b1f92394ecb": {
+    "en": "Eliminate Scavs during 22:00-07:00 on Shoreline",
+    "ko": "해안선(Shoreline)에서 22:00~07:00 사이에 스캐브 사살하기"
+  },
+  "666333e93962787efd64004a": {
+    "en": "Eliminate PMC operatives while wearing 6B43 body armor and Kiver-M helmet on Factory",
+    "ko": "공장(Factory)에서 [6B43 방탄복]과 [Kiver-M 헬멧]을 착용한 상태로 PMC 사살하기"
+  },
+  "65802779963422318339533c": {
+    "en": "Eliminate any target at the smuggler bases on Shoreline or Interchange",
+    "ko": "해안선(Shoreline) 또는 인터체인지(Interchange)의 밀수꾼 기지에서 아무 적 사살하기"
+  },
+  "64f6a9e6dd44b6417729b535": {
+    "en": "Locate and obtain information on culinary secrets at the Beluga restaurant on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)의 벨루가 식당에서 요리 비법 정보 찾아서 획득하기"
+  },
+  "64f6aa6cdd44b6417729b536": {
+    "en": "Hand over the found data",
+    "ko": "찾은 자료 건네주기"
+  },
+  "675c04b3fc6b273a36ed294a": {
+    "en": "Locate and obtain the TerraGroup shipment lists on Customs",
+    "ko": "세관(Customs)에서 테라그룹 화물 목록 찾아서 획득하기"
+  },
+  "675c04c1b68cc8180efb38c6": {
+    "en": "Hand over the found information",
+    "ko": "찾은 정보 건네주기"
+  },
+  "669fb6c859bdae826f7325d4": {
+    "en": "Take a sample of the chemicals from the damaged tank container on Factory",
+    "ko": "공장(Factory)의 파손된 탱크 컨테이너에서 화학물질 샘플 채취하기"
+  },
+  "66a7eebed6bac3ecc16f7d6b": {
+    "en": "Hand over the collected sample",
+    "ko": "채취한 샘플 건네주기"
+  },
+  "669fb647a5be751be095da27": {
+    "en": "Locate and mark any of the heat exchangers with an MS2000 Marker on Factory",
+    "ko": "공장(Factory)에서 열교환기 중 아무거나 찾아 MS2000 마커 설치하기"
+  },
+  "6573382e557ff128bf3da537": {
+    "en": "Unravel the secret of the IT firm's employees' high morale on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)에서 IT 회사 직원들의 높은 사기의 비밀 밝혀내기"
+  },
+  "63a7d8665199ab1f7d4a7747": {
+    "en": "Locate the surveillance spot on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)에서 감시 장소 찾기"
+  },
+  "639136fa9444fb141f4e6eef": {
+    "en": "Obtain the observation results",
+    "ko": "감시 결과 획득하기"
+  },
+  "639136fa9444fb141f4e6ef0": {
+    "en": "Hand over the data",
+    "ko": "자료 건네주기"
+  },
+  "64e7ba17220ee966bf425ecb": {
+    "en": "Locate and neutralize Kaban",
+    "ko": "카반(Kaban) 찾아서 사살하기"
+  },
+  "66b38e144f2ab7cc530c3fe8": {
+    "en": "Locate a good tripwire installation spot in the breach room on Factory",
+    "ko": "공장(Factory)의 돌파실(breach room)에서 부비트랩 설치하기 좋은 장소 찾기"
+  },
+  "66b38e144f2ab7cc530c3fea": {
+    "en": "Locate a good tripwire installation spot at the three-story dorm stairs on Customs",
+    "ko": "세관(Customs)의 3층 기숙사 계단에서 부비트랩 설치하기 좋은 장소 찾기"
+  },
+  "66a0e692281e56a89b717b7d": {
+    "en": "Locate and obtain the chemical container at the TerraGroup warehouse on Factory",
+    "ko": "공장(Factory)의 테라그룹 창고에서 화학물질 용기 찾아서 획득하기"
+  },
+  "66a0e69ec03c2dad1a84993a": {
+    "en": "Hand over the chemical container",
+    "ko": "화학물질 용기 건네주기"
+  },
+  "5d26fd8886f77469f0445745": {
+    "en": "Locate and neutralize Reshala",
+    "ko": "르샬라(Reshala) 찾아서 사살하기"
+  },
+  "5d2710e686f7742e9019a6b2": {
+    "en": "Hand over the found in raid Reshala's Golden TT-33 pistol",
+    "ko": "레이드에서 발견한 [르샬라의 황금 TT-33 권총] 건네주기"
+  },
+  "6a5ccda873f06065630d61b2": {
+    "en": "Eliminate any target with headshots using a 12ga shotgun on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)에서 12게이지 산탄총으로 아무 적 헤드샷으로 사살하기"
+  },
+  "65734c186dc1e402c80dc1a2": {
+    "en": "Eliminate any target while wearing a Bomber beanie and RayBench Hipster Reserve sunglasses on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)에서 [봄버 비니]와 [레이벤치 힙스터 리저브 선글라스]를 착용한 상태로 아무 적 사살하기"
+  },
+  "657356c410becd24bc776f55": {
+    "en": "Stash a Bomber beanie inside the barber shop on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)의 이발소 안에 [봄버 비니] 숨기기"
+  },
+  "657356d0a95a1e7e1a8d8d99": {
+    "en": "Stash RayBench Hipster Reserve sunglasses inside the barber shop on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)의 이발소 안에 [레이벤치 힙스터 리저브 선글라스] 숨기기"
+  },
+  "65802b627b44fa5e1463889a": {
+    "en": "Locate Ragman's SUV on Shoreline",
+    "ko": "해안선(Shoreline)에서 래그맨의 SUV 찾기"
+  },
+  "675c14f54662a2fae349dbb9": {
+    "en": "Stash a DVL-10 sniper rifle at the specified spot on Customs",
+    "ko": "세관(Customs)의 지정된 장소에 [DVL-10 저격소총] 숨기기"
+  },
+  "675c152299549b5b62094f06": {
+    "en": "Stash a DVL-10 magazine at the specified spot on Customs",
+    "ko": "세관(Customs)의 지정된 장소에 [DVL-10 탄창] 숨기기"
+  },
+  "675c153ae96d38136d02f670": {
+    "en": "Stash an ELCAN SpecterDR scope at the specified spot on Customs",
+    "ko": "세관(Customs)의 지정된 장소에 [ELCAN SpecterDR 조준경] 숨기기"
+  },
+  "67604476b1ae3717835ccaed": {
+    "en": "Stash a pack of any 7.62x51 ammo at the specified spot on Customs",
+    "ko": "세관(Customs)의 지정된 장소에 아무 7.62x51 탄약 팩 숨기기"
+  },
+  "638fd070202cd55bee01ca11": {
+    "en": "Obtain the financial records on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)에서 재무 기록 획득하기"
+  },
+  "638fd0805e5a195d2c443754": {
+    "en": "Hand over the journal",
+    "ko": "일지 건네주기"
+  },
+  "6a667849c90044ddde3e7c26": {
+    "en": "Eliminate Scavs at USEC camp, Scav camp, sawmill, or abandoned village on Woods",
+    "ko": "삼림(Woods)의 USEC 캠프, 스캐브 캠프, 제재소, 버려진 마을 중 한 곳에서 스캐브 사살하기"
+  },
+  "60e73ee8b567ff641b129570": {
+    "en": "Eliminate PMC operatives on Interchange",
+    "ko": "인터체인지(Interchange)에서 PMC 사살하기"
+  },
+  "600303250b79c6604058ce30": {
+    "en": "Eliminate Scavs on Interchange, Ground Zero, Woods, or Customs",
+    "ko": "인터체인지(Interchange), 그라운드 제로(Ground Zero), 삼림(Woods), 세관(Customs) 중 한 곳에서 스캐브 사살하기"
+  },
+  "675c37d2da4b531ba8daaadd": {
+    "en": "Locate and obtain Skier's wallet on Customs",
+    "ko": "세관(Customs)에서 스키어의 지갑 찾아서 획득하기"
+  },
+  "675c37e07ac1a33fff170966": {
+    "en": "Hand over the found item",
+    "ko": "찾은 아이템 건네주기"
+  },
+  "6a5424ae135497b9df0c68c1": {
+    "en": "Find the item in raid: Disposable syringe",
+    "ko": "레이드에서 [일회용 주사기] 획득하기"
+  },
+  "6a5424ae135497b9df0c68c2": {
+    "en": "Hand over the items",
+    "ko": "아이템 건네주기"
+  },
+  "675c0444db2b69f48942f37c": {
+    "en": "Mark any of the special TerraGroup cargo boxes with an MS2000 Marker on Customs",
+    "ko": "세관(Customs)에서 테라그룹 특수 화물 상자 중 아무거나에 MS2000 마커 설치하기"
+  },
+  "6a574fe188bf38e4f6c954f6": {
+    "en": "Locate the first special TerraGroup cargo on Customs",
+    "ko": "세관(Customs)에서 첫 번째 테라그룹 특수 화물 찾기"
+  },
+  "6a574ff13e5804d879146872": {
+    "en": "Locate the second special TerraGroup cargo on Customs",
+    "ko": "세관(Customs)에서 두 번째 테라그룹 특수 화물 찾기"
+  },
+  "6a574ff78f1b3fc8bdbb8755": {
+    "en": "Locate the third special TerraGroup cargo on Customs",
+    "ko": "세관(Customs)에서 세 번째 테라그룹 특수 화물 찾기"
+  },
+  "6a574ffc261a237f28375818": {
+    "en": "Locate the fourth special TerraGroup cargo on Customs",
+    "ko": "세관(Customs)에서 네 번째 테라그룹 특수 화물 찾기"
+  },
+  "6a575000eddb07c675a2567c": {
+    "en": "Locate the fifth special TerraGroup cargo on Customs",
+    "ko": "세관(Customs)에서 다섯 번째 테라그룹 특수 화물 찾기"
+  },
+  "6a575004d14917ff71ab6aec": {
+    "en": "Locate the sixth special TerraGroup cargo on Customs",
+    "ko": "세관(Customs)에서 여섯 번째 테라그룹 특수 화물 찾기"
+  },
+  "6a57500b923ac62ea96d47aa": {
+    "en": "Locate the seventh special TerraGroup cargo on Customs",
+    "ko": "세관(Customs)에서 일곱 번째 테라그룹 특수 화물 찾기"
+  },
+  "675c1cf4a757ddd00404f0a6": {
+    "en": "Locate the secret exfil on Customs",
+    "ko": "세관(Customs)에서 비밀 탈출구 찾기"
+  },
+  "676ab31c058363b09072c78e": {
+    "en": "Obtain the special item to extract through the secret exfil",
+    "ko": "비밀 탈출구로 나가는 데 필요한 특수 아이템 획득하기"
+  },
+  "669faef62c68a5925a36fccc": {
+    "en": "Hand over the lab journal",
+    "ko": "연구 일지 건네주기"
+  },
+  "6575a64d3fc09bdfb38b713d": {
+    "en": "Access the lab scientist's office on Ground Zero",
+    "ko": "그라운드 제로(Ground Zero)에서 연구원의 사무실에 들어가기"
+  },
+  "6575a524a39d2be74e620546": {
+    "en": "Locate the USEC group at the parking lot of the TerraGroup complex",
+    "ko": "테라그룹 단지 주차장에서 USEC 일행 찾기"
+  },
+  "6575a62a62028c6d5cb43cb7": {
+    "en": "Locate the lab scientist in the TerraGroup complex",
+    "ko": "테라그룹 단지에서 연구원 찾기"
+  },
+  "65817fbbb454159976c91917": {
+    "en": "Locate and obtain the scientist's hard drive",
+    "ko": "연구원의 하드 드라이브 찾아서 획득하기"
+  },
+  "65817fc99a039ed2e97896e4": {
+    "en": "Hand over the hard drive",
+    "ko": "하드 드라이브 건네주기"
+  },
+  "66b38c7bf85b8bf7250f9cb7": {
+    "en": "Locate the heavily mined area at the USEC camp on Woods",
+    "ko": "삼림(Woods)의 USEC 캠프에서 지뢰가 많이 깔린 구역 찾기"
+  },
+  "66b38de6a97d8cbafd711846": {
+    "en": "Locate the Claymore mine on Ground Zero",
+    "ko": "그라운드 제로(Ground Zero)에서 클레이모어 지뢰 찾기"
+  },
+  "65817bf31404f3565aef9fec": {
+    "en": "Hand over any found in raid medicine items",
+    "ko": "레이드에서 발견한 아무 의약품 아이템 건네주기"
+  },
+  "675c15916580a378dc0f012f": {
+    "en": "Locate and obtain the customized tool set at the garage complex on Customs",
+    "ko": "세관(Customs)의 차고 단지에서 개조된 공구 세트 찾아서 획득하기"
+  },
+  "675c1595a4c063af74ee5279": {
+    "en": "Hand over the found item",
+    "ko": "찾은 아이템 건네주기"
+  },
+  "675c1d6d59b0575973008fc9": {
+    "en": "Use the transit from Customs to Shoreline",
+    "ko": "세관(Customs)에서 해안선(Shoreline)으로 가는 지역 이동(트랜짓) 이용하기"
+  },
+  "6a5c10e883a51e292d11b976": {
+    "en": "Stash a Corrugated hose in the med lab on Customs",
+    "ko": "세관(Customs)의 의료 연구실에 [주름진 호스] 숨기기"
+  },
+  "5ec1538a92e95f77ac7a2529": {
+    "en": "Find the items from the Medkits category in raid",
+    "ko": "레이드에서 [구급상자] 종류 아이템 획득하기"
+  },
+  "5d27446f86f77475a86565a3": {
+    "en": "Hand over the items",
+    "ko": "아이템 건네주기"
+  },
+  "5ec1504183b69d213d3c2ee8": {
+    "en": "Find the items from the Injury treatment category in raid",
+    "ko": "레이드에서 [부상 치료] 종류 아이템 획득하기"
+  },
+  "5d7782c686f7742fa732bf07": {
+    "en": "Hand over the items",
+    "ko": "아이템 건네주기"
+  },
+  "5d24ba7886f77439c92d6baa": {
+    "en": "Hand over any items from the Food category",
+    "ko": "[음식] 종류 아이템 아무거나 건네주기"
+  },
+  "669faeb6a6e02d00c47ad812": {
+    "en": "Locate and obtain the lab journal on Factory",
+    "ko": "공장(Factory)에서 연구 일지 찾아서 획득하기"
+  },
+  "669faecceb01bf6324de66c4": {
+    "en": "Stash the journal at the old sawmill on Woods",
+    "ko": "삼림(Woods)의 오래된 제재소에 일지 숨기기"
+  },
+  "671ac68e30609eb2c7e9a7f7": {
+    "en": "Eliminate any target with an AA-12 shotgun",
+    "ko": "[AA-12 산탄총]으로 아무 적 사살하기"
+  }
+}

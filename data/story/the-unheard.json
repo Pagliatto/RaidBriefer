@@ -1,0 +1,530 @@
+{
+  "id": "the-unheard",
+  "name": "The Unheard",
+  "library": "https://eftlibrary.com/story/the-unheard",
+  "wiki": "https://escapefromtarkov.fandom.com/wiki/The_Unheard",
+  "requirement": "'정화(Purification)'에 관한 쪽지를 주워 읽으면 시작 (시내 테라그룹 경비 초소 감시실 / 시내 테라그룹 사무실 / 그라운드 제로 테라그룹 본관 2층 4번 사무실 중 하나)",
+  "requirement_en": "Starts when you pick up and read the Note with ramblings about the Purification at one of these locations: the surveillance room at the TerraGroup guard post on Streets of Tarkov / the TerraGroup office on Streets of Tarkov / office 4 on the second floor of the TerraGroup main building on Ground Zero",
+  "sections": [
+    {
+      "title": "언허드에 대해 알아보기",
+      "title_en": "Learn about The Unheard",
+      "map": null,
+      "tip": "시작 조건의 쪽지를 읽으면 완료.",
+      "tip_en": "Completed by reading the note that starts the chapter.",
+      "steps": [
+        {
+          "id": "the-unheard-00",
+          "ko": "언허드에 대해 더 알아보기",
+          "en": "Learn more about The Unheard",
+          "optional": false,
+          "map": null
+        }
+      ]
+    },
+    {
+      "title": "연구소의 문서 2개",
+      "title_en": "Two documents in The Lab",
+      "map": "the-lab",
+      "tip": "연구소에서 문서 2개를 주워 읽기: 1층 돔 옆 실험실의 '기업 간 상호작용 변경 문서'(화면 옆), 2층 O23 사무실의 '화물 운송 팩스'(금고 옆 낮은 장 위). 연구소 출입 카드 필요.",
+      "tip_en": "Pick up and read 2 documents in The Lab: the Document on changes in enterprise interactions in the laboratory beside the dome on the first floor (next to the screen), and the Cargo transport fax in office O23 on the second floor (on the low cabinet beside the safe). A TerraGroup Labs access keycard is required.",
+      "steps": [
+        {
+          "id": "the-unheard-01",
+          "ko": "테라그룹의 활동에 대해 더 알아보기",
+          "en": "Learn more about TerraGroup's activities",
+          "optional": false,
+          "map": "the-lab"
+        },
+        {
+          "id": "the-unheard-02",
+          "ko": "쪽지에 나온 '연료'에 대해 더 알아보기",
+          "en": "Learn more about the \"fuel\" mentioned in the note",
+          "optional": false,
+          "map": "the-lab"
+        }
+      ],
+      "prep": [
+        {
+          "kind": "가져가기",
+          "text": "TerraGroup Labs access keycard (연구소 출입 카드)",
+          "text_en": "TerraGroup Labs access keycard",
+          "count": null,
+          "fir": false
+        }
+      ],
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/1/19/The_Unheard_Changes_and_Fax_Map.png/revision/latest/scale-to-width-down/480?cb=20260212195119",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/1/19/The_Unheard_Changes_and_Fax_Map.png/revision/latest?cb=20260212195119",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:The_Unheard_Changes_and_Fax_Map.png",
+          "caption": "두 문서 위치",
+          "caption_en": "Both document locations"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/4/45/The_Unheard_Changes.png/revision/latest/scale-to-width-down/480?cb=20260212195743",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/4/45/The_Unheard_Changes.png/revision/latest?cb=20260212195743",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:The_Unheard_Changes.png",
+          "caption": "실험실 문서",
+          "caption_en": "Laboratory document"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/7/70/The_Unheard_Fax.png/revision/latest/scale-to-width-down/480?cb=20260212195804",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/7/70/The_Unheard_Fax.png/revision/latest?cb=20260212195804",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:The_Unheard_Fax.png",
+          "caption": "사무실 팩스",
+          "caption_en": "Office fax"
+        }
+      ]
+    },
+    {
+      "title": "특수 촉매 운송 정보 (공장)",
+      "title_en": "Special catalyst shipment information (Factory)",
+      "map": "factory",
+      "tip": "공장에서 '메모가 적힌 운송 기록'을 주워 읽기. 바닥 구멍 옆 노란 드럼통 위.",
+      "tip_en": "Pick up and read the transport log with notes on Factory. It is on the yellow barrel beside the hole in the floor.",
+      "steps": [
+        {
+          "id": "the-unheard-03",
+          "ko": "특수 촉매 운송에 대한 정보 더 찾기",
+          "en": "Find more information about the special catalyst shipment",
+          "optional": false,
+          "map": "factory"
+        }
+      ],
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/6/67/The_Unheard_Transport_Log_Map.jpg/revision/latest/scale-to-width-down/480?cb=20260212204053",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/6/67/The_Unheard_Transport_Log_Map.jpg/revision/latest?cb=20260212204053",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:The_Unheard_Transport_Log_Map.jpg",
+          "caption": "운송 기록 위치",
+          "caption_en": "Transport log location"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/c/cc/Location_of_unheard_log.png/revision/latest/scale-to-width-down/480?cb=20260212203527",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/c/cc/Location_of_unheard_log.png/revision/latest?cb=20260212203527",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Location_of_unheard_log.png",
+          "caption": "노란 드럼통 위 기록",
+          "caption_en": "Log on the yellow barrel"
+        }
+      ]
+    },
+    {
+      "title": "르제프스키의 차량 (시내 LexOs 근처)",
+      "title_en": "Rzhevsky's car (near LexOs on Streets of Tarkov)",
+      "map": "streets-of-tarkov",
+      "tip": "타르코프 시내 LexOs 자동차 대리점 근처의 차량, 가운데 콘솔 위 하드 드라이브 획득. 은신처 정보 수집 시설 1레벨에서 '하드 드라이브 출력물'을 제작해 레이드 밖 퀘스트 인벤토리에서 읽기 (제작 내내 전기 필요).",
+      "tip_en": "Find the vehicle near the LexOs car dealership on Streets of Tarkov and take the hard drive from the center console. Craft the hard drive printout at the Hideout's Intelligence Center level 1, then read it in your off-raid quest inventory. Power is required throughout the craft.",
+      "steps": [
+        {
+          "id": "the-unheard-04",
+          "ko": "르제프스키의 업무 차량 찾아 개인 소지품 얻기",
+          "en": "Locate Rzhevsky's service vehicle and obtain his personal belongings",
+          "optional": false,
+          "map": "streets-of-tarkov"
+        },
+        {
+          "id": "the-unheard-05",
+          "ko": "르제프스키 차량 하드 드라이브의 데이터 꺼내기 (은신처 제작)",
+          "en": "Retrieve the data from the hard drive in Rzhevsky's car",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-unheard-06",
+          "ko": "르제프스키 대화 녹취록 읽기",
+          "en": "Read the transcript of Rzhevsky's conversation",
+          "optional": false,
+          "map": null
+        }
+      ],
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/f/ff/Rzhevsky%27s_Service_Vehicle_on_map.png/revision/latest/scale-to-width-down/480?cb=20260212210853",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/f/ff/Rzhevsky%27s_Service_Vehicle_on_map.png/revision/latest?cb=20260212210853",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Rzhevsky%27s_Service_Vehicle_on_map.png",
+          "caption": "차량 위치",
+          "caption_en": "Vehicle location"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/1/1b/Rzhevsky%27s_Service_Vehicle.png/revision/latest/scale-to-width-down/480?cb=20261011214036",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/1/1b/Rzhevsky%27s_Service_Vehicle.png/revision/latest?cb=20261011214036",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Rzhevsky%27s_Service_Vehicle.png",
+          "caption": "차량",
+          "caption_en": "Vehicle"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/6/69/HDD_in_Rzhevsky%27s_Service_Vehicle.png/revision/latest/scale-to-width-down/480?cb=20260212210438",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/6/69/HDD_in_Rzhevsky%27s_Service_Vehicle.png/revision/latest?cb=20260212210438",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:HDD_in_Rzhevsky%27s_Service_Vehicle.png",
+          "caption": "하드 드라이브",
+          "caption_en": "Hard drive"
+        }
+      ]
+    },
+    {
+      "title": "블루 아이스 촉매 연구 문서 (공장 테라그룹 창고)",
+      "title_en": "Blue Ice catalyst research documents (TerraGroup storage room on Factory)",
+      "map": "factory",
+      "tip": "공장 지하 터널, 스캐브 탈출구 'Camera Bunker Door' 바로 옆 테라그룹 창고. 창고 키카드 필요. 안에서 '연료 촉매 시험 보고서'와 '불탄 문서'를 주워 읽기(위치는 여러 곳 중 하나).",
+      "tip_en": "The TerraGroup storage room is in Factory's underground tunnels, right beside the Camera Bunker Door Scav extract. A TerraGroup storage room keycard is required. Inside, pick up and read the Fuel catalyst test report and the burnt documents; each has several possible spawns.",
+      "steps": [
+        {
+          "id": "the-unheard-07",
+          "ko": "블루 아이스 연료 촉매 연구 문서 찾아서 획득하기",
+          "en": "Locate and obtain the documents on the Blue Ice fuel catalyst research",
+          "optional": false,
+          "map": "factory"
+        },
+        {
+          "id": "the-unheard-08",
+          "ko": "언허드의 계획에 대해 최대한 정보 찾기",
+          "en": "Find as much information as possible about the plans of The Unheard",
+          "optional": false,
+          "map": "factory"
+        }
+      ],
+      "prep": [
+        {
+          "kind": "열쇠",
+          "text": "TerraGroup storage room keycard (테라그룹 창고 키카드)",
+          "text_en": "TerraGroup storage room keycard",
+          "count": null,
+          "fir": false
+        }
+      ],
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/8/89/TerraGroup_storage_room_keycard_map.png/revision/latest/scale-to-width-down/480?cb=20240824194327",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/8/89/TerraGroup_storage_room_keycard_map.png/revision/latest?cb=20240824194327",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:TerraGroup_storage_room_keycard_map.png",
+          "caption": "창고 위치",
+          "caption_en": "Storage room location"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/f/f1/TerraGroup_storage_room_keycard_door.png/revision/latest/scale-to-width-down/480?cb=20240822192018",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/f/f1/TerraGroup_storage_room_keycard_door.png/revision/latest?cb=20240822192018",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:TerraGroup_storage_room_keycard_door.png",
+          "caption": "창고 문",
+          "caption_en": "Storage room door"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/1/19/The_Unheard_Fuel_catalyst_test_report_Spawn_2.png/revision/latest/scale-to-width-down/480?cb=20260213141504",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/1/19/The_Unheard_Fuel_catalyst_test_report_Spawn_2.png/revision/latest?cb=20260213141504",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:The_Unheard_Fuel_catalyst_test_report_Spawn_2.png",
+          "caption": "시험 보고서 위치 1",
+          "caption_en": "Test report spawn 1"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/9/98/The_Unheard_Burnt_document_Spawn_1.png/revision/latest/scale-to-width-down/480?cb=20260213141518",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/9/98/The_Unheard_Burnt_document_Spawn_1.png/revision/latest?cb=20260213141518",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:The_Unheard_Burnt_document_Spawn_1.png",
+          "caption": "불탄 문서 위치 1",
+          "caption_en": "Burnt documents spawn 1"
+        }
+      ]
+    },
+    {
+      "title": "A.P.의 흔적 (연구소)",
+      "title_en": "Traces of A.P. (The Lab)",
+      "map": "the-lab",
+      "tip": "연구소에서 화이트보드 2개 중 하나 찾기(O23 사무실 / R22 관리 사무실) + 강의실의 오디오 테이프 2개 주워 듣기(계단 위, 노트북 옆 책상).",
+      "tip_en": "Find either of the 2 whiteboards in The Lab (office O23 or administration office R22), then pick up and listen to the 2 audio tapes in the lecture room (on the stairs and on the desk beside the laptop).",
+      "steps": [
+        {
+          "id": "the-unheard-09",
+          "ko": "A.P.의 활동에 대해 더 알아보기",
+          "en": "Learn more about A.P.'s activities",
+          "optional": false,
+          "map": "the-lab"
+        },
+        {
+          "id": "the-unheard-10",
+          "ko": "A.P.의 역할에 대해 더 알아보기",
+          "en": "Learn more about A.P.'s role",
+          "optional": false,
+          "map": "the-lab"
+        },
+        {
+          "id": "the-unheard-11",
+          "ko": "연구소에서 A.P.에 대한 언급 찾기",
+          "en": "Search for any mention of A.P. in The Lab",
+          "optional": false,
+          "map": "the-lab"
+        }
+      ],
+      "prep": [
+        {
+          "kind": "가져가기",
+          "text": "TerraGroup Labs access keycard (연구소 출입 카드)",
+          "text_en": "TerraGroup Labs access keycard",
+          "count": null,
+          "fir": false
+        }
+      ],
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/f/f8/APsWhiteboardAndTapes.png/revision/latest/scale-to-width-down/480?cb=20260213221840",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/f/f8/APsWhiteboardAndTapes.png/revision/latest?cb=20260213221840",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:APsWhiteboardAndTapes.png",
+          "caption": "화이트보드·테이프 위치",
+          "caption_en": "Whiteboard and tape locations"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/c/ce/Location_of_first_tapeunheardlabs.png/revision/latest/scale-to-width-down/480?cb=20260213152325",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/c/ce/Location_of_first_tapeunheardlabs.png/revision/latest?cb=20260213152325",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Location_of_first_tapeunheardlabs.png",
+          "caption": "테이프 1",
+          "caption_en": "Tape 1"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/b/b7/Location_of_second_tapetheunheardlabs.png/revision/latest/scale-to-width-down/480?cb=20260213152751",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/b/b7/Location_of_second_tapetheunheardlabs.png/revision/latest?cb=20260213152751",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Location_of_second_tapetheunheardlabs.png",
+          "caption": "테이프 2",
+          "caption_en": "Tape 2"
+        }
+      ]
+    },
+    {
+      "title": "A.P.의 방 (해안선 요양원 동관 305호)",
+      "title_en": "A.P.'s room (Health Resort east wing room 305 on Shoreline)",
+      "map": "shoreline",
+      "tip": "해안선 요양원 동관 305호. 노트북에 꽂힌 'A.P. 슬라이더키 플래시 드라이브', 오른쪽 협탁의 '테라그룹 사택 열쇠' 획득. 왼쪽 협탁의 문서 조각(선택). 방 번호는 서관 1층 남쪽 입구 경비실 옆 책상의 쪽지로 알 수 있음(선택).",
+      "tip_en": "Go to room 305 in the Health Resort east wing on Shoreline. Take the Sliderkey flash drive marked with A.P. from the laptop and the TerraGroup corporate apartment key from the right nightstand. The document fragment on the left nightstand is optional. You can learn the room number from a note on the desk beside the guard room at the south entrance on the west wing's first floor (optional).",
+      "steps": [
+        {
+          "id": "the-unheard-12",
+          "ko": "요양원에서 A.P.의 방 찾기",
+          "en": "Locate A.P.'s room in the Health Resort",
+          "optional": false,
+          "map": "shoreline"
+        },
+        {
+          "id": "the-unheard-13",
+          "ko": "A.P.가 몇 호실이었는지 알아내기",
+          "en": "(Optional) Find out which room A.P. was assigned to",
+          "optional": true,
+          "map": "shoreline"
+        },
+        {
+          "id": "the-unheard-14",
+          "ko": "A.P.의 개인 소지품 얻기 (사택 열쇠)",
+          "en": "Obtain A.P.'s personal belongings",
+          "optional": false,
+          "map": "shoreline"
+        },
+        {
+          "id": "the-unheard-15",
+          "ko": "A.P.의 데이터 저장 장치 얻기 (플래시 드라이브)",
+          "en": "Obtain A.P.'s data storage device",
+          "optional": false,
+          "map": "shoreline"
+        }
+      ],
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/d/d9/HealthResortEastWing.jpg/revision/latest/scale-to-width-down/480?cb=20240520225533",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/d/d9/HealthResortEastWing.jpg/revision/latest?cb=20240520225533",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:HealthResortEastWing.jpg",
+          "caption": "요양원 동관 위치",
+          "caption_en": "Health Resort east wing location"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/b/bc/Sliderkey_flash_drive_marked_with_A.P._spawn.png/revision/latest/scale-to-width-down/480?cb=20260213172048",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/b/bc/Sliderkey_flash_drive_marked_with_A.P._spawn.png/revision/latest?cb=20260213172048",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Sliderkey_flash_drive_marked_with_A.P._spawn.png",
+          "caption": "노트북의 플래시 드라이브",
+          "caption_en": "Flash drive in the laptop"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/7/76/TerraGroup_Corporate_Apartment_Key_Spawn.png/revision/latest/scale-to-width-down/480?cb=20251128023613",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/7/76/TerraGroup_Corporate_Apartment_Key_Spawn.png/revision/latest?cb=20251128023613",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:TerraGroup_Corporate_Apartment_Key_Spawn.png",
+          "caption": "오른쪽 협탁의 열쇠",
+          "caption_en": "Key on the right nightstand"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/5/5a/Guard_post_note_spawn.png/revision/latest/scale-to-width-down/480?cb=20260213172301",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/5/5a/Guard_post_note_spawn.png/revision/latest?cb=20260213172301",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Guard_post_note_spawn.png",
+          "caption": "경비실 쪽지 (선택)",
+          "caption_en": "Guard room note (optional)"
+        }
+      ]
+    },
+    {
+      "title": "플래시 드라이브 해독 → 메카닉 → 일렉트로닉",
+      "title_en": "Decrypt the flash drive → Mechanic → Elektronik",
+      "map": null,
+      "tip": "은신처 정보 수집 시설 1레벨에서 '해독된 A.P. 플래시 드라이브' 제작(전기 필요). 메카닉에게 물어보면 일렉트로닉이 도와줄 수 있다며 500만 루블 요구. 루블과 해독된 드라이브를 메카닉에게 전달. 그 뒤 6~12시간 기다렸다가 메카닉에게 가기 (Mr. Kerman과 연락한 적 있으면 1시간 반 뒤 Kerman이 연락옴).",
+      "tip_en": "Craft the Decrypted Sliderkey flash drive marked with A.P. at the Hideout's Intelligence Center level 1 (power required). Ask Mechanic; he says Elektronik can help and requests 5,000,000 Roubles. Hand the money and decrypted drive to Mechanic. Wait 6–12 hours, then visit him again. If you have contacted Mr. Kerman before, Kerman contacts you after 1.5 hours.",
+      "steps": [
+        {
+          "id": "the-unheard-16",
+          "ko": "A.P. 방의 플래시 드라이브 해독하기 (은신처 제작)",
+          "en": "Decrypt the flash drive from A.P.'s room",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-unheard-17",
+          "ko": "메카닉에게 도움 요청하기",
+          "en": "Ask Mechanic for help",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-unheard-18",
+          "ko": "메카닉에게 500만 루블 전달하기",
+          "en": "Hand over 5,000,000 Roubles to Mechanic",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-unheard-19",
+          "ko": "메카닉에게 A.P. 플래시 드라이브 전달하기",
+          "en": "Hand over the A.P. flash drive to Mechanic",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-unheard-20",
+          "ko": "일렉트로닉의 소식 기다리기",
+          "en": "Wait for the news from Elektronik",
+          "optional": false,
+          "map": null
+        }
+      ],
+      "prep": [
+        {
+          "kind": "제출",
+          "text": "루블",
+          "text_en": "Roubles",
+          "count": 5000000,
+          "fir": false
+        },
+        {
+          "kind": "제출",
+          "text": "Decrypted Sliderkey flash drive marked with A.P. (은신처 제작)",
+          "text_en": "Decrypted Sliderkey flash drive marked with A.P. (crafted in the hideout)",
+          "count": null,
+          "fir": false
+        }
+      ]
+    },
+    {
+      "title": "A.P.의 사택 숨겨진 방 (시내 카디널 단지)",
+      "title_en": "Hidden room in A.P.'s corporate apartment (Cardinal complex on Streets of Tarkov)",
+      "map": "streets-of-tarkov",
+      "tip": "은신처 정보 수집 시설 1레벨에서 A.P. 아파트용 재프로그래밍 키카드(초록) 제작 — 파랑·빨강은 가짜. 타르코프 시내 카디널 아파트 단지 2층 1호(사택 열쇠 필요) → 복도 끝 숨겨진 방을 초록 키카드로 열기 → 안의 문서 4개 주워 읽기.",
+      "tip_en": "Craft the Reprogrammed keycard for A.P.'s apartment lock (Green) at the Hideout's Intelligence Center level 1; the blue and red cards are fake. Enter apartment 1 on the second floor of the Cardinal apartment complex on Streets of Tarkov using the TerraGroup corporate apartment key. Open the hidden room at the end of the corridor with the green keycard, then pick up and read the 4 documents inside.",
+      "steps": [
+        {
+          "id": "the-unheard-21",
+          "ko": "A.P.의 플래시 드라이브 파일을 테라그룹 키카드에 넣기 (은신처 제작)",
+          "en": "Integrate the tech files from A.P.'s flash drive into a TerraGroup keycard",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "the-unheard-22",
+          "ko": "A.P.의 사택 들어가기",
+          "en": "Access A.P.'s corporate apartment",
+          "optional": false,
+          "map": "streets-of-tarkov"
+        },
+        {
+          "id": "the-unheard-23",
+          "ko": "A.P.의 아파트 조사하기",
+          "en": "Investigate A.P.'s apartment",
+          "optional": false,
+          "map": "streets-of-tarkov"
+        },
+        {
+          "id": "the-unheard-24",
+          "ko": "A.P. 아파트의 숨겨진 방 들어가기",
+          "en": "Access the hidden room in A.P.'s apartment",
+          "optional": false,
+          "map": "streets-of-tarkov"
+        },
+        {
+          "id": "the-unheard-25",
+          "ko": "A.P. 사무실의 테라그룹 문서 살펴보기",
+          "en": "Study the TerraGroup documentation in A.P.'s office",
+          "optional": false,
+          "map": "streets-of-tarkov"
+        },
+        {
+          "id": "the-unheard-26",
+          "ko": "언허드 프로토콜에서 블루 아이스 촉매의 역할 알아보기",
+          "en": "Study the role of the Blue Ice catalyst in The Unheard's protocol",
+          "optional": false,
+          "map": "streets-of-tarkov"
+        },
+        {
+          "id": "the-unheard-27",
+          "ko": "언허드 프로토콜에 대해 더 알아보기",
+          "en": "Learn more about The Unheard's protocol",
+          "optional": false,
+          "map": "streets-of-tarkov"
+        },
+        {
+          "id": "the-unheard-28",
+          "ko": "언허드와 타르코프의 관계 알아내기",
+          "en": "Figure out how The Unheard are connected to Tarkov",
+          "optional": false,
+          "map": "streets-of-tarkov"
+        }
+      ],
+      "prep": [
+        {
+          "kind": "열쇠",
+          "text": "TerraGroup corporate apartment key (테라그룹 사택 열쇠)",
+          "text_en": "TerraGroup corporate apartment key",
+          "count": null,
+          "fir": false
+        },
+        {
+          "kind": "가져가기",
+          "text": "Reprogrammed keycard for A.P.'s apartment lock (Green) (은신처 제작)",
+          "text_en": "Reprogrammed keycard for A.P.'s apartment lock (Green) (crafted in the hideout)",
+          "count": null,
+          "fir": false
+        }
+      ],
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/7/70/Cardinal_apartment_complex_Map.jpg/revision/latest/scale-to-width-down/480?cb=20251128013028",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/7/70/Cardinal_apartment_complex_Map.jpg/revision/latest?cb=20251128013028",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Cardinal_apartment_complex_Map.jpg",
+          "caption": "카디널 단지 위치",
+          "caption_en": "Cardinal complex location"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/b/bb/Cardinal_apartment_complex.png/revision/latest/scale-to-width-down/480?cb=20261011213735",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/b/bb/Cardinal_apartment_complex.png/revision/latest?cb=20261011213735",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Cardinal_apartment_complex.png",
+          "caption": "카디널 단지",
+          "caption_en": "Cardinal complex"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/7/7b/TerraGroup_corporate_apartment_key_door.png/revision/latest/scale-to-width-down/480?cb=20251128012350",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/7/7b/TerraGroup_corporate_apartment_key_door.png/revision/latest?cb=20251128012350",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:TerraGroup_corporate_apartment_key_door.png",
+          "caption": "1호 문",
+          "caption_en": "Apartment 1 door"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/d/d6/TerraGroup_corporate_apartment_key_inside_4.png/revision/latest/scale-to-width-down/480?cb=20251128014235",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/d/d6/TerraGroup_corporate_apartment_key_inside_4.png/revision/latest?cb=20251128014235",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:TerraGroup_corporate_apartment_key_inside_4.png",
+          "caption": "숨겨진 방 문",
+          "caption_en": "Hidden room door"
+        }
+      ],
+      "reward": "12만 8천 경험치, 업적 Trail of Breadcrumbs",
+      "reward_en": "128,000 XP; Trail of Breadcrumbs achievement"
+    }
+  ]
+}

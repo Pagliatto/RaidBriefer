@@ -1,0 +1,471 @@
+{
+  "id": "accidental-witness",
+  "name": "Accidental Witness",
+  "library": "https://eftlibrary.com/story/accidental-witness",
+  "wiki": "https://escapefromtarkov.fandom.com/wiki/Accidental_Witness",
+  "requirement": "세관 기숙사 마당의 낙서된 흰색 차를 찾으면 시작",
+  "requirement_en": "Starts when you find the white car covered in graffiti in the dorms courtyard on Customs",
+  "sections": [
+    {
+      "title": "코즐로프의 방 (세관 2층 기숙사)",
+      "title_en": "Kozlov's room (two-story dorm on Customs)",
+      "map": "customs",
+      "tip": "세관 2층 기숙사 1층 110호. 방 번호 아래 쪽지를 읽기. 110호 열쇠로 들어가 협탁 위 편지 읽기. 110호 옆 부엌 벽에 수리점 쪽지(선택).",
+      "tip_en": "Room 110 on the first floor of the two-story dorm on Customs. Read the note below the room number. Use the Dorm room 110 key to enter and read the letter on the nightstand. The repair shop note on the kitchen wall beside room 110 is optional.",
+      "steps": [
+        {
+          "id": "accidental-witness-00",
+          "ko": "코즐로프가 살던 곳 알아내기",
+          "en": "Figure out where Kozlov lived",
+          "optional": false,
+          "map": "customs"
+        },
+        {
+          "id": "accidental-witness-01",
+          "ko": "코즐로프 방문의 쪽지 읽기",
+          "en": "Read the note on Kozlov's door",
+          "optional": false,
+          "map": "customs"
+        },
+        {
+          "id": "accidental-witness-02",
+          "ko": "코즐로프가 무슨 일에 얽혔는지 알아내기",
+          "en": "Find out what Kozlov was involved in",
+          "optional": false,
+          "map": "customs"
+        },
+        {
+          "id": "accidental-witness-03",
+          "ko": "코즐로프의 방 들어가기",
+          "en": "(Optional) Access Kozlov's room",
+          "optional": true,
+          "map": "customs"
+        },
+        {
+          "id": "accidental-witness-04",
+          "ko": "코즐로프 방 열쇠를 어디서 구할지 알아내기",
+          "en": "(Optional) Figure out where to get Kozlov's key",
+          "optional": true,
+          "map": null
+        },
+        {
+          "id": "accidental-witness-05",
+          "ko": "코즐로프의 방 조사하기",
+          "en": "(Optional) Investigate Kozlov's room",
+          "optional": true,
+          "map": "customs"
+        }
+      ],
+      "prep": [
+        {
+          "kind": "열쇠",
+          "text": "Dorm room 110 key (기숙사 110호 열쇠)",
+          "text_en": "Dorm room 110 key",
+          "count": null,
+          "fir": false
+        }
+      ],
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/0/0c/Customs_2_Story_Dorms_Map.png/revision/latest/scale-to-width-down/480?cb=20260207001802",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/0/0c/Customs_2_Story_Dorms_Map.png/revision/latest?cb=20260207001802",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Customs_2_Story_Dorms_Map.png",
+          "caption": "2층 기숙사 위치",
+          "caption_en": "Two-story dorm location"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/2/25/Room_110_Door.png/revision/latest/scale-to-width-down/480?cb=20260416020531",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/2/25/Room_110_Door.png/revision/latest?cb=20260416020531",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Room_110_Door.png",
+          "caption": "110호 문과 쪽지",
+          "caption_en": "Room 110 door and note"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/4/44/Letter_from_Kozlov%27s_room_spawn.png/revision/latest/scale-to-width-down/480?cb=20260207000427",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/4/44/Letter_from_Kozlov%27s_room_spawn.png/revision/latest?cb=20260207000427",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Letter_from_Kozlov%27s_room_spawn.png",
+          "caption": "협탁 위 편지",
+          "caption_en": "Letter on the nightstand"
+        }
+      ]
+    },
+    {
+      "title": "스키어에게 아나스타샤에 대해 묻기",
+      "title_en": "Ask Skier about Anastasia",
+      "map": null,
+      "tip": "상인 화면에서 스키어에게 아나스타샤에 대해 묻기.",
+      "tip_en": "Ask Skier about Anastasia on his trader screen.",
+      "steps": [
+        {
+          "id": "accidental-witness-06",
+          "ko": "상인들에게 아나스타샤에 대해 묻기",
+          "en": "Ask the traders about Anastasia",
+          "optional": false,
+          "map": null
+        }
+      ]
+    },
+    {
+      "title": "스키어 공범의 아파트 (시내 즈메이스키 3)",
+      "title_en": "Skier's accomplice's apartment (Zmeisky 3 on Streets of Tarkov)",
+      "map": "streets-of-tarkov",
+      "tip": "타르코프 시내 즈메이스키 3 건물 1층, 뒷마당 쪽 입구. Zmeisky 3 아파트 열쇠 필요. 안에서 문서 4개를 주워 읽기(FSB 보고서, 제9원 14·19호, 타르코프 헤럴드 요약) — 위치는 여러 군데 중 하나. 그 뒤 시내에서 살아서 탈출.",
+      "tip_en": "First floor of the Zmeisky 3 building on Streets of Tarkov, through the courtyard entrance. Requires the Zmeisky 3 apartment key. Pick up and read 4 documents inside: FSB report, The Ninth Circle Issue #14, The Ninth Circle Issue #19, and Tarkov Herald summary. Each has several possible spawns. Then survive and extract from Streets of Tarkov.",
+      "steps": [
+        {
+          "id": "accidental-witness-07",
+          "ko": "스키어 공범의 아파트 들어가기",
+          "en": "Access Skier's accomplice's apartment",
+          "optional": false,
+          "map": "streets-of-tarkov"
+        },
+        {
+          "id": "accidental-witness-08",
+          "ko": "아파트 열쇠 찾기",
+          "en": "(Optional) Find the key to the apartment",
+          "optional": true,
+          "map": null
+        },
+        {
+          "id": "accidental-witness-09",
+          "ko": "스키어 공범에 대해 더 알아보기",
+          "en": "Learn more about Skier's accomplice",
+          "optional": false,
+          "map": "streets-of-tarkov"
+        },
+        {
+          "id": "accidental-witness-10",
+          "ko": "아파트 조사하기",
+          "en": "(Optional) Investigate the apartment",
+          "optional": true,
+          "map": "streets-of-tarkov"
+        },
+        {
+          "id": "accidental-witness-11",
+          "ko": "공범 아파트의 문서 읽기",
+          "en": "Read the documents in Skier's accomplice's apartment",
+          "optional": false,
+          "map": "streets-of-tarkov"
+        },
+        {
+          "id": "accidental-witness-12",
+          "ko": "타르코프 시내에서 살아서 탈출하기",
+          "en": "Survive and extract from Streets of Tarkov",
+          "optional": false,
+          "map": "streets-of-tarkov"
+        },
+        {
+          "id": "accidental-witness-13",
+          "ko": "스키어에게 보고하기",
+          "en": "Report to Skier",
+          "optional": false,
+          "map": null
+        }
+      ],
+      "prep": [
+        {
+          "kind": "열쇠",
+          "text": "Zmeisky 3 apartment key (즈메이스키 3 아파트 열쇠)",
+          "text_en": "Zmeisky 3 apartment key",
+          "count": null,
+          "fir": false
+        }
+      ],
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/3/36/Zmeevsky3Apt8Map.png/revision/latest/scale-to-width-down/480?cb=20230827020815",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/3/36/Zmeevsky3Apt8Map.png/revision/latest?cb=20230827020815",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Zmeevsky3Apt8Map.png",
+          "caption": "즈메이스키 3 위치",
+          "caption_en": "Zmeisky 3 location"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/d/d1/Zmeevsky3Building.png/revision/latest/scale-to-width-down/480?cb=20230103024026",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/d/d1/Zmeevsky3Building.png/revision/latest?cb=20230103024026",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Zmeevsky3Building.png",
+          "caption": "건물과 입구",
+          "caption_en": "Building and entrance"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/2/25/Zmeevsky3Door2.png/revision/latest/scale-to-width-down/480?cb=20251127232239",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/2/25/Zmeevsky3Door2.png/revision/latest?cb=20251127232239",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Zmeevsky3Door2.png",
+          "caption": "아파트 문",
+          "caption_en": "Apartment door"
+        }
+      ]
+    },
+    {
+      "title": "래그맨 → 아나스타샤의 아파트 (시내 체칸나야 13)",
+      "title_en": "Ragman → Anastasia's apartment (Chekannaya 13 on Streets of Tarkov)",
+      "map": "streets-of-tarkov",
+      "tip": "상인 화면에서 래그맨과 대화. 타르코프 시내 체칸나야 13 아파트 2층에 아나스타샤의 집. 다시 계단으로 내려가 우편함에서 편지와 신문(A. 미하일로바 기사)을 주워 읽기.",
+      "tip_en": "Talk to Ragman on his trader screen. Anastasia's home is on the second floor of the Chekannaya 13 apartment building on Streets of Tarkov. Go back downstairs, then pick up the letter and newspaper with A. Mikhailova's article from the mailbox and read them.",
+      "steps": [
+        {
+          "id": "accidental-witness-14",
+          "ko": "래그맨과 대화하기",
+          "en": "Talk to Ragman",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "accidental-witness-15",
+          "ko": "아나스타샤의 아파트 찾기",
+          "en": "Locate Anastasia's apartment",
+          "optional": false,
+          "map": "streets-of-tarkov"
+        },
+        {
+          "id": "accidental-witness-16",
+          "ko": "아나스타샤에 대해 더 알아보기",
+          "en": "Learn more about Anastasia",
+          "optional": false,
+          "map": "streets-of-tarkov"
+        },
+        {
+          "id": "accidental-witness-17",
+          "ko": "아나스타샤 건물 입구 조사하기 (우편함)",
+          "en": "Investigate the entrance of Anastasia's building",
+          "optional": false,
+          "map": "streets-of-tarkov"
+        }
+      ],
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/c/c5/AccidentalWitnessAnastasiaBuildingMap.png/revision/latest/scale-to-width-down/480?cb=20260209173408",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/c/c5/AccidentalWitnessAnastasiaBuildingMap.png/revision/latest?cb=20260209173408",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:AccidentalWitnessAnastasiaBuildingMap.png",
+          "caption": "건물 위치",
+          "caption_en": "Building location"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/f/f0/AccidentalWitnessAnastasiaBuildingEntrance.png/revision/latest/scale-to-width-down/480?cb=20260616231904",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/f/f0/AccidentalWitnessAnastasiaBuildingEntrance.png/revision/latest?cb=20260616231904",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:AccidentalWitnessAnastasiaBuildingEntrance.png",
+          "caption": "건물 입구",
+          "caption_en": "Building entrance"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/d/dd/AccidentalWitnessAnastasiaMailboxNote1.png/revision/latest/scale-to-width-down/480?cb=20260209172352",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/d/dd/AccidentalWitnessAnastasiaMailboxNote1.png/revision/latest?cb=20260209172352",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:AccidentalWitnessAnastasiaMailboxNote1.png",
+          "caption": "우편함 신문",
+          "caption_en": "Newspaper in the mailbox"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/f/fb/AccidentalWitnessAnastasiaMailboxNote2.png/revision/latest/scale-to-width-down/480?cb=20260209172423",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/f/fb/AccidentalWitnessAnastasiaMailboxNote2.png/revision/latest?cb=20260209172423",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:AccidentalWitnessAnastasiaMailboxNote2.png",
+          "caption": "우편함 편지",
+          "caption_en": "Letter in the mailbox"
+        }
+      ]
+    },
+    {
+      "title": "택배원 파샤의 매복 장소 (세관)",
+      "title_en": "Courier Pasha's ambush site (Customs)",
+      "map": "customs",
+      "tip": "세관 2층 기숙사 옆. 자전거 옆에 있는 봉투를 주워 읽기. 그 뒤 스키어와 대화.",
+      "tip_en": "Beside the two-story dorm on Customs. Pick up and read the envelope next to the bicycle, then talk to Skier.",
+      "steps": [
+        {
+          "id": "accidental-witness-18",
+          "ko": "택배원 파샤 찾기",
+          "en": "Locate courier Pasha",
+          "optional": false,
+          "map": "customs"
+        },
+        {
+          "id": "accidental-witness-19",
+          "ko": "매복 장소 수색하기",
+          "en": "Search the ambush spot",
+          "optional": false,
+          "map": "customs"
+        },
+        {
+          "id": "accidental-witness-20",
+          "ko": "스키어와 대화하기",
+          "en": "Talk to Skier",
+          "optional": false,
+          "map": null
+        }
+      ],
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/7/7b/AccidentalWitnessPashaMap.png/revision/latest/scale-to-width-down/480?cb=20260209183832",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/7/7b/AccidentalWitnessPashaMap.png/revision/latest?cb=20260209183832",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:AccidentalWitnessPashaMap.png",
+          "caption": "매복 장소 위치",
+          "caption_en": "Ambush site location"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/f/f6/AccidentalWitnessPashaLocation.png/revision/latest/scale-to-width-down/480?cb=20260524125533",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/f/f6/AccidentalWitnessPashaLocation.png/revision/latest?cb=20260524125533",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:AccidentalWitnessPashaLocation.png",
+          "caption": "매복 장소",
+          "caption_en": "Ambush site"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/4/43/AccidentalWitnessPashaNote.png/revision/latest/scale-to-width-down/480?cb=20260524125553",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/4/43/AccidentalWitnessPashaNote.png/revision/latest?cb=20260524125553",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:AccidentalWitnessPashaNote.png",
+          "caption": "자전거 옆 쪽지",
+          "caption_en": "Note beside the bicycle"
+        }
+      ]
+    },
+    {
+      "title": "르샬라의 은신처 (세관 숙소)",
+      "title_en": "Reshala's stash (bunkhouse on Customs)",
+      "map": "customs",
+      "tip": "세관에 있는 르샬라의 숙소. Reshala's bunkhouse key 필요(르샬라 처치 시 획득 가능, 선택). 안에 쪽지 3개(왼쪽 벽, 의자 위, 오른쪽 벽)를 주워 읽기.",
+      "tip_en": "Go to Reshala's bunkhouse on Customs. Requires Reshala's bunkhouse key, which can be obtained by killing Reshala (optional). Pick up and read the 3 notes inside: on the left wall, on the chair, and on the right wall.",
+      "steps": [
+        {
+          "id": "accidental-witness-21",
+          "ko": "르샬라의 은신처 찾기",
+          "en": "Locate Reshala's stash",
+          "optional": false,
+          "map": "customs"
+        },
+        {
+          "id": "accidental-witness-22",
+          "ko": "르샬라 찾아서 사살하기",
+          "en": "(Optional) Locate and neutralize Reshala",
+          "optional": true,
+          "map": "customs"
+        },
+        {
+          "id": "accidental-witness-23",
+          "ko": "르샬라 은신처 열쇠 얻기",
+          "en": "(Optional) Obtain the key to Reshala's stash",
+          "optional": true,
+          "map": null
+        },
+        {
+          "id": "accidental-witness-24",
+          "ko": "르샬라의 숙소 조사하기",
+          "en": "Investigate Reshala's bunkhouse",
+          "optional": false,
+          "map": "customs"
+        },
+        {
+          "id": "accidental-witness-25",
+          "ko": "르샬라의 작업 메모 얻기",
+          "en": "(Optional) Obtain Reshala's work notes",
+          "optional": true,
+          "map": "customs"
+        },
+        {
+          "id": "accidental-witness-26",
+          "ko": "택배원 파샤의 소지품 얻기",
+          "en": "(Optional) Obtain courier Pasha's belongings",
+          "optional": true,
+          "map": "customs"
+        }
+      ],
+      "prep": [
+        {
+          "kind": "열쇠",
+          "text": "Reshala's bunkhouse key (르샬라 숙소 열쇠)",
+          "text_en": "Reshala's bunkhouse key",
+          "count": null,
+          "fir": false
+        }
+      ],
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/8/89/ReshalasBunkhouseKeyMap.png/revision/latest/scale-to-width-down/480?cb=20251127230734",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/8/89/ReshalasBunkhouseKeyMap.png/revision/latest?cb=20251127230734",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:ReshalasBunkhouseKeyMap.png",
+          "caption": "숙소 위치",
+          "caption_en": "Bunkhouse location"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/5/5c/ReshalasBunkhouse.png/revision/latest/scale-to-width-down/480?cb=20251127233757",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/5/5c/ReshalasBunkhouse.png/revision/latest?cb=20251127233757",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:ReshalasBunkhouse.png",
+          "caption": "숙소 문",
+          "caption_en": "Bunkhouse door"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/8/8e/AccidentalWitnessReshalasStashNote1.png/revision/latest/scale-to-width-down/480?cb=20260209185407",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/8/8e/AccidentalWitnessReshalasStashNote1.png/revision/latest?cb=20260209185407",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:AccidentalWitnessReshalasStashNote1.png",
+          "caption": "쪽지 1",
+          "caption_en": "Note 1"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/1/1f/AccidentalWitnessReshalasStashNote2.png/revision/latest/scale-to-width-down/480?cb=20260209185414",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/1/1f/AccidentalWitnessReshalasStashNote2.png/revision/latest?cb=20260209185414",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:AccidentalWitnessReshalasStashNote2.png",
+          "caption": "쪽지 2",
+          "caption_en": "Note 2"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/9/90/AccidentalWitnessReshalasStashNote3.png/revision/latest/scale-to-width-down/480?cb=20260209185421",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/9/90/AccidentalWitnessReshalasStashNote3.png/revision/latest?cb=20260209185421",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:AccidentalWitnessReshalasStashNote3.png",
+          "caption": "쪽지 3",
+          "caption_en": "Note 3"
+        }
+      ]
+    },
+    {
+      "title": "코즐로프의 은신처 (해안선 서쪽 마을)",
+      "title_en": "Kozlov's hideout (west village on Shoreline)",
+      "map": "shoreline",
+      "tip": "해안선 서쪽 마을 동쪽 편 3번 집. 입구 옆 화단에서 오디오 테이프를 주워 듣기. 집 안 바닥에 아나스타샤 사진 신문 조각(선택).",
+      "tip_en": "House 3 in the eastern part of the west village on Shoreline. Pick up and listen to the audio tape in the flower bed beside the entrance. The newspaper clipping with Anastasia's photo on the floor inside is optional.",
+      "steps": [
+        {
+          "id": "accidental-witness-27",
+          "ko": "코즐로프의 은신처 찾기",
+          "en": "Locate Kozlov's hideout",
+          "optional": false,
+          "map": "shoreline"
+        },
+        {
+          "id": "accidental-witness-28",
+          "ko": "코즐로프의 증거 찾아서 획득하기",
+          "en": "Locate and obtain Kozlov's evidence",
+          "optional": false,
+          "map": "shoreline"
+        }
+      ],
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/5/51/AccidentalWitnessKozlovsHideoutMap.png/revision/latest/scale-to-width-down/480?cb=20260209191611",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/5/51/AccidentalWitnessKozlovsHideoutMap.png/revision/latest?cb=20260209191611",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:AccidentalWitnessKozlovsHideoutMap.png",
+          "caption": "은신처 위치",
+          "caption_en": "Hideout location"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/4/40/AccidentalWitnessKozlovsHideout2.png/revision/latest/scale-to-width-down/480?cb=20260103043250",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/4/40/AccidentalWitnessKozlovsHideout2.png/revision/latest?cb=20260103043250",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:AccidentalWitnessKozlovsHideout2.png",
+          "caption": "집",
+          "caption_en": "House"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/5/59/AccidentalWitnessKozlovsHideoutTapeFar.png/revision/latest/scale-to-width-down/480?cb=20260103043701",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/5/59/AccidentalWitnessKozlovsHideoutTapeFar.png/revision/latest?cb=20260103043701",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:AccidentalWitnessKozlovsHideoutTapeFar.png",
+          "caption": "화단",
+          "caption_en": "Flower bed"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/e/e2/AccidentalWitnessKozlovsHideoutTapeClose.png/revision/latest/scale-to-width-down/480?cb=20260103043307",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/e/e2/AccidentalWitnessKozlovsHideoutTapeClose.png/revision/latest?cb=20260103043307",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:AccidentalWitnessKozlovsHideoutTapeClose.png",
+          "caption": "테이프",
+          "caption_en": "Tape"
+        }
+      ],
+      "reward": "6만 4천 경험치, 업적 Pay Your Debt",
+      "reward_en": "64,000 XP; Pay Your Debt achievement"
+    }
+  ]
+}

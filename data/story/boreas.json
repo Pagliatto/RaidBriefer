@@ -1,0 +1,1148 @@
+{
+  "id": "boreas",
+  "name": "Boreas",
+  "library": "https://eftlibrary.com/story/boreas",
+  "wiki": "https://escapefromtarkov.fandom.com/wiki/Boreas",
+  "requirement": "Paradigm Shipping 포스터를 얻거나, 은신처 정보 수집 시설 3레벨 무전기로 조난 신호를 확인하면 시작",
+  "requirement_en": "Starts when you obtain a Paradigm Shipping poster or check the distress signal on the radio at the Hideout's Intelligence Center level 3",
+  "sections": [
+    {
+      "title": "메카닉 · 삼림 통신탑 장비 수리",
+      "title_en": "Mechanic · Repair the equipment beneath the Woods communications tower",
+      "map": "woods",
+      "tip": "상인 화면에서 메카닉에게 조난 신호에 대해 묻기. 삼림 스캐브 벙커(통신탑 아래)의 장비를 공구 세트로 수리(공구 세트는 사라짐). 메카닉에게 보고.",
+      "tip_en": "Ask Mechanic about the distress signal on his trader screen. Repair the equipment in the Scav bunker beneath the communications tower on Woods with a Toolset, which is consumed. Report back to Mechanic.",
+      "steps": [
+        {
+          "id": "boreas-00",
+          "ko": "상인들에게 테라그룹과 Paradigm Shipping의 관계 묻기 / 메카닉에게 조난 신호 출처 묻기",
+          "en": "Find out from traders more about the connection between TerraGroup and Paradigm Shipping/Ask Mechanic where the distress signal came from",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "boreas-01",
+          "ko": "삼림 통신탑 아래 장비 찾기",
+          "en": "Locate the equipment under the cellular tower on Woods",
+          "optional": false,
+          "map": "woods"
+        },
+        {
+          "id": "boreas-02",
+          "ko": "삼림 통신탑 아래 장비 수리하기",
+          "en": "Repair the equipment under the cellular tower on Woods",
+          "optional": false,
+          "map": "woods"
+        },
+        {
+          "id": "boreas-03",
+          "ko": "메카닉에게 보고하기",
+          "en": "Report back to Mechanic",
+          "optional": false,
+          "map": null
+        }
+      ],
+      "prep": [
+        {
+          "kind": "가져가기",
+          "text": "공구 세트 (Toolset) - 수리에 사용, 인레이드 아니어도 됨",
+          "text_en": "Toolset - used for repairs; does not need to be Found in Raid",
+          "count": 1,
+          "fir": false
+        }
+      ],
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/2/28/ThirstyDeliveryWoodsMap.png/revision/latest/scale-to-width-down/480?cb=20240710151841",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/2/28/ThirstyDeliveryWoodsMap.png/revision/latest?cb=20240710151841",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:ThirstyDeliveryWoodsMap.png",
+          "caption": "스캐브 벙커 위치",
+          "caption_en": "Scav bunker location"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/d/d3/Boreas_Equipment.png/revision/latest/scale-to-width-down/480?cb=20261011220316",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/d/d3/Boreas_Equipment.png/revision/latest?cb=20261011220316",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Boreas_Equipment.png",
+          "caption": "수리할 장비",
+          "caption_en": "Equipment to repair"
+        }
+      ]
+    },
+    {
+      "title": "Paradigm Shipping 문서 (등대 화물역)",
+      "title_en": "Paradigm Shipping document (Lighthouse freight station)",
+      "map": "lighthouse",
+      "tip": "등대 북쪽 화물역 창고, 램프 옆 탁자의 'Paradigm Shipping 지시서' 읽기. 메카닉에게 '보레아스'에 대해 말하기.",
+      "tip_en": "Read the Paradigm Shipping instructions on the table beside the lamp in the warehouse at the northern freight station on Lighthouse. Tell Mechanic about Boreas.",
+      "steps": [
+        {
+          "id": "boreas-04",
+          "ko": "Paradigm Shipping 문서 찾아서 획득하기",
+          "en": "Locate and obtain the Paradigm Shipping documentation",
+          "optional": false,
+          "map": "lighthouse"
+        },
+        {
+          "id": "boreas-05",
+          "ko": "메카닉에게 '보레아스'에 대해 말하기",
+          "en": "Tell Mechanic about \"Boreas\"",
+          "optional": false,
+          "map": null
+        }
+      ],
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/6/65/Boreas_Lighthouse_Warehouse_Map.png/revision/latest/scale-to-width-down/480?cb=20260525193846",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/6/65/Boreas_Lighthouse_Warehouse_Map.png/revision/latest?cb=20260525193846",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Boreas_Lighthouse_Warehouse_Map.png",
+          "caption": "창고 위치",
+          "caption_en": "Warehouse location"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/d/d5/Boreas_Paradigm_Shipping_Directive.png/revision/latest/scale-to-width-down/480?cb=20260525193518",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/d/d5/Boreas_Paradigm_Shipping_Directive.png/revision/latest?cb=20260525193518",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Boreas_Paradigm_Shipping_Directive.png",
+          "caption": "탁자의 지시서",
+          "caption_en": "Instructions on the table"
+        }
+      ]
+    },
+    {
+      "title": "쇄빙선 수송 준비 ① 프라퍼",
+      "title_en": "Arrange transport to Icebreaker 1: Prapor",
+      "map": "reserve",
+      "tip": "상인 화면에서 프라퍼에게 수송을 물어보기. Falling Skies 결과에 맞는 과제만 자동으로 보여요: 장갑 케이스를 가졌으면 → 인레이드 군용 전원 필터 3개 / Falling Skies를 안 끝냈으면 → 리저브에서 30명 처치 + 리저브 삼림 트랜짓에서 노란 신호탄 하늘로 발사(RSP-30 노랑은 프라퍼 1레벨, 26x75 노랑 탄은 예거 1레벨). 공통: 리저브에서 AMG-10 유압유(퀘스트 아이템) 찾아 전달 — 흑색 비숍 지하 북쪽 창고 선반 또는 연병장 헬기 안·뒤.",
+      "tip_en": "Ask Prapor about transport on his trader screen. Only tasks matching your Falling Skies outcome are shown automatically. Kept the armored case: hand over 3 Found in Raid Military power filters. Have not finished Falling Skies: kill 30 enemies on Reserve and fire a yellow flare into the sky at the Reserve → Woods Transit (RSP-30 Yellow from Prapor Loyalty Level 1; 26x75mm yellow flare cartridge from Jaeger Loyalty Level 1). All routes: find and hand over AMG-10 hydraulic fluid, a quest item on Reserve. Look on the shelf in the northern basement storage room of Black Bishop, or inside/behind the helicopter on the parade ground.",
+      "steps": [
+        {
+          "id": "boreas-06",
+          "ko": "쇄빙선까지 수송편 마련하기",
+          "en": "Arrange a transport to the icebreaker",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "boreas-07",
+          "ko": "AMG-10 유압유 프라퍼에게 전달하기",
+          "en": "Hand over the AMG-10 fluid to Prapor",
+          "optional": false,
+          "map": "reserve",
+          "when": {
+            "falling-skies@case": "given"
+          }
+        },
+        {
+          "id": "boreas-08",
+          "ko": "인레이드 군용 전원 필터 3개 프라퍼에게 전달하기 (장갑 케이스를 가진 경우)",
+          "en": "Hand over 3 found in raid Military power filters to Prapor",
+          "optional": false,
+          "map": null,
+          "when": {
+            "falling-skies@case": "kept"
+          }
+        },
+        {
+          "id": "boreas-09",
+          "ko": "AMG-10 유압유 프라퍼에게 전달하기",
+          "en": "Hand over the AMG-10 fluid to Prapor",
+          "optional": false,
+          "map": "reserve",
+          "when": {
+            "falling-skies@case": "kept"
+          }
+        },
+        {
+          "id": "boreas-10",
+          "ko": "리저브에서 아무 적 30명 사살하기 (Falling Skies 미완료 시)",
+          "en": "Eliminate any 30 targets on Reserve",
+          "optional": false,
+          "map": "reserve",
+          "when": {
+            "done:falling-skies": false
+          }
+        },
+        {
+          "id": "boreas-11",
+          "ko": "리저브 삼림 트랜짓에서 노란 신호탄 쏘기 (Falling Skies 미완료 시)",
+          "en": "Launch a yellow signal flare at the Woods transit on Reserve",
+          "optional": false,
+          "map": "reserve",
+          "when": {
+            "done:falling-skies": false
+          }
+        },
+        {
+          "id": "boreas-12",
+          "ko": "AMG-10 유압유 프라퍼에게 전달하기",
+          "en": "Hand over the AMG-10 fluid to Prapor",
+          "optional": false,
+          "map": "reserve",
+          "when": {
+            "done:falling-skies": false
+          }
+        }
+      ],
+      "prep": [
+        {
+          "kind": "제출",
+          "text": "AMG-10 hydraulic fluid (퀘스트 아이템, 리저브)",
+          "text_en": "AMG-10 hydraulic fluid (quest item, Reserve)",
+          "quest_item": true,
+          "count": null,
+          "fir": true
+        },
+        {
+          "kind": "가져가기",
+          "text": "노란 신호탄: RSP-30 (Yellow) 또는 26x75mm 노랑 탄 + 신호권총",
+          "text_en": "Yellow flare: RSP-30 (Yellow) or 26x75mm yellow flare cartridge + flare gun",
+          "count": null,
+          "fir": false,
+          "when": {
+            "done:falling-skies": false
+          }
+        }
+      ],
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/a/a2/AMG-10_hydraulic_fluid_Spawn_Map.png/revision/latest/scale-to-width-down/480?cb=20261018154114",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/a/a2/AMG-10_hydraulic_fluid_Spawn_Map.png/revision/latest?cb=20261018154114",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:AMG-10_hydraulic_fluid_Spawn_Map.png",
+          "caption": "AMG-10 위치들",
+          "caption_en": "AMG-10 locations"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/a/a3/ReserveTransitToWoodsMap.png/revision/latest/scale-to-width-down/480?cb=20250101212400",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/a/a3/ReserveTransitToWoodsMap.png/revision/latest?cb=20250101212400",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:ReserveTransitToWoodsMap.png",
+          "caption": "리저브 삼림 트랜짓 위치",
+          "caption_en": "Reserve → Woods Transit location"
+        }
+      ]
+    },
+    {
+      "title": "쇄빙선 수송 준비 ② BTR 운전수",
+      "title_en": "Arrange transport to Icebreaker 2: BTR Driver",
+      "map": null,
+      "tip": "BTR 운전수에게 수송을 물어보기. BTR 운전수 퀘스트 완료 여부(게임 로그)에 맞는 과제만 자동으로 보여요: The Price of Independence 완료 → 은신처로 돌아가기(탈출 또는 사망) / Choose Your Friends Wisely 완료 → 7.62x54R BT 200발 + 세관 스캐브 기지~연구소 사이 도랑의 스키어 보고서 획득 후 세관 아무 드럼통에 태우기 + 밀수꾼 구역(해안선·인터체인지) 15명 처치 / 둘 다 안 했으면 → 밀수꾼 구역 10명 처치. 끝나면 BTR 운전수에게 보고 후 메카닉에게 수송편 찾았다고 말하기. ⚠ Choose Your Friends Wisely와 The Price of Independence는 둘 중 하나만 할 수 있고, Choose Your Friends Wisely를 끝내면 The Ticket 구원자 엔딩이 막혀요(생존자로 바뀜).",
+      "tip_en": "Ask the BTR Driver about transport. Only tasks matching your BTR Driver quest completions in the game log are shown automatically. Completed The Price of Independence: return to the hideout by extracting or dying. Completed Choose Your Friends Wisely: hand over 200 rounds of 7.62x54R BT, retrieve Skier's report from the ditch between the Scav base and the laboratory on Customs and burn it in any barrel on Customs, and kill 15 enemies in the Smuggler areas on Shoreline or Interchange. Completed neither: kill 10 enemies in the Smuggler areas. Report back to the BTR Driver, then tell Mechanic you found transport. ⚠ Choose Your Friends Wisely and The Price of Independence are mutually exclusive. Completing Choose Your Friends Wisely blocks The Ticket's Savior ending and switches it to Survivor.",
+      "steps": [
+        {
+          "id": "boreas-13",
+          "ko": "쇄빙선까지 다른 수송편 찾기",
+          "en": "Find an alternative transport to the icebreaker",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "boreas-14",
+          "ko": "BTR 운전수와 대화하기",
+          "en": "Talk to the BTR Driver",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "boreas-15",
+          "ko": "은신처로 돌아가기 (The Price of Independence 완료 시)",
+          "en": "Return to the Hideout",
+          "optional": false,
+          "map": null,
+          "when": {
+            "quest:6744af0969a58fceba101fed,6745cbee909d2013670a4a55": true
+          }
+        },
+        {
+          "id": "boreas-16",
+          "ko": "BTR 운전수에게 돌아가기",
+          "en": "Return to the BTR Driver",
+          "optional": false,
+          "map": null,
+          "when": {
+            "quest:6744af0969a58fceba101fed,6745cbee909d2013670a4a55": true
+          }
+        },
+        {
+          "id": "boreas-17",
+          "ko": "메카닉에게 쇄빙선 수송편을 찾았다고 말하기",
+          "en": "Tell Mechanic that you found transport to the icebreaker",
+          "optional": false,
+          "map": null,
+          "when": {
+            "quest:6744af0969a58fceba101fed,6745cbee909d2013670a4a55": true
+          }
+        },
+        {
+          "id": "boreas-18",
+          "ko": "7.62x54mm R BT 200발 전달하기 (Choose Your Friends Wisely 완료 시)",
+          "en": "Hand over 200 7.62x54mm R BT gzh",
+          "optional": false,
+          "map": null,
+          "when": {
+            "quest:67460662d0fbbc74ca0f7229": true
+          }
+        },
+        {
+          "id": "boreas-19",
+          "ko": "세관에서 스키어의 보고서 찾아서 획득하기",
+          "en": "Locate and obtain Skier's reports on Customs",
+          "optional": false,
+          "map": "customs",
+          "when": {
+            "quest:67460662d0fbbc74ca0f7229": true
+          }
+        },
+        {
+          "id": "boreas-20",
+          "ko": "세관에서 스키어의 보고서 태우기",
+          "en": "Burn Skier's reports on Customs",
+          "optional": false,
+          "map": "customs",
+          "when": {
+            "quest:67460662d0fbbc74ca0f7229": true
+          }
+        },
+        {
+          "id": "boreas-21",
+          "ko": "밀수꾼 구역에서 아무 적 15명 사살하기",
+          "en": "Eliminate any 15 targets at the smugglers' territories",
+          "optional": false,
+          "map": null,
+          "when": {
+            "quest:67460662d0fbbc74ca0f7229": true
+          }
+        },
+        {
+          "id": "boreas-22",
+          "ko": "BTR 운전수에게 보고하기",
+          "en": "Report back to the BTR Driver",
+          "optional": false,
+          "map": null,
+          "when": {
+            "quest:67460662d0fbbc74ca0f7229": true
+          }
+        },
+        {
+          "id": "boreas-23",
+          "ko": "메카닉에게 쇄빙선 수송편을 찾았다고 말하기",
+          "en": "Tell Mechanic that you found transport to the icebreaker",
+          "optional": false,
+          "map": null,
+          "when": {
+            "quest:67460662d0fbbc74ca0f7229": true
+          }
+        },
+        {
+          "id": "boreas-24",
+          "ko": "밀수꾼 구역에서 아무 적 10명 사살하기 (두 퀘스트 모두 미완료 시)",
+          "en": "Eliminate any 10 targets at the smugglers' territories",
+          "optional": false,
+          "map": null,
+          "when": {
+            "quest:6744af0969a58fceba101fed,6745cbee909d2013670a4a55": false,
+            "quest:67460662d0fbbc74ca0f7229": false
+          }
+        },
+        {
+          "id": "boreas-25",
+          "ko": "BTR 운전수에게 보고하기",
+          "en": "Report back to the BTR Driver",
+          "optional": false,
+          "map": null,
+          "when": {
+            "quest:6744af0969a58fceba101fed,6745cbee909d2013670a4a55": false,
+            "quest:67460662d0fbbc74ca0f7229": false
+          }
+        },
+        {
+          "id": "boreas-26",
+          "ko": "메카닉에게 쇄빙선 수송편을 찾았다고 말하기",
+          "en": "Tell Mechanic that you found transport to the icebreaker",
+          "optional": false,
+          "map": null,
+          "when": {
+            "quest:6744af0969a58fceba101fed,6745cbee909d2013670a4a55": false,
+            "quest:67460662d0fbbc74ca0f7229": false
+          }
+        }
+      ],
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/7/74/Boreas_Skiers_Docs_Map.png/revision/latest/scale-to-width-down/480?cb=20260525235824",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/7/74/Boreas_Skiers_Docs_Map.png/revision/latest?cb=20260525235824",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Boreas_Skiers_Docs_Map.png",
+          "caption": "스키어 보고서 위치",
+          "caption_en": "Skier's report location"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/d/da/Customs_Scav_Base_Fire_Barrel.png/revision/latest/scale-to-width-down/480?cb=20260526004307",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/d/da/Customs_Scav_Base_Fire_Barrel.png/revision/latest?cb=20260526004307",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Customs_Scav_Base_Fire_Barrel.png",
+          "caption": "스캐브 기지 드럼통",
+          "caption_en": "Barrel at the Scav base"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/b/b5/Shoreline_Smuggler_Base_Map.png/revision/latest/scale-to-width-down/480?cb=20260525233045",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/b/b5/Shoreline_Smuggler_Base_Map.png/revision/latest?cb=20260525233045",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Shoreline_Smuggler_Base_Map.png",
+          "caption": "해안선 밀수꾼 기지",
+          "caption_en": "Smuggler base on Shoreline"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/6/69/Interchange_Smuggler_Base_Map.jpg/revision/latest/scale-to-width-down/480?cb=20260525233428",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/6/69/Interchange_Smuggler_Base_Map.jpg/revision/latest?cb=20260525233428",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Interchange_Smuggler_Base_Map.jpg",
+          "caption": "인터체인지 밀수꾼 기지",
+          "caption_en": "Smuggler base on Interchange"
+        }
+      ]
+    },
+    {
+      "title": "쇄빙선 첫 방문 · 엔진실",
+      "title_en": "First Icebreaker visit · Engine room",
+      "map": "icebreaker",
+      "tip": "해안선 또는 등대 부두의 밀수꾼 호버크래프트에 Sudak-Tudak 선박 수리 키트를 들고 타기. 쇄빙선에서 나오려면 초록 신호탄과 2,500유로 필요. 1층 동쪽 인터폰으로 생존 과학자와 대화. 1층 가운데 의무실 기술자 시신 옆 엔진실 키카드 → 0층 동쪽 제어실 옆 문 → 1층 엔진실 문 열고 -2층(중간쯤 블랙 디비전 등장).",
+      "tip_en": "Board the Smugglers' hovercraft at the pier on Shoreline or Lighthouse with a Sudak-Tudak marine repair kit. You need a green flare and 2,500 Euros to leave Icebreaker. Talk to the surviving scientist through the intercom on the east side of floor 1. Take the engine room keycard beside the technician's body in the central infirmary on floor 1. Go through the door beside the eastern control room on floor 0, open the engine room door on floor 1, then head to floor -2. Black Division appears partway along the route.",
+      "steps": [
+        {
+          "id": "boreas-27",
+          "ko": "해안선 또는 등대에서 밀수꾼 호버크래프트 타기",
+          "en": "Board the smuggler hovercraft on Shoreline or Lighthouse",
+          "optional": false,
+          "map": [
+            "shoreline",
+            "lighthouse"
+          ]
+        },
+        {
+          "id": "boreas-28",
+          "ko": "선박 수리 키트 챙겨 가기",
+          "en": "(Optional) Bring a marine repair kit",
+          "optional": true,
+          "map": null
+        },
+        {
+          "id": "boreas-29",
+          "ko": "초록 RSP 신호탄 챙겨 가기",
+          "en": "(Optional) Bring a green RSP signal flare",
+          "optional": true,
+          "map": null
+        },
+        {
+          "id": "boreas-30",
+          "ko": "쇄빙선 탈출 비용 2,500유로 챙겨 가기",
+          "en": "(Optional) Bring 2,500 Euros to pay for the evacuation from the icebreaker",
+          "optional": true,
+          "map": null
+        },
+        {
+          "id": "boreas-31",
+          "ko": "쇄빙선 도착하기",
+          "en": "Arrive at the Icebreaker",
+          "optional": false,
+          "map": "icebreaker"
+        },
+        {
+          "id": "boreas-32",
+          "ko": "살아남은 승무원이 있는지 확인하기 (인터폰)",
+          "en": "Check if any crew members survived on the ship",
+          "optional": false,
+          "map": "icebreaker"
+        },
+        {
+          "id": "boreas-33",
+          "ko": "엔진실 들어가기",
+          "en": "Access the engine room",
+          "optional": false,
+          "map": "icebreaker"
+        },
+        {
+          "id": "boreas-34",
+          "ko": "엔진실 키카드 찾아서 획득하기",
+          "en": "(Optional) Locate and obtain the engine room keycard",
+          "optional": true,
+          "map": "icebreaker"
+        },
+        {
+          "id": "boreas-35",
+          "ko": "엔진실 도착하기",
+          "en": "(Optional) Reach the engine room",
+          "optional": true,
+          "map": "icebreaker"
+        }
+      ],
+      "prep": [
+        {
+          "kind": "가져가기",
+          "text": "Sudak-Tudak marine repair kit (선박 수리 키트) - 탑승 필수",
+          "text_en": "Sudak-Tudak marine repair kit - required to board",
+          "count": null,
+          "fir": false
+        },
+        {
+          "kind": "가져가기",
+          "text": "초록 신호탄 (RSP-30 Green) - 쇄빙선에서 나올 때",
+          "text_en": "RSP-30 reactive signal cartridge (Green) - when leaving Icebreaker",
+          "count": null,
+          "fir": false
+        },
+        {
+          "kind": "가져가기",
+          "text": "유로 - 쇄빙선에서 나올 때",
+          "text_en": "Euros - when leaving Icebreaker",
+          "count": 2500,
+          "fir": false
+        }
+      ],
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/8/80/ShorelineTransitToIcebreakerMap.png/revision/latest/scale-to-width-down/480?cb=20260604185437",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/8/80/ShorelineTransitToIcebreakerMap.png/revision/latest?cb=20260604185437",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:ShorelineTransitToIcebreakerMap.png",
+          "caption": "해안선 호버크래프트 위치",
+          "caption_en": "Hovercraft location on Shoreline"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/c/cf/LighthouseTransitToIcebreakerMap.png/revision/latest/scale-to-width-down/480?cb=20260908131058",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/c/cf/LighthouseTransitToIcebreakerMap.png/revision/latest?cb=20260908131058",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:LighthouseTransitToIcebreakerMap.png",
+          "caption": "등대 호버크래프트 위치",
+          "caption_en": "Hovercraft location on Lighthouse"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/8/8b/BoreasScientistIntercomMap.jpg/revision/latest/scale-to-width-down/480?cb=20260530051548",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/8/8b/BoreasScientistIntercomMap.jpg/revision/latest?cb=20260530051548",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:BoreasScientistIntercomMap.jpg",
+          "caption": "인터폰 위치",
+          "caption_en": "Intercom location"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/a/a6/BoreasEngineRoomKeycardDoorMap.jpg/revision/latest/scale-to-width-down/480?cb=20260530021556",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/a/a6/BoreasEngineRoomKeycardDoorMap.jpg/revision/latest?cb=20260530021556",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:BoreasEngineRoomKeycardDoorMap.jpg",
+          "caption": "엔진실 키카드 문 위치",
+          "caption_en": "Engine room keycard door location"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/4/40/BoreasEngineRoomMap.jpg/revision/latest/scale-to-width-down/480?cb=20260530052746",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/4/40/BoreasEngineRoomMap.jpg/revision/latest?cb=20260530052746",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:BoreasEngineRoomMap.jpg",
+          "caption": "엔진실 위치",
+          "caption_en": "Engine room location"
+        }
+      ]
+    },
+    {
+      "title": "상부 구조물 진입로 · 폭약",
+      "title_en": "Route to the superstructure · Explosives",
+      "map": "icebreaker",
+      "tip": "탈출 지점 대신 두 층 아래로 → 헬기장 돌아서 배 옆면 끝 → 3층의 쇠사슬 문 찾기(헬기장 위·아래에 블랙 디비전). 문을 열려고 하면 폭약이 필요하다고 나옴 → 탈출 가능. 메카닉과 프라퍼에게 폭약 묻기 → 프라퍼 1레벨에서 SZ-1 폭약 구매 가능.",
+      "tip_en": "Go 2 floors below the extraction point, around the helipad, and along the side of the ship to the end. Find the chained door on floor 3; Black Division is above and below the helipad. Try to open it to learn that explosives are needed, then you can extract. Ask Mechanic and Prapor about explosives; the SZ-1 explosive charge becomes available from Prapor Loyalty Level 1.",
+      "steps": [
+        {
+          "id": "boreas-36",
+          "ko": "쇄빙선 상부 구조물로 들어갈 방법 찾기",
+          "en": "Find a way into the icebreaker superstructure",
+          "optional": false,
+          "map": "icebreaker"
+        },
+        {
+          "id": "boreas-37",
+          "ko": "메카닉에게 폭약에 대해 묻기",
+          "en": "Ask Mechanic about explosives",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "boreas-38",
+          "ko": "프라퍼에게 폭약에 대해 묻기",
+          "en": "Ask Prapor about explosives",
+          "optional": false,
+          "map": null
+        }
+      ],
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/5/50/BoreasDamagedDoorMap.jpg/revision/latest/scale-to-width-down/480?cb=20260530071450",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/5/50/BoreasDamagedDoorMap.jpg/revision/latest?cb=20260530071450",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:BoreasDamagedDoorMap.jpg",
+          "caption": "쇠사슬 문 위치",
+          "caption_en": "Chained door location"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/f/ff/BoreasSuperstructureWay.png/revision/latest/scale-to-width-down/480?cb=20260530080045",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/f/ff/BoreasSuperstructureWay.png/revision/latest?cb=20260530080045",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:BoreasSuperstructureWay.png",
+          "caption": "상부 구조물로 가는 길",
+          "caption_en": "Route to the superstructure"
+        }
+      ]
+    },
+    {
+      "title": "쇄빙선 두 번째 방문 · 승무원 구역",
+      "title_en": "Second Icebreaker visit · Crew quarters",
+      "map": "icebreaker",
+      "tip": "다시 쇄빙선 → 쇠사슬 문에 SZ-1 폭약 설치해 부수기 → 승무원 구역(입구에 최루탄 부비트랩, 안에 The Wedge 분대) 정리 → 5층에서 밖으로 나가 계단으로 6층 코드 잠금 문까지. 인터폰으로 과학자에게 코드 묻기 → 메카닉에게 코드 두 번째 부분 부탁 → 연구소 1층 서버실에 해킹 장치 설치(Blue Fire에서 이미 했으면 자동 완료) → 메카닉에게 돌아가기.",
+      "tip_en": "Return to Icebreaker and plant an SZ-1 explosive charge on the chained door to breach it. Clear the crew quarters: a tear gas booby trap is at the entrance and The Wedge squad is inside. Go outside on floor 5 and take the stairs to the code-locked door on floor 6. Ask the scientist for the code through the intercom, then ask Mechanic for the second part. Install a hacking device in the server room on The Lab's first floor; this completes automatically if already done in Blue Fire. Return to Mechanic.",
+      "steps": [
+        {
+          "id": "boreas-39",
+          "ko": "쇄빙선 도착하기",
+          "en": "Arrive at the Icebreaker",
+          "optional": false,
+          "map": "icebreaker"
+        },
+        {
+          "id": "boreas-40",
+          "ko": "엔진실 지붕의 부서진 문까지 가기",
+          "en": "Reach the damaged door on the roof of the engine room",
+          "optional": false,
+          "map": "icebreaker"
+        },
+        {
+          "id": "boreas-41",
+          "ko": "SZ-1 폭약으로 엔진실 지붕 문의 쇠사슬 부수기",
+          "en": "Break the chain on the door on the roof of the engine room using the SZ-1 charge",
+          "optional": false,
+          "map": "icebreaker"
+        },
+        {
+          "id": "boreas-42",
+          "ko": "엔진실 지붕에서 상부 구조물로 들어가기",
+          "en": "Enter the icebreaker superstructure from the roof of the engine room",
+          "optional": false,
+          "map": "icebreaker"
+        },
+        {
+          "id": "boreas-43",
+          "ko": "상부 구조물의 승무원 숙소 살펴보기",
+          "en": "(Optional) Inspect the crew living quarters in the icebreaker superstructure",
+          "optional": true,
+          "map": "icebreaker"
+        },
+        {
+          "id": "boreas-44",
+          "ko": "상부 구조물 위쪽 갑판으로 가는 길 찾기",
+          "en": "Find a way to the upper decks of the icebreaker superstructure",
+          "optional": false,
+          "map": "icebreaker"
+        },
+        {
+          "id": "boreas-45",
+          "ko": "생존 과학자에게 6층 코드 잠금 문 여는 법 묻기",
+          "en": "Ask the surviving scientist how to open the code-locked door on level 6",
+          "optional": false,
+          "map": "icebreaker"
+        },
+        {
+          "id": "boreas-46",
+          "ko": "메카닉에게 6층 문 코드의 두 번째 부분 부탁하기",
+          "en": "Ask Mechanic for help with finding the second part of the code for the locked door on level 6",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "boreas-47",
+          "ko": "연구소 서버실에 해킹 장치 설치하기",
+          "en": "Plant the hacking device in the server room in The Lab",
+          "optional": false,
+          "map": "the-lab"
+        },
+        {
+          "id": "boreas-48",
+          "ko": "메카닉에게 돌아가기",
+          "en": "Return to Mechanic",
+          "optional": false,
+          "map": null
+        }
+      ],
+      "prep": [
+        {
+          "kind": "가져가기",
+          "text": "SZ-1 explosive charge (Icebreaker) - 프라퍼 1레벨 구매",
+          "text_en": "SZ-1 explosive charge (Icebreaker) - buy from Prapor Loyalty Level 1",
+          "count": null,
+          "fir": false
+        },
+        {
+          "kind": "가져가기",
+          "text": "Local network hacking device (Blue Fire에서 안 했을 때)",
+          "text_en": "Local network hacking device (if not already installed in Blue Fire)",
+          "count": null,
+          "fir": false
+        }
+      ],
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/a/a6/Stick_To_It_Activation_Chained_Door.png/revision/latest/scale-to-width-down/480?cb=20260527232427",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/a/a6/Stick_To_It_Activation_Chained_Door.png/revision/latest?cb=20260527232427",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Stick_To_It_Activation_Chained_Door.png",
+          "caption": "쇠사슬 문",
+          "caption_en": "Chained door"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/1/11/BoreasEnterIcebreakerSuperstructure.png/revision/latest/scale-to-width-down/480?cb=20260530092313",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/1/11/BoreasEnterIcebreakerSuperstructure.png/revision/latest?cb=20260530092313",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:BoreasEnterIcebreakerSuperstructure.png",
+          "caption": "승무원 구역 입구",
+          "caption_en": "Crew quarters entrance"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/3/3c/BoreasUpperDecksCodeLockedDoor.png/revision/latest/scale-to-width-down/480?cb=20260530092406",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/3/3c/BoreasUpperDecksCodeLockedDoor.png/revision/latest?cb=20260530092406",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:BoreasUpperDecksCodeLockedDoor.png",
+          "caption": "코드 잠금 문",
+          "caption_en": "Code-locked door"
+        }
+      ]
+    },
+    {
+      "title": "쇄빙선 세 번째 방문 · 함교와 C-1 구역",
+      "title_en": "Third Icebreaker visit · Bridge and compartment C-1",
+      "map": "icebreaker",
+      "tip": "코드는 3-1-2-2-2-0 (항상 같음, 바깥으로 나가는 문 모두 동일). 7층 밖으로 나가는 출구 옆이 C-1 구역. 위로 올라가 함교 지붕의 얼어붙은 해치를 BBQ-S43 가스 토치로 녹이기(토치는 3층 The Wedge가 나오는 주방). 9층 함교의 선장 시신 왼손에 C-1 키카드. C-1 안: 왼쪽 선반, 책상 밑 PC 위, 바닥 서버 위에서 하드 드라이브 3개 획득.",
+      "tip_en": "The code is 3-1-2-2-2-0. It never changes and works for all doors leading outside. Compartment C-1 is beside the exit to the outside on floor 7. Go up and thaw the frozen hatch on the bridge roof with a BBQ-S43 gas torch, found in the kitchen on floor 3 where The Wedge spawns. The C-1 keycard is in the captain's left hand on the bridge on floor 9. Collect the 3 hard drives inside C-1: on the left shelf, on the PC beneath the desk, and on the server on the floor.",
+      "steps": [
+        {
+          "id": "boreas-49",
+          "ko": "쇄빙선 도착하기",
+          "en": "Arrive at the Icebreaker",
+          "optional": false,
+          "map": "icebreaker"
+        },
+        {
+          "id": "boreas-50",
+          "ko": "엔진실 도착하기",
+          "en": "Reach the engine room",
+          "optional": false,
+          "map": "icebreaker"
+        },
+        {
+          "id": "boreas-51",
+          "ko": "엔진실 키카드 찾아서 획득하기",
+          "en": "(Optional) Locate and obtain the engine room keycard",
+          "optional": true,
+          "map": "icebreaker"
+        },
+        {
+          "id": "boreas-52",
+          "ko": "엔진실 지붕의 부서진 문까지 가기",
+          "en": "Reach the damaged door on the roof of the engine room",
+          "optional": false,
+          "map": "icebreaker"
+        },
+        {
+          "id": "boreas-53",
+          "ko": "BTR 운전수에게 돌아가기",
+          "en": "Return to the BTR driver",
+          "optional": false,
+          "map": null,
+          "manual": true
+        },
+        {
+          "id": "boreas-54",
+          "ko": "BTR 운전수에게 돌아가기",
+          "en": "Return to the BTR driver",
+          "optional": false,
+          "map": null,
+          "manual": true
+        },
+        {
+          "id": "boreas-55",
+          "ko": "SZ-1 폭약으로 엔진실 지붕 문의 쇠사슬 부수기",
+          "en": "Break the chain on the door on the roof of the engine room using the SZ-1 charge",
+          "optional": false,
+          "map": "icebreaker"
+        },
+        {
+          "id": "boreas-56",
+          "ko": "코드 잠금 문까지 가기",
+          "en": "Reach the code-locked door",
+          "optional": false,
+          "map": "icebreaker"
+        },
+        {
+          "id": "boreas-57",
+          "ko": "올바른 코드 입력하기 (3-1-2-2-2-0)",
+          "en": "Use the correct access code",
+          "optional": false,
+          "map": "icebreaker"
+        },
+        {
+          "id": "boreas-58",
+          "ko": "C-1 구역 찾기",
+          "en": "Locate compartment C-1",
+          "optional": false,
+          "map": "icebreaker"
+        },
+        {
+          "id": "boreas-59",
+          "ko": "C-1 구역 키카드 찾아서 획득하기",
+          "en": "(Optional) Locate and obtain the keycard with access to compartment C-1",
+          "optional": true,
+          "map": "icebreaker"
+        },
+        {
+          "id": "boreas-60",
+          "ko": "함교 입구 찾기",
+          "en": "(Optional) Locate the entrance to the bridge",
+          "optional": true,
+          "map": "icebreaker"
+        },
+        {
+          "id": "boreas-61",
+          "ko": "함교로 가는 다른 길 찾기",
+          "en": "(Optional) Locate an alternative path to the bridge",
+          "optional": true,
+          "map": "icebreaker"
+        },
+        {
+          "id": "boreas-62",
+          "ko": "위쪽 갑판에 도착하기",
+          "en": "Reach the upper decks",
+          "optional": false,
+          "map": "icebreaker"
+        },
+        {
+          "id": "boreas-63",
+          "ko": "함교 지붕의 해치 녹이기",
+          "en": "Thaw the hatch on the roof of the bridge",
+          "optional": false,
+          "map": "icebreaker"
+        },
+        {
+          "id": "boreas-64",
+          "ko": "해치를 녹일 도구 찾기 (가스 토치)",
+          "en": "(Optional) Find something to thaw the hatch on the roof of the bridge",
+          "optional": true,
+          "map": "icebreaker"
+        },
+        {
+          "id": "boreas-65",
+          "ko": "쇄빙선 선장 구하기",
+          "en": "Rescue the icebreaker captain",
+          "optional": false,
+          "map": "icebreaker"
+        },
+        {
+          "id": "boreas-66",
+          "ko": "C-1 구역 들어가기",
+          "en": "Access Compartment C-1",
+          "optional": false,
+          "map": "icebreaker"
+        },
+        {
+          "id": "boreas-67",
+          "ko": "C-1 구역 선반 수색하기",
+          "en": "Search the shelves in compartment C-1",
+          "optional": false,
+          "map": "icebreaker"
+        },
+        {
+          "id": "boreas-68",
+          "ko": "C-1 구역 작업대 주변 수색하기",
+          "en": "Search the area near the workstation in compartment C-1",
+          "optional": false,
+          "map": "icebreaker"
+        },
+        {
+          "id": "boreas-69",
+          "ko": "C-1 구역 서버 수색하기",
+          "en": "Search the servers in compartment C-1",
+          "optional": false,
+          "map": "icebreaker"
+        }
+      ],
+      "prep": [
+        {
+          "kind": "가져가기",
+          "text": "SZ-1 explosive charge (Icebreaker)",
+          "count": null,
+          "fir": false
+        }
+      ],
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/d/d0/Compartment_C-1_keycard_map.jpg/revision/latest/scale-to-width-down/480?cb=20260531234658",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/d/d0/Compartment_C-1_keycard_map.jpg/revision/latest?cb=20260531234658",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Compartment_C-1_keycard_map.jpg",
+          "caption": "C-1 구역 위치",
+          "caption_en": "Compartment C-1 location"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/8/84/Compartment_C-1_keycard_door.png/revision/latest/scale-to-width-down/480?cb=20260528232129",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/8/84/Compartment_C-1_keycard_door.png/revision/latest?cb=20260528232129",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Compartment_C-1_keycard_door.png",
+          "caption": "C-1 문",
+          "caption_en": "C-1 door"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/b/bb/Gas_torch_apply_Icebreaker.png/revision/latest/scale-to-width-down/480?cb=20260531151318",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/b/bb/Gas_torch_apply_Icebreaker.png/revision/latest?cb=20260531151318",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Gas_torch_apply_Icebreaker.png",
+          "caption": "녹일 해치",
+          "caption_en": "Hatch to thaw"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/b/ba/Compartment_C-1_keycard_spawn.png/revision/latest/scale-to-width-down/480?cb=20260528232510",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/b/ba/Compartment_C-1_keycard_spawn.png/revision/latest?cb=20260528232510",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Compartment_C-1_keycard_spawn.png",
+          "caption": "선장 시신 (C-1 키카드)",
+          "caption_en": "Captain's body (C-1 keycard)"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/2/24/BoreasHDD1_spawn.png/revision/latest/scale-to-width-down/480?cb=20260531162835",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/2/24/BoreasHDD1_spawn.png/revision/latest?cb=20260531162835",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:BoreasHDD1_spawn.png",
+          "caption": "하드 드라이브 1",
+          "caption_en": "Hard drive 1"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/3/32/BoreasHDD2_spawn.png/revision/latest/scale-to-width-down/480?cb=20260531162812",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/3/32/BoreasHDD2_spawn.png/revision/latest?cb=20260531162812",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:BoreasHDD2_spawn.png",
+          "caption": "하드 드라이브 2",
+          "caption_en": "Hard drive 2"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/b/b5/BoreasHDD3_spawn.png/revision/latest/scale-to-width-down/480?cb=20260531162844",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/b/b5/BoreasHDD3_spawn.png/revision/latest?cb=20260531162844",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:BoreasHDD3_spawn.png",
+          "caption": "하드 드라이브 3",
+          "caption_en": "Hard drive 3"
+        }
+      ]
+    },
+    {
+      "title": "하드 드라이브 해독 (메카닉)",
+      "title_en": "Decrypt the hard drives (Mechanic)",
+      "map": null,
+      "tip": "메카닉에게 하드 드라이브 3개 전달하고 해독 부탁. 이어서 인레이드 부품 전달: Ultralink 위성 통신 모듈 3개, Memento 서버 RAM 4개, IBX Gigachad 암호화 프로세서 2개(쇄빙선에서 찾을 수 있음). 받은 '쇄빙선 기록 데이터'를 핸드북에서 읽기.",
+      "tip_en": "Give Mechanic the 3 hard drives and ask him to decrypt them. Then hand over Found in Raid parts: 3 Ultralink satellite communication modules, 4 Memento Server RAM Modules, and 2 IBX Gigachad cryptographic processors. These can be found on Icebreaker. Read the Icebreaker archive data you receive in the Handbook.",
+      "steps": [
+        {
+          "id": "boreas-70",
+          "ko": "메카닉에게 쇄빙선 하드 드라이브 해독 부탁하기",
+          "en": "Ask Mechanic for help decoding the hard drives from the icebreaker",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "boreas-71",
+          "ko": "인레이드 Ultralink 위성 모듈 3개 전달하기",
+          "en": "Hand over 3 found in raid Ultralink satellite modules to Mechanic",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "boreas-72",
+          "ko": "쇄빙선에서 Ultralink 위성 모듈 찾기",
+          "en": "(Optional) Locate and obtain Ultralink satellite modules on the icebreaker",
+          "optional": true,
+          "map": "icebreaker"
+        },
+        {
+          "id": "boreas-73",
+          "ko": "인레이드 서버 RAM 4개 전달하기",
+          "en": "Hand over 4 found in raid server RAM modules to Mechanic",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "boreas-74",
+          "ko": "쇄빙선에서 서버 RAM 찾기",
+          "en": "(Optional) Locate and obtain the server RAM modules on the icebreaker",
+          "optional": true,
+          "map": "icebreaker"
+        },
+        {
+          "id": "boreas-75",
+          "ko": "인레이드 암호화 프로세서 2개 전달하기",
+          "en": "Hand over 2 found in raid cryptographic processors to Mechanic",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "boreas-76",
+          "ko": "쇄빙선에서 암호화 프로세서 찾기",
+          "en": "(Optional) Locate and obtain the cryptographic processors on the icebreaker",
+          "optional": true,
+          "map": "icebreaker"
+        },
+        {
+          "id": "boreas-77",
+          "ko": "쇄빙선 데이터 분석하기 (핸드북에서 읽기)",
+          "en": "Analyse the data from the icebreaker",
+          "optional": false,
+          "map": null
+        }
+      ],
+      "prep": [
+        {
+          "kind": "제출",
+          "text": "Hard drive from compartment C-1 (C-1 구역의 하드 드라이브)",
+          "text_en": "Hard drive from compartment C-1",
+          "count": 3,
+          "fir": true
+        },
+        {
+          "kind": "제출",
+          "text": "Ultralink satellite communication module",
+          "count": 3,
+          "fir": true
+        },
+        {
+          "kind": "제출",
+          "text": "Memento Server RAM Module",
+          "count": 4,
+          "fir": true
+        },
+        {
+          "kind": "제출",
+          "text": "IBX Gigachad cryptographic processor",
+          "count": 2,
+          "fir": true
+        }
+      ],
+      "reward": "쇄빙선 기록 데이터, 업적 Cracks in the Ice",
+      "reward_en": "Icebreaker archive data; Cracks in the Ice achievement"
+    },
+    {
+      "title": "과학자 구출 (BTR 운전수)",
+      "title_en": "Rescue the scientist (BTR Driver)",
+      "map": null,
+      "tip": "쇄빙선 1층 인터폰으로 과학자에게 선장의 죽음 알리기 → BTR 운전수에게 구출 도움 묻기 → 퀘스트 Hangover 완료(밀수꾼 vs 로그) → BTR 운전수에게 돌아가기 → 쇄빙선에서 20명 처치 → 방독면/호흡기 5개, 키라사-N에 맞는 5등급 이상 방탄판 2개, 키라사-N 방탄복 전달(인레이드 아니어도 됨) → 과학자에게 준비 완료 알리기 → 삼림 또는 시내의 BTR 운전수에게 결과 묻기.",
+      "tip_en": "Use the intercom on Icebreaker floor 1 to tell the scientist about the captain's death. Ask the BTR Driver to help with the rescue, complete Hangover (Smugglers vs. Rogues), and return to the BTR Driver. Kill 20 enemies on Icebreaker. Hand over 5 respirators/gas masks, 2 class 5 or higher armor plates compatible with Kirasa-N, and BNTI Kirasa-N body armor; these do not need to be Found in Raid. Tell the scientist everything is ready, then ask the BTR Driver on Woods or Streets of Tarkov about the outcome.",
+      "steps": [
+        {
+          "id": "boreas-78",
+          "ko": "과학자에게 선장의 죽음 알리기",
+          "en": "Inform the scientist about the captain's death",
+          "optional": false,
+          "map": "icebreaker"
+        },
+        {
+          "id": "boreas-79",
+          "ko": "BTR 운전수에게 과학자 구출 도움 묻기",
+          "en": "Ask the BTR driver if he can help evacuate the scientist from the icebreaker",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "boreas-80",
+          "ko": "밀수꾼과 로그의 분쟁 돕기 (퀘스트 Hangover)",
+          "en": "Assist the smugglers with their conflict against the Rogues",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "boreas-81",
+          "ko": "BTR 운전수에게 돌아가기",
+          "en": "Return to the BTR driver",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "boreas-82",
+          "ko": "쇄빙선에서 20명 사살하기",
+          "en": "Eliminate 20 targets on the icebreaker",
+          "optional": false,
+          "map": "icebreaker"
+        },
+        {
+          "id": "boreas-83",
+          "ko": "호흡기 5개 BTR 운전수에게 전달하기",
+          "en": "Hand over 5 respirators to the BTR driver",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "boreas-84",
+          "ko": "호흡기 구하기",
+          "en": "(Optional) Obtain respirators for the BTR driver",
+          "optional": true,
+          "map": null
+        },
+        {
+          "id": "boreas-85",
+          "ko": "5등급 이상 방탄판 2개 BTR 운전수에게 전달하기",
+          "en": "Hand over 2 class 5 or higher ballistic plates to the BTR driver",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "boreas-86",
+          "ko": "5등급 이상 방탄판 구하기",
+          "en": "(Optional) Obtain class 5+ ballistic plates for the BTR driver",
+          "optional": true,
+          "map": null
+        },
+        {
+          "id": "boreas-87",
+          "ko": "키라사-N 방탄복 BTR 운전수에게 전달하기",
+          "en": "Hand over the Kirasa-N body armor to the BTR driver",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "boreas-88",
+          "ko": "키라사-N 방탄복 구하기",
+          "en": "(Optional) Obtain the Kirasa-N body armor for the BTR driver",
+          "optional": true,
+          "map": null
+        },
+        {
+          "id": "boreas-89",
+          "ko": "과학자에게 구출 준비가 끝났다고 알리기",
+          "en": "Inform the scientist that everything is ready for his evacuation",
+          "optional": false,
+          "map": "icebreaker"
+        },
+        {
+          "id": "boreas-90",
+          "ko": "BTR 운전수에게 과학자 구출 결과 묻기",
+          "en": "Ask the BTR driver how the scientist's rescue went",
+          "optional": false,
+          "map": null
+        }
+      ],
+      "prep": [
+        {
+          "kind": "제출",
+          "text": "호흡기/방독면 (Respirator, SOTR, GP-5, GP-7, M53A1 중)",
+          "text_en": "Respirators/gas masks (Respirator, SOTR, GP-5, GP-7, or M53A1)",
+          "count": 5,
+          "fir": false
+        },
+        {
+          "kind": "제출",
+          "text": "키라사-N 호환 5등급 이상 방탄판",
+          "text_en": "Class 5 or higher armor plates compatible with Kirasa-N",
+          "count": 2,
+          "fir": false
+        },
+        {
+          "kind": "제출",
+          "text": "BNTI Kirasa-N body armor (키라사-N 방탄복)",
+          "text_en": "BNTI Kirasa-N body armor",
+          "count": 1,
+          "fir": false
+        }
+      ],
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/8/8b/BoreasScientistIntercomMap.jpg/revision/latest/scale-to-width-down/480?cb=20260530051548",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/8/8b/BoreasScientistIntercomMap.jpg/revision/latest?cb=20260530051548",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:BoreasScientistIntercomMap.jpg",
+          "caption": "인터폰 위치",
+          "caption_en": "Intercom location"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/7/7f/BoreasScientistIntercom.png/revision/latest/scale-to-width-down/480?cb=20260528182121",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/7/7f/BoreasScientistIntercom.png/revision/latest?cb=20260528182121",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:BoreasScientistIntercom.png",
+          "caption": "인터폰",
+          "caption_en": "Intercom"
+        }
+      ]
+    }
+  ]
+}

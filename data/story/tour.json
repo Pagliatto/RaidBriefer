@@ -1,0 +1,505 @@
+{
+  "id": "tour",
+  "name": "Tour",
+  "library": "https://eftlibrary.com/story/tour",
+  "wiki": "https://escapefromtarkov.fandom.com/wiki/Tour",
+  "requirement": "게임 시작 시 자동으로 추가",
+  "requirement_en": "Added automatically when you start the game",
+  "sections": [
+    {
+      "title": "그라운드 제로 탈출",
+      "title_en": "Escape Ground Zero",
+      "map": "ground-zero",
+      "tip": "튜토리얼 레이드. 스카이사이드(Skyside) 건물 뒤 Klimov Street 탈출구로 나가면 끝. 죽으면 레이드가 다시 시작됨.",
+      "tip_en": "Tutorial raid. Leave through the Klimov Street extract behind the Skyside building. If you die, the raid restarts.",
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/b/b8/Tutorial_By_xTycho.png/revision/latest/scale-to-width-down/480?cb=20251115145408",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/b/b8/Tutorial_By_xTycho.png/revision/latest?cb=20251115145408",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Tutorial_By_xTycho.png",
+          "caption": "튜토리얼 지도",
+          "caption_en": "Tutorial map"
+        }
+      ],
+      "steps": [
+        {
+          "id": "tour-00",
+          "ko": "그라운드 제로에서 탈출하기",
+          "en": "Escape Ground Zero",
+          "optional": false,
+          "map": "ground-zero"
+        }
+      ]
+    },
+    {
+      "title": "테라피스트 → 타르코프 시내 해금",
+      "title_en": "Therapist → Unlock Streets of Tarkov",
+      "map": null,
+      "tip": "상인 화면에서 테라피스트에게 대화 선택지가 뜨면 25만 루블 전달.",
+      "tip_en": "When the dialogue option appears on Therapist's trader screen, hand over 250,000 Roubles.",
+      "prep": [
+        {
+          "kind": "제출",
+          "text": "루블",
+          "text_en": "Roubles",
+          "count": 250000,
+          "fir": false
+        }
+      ],
+      "reward": "타르코프 시내 해금",
+      "reward_en": "Unlocks Streets of Tarkov",
+      "steps": [
+        {
+          "id": "tour-01",
+          "ko": "테라피스트와 대화하기",
+          "en": "Talk to Therapist",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "tour-02",
+          "ko": "타르코프 시내 접근 권한 확보하기",
+          "en": "Ensure access to the Streets of Tarkov",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "tour-03",
+          "ko": "테라피스트에게 현금 전달하기",
+          "en": "Hand over the cash to Therapist",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "tour-04",
+          "ko": "25만 루블 모으기",
+          "en": "(Optional) Collect the required 250,000 Roubles",
+          "optional": true,
+          "map": null
+        }
+      ]
+    },
+    {
+      "title": "래그맨 → 인터체인지",
+      "title_en": "Ragman → Interchange",
+      "map": "interchange",
+      "tip": "인터체인지에서 생존 또는 Run-Through로 탈출하거나, 3번 방문(입장)하면 됨.",
+      "tip_en": "Extract from Interchange with Survived or Run-Through status, or enter the map 3 times.",
+      "reward": "스키어 상인, 세관 해금",
+      "reward_en": "Unlocks Skier and Customs",
+      "steps": [
+        {
+          "id": "tour-05",
+          "ko": "래그맨과 대화하기",
+          "en": "Talk to Ragman",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "tour-06",
+          "ko": "인터체인지에서 살아서 탈출 또는 3번 방문하기",
+          "en": "Survive and extract from Interchange or visit Interchange 3 times",
+          "optional": false,
+          "map": "interchange"
+        },
+        {
+          "id": "tour-07",
+          "ko": "정찰 결과를 래그맨에게 보고하기",
+          "en": "Tell Ragman what you found during the recon",
+          "optional": false,
+          "map": null
+        }
+      ]
+    },
+    {
+      "title": "스키어 → 세관",
+      "title_en": "Skier → Customs",
+      "map": "customs",
+      "tip": "세관에서 생존/Run-Through 탈출 또는 3번 방문. 건축 자재·도구 5개는 한 번에 내야 함(나눠서 제출 불가).",
+      "tip_en": "Extract from Customs with Survived or Run-Through status, or visit 3 times. Hand over all 5 building materials or tools at once; partial hand-ins are not allowed.",
+      "prep": [
+        {
+          "kind": "제출",
+          "text": "건축 자재 또는 도구 (아무거나)",
+          "text_en": "Any building materials or tools",
+          "count": 5,
+          "fir": true
+        }
+      ],
+      "reward": "메카닉 상인, 공장 해금",
+      "reward_en": "Unlocks Mechanic and Factory",
+      "steps": [
+        {
+          "id": "tour-08",
+          "ko": "스키어와 대화하기",
+          "en": "Talk to Skier",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "tour-09",
+          "ko": "세관에서 살아서 탈출 또는 3번 방문하기",
+          "en": "Survive and extract from Customs or visit Customs 3 times",
+          "optional": false,
+          "map": "customs"
+        },
+        {
+          "id": "tour-10",
+          "ko": "인레이드 건축 자재 5개 스키어에게 전달하기",
+          "en": "Hand over any 5 found in raid building materials items to Skier",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "tour-11",
+          "ko": "레이드에서 건축 자재 5개 찾기",
+          "en": "(Optional) Find any 5 items in raid from the building materials category",
+          "optional": true,
+          "map": null
+        }
+      ]
+    },
+    {
+      "title": "메카닉 → 공장",
+      "title_en": "Mechanic → Factory",
+      "map": "factory",
+      "tip": "공장에서 생존/Run-Through 탈출 또는 3번 방문. 레이드에서 주운 무기 2정 제출.",
+      "tip_en": "Extract from Factory with Survived or Run-Through status, or visit 3 times. Hand over 2 Found in Raid weapons.",
+      "prep": [
+        {
+          "kind": "제출",
+          "text": "무기 (아무거나)",
+          "text_en": "Any weapons",
+          "count": 2,
+          "fir": true
+        }
+      ],
+      "reward": "프라퍼 상인, 삼림 해금",
+      "reward_en": "Unlocks Prapor and Woods",
+      "steps": [
+        {
+          "id": "tour-12",
+          "ko": "메카닉과 대화하기",
+          "en": "Talk to Mechanic",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "tour-13",
+          "ko": "공장에서 살아서 탈출 또는 3번 방문하기",
+          "en": "Survive and extract from Factory or visit Factory 3 times",
+          "optional": false,
+          "map": "factory"
+        },
+        {
+          "id": "tour-14",
+          "ko": "인레이드 무기 2정 메카닉에게 전달하기",
+          "en": "Hand over any 2 found in raid weapons to Mechanic",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "tour-15",
+          "ko": "레이드에서 무기 2정 찾기",
+          "en": "(Optional) Find any 2 weapons in raid",
+          "optional": true,
+          "map": null
+        }
+      ]
+    },
+    {
+      "title": "스키어 → 삼림",
+      "title_en": "Skier → Woods",
+      "map": "woods",
+      "tip": "삼림에서 아무 적 3명 처치 + 생존/Run-Through 탈출(또는 3번 방문). 처치와 탈출은 다른 레이드여도 됨.",
+      "tip_en": "Kill any 3 enemies on Woods and extract with Survived or Run-Through status (or visit 3 times). The kills and extraction can be in separate raids.",
+      "reward": "피스키퍼 상인, 해안선 해금",
+      "reward_en": "Unlocks Peacekeeper and Shoreline",
+      "steps": [
+        {
+          "id": "tour-16",
+          "ko": "스키어와 대화하기",
+          "en": "Talk to Skier",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "tour-17",
+          "ko": "삼림에서 아무 적 3명 사살하기",
+          "en": "Eliminate any 3 targets on Woods",
+          "optional": false,
+          "map": "woods"
+        },
+        {
+          "id": "tour-18",
+          "ko": "삼림에서 살아서 탈출 또는 3번 방문하기",
+          "en": "Survive and extract from Woods or visit Woods 3 times",
+          "optional": false,
+          "map": "woods"
+        }
+      ]
+    },
+    {
+      "title": "해안선 - 터미널 입구",
+      "title_en": "Shoreline - Terminal entrance",
+      "map": "shoreline",
+      "tip": "해안선 남동쪽 끝, 터미널 앞 감시탑의 인터폰 사용. 터미널 벽에 너무 붙으면 경비병이 쏨(대응 불가). 나가라는 말 뒤에도 인터폰을 계속 누르면 사살됨.",
+      "tip_en": "Use the intercom at the watchtower in front of Terminal, at the southeastern edge of Shoreline. Get too close to the Terminal wall and the guards will shoot; you cannot fight back. Keep pressing the intercom after being told to leave and you will be killed.",
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/f/fa/Tour_Shoreline_Map.png/revision/latest/scale-to-width-down/480?cb=20260630231412",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/f/fa/Tour_Shoreline_Map.png/revision/latest?cb=20260630231412",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Tour_Shoreline_Map.png",
+          "caption": "인터폰 위치",
+          "caption_en": "Intercom location"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/c/c5/Tour_Shoreline_Tower.png/revision/latest/scale-to-width-down/480?cb=20251122211655",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/c/c5/Tour_Shoreline_Tower.png/revision/latest?cb=20251122211655",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Tour_Shoreline_Tower.png",
+          "caption": "인터폰이 있는 감시탑",
+          "caption_en": "Watchtower with the intercom"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/a/ad/Tour_Shoreline_Intercom.png/revision/latest/scale-to-width-down/480?cb=20251122211659",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/a/ad/Tour_Shoreline_Intercom.png/revision/latest?cb=20251122211659",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Tour_Shoreline_Intercom.png",
+          "caption": "인터폰",
+          "caption_en": "Intercom"
+        }
+      ],
+      "steps": [
+        {
+          "id": "tour-19",
+          "ko": "항구 터미널 입구 찾기",
+          "en": "Locate the entrance to the port Terminal",
+          "optional": false,
+          "map": "shoreline"
+        },
+        {
+          "id": "tour-20",
+          "ko": "터미널 병사들과 연락할 방법 찾기",
+          "en": "Find a way to contact the soldiers at the Terminal",
+          "optional": false,
+          "map": "shoreline"
+        },
+        {
+          "id": "tour-21",
+          "ko": "인터폰으로 항구 주둔군과 연락하기",
+          "en": "Use the intercom to contact the port garrison",
+          "optional": false,
+          "map": "shoreline"
+        },
+        {
+          "id": "tour-22",
+          "ko": "타르코프 탈출 방법 알아보기 (모든 상인에게 묻기)",
+          "en": "Learn how to escape Tarkov",
+          "optional": false,
+          "map": null
+        }
+      ]
+    },
+    {
+      "title": "프라퍼 → 리저브",
+      "title_en": "Prapor → Reserve",
+      "map": "shoreline",
+      "tip": "해안선 생존/Run-Through 탈출(또는 3번 방문) 후 프라퍼에게 PMC 인식표 5개. 인식표는 남이 죽인 PMC 시체에서 가져와도 됨.",
+      "tip_en": "Extract from Shoreline with Survived or Run-Through status (or visit 3 times), then give Prapor 5 PMC dogtags. You can take the dogtags from PMCs killed by someone else.",
+      "prep": [
+        {
+          "kind": "제출",
+          "text": "PMC 인식표",
+          "text_en": "PMC dogtags",
+          "count": 5,
+          "fir": false
+        }
+      ],
+      "reward": "리저브 해금",
+      "reward_en": "Unlocks Reserve",
+      "steps": [
+        {
+          "id": "tour-23",
+          "ko": "리저브 접근 권한 확보하기",
+          "en": "Ensure access to Reserve",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "tour-24",
+          "ko": "해안선에서 살아서 탈출 또는 3번 방문하기",
+          "en": "Survive and extract from Shoreline or visit Shoreline 3 times",
+          "optional": false,
+          "map": "shoreline"
+        },
+        {
+          "id": "tour-25",
+          "ko": "PMC 인식표 5개 프라퍼에게 전달하기",
+          "en": "Hand over 5 PMC dogtags to Prapor",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "tour-26",
+          "ko": "레이드에서 PMC 인식표 5개 찾기",
+          "en": "(Optional) Find 5 PMC dogtags in raid",
+          "optional": true,
+          "map": null
+        }
+      ]
+    },
+    {
+      "title": "메카닉 → 등대",
+      "title_en": "Mechanic → Lighthouse",
+      "map": null,
+      "tip": "상인 화면에서 메카닉에게 8,000 달러 전달. 달러는 피스키퍼에게 루블로 살 수 있음.",
+      "tip_en": "Hand over 8,000 Dollars on Mechanic's trader screen. You can buy Dollars from Peacekeeper with Roubles.",
+      "prep": [
+        {
+          "kind": "제출",
+          "text": "달러 (USD)",
+          "text_en": "Dollars (USD)",
+          "count": 8000,
+          "fir": false
+        }
+      ],
+      "reward": "등대 해금",
+      "reward_en": "Unlocks Lighthouse",
+      "steps": [
+        {
+          "id": "tour-27",
+          "ko": "등대 접근 권한 확보하기",
+          "en": "Ensure access to Lighthouse",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "tour-28",
+          "ko": "메카닉에게 8,000 USD 전달하기",
+          "en": "Hand over 8,000 USD to Mechanic",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "tour-29",
+          "ko": "8,000 USD 모으기",
+          "en": "(Optional) Collect the required 8,000 USD",
+          "optional": true,
+          "map": null
+        }
+      ]
+    },
+    {
+      "title": "테라그룹 비밀 시설 - 연구소",
+      "title_en": "Secret TerraGroup facility - The Lab",
+      "map": "the-lab",
+      "tip": "연구소 키카드로 트랜짓 이용(레이드 시작 1분 뒤부터). 시내: Klimova 16A(우주인 벽화) 건물 앞 지하 입구 / 공장: 지하 침수 구역과 이어진 하수 터널. 연구소 안에서는 2층 관리자 사무실(O21) → 1층 격납고 옆 서버실 → 지하 Sewage Conduit 탈출구 쪽 하수로 도착. 하수로는 도착만 하면 되고 살아서 나갈 필요 없음.",
+      "tip_en": "Use a TerraGroup Labs access keycard to take the Transit, available 1 minute after the raid starts. Streets of Tarkov: the underground entrance in front of Klimova 16A (the astronaut mural building). Factory: the sewer tunnel connected to the flooded underground area. Inside The Lab, go to the manager's office (O21) on the second floor, then the server room beside the hangar on the first floor, then the underground drainage passage near the Sewage Conduit extract. Reaching the drainage passage is enough; you do not need to survive.",
+      "prep": [
+        {
+          "kind": "가져가기",
+          "text": "TerraGroup Labs access keycard (연구소 출입 카드, 1회용)",
+          "text_en": "TerraGroup Labs access keycard (single-use)",
+          "count": null,
+          "fir": false
+        }
+      ],
+      "reward": "연구소 해금, Pathfinder 업적",
+      "reward_en": "Unlocks The Lab; Pathfinder achievement",
+      "images": [
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/7/75/StreetsTransitToLabsMap.png/revision/latest/scale-to-width-down/480?cb=20240828224823",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/7/75/StreetsTransitToLabsMap.png/revision/latest?cb=20240828224823",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:StreetsTransitToLabsMap.png",
+          "caption": "시내 → 연구소 트랜짓 위치",
+          "caption_en": "Streets of Tarkov → The Lab Transit location"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/8/8d/FactoryTransitToLabsMap.png/revision/latest/scale-to-width-down/480?cb=20251123121148",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/8/8d/FactoryTransitToLabsMap.png/revision/latest?cb=20251123121148",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:FactoryTransitToLabsMap.png",
+          "caption": "공장 → 연구소 트랜짓 위치",
+          "caption_en": "Factory → The Lab Transit location"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/4/4f/Lab_Managers_Location.png/revision/latest/scale-to-width-down/480?cb=20190326144251",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/4/4f/Lab_Managers_Location.png/revision/latest?cb=20190326144251",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Lab_Managers_Location.png",
+          "caption": "관리자 사무실 위치",
+          "caption_en": "Manager's office location"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/3/37/LabsServerRoomMap.png/revision/latest/scale-to-width-down/480?cb=20240828223423",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/3/37/LabsServerRoomMap.png/revision/latest?cb=20240828223423",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:LabsServerRoomMap.png",
+          "caption": "서버실 위치",
+          "caption_en": "Server room location"
+        },
+        {
+          "thumb": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/f/f8/Tour_The_Lab_Escape_path_Map.png/revision/latest/scale-to-width-down/480?cb=20251123124447",
+          "full": "https://static.wikia.nocookie.net/escapefromtarkov_gamepedia/images/f/f8/Tour_The_Lab_Escape_path_Map.png/revision/latest?cb=20251123124447",
+          "source": "https://escapefromtarkov.fandom.com/wiki/File:Tour_The_Lab_Escape_path_Map.png",
+          "caption": "하수로 탈출로 위치",
+          "caption_en": "Drainage escape route location"
+        }
+      ],
+      "steps": [
+        {
+          "id": "tour-30",
+          "ko": "연구소 접근 권한 확보하기",
+          "en": "Ensure access to The Lab",
+          "optional": false,
+          "map": null
+        },
+        {
+          "id": "tour-31",
+          "ko": "테라그룹 비밀 시설 들어가기",
+          "en": "Access the secret TerraGroup facility",
+          "optional": false,
+          "map": "the-lab"
+        },
+        {
+          "id": "tour-32",
+          "ko": "시설 출입용 키카드 또는 출입 코드 얻기",
+          "en": "(Optional) Obtain a keycard or access codes to enter the facility",
+          "optional": true,
+          "map": null
+        },
+        {
+          "id": "tour-33",
+          "ko": "공장에서 시설 입구 찾기",
+          "en": "(Optional) Locate the entrance to the facility on Factory",
+          "optional": true,
+          "map": "factory"
+        },
+        {
+          "id": "tour-34",
+          "ko": "타르코프 시내에서 시설 입구 찾기",
+          "en": "(Optional) Locate the entrance to the facility on Streets of Tarkov",
+          "optional": true,
+          "map": "streets-of-tarkov"
+        },
+        {
+          "id": "tour-35",
+          "ko": "연구소 경영진 사무실 수색하기",
+          "en": "Search the top management offices in The Lab",
+          "optional": false,
+          "map": "the-lab"
+        },
+        {
+          "id": "tour-36",
+          "ko": "연구소 서버실 수색하기",
+          "en": "Search the server room in The Lab",
+          "optional": false,
+          "map": "the-lab"
+        },
+        {
+          "id": "tour-37",
+          "ko": "연구소 하수로 탈출 경로 찾기",
+          "en": "Locate the escape path through the drainage system in The Lab",
+          "optional": false,
+          "map": "the-lab"
+        }
+      ]
+    }
+  ]
+}

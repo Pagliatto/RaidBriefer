@@ -1,0 +1,106 @@
+// 설정 창: 오른쪽 위 ⚙ 버튼
+// - 게임 설치 위치 보기 / 바꾸기 / 자동으로 찾기 (서버 /api/settings)
+
+const settingsUI = {
+  dialog: document.getElementById("settings"),
+  input: document.getElementById("settings-game-dir"),
+  result: document.getElementById("settings-result"),
+  buttons: [document.getElementById("settings-save"), document.getElementById("settings-find")],
+};
+
+function showSettingsResult(text, ok) {
+  settingsUI.result.textContent = text;
+  settingsUI.result.className = `settings-result ${ok ? "ok" : "bad"}`;
+}
+
+async function sendSettings(body) {
+  settingsUI.buttons.forEach((b) => (b.disabled = true));
+  showSettingsResult(t("setup.checking"), true);
+  try {
+    const res = await fetch("/api/settings", {
+      method: body ? "POST" : "GET",
+      headers: body ? { "Content-Type": "application/json" } : undefined,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showSettingsResult(data.error || t("settings.saveFailed"), false);
+      return;
+    }
+    settingsUI.input.value = data.game_dir;
+    showSettingsResult(body ? t("settings.saved", { message: data.check.message }) : data.check.message, data.check.ok);
+    // 위치가 바뀌었으면 퀘스트를 새로 불러오게 알림
+    if (body) window.dispatchEvent(new CustomEvent("settings-changed", { detail: data }));
+  } catch (error) {
+    showSettingsResult(t("settings.noServer"), false);
+  } finally {
+    settingsUI.buttons.forEach((b) => (b.disabled = false));
+  }
+}
+
+document.getElementById("settings-open").addEventListener("click", () => {
+  settingsUI.dialog.showModal();
+  sendSettings(null); // 열 때마다 지금 값과 확인 결과를 새로 보여줌
+});
+document.getElementById("settings-save").addEventListener("click", () =>
+  sendSettings({ game_dir: settingsUI.input.value }));
+document.getElementById("settings-find").addEventListener("click", () => sendSettings({ find: true }));
+settingsUI.input.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") sendSettings({ game_dir: settingsUI.input.value });
+});
+// 창 바깥(어두운 부분)을 누르면 닫기
+settingsUI.dialog.addEventListener("click", (e) => {
+  if (e.target === settingsUI.dialog) settingsUI.dialog.close();
+});
+
+// 전체 초기화: 확인 창 → 모든 기록 지움 → 새로고침하면 처음 설정이 뜸
+document.getElementById("settings-reset").addEventListener("click", async () => {
+  const ok = window.confirm(t("settings.resetConfirm"));
+  if (!ok) return;
+  try {
+    const res = await fetch("/api/reset", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ confirm: true }),
+    });
+    if (!res.ok) throw new Error();
+    location.reload();
+  } catch (error) {
+    showSettingsResult(t("settings.resetFailed"), false);
+  }
+});
+
+// 언어 고르기 (설정 창 + 처음 설정 1단계). 바꾸면 화면을 새로 불러와서 모든 글자를 그 언어로
+async function renderLangPickers() {
+  let info;
+  try {
+    info = await (await fetch("/api/settings")).json();
+  } catch (error) {
+    return;
+  }
+  ["settings-lang", "setup-lang"].forEach((id) => {
+    const box = document.getElementById(id);
+    if (!box) return;
+    box.replaceChildren();
+    (info.langs || []).forEach(([code, name]) => {
+      const btn = el("button", code === info.lang ? "on" : "", name);
+      btn.type = "button";
+      btn.lang = code;
+      btn.addEventListener("click", async () => {
+        if (code === info.lang) return;
+        try {
+          await fetch("/api/settings", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ lang: code }),
+          });
+          location.reload();
+        } catch (error) {
+          alert(t("common.saveFailedShort"));
+        }
+      });
+      box.append(btn);
+    });
+  });
+}
+renderLangPickers();
