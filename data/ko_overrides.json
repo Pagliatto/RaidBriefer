@@ -311,5 +311,1573 @@
   "6672e49679243c500ec02c2e": {
     "en": "Hand over the found item",
     "ko": "찾은 물건 건네주기"
+  },
+  "665ef4d93bd11acd294ac48c": {
+    "en": "Find the item in raid: Propane tank (5L)",
+    "ko": "레이드에서 [Propane tank 프로판 탱크 (5L)] 찾기"
+  },
+  "665ef4f08f3a505364a8ab09": {
+    "en": "Hand over the items",
+    "ko": "아이템 건네주기"
+  },
+  "6661a14545909ae2e92ca2d5": {
+    "en": "Locate the specified stash spot on Woods",
+    "ko": "삼림(Woods)에서 지정된 은닉 장소 찾기"
+  },
+  "6661a18a12e8457716d59f5d": {
+    "en": "Locate the specified stash spot on Customs",
+    "ko": "세관(Customs)에서 지정된 은닉 장소 찾기"
+  },
+  "6661a170945719c63f28d9c6": {
+    "en": "Stash the first Propane tank (5L)",
+    "ko": "첫 번째 [Propane tank 프로판 탱크 (5L)] 숨기기"
+  },
+  "6661a1a1b1953d6c96da8f0e": {
+    "en": "Stash the second Propane tank (5L)",
+    "ko": "두 번째 [Propane tank 프로판 탱크 (5L)] 숨기기"
+  },
+  "6660785fc37356435d193ae4": {
+    "en": "Locate any information about Thirsty on Shoreline",
+    "ko": "해안선(Shoreline)에서 Thirsty에 관한 아무 정보 찾기"
+  },
+  "66607896f2ea02201517c203": {
+    "en": "Obtain the information in Thirsty's hideout",
+    "ko": "Thirsty의 은신처에서 정보 획득하기"
+  },
+  "666078bee6ed30ab2294f593": {
+    "en": "Hand over the found information",
+    "ko": "찾은 정보 건네주기"
+  },
+  "6661a28be2cdba6a469447c7": {
+    "en": "Hand over the found in raid item: Adrenaline injector",
+    "ko": "레이드에서 발견한 [Adrenaline 아드레날린 주사기] 건네주기"
+  },
+  "6661a2ae387c59056c822add": {
+    "en": "Hand over the found in raid item: Bottle of OLOLO Multivitamins",
+    "ko": "레이드에서 발견한 [OLOLO 종합 비타민 약통] 건네주기"
+  },
+  "6661a2bf4846fd2b6ba30f90": {
+    "en": "Hand over the found in raid item: Bottle of saline solution",
+    "ko": "레이드에서 발견한 [생리식염수 병 (Bottle of saline solution)] 건네주기"
+  },
+  "68341846186efa3c5b07f98c": {
+    "en": "Eliminate Scavs while using a Steyr AUG on any location",
+    "ko": "아무 지역에서 [Steyr AUG]로 스캐브 사살하기"
+  },
+  "68341a0b2f0e2a7eb90b62d7": {
+    "en": "Eliminate PMC operatives while wearing a PACA Soft Armor on any location",
+    "ko": "아무 지역에서 [PACA 방탄복]을 착용한 상태로 PMC 사살하기"
+  },
+  "68341b407559f4e6d50bc0d1": {
+    "en": "Hand over the found in raid items: Class 4 or higher ballistic plates",
+    "ko": "레이드에서 발견한 4클래스 이상 방탄판 건네주기"
+  },
+  "68341c4babec72d95d0c1263": {
+    "en": "Plant TP-200 TNT bricks on the second floor of the cafe on Ground Zero",
+    "ko": "그라운드 제로(Ground Zero)의 카페 2층에 [TP-200 TNT 블록] 설치하기"
+  },
+  "68342446a8d674b5740b31ff": {
+    "en": "Eliminate enemies in any game mode in Arena",
+    "ko": "Arena의 아무 게임 모드에서 적 사살하기"
+  },
+  "6834254f2f0e2a7eb90b62f1": {
+    "en": "Locate and obtain the compromising information on Ref",
+    "ko": "레프의 약점이 될 정보 찾아서 획득하기"
+  },
+  "6834254f2f0e2a7eb90b62f2": {
+    "en": "Hand over the found info",
+    "ko": "찾은 정보 건네주기"
+  },
+  "683425dd8f5b18d29a05d9d4": {
+    "en": "Return to the old champion's hideout on Customs",
+    "ko": "세관(Customs)의 옛 챔피언 은신처로 돌아가기"
+  },
+  "683425dd8f5b18d29a05d9d6": {
+    "en": "Locate and obtain the compromising information on Ref",
+    "ko": "레프의 약점이 될 정보 찾아서 획득하기"
+  },
+  "683425dd8f5b18d29a05d9d8": {
+    "en": "Hand over the found info",
+    "ko": "찾은 정보 건네주기"
+  },
+  "69788d4e963f08d9140bce1c": {
+    "en": "Play a match in CheckPoint or Last Hero mode",
+    "ko": "CheckPoint 또는 Last Hero 모드에서 한 경기 플레이하기"
+  },
+  "69789903c30426685c9f3080": {
+    "en": "Complete the task Professional Fitness - Part 2",
+    "ko": "Professional Fitness - Part 2 퀘스트 완료하기"
+  },
+  "697899167ed646e5d6187fea": {
+    "en": "Complete the task Hold the Lead",
+    "ko": "Hold the Lead 퀘스트 완료하기"
+  },
+  "69789660b2187365e70bb94d": {
+    "en": "Eliminate enemies in Arena",
+    "ko": "Arena에서 적 사살하기"
+  },
+  "6978907718bd6d7cbd0e8b91": {
+    "en": "Eliminate enemies in Arena",
+    "ko": "Arena에서 적 사살하기"
+  },
+  "6834233fecd5cf3a440d855f": {
+    "en": "Locate the old champion's room on Customs",
+    "ko": "세관(Customs)에서 옛 챔피언의 방 찾기"
+  },
+  "6834233fecd5cf3a440d8567": {
+    "en": "Locate and obtain the key at the smugglers' base on Shoreline",
+    "ko": "해안선(Shoreline)의 밀수꾼 기지에서 열쇠 찾아서 획득하기"
+  },
+  "6834233fecd5cf3a440d8561": {
+    "en": "Find out what happened to the champion",
+    "ko": "챔피언에게 무슨 일이 있었는지 알아내기"
+  },
+  "6834233fecd5cf3a440d8564": {
+    "en": "Survive and extract from the location",
+    "ko": "해당 지역에서 살아서 탈출하기"
+  },
+  "63a7d99804d3dc28a52a2106": {
+    "en": "Locate the place of bloody broadcast inside the grocery store on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)의 식료품점 안에서 유혈 방송이 진행된 장소 찾기"
+  },
+  "6672edebec0c3e2ad7d4e489": {
+    "en": "Launch a red signal flare at the old sawmill on Woods",
+    "ko": "삼림(Woods)의 오래된 제재소에서 빨간 신호탄 발사하기"
+  },
+  "6663389aa257916ad3c89529": {
+    "en": "Eliminate any target with the golden TT-33 pistol",
+    "ko": "[토카레프 TT-33 7.62x25 TT 권총 (황금색)]으로 아무 적 사살하기"
+  },
+  "667a958eb30fe2e2938a6387": {
+    "en": "Locate and obtain the special edition of the gaming magazine on Interchange",
+    "ko": "인터체인지(Interchange)에서 특별판 [게임 잡지] 찾아서 획득하기"
+  },
+  "667a95972740eaeca1ecda21": {
+    "en": "Hand over the found item",
+    "ko": "찾은 물건 건네주기"
+  },
+  "667571ad6889d3af44af7be2": {
+    "en": "Locate and obtain the hard drive at the old house on Shoreline",
+    "ko": "해안선(Shoreline)의 오래된 집에서 하드 드라이브 찾아서 획득하기"
+  },
+  "667571cb7620e3041bad913c": {
+    "en": "Hand over the found item",
+    "ko": "찾은 물건 건네주기"
+  },
+  "66675a4567c0cf0989946e12": {
+    "en": "Hand over the found in raid item: SSD drive",
+    "ko": "레이드에서 발견한 [SSD 드라이브] 건네주기"
+  },
+  "66675a50f15c3daac1fcb57d": {
+    "en": "Hand over the found in raid item: USB Adapter",
+    "ko": "레이드에서 발견한 [USB-A 어댑터] 건네주기"
+  },
+  "66675a5b89c89dbbf90361d5": {
+    "en": "Hand over the found in raid item: Portable Powerbank",
+    "ko": "레이드에서 발견한 [휴대형 보조배터리 (Portable Powerbank)] 건네주기"
+  },
+  "66675a66e7b6dbc6ff88de91": {
+    "en": "Hand over the found in raid item: Rechargeable battery",
+    "ko": "레이드에서 발견한 [충전지 (Rechargable battery)] 건네주기"
+  },
+  "667c252898eab887725ef789": {
+    "en": "Hand over the found in raid item: PC CPU",
+    "ko": "레이드에서 발견한 [PC CPU] 건네주기"
+  },
+  "667c25452c353b0176f883d1": {
+    "en": "Hand over the found in raid item: Electronic components",
+    "ko": "레이드에서 발견한 [전자기기 부품 (Electronic components)] 건네주기"
+  },
+  "667c257562774a862480925c": {
+    "en": "Hand over the found in raid item: Bundle of wires",
+    "ko": "레이드에서 발견한 [전선 묶음 (Bundle of wires)] 건네주기"
+  },
+  "667c25970b2c3c93bfc0f204": {
+    "en": "Hand over the found in raid item: Capacitors",
+    "ko": "레이드에서 발견한 [Capacitors 축전기] 건네주기"
+  },
+  "667c25a8b3d49a2e3f4bd05c": {
+    "en": "Hand over the found in raid item: NIXXOR lens",
+    "ko": "레이드에서 발견한 [NIXXOR 닉콘 렌즈] 건네주기"
+  },
+  "667c25b7b4419ddadbe352be": {
+    "en": "Hand over the found in raid item: RAM stick",
+    "ko": "레이드에서 발견한 [RAM 스틱] 건네주기"
+  },
+  "667c25eeb3fba3b8f07b9193": {
+    "en": "Hand over the found in raid item: Working LCD",
+    "ko": "레이드에서 발견한 [멀쩡한 LCD] 건네주기"
+  },
+  "667c26159bd3d32fb565578e": {
+    "en": "Hand over the found in raid item: Light bulb",
+    "ko": "레이드에서 발견한 [Light bulb 전구] 건네주기"
+  },
+  "667442da875be5fb415df535": {
+    "en": "Stash a Golden rooster figurine at Prapor's WI-FI Camera on Woods",
+    "ko": "삼림(Woods)의 프라퍼의 [WI-FI 카메라]에 [황금 수탉 피규어 (Golden Rooster figurine)] 숨기기"
+  },
+  "6682873d755938fa4cb73073": {
+    "en": "Stash a Golden rooster figurine at Prapor's WI-FI Camera on Shoreline",
+    "ko": "해안선(Shoreline)의 프라퍼의 [WI-FI 카메라]에 [황금 수탉 피규어 (Golden Rooster figurine)] 숨기기"
+  },
+  "66d080533a3c33d823a3477d": {
+    "en": "Stash a Golden rooster figurine at Prapor's WI-FI Camera on Factory",
+    "ko": "공장(Factory)의 프라퍼의 [WI-FI 카메라]에 [황금 수탉 피규어 (Golden Rooster figurine)] 숨기기"
+  },
+  "6679884cef969161e3e9d64d": {
+    "en": "Locate and obtain the souvenir key to the city on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)에서 도시의 기념 열쇠 찾아서 획득하기"
+  },
+  "667988545af9f7082798b67d": {
+    "en": "Hand over the found item",
+    "ko": "찾은 물건 건네주기"
+  },
+  "63aaccae87413d64ae079631": {
+    "en": "Launch a yellow signal flare at the train depot on Reserve (In one raid)",
+    "ko": "리저브(Reserve)의 기차 차고에서 노란 신호탄 발사하기 (한 레이드 내에)"
+  },
+  "639285879444fb141f4e6f25": {
+    "en": "Eliminate any target at the train depot on Reserve (In one raid)",
+    "ko": "리저브(Reserve)의 기차 차고에서 아무 적 사살하기 (한 레이드 내에)"
+  },
+  "6a45208043b8d7604d00b8d9": {
+    "en": "Launch a yellow signal flare at the train station on Lighthouse",
+    "ko": "등대(Lighthouse)의 기차역에서 노란 신호탄 발사하기"
+  },
+  "6a45208043b8d7604d00b8d7": {
+    "en": "Eliminate any target at the train station territory on Lighthouse",
+    "ko": "등대(Lighthouse)의 기차역 구역에서 아무 적 사살하기"
+  },
+  "63ac22b8f627f540861d1b2d": {
+    "en": "Locate the place of bloody broadcast inside the old house on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)의 오래된 집 안에서 유혈 방송이 진행된 장소 찾기"
+  },
+  "63a7d6d61f06d111271f5aeb": {
+    "en": "Locate the cultist meeting spot on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)에서 광신도 모임 장소 찾기"
+  },
+  "64eea404a2a5bb727b61c31e": {
+    "en": "Locate and neutralize Priest",
+    "ko": "사제(Priest) 찾아서 사살하기"
+  },
+  "64ee9a979878a0569d6ec8cb": {
+    "en": "Locate the ritual spot on Chekannaya st. on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)의 Chekannaya st.에서 의식 장소 찾기"
+  },
+  "64ee9b5a1a5f313cb144bf87": {
+    "en": "Stash a Cultist knife at the ritual spot",
+    "ko": "의식 장소에 [Cultist 광신도의 칼] 숨기기"
+  },
+  "671a5941cb557f8656561a12": {
+    "en": "Locate and obtain the lost weapon crate on Interchange",
+    "ko": "인터체인지(Interchange)에서 분실된 무기 상자 찾아서 획득하기"
+  },
+  "671a598e596272a846fa862a": {
+    "en": "Hand over the retrieved cargo",
+    "ko": "회수한 화물 건네주기"
+  },
+  "608a94101a66564e74191fc3": {
+    "en": "Locate the secret underground bunker exit on Reserve",
+    "ko": "리저브(Reserve)에서 비밀 지하 벙커 출구 찾기"
+  },
+  "6a4e6a3ee26b316718da2390": {
+    "en": "Locate the switch that activates the exit",
+    "ko": "출구를 활성화하는 스위치 찾기"
+  },
+  "67a0e4df8cddbe2df31dd1d9": {
+    "en": "Stash a Cultist knife in the first special place inside The Labyrinth",
+    "ko": "미궁(The Labyrinth) 안의 첫 번째 특별한 장소에 [Cultist 광신도의 칼] 숨기기"
+  },
+  "67a0e4e399e34c9ffcdc6e00": {
+    "en": "Stash a Cultist knife in the second special place inside The Labyrinth",
+    "ko": "미궁(The Labyrinth) 안의 두 번째 특별한 장소에 [Cultist 광신도의 칼] 숨기기"
+  },
+  "67a0e4e64cb065811d95c6d9": {
+    "en": "Stash a Cultist knife in the third special place inside The Labyrinth",
+    "ko": "미궁(The Labyrinth) 안의 세 번째 특별한 장소에 [Cultist 광신도의 칼] 숨기기"
+  },
+  "63a7d8f404d3dc28a52a2104": {
+    "en": "Locate the musician gathering spot on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)에서 음악가들이 모이는 장소 찾기"
+  },
+  "639135bbc115f907b14700a7": {
+    "en": "Locate and obtain the engraved guitar pick",
+    "ko": "각인된 기타 피크 찾아서 획득하기"
+  },
+  "639135bbc115f907b14700a8": {
+    "en": "Hand over the guitar pick",
+    "ko": "기타 피크 건네주기"
+  },
+  "6613f36ca4dc044e13e02295": {
+    "en": "Eliminate Raiders",
+    "ko": "레이더 사살하기"
+  },
+  "6616819ac7c53d7769413d9c": {
+    "en": "Hand over the found in raid WARTECH brand equipment",
+    "ko": "레이드에서 발견한 WARTECH 브랜드 장비 건네주기"
+  },
+  "66151401efb0539ae10875af": {
+    "en": "Eliminate Raiders",
+    "ko": "레이더 사살하기"
+  },
+  "66168239957ac58c30b29135": {
+    "en": "Hand over the found in raid WARTECH brand equipment",
+    "ko": "레이드에서 발견한 WARTECH 브랜드 장비 건네주기"
+  },
+  "66aa61663aa37705c502427c": {
+    "en": "Use the transit from Streets of Tarkov to Interchange (In one raid)",
+    "ko": "타르코프 시내(Streets of Tarkov)에서 인터체인지(Interchange)로 가는 지역 이동(트랜짓) 이용하기 (한 레이드 내에)"
+  },
+  "66aa61663aa37705c502427e": {
+    "en": "Eliminate any target on Interchange (In one raid)",
+    "ko": "인터체인지(Interchange)에서 아무 적 사살하기 (한 레이드 내에)"
+  },
+  "63a7dbefee7b4d0d5507baf8": {
+    "en": "Find out what happened to the warden",
+    "ko": "교도관에게 무슨 일이 있었는지 알아내기"
+  },
+  "63a7dbc31943b749b5021ec3": {
+    "en": "Locate the improvised jail warden's apartment on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)에서 임시 감옥 교도관의 아파트 찾기"
+  },
+  "63972db222ea23711e21aaaa": {
+    "en": "Survive and extract from the location",
+    "ko": "해당 지역에서 살아서 탈출하기"
+  },
+  "63a9b3d7813bba58a50c9ee9": {
+    "en": "Eliminate Scavs with melee weapons on daytime Factory",
+    "ko": "주간 공장(Factory)에서 근접 무기로 스캐브 사살하기"
+  },
+  "63a9b41dad5cc12f22162022": {
+    "en": "Eliminate Scavs with melee weapons on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)에서 근접 무기로 스캐브 사살하기"
+  },
+  "63a9b45bda7999196148ba5f": {
+    "en": "Eliminate Scavs with melee weapons on Lighthouse",
+    "ko": "등대(Lighthouse)에서 근접 무기로 스캐브 사살하기"
+  },
+  "63a9b557da7999196148ba61": {
+    "en": "Eliminate Scavs with melee weapons on Shoreline",
+    "ko": "해안선(Shoreline)에서 근접 무기로 스캐브 사살하기"
+  },
+  "63a9b5f064b9631d9178276b": {
+    "en": "Eliminate Scavs with melee weapons on Reserve",
+    "ko": "리저브(Reserve)에서 근접 무기로 스캐브 사살하기"
+  },
+  "65e0a329893b7bf535c6a9fd": {
+    "en": "Eliminate Scavs with melee weapons on Ground Zero",
+    "ko": "그라운드 제로(Ground Zero)에서 근접 무기로 스캐브 사살하기"
+  },
+  "6a4532e48e82d8ffea0c3eb0": {
+    "en": "Eliminate any target in The Lab (in one raid)",
+    "ko": "연구소(The Lab)에서 아무 적 사살하기 (한 레이드 내에)"
+  },
+  "683427418f5b18d29a05d9e5": {
+    "en": "Return to the old champion's hideout on Customs",
+    "ko": "세관(Customs)의 옛 챔피언 은신처로 돌아가기"
+  },
+  "683427418f5b18d29a05d9e7": {
+    "en": "Locate and obtain the compromising information on Ref",
+    "ko": "레프의 약점이 될 정보 찾아서 획득하기"
+  },
+  "683427418f5b18d29a05d9e9": {
+    "en": "Hand over the found info",
+    "ko": "찾은 정보 건네주기"
+  },
+  "6834287b7559f4e6d50bc0fd": {
+    "en": "Hand over the item: Lega Medal",
+    "ko": "[Lega Medal] 건네주기"
+  },
+  "63a9b229813bba58a50c9ee6": {
+    "en": "Eliminate any target with AR-15 weapons from over 100 meters away on Reserve, Lighthouse, Shoreline, or Ground Zero",
+    "ko": "리저브(Reserve), 등대(Lighthouse), 해안선(Shoreline), 그라운드 제로(Ground Zero) 중 한 곳에서 AR-15 계열 무기로 100미터 초과 거리에서 아무 적 사살하기"
+  },
+  "66aba85403e0ee310104287a": {
+    "en": "Use the transit from Streets of Tarkov to The Lab (In one raid)",
+    "ko": "타르코프 시내(Streets of Tarkov)에서 연구소(The Lab)로 가는 지역 이동(트랜짓) 이용하기 (한 레이드 내에)"
+  },
+  "66b090f5723e7bbe8b518ca8": {
+    "en": "Scout the server room in The Lab (In one raid)",
+    "ko": "연구소(The Lab)의 서버실 정찰하기 (한 레이드 내에)"
+  },
+  "66aba85403e0ee3101042878": {
+    "en": "Locate the passage leading to The Lab on Streets of Tarkov (In one raid)",
+    "ko": "타르코프 시내(Streets of Tarkov)에서 연구소(The Lab)로 이어지는 통로 찾기 (한 레이드 내에)"
+  },
+  "66aba97b1000025218c82ea8": {
+    "en": "Locate the passage leading to Streets of Tarkov in The Lab (In one raid)",
+    "ko": "연구소(The Lab)에서 타르코프 시내(Streets of Tarkov)로 이어지는 통로 찾기 (한 레이드 내에)"
+  },
+  "66b0910951c5294b9d213918": {
+    "en": "Scout the hazard dome in The Lab (In one raid)",
+    "ko": "연구소(The Lab)의 위험물 돔 정찰하기 (한 레이드 내에)"
+  },
+  "66b10eef0951e90ec383850b": {
+    "en": "Scout the control room in The Lab (In one raid)",
+    "ko": "연구소(The Lab)의 통제실 정찰하기 (한 레이드 내에)"
+  },
+  "66a0f391676953651bd8b796": {
+    "en": "Locate the dead worker and take their blood sample on Factory",
+    "ko": "공장(Factory)에서 죽은 작업자를 찾아 혈액 샘플 채취하기"
+  },
+  "6a60703aaa77a4b86e07aa3b": {
+    "en": "Hand over the found in raid item: LEDX Skin Transilluminator",
+    "ko": "레이드에서 발견한 [LEDX 피부 투과조명기] 건네주기"
+  },
+  "6a6070549ba7daf0a3ca7ae9": {
+    "en": "Stash the blood sample in Sanitar's office in The Lab",
+    "ko": "연구소(The Lab)의 세니타(Sanitar)의 사무실에 [혈액 샘플] 숨기기"
+  },
+  "6942b48e6998a45a7b90cd5b": {
+    "en": "Eliminate PMC operatives while using an active headset without wearing any armor or helmet",
+    "ko": "방탄복과 헬멧을 착용하지 않고 액티브 헤드셋을 사용한 상태로 PMC 사살하기"
+  },
+  "6942b72980d7f587b5b3ca86": {
+    "en": "Eliminate PMC operatives while wearing the TSh-4M-L soft tank crew helmet",
+    "ko": "[TSh-4M-L 전차 승무원 헬멧]을 착용한 상태로 PMC 사살하기"
+  },
+  "64f83d0eed30ed471f49bcde": {
+    "en": "Modify a CMMG Mk47 Mutant to comply with the given specifications",
+    "ko": "주어진 사양에 맞게 [CMMG Mk47 Mutant 7.62x39 돌격소총] 개조하기"
+  },
+  "64f83e9d52fc01298e2c857e": {
+    "en": "Modify a KAC SR-25 to comply with the given specifications",
+    "ko": "주어진 사양에 맞게 [Knight's Armament Company SR-25 7.62x51 지정사수소총] 개조하기"
+  },
+  "64f841199a4f905106515448": {
+    "en": "Modify a PKP machine gun to comply with the given specifications",
+    "ko": "주어진 사양에 맞게 [칼라시니코프 PKP 7.62x54R 기관총] 개조하기"
+  },
+  "676529e759261ce07bc47b62": {
+    "en": "Modify a T-5000M to comply with the given specifications",
+    "ko": "주어진 사양에 맞게 [ORSIS T-5000M 7.62x51 볼트액션 저격소총] 개조하기"
+  },
+  "676529af9c90953d090882ea": {
+    "en": "Modify a PP-19-01 to comply with the given specifications",
+    "ko": "주어진 사양에 맞게 [PP-19-01 Vityaz 9x19 기관단총] 개조하기"
+  },
+  "67652a2f4f75e1a9543289ed": {
+    "en": "Modify a Glock 17 to comply with the given specifications",
+    "ko": "주어진 사양에 맞게 [Glock 17 9x19 권총] 개조하기"
+  },
+  "6615127fd998c5f2aaa4a8a0": {
+    "en": "Eliminate Rogues",
+    "ko": "로그(Rogue) 사살하기"
+  },
+  "661681edabe376e7d6eab98f": {
+    "en": "Hand over the found in raid LBT brand equipment",
+    "ko": "레이드에서 발견한 LBT 브랜드 장비 건네주기"
+  },
+  "6615141bfda04449120269a8": {
+    "en": "Eliminate Rogues",
+    "ko": "로그(Rogue) 사살하기"
+  },
+  "661682aed31d408548016468": {
+    "en": "Hand over the found in raid LBT brand equipment",
+    "ko": "레이드에서 발견한 LBT 브랜드 장비 건네주기"
+  },
+  "66696cd3997231debad40d19": {
+    "en": "Eliminate any target that is using a 20+ container size backpack",
+    "ko": "수납공간이 20칸 이상인 배낭을 사용하는 아무 적 사살하기"
+  },
+  "666973ee1d80fbbbfeaf46c9": {
+    "en": "Sell Ragman any backpacks or tactical rigs",
+    "ko": "래그맨에게 아무 배낭 또는 전술 조끼 판매하기"
+  },
+  "6669abb8dac5788ebd0ff74a": {
+    "en": "Locate and neutralize any Boss (excluding The Goons, The Wedge and Partisan) while using any Goons Edition tactical rig",
+    "ko": "아무 Goons Edition 전술 조끼를 사용한 상태로 아무 보스(The Goons, The Wedge, Partisan 제외) 찾아서 사살하기"
+  },
+  "68406fd3b614b3db64e6097d": {
+    "en": "Locate and obtain the AK-50 barrel on Reserve",
+    "ko": "리저브(Reserve)에서 [AK-50 총열] 찾아서 획득하기"
+  },
+  "6840711071516aad97bd9156": {
+    "en": "Locate Glukhar's workshop on Reserve",
+    "ko": "리저브(Reserve)에서 글루하(Glukhar)의 작업장 찾기"
+  },
+  "684070a1a550c194cf2f833a": {
+    "en": "Locate and obtain the AK-50 dust cover at one of Tarkov's security checkpoints",
+    "ko": "타르코프의 보안 검문소 중 한 곳에서 [AK-50 먼지덮개] 찾아서 획득하기"
+  },
+  "6840714469caa738cc1225c3": {
+    "en": "Locate the checkpoint with seized cargo",
+    "ko": "압수한 화물이 있는 검문소 찾기"
+  },
+  "685e95c44b14e68996ad6590": {
+    "en": "Stash the AK-50 body at the specified spot on Customs",
+    "ko": "세관(Customs)의 지정된 장소에 [AK-50 body] 숨기기"
+  },
+  "685e97f9892281cf7a89f39c": {
+    "en": "Build the AK-50 body",
+    "ko": "[AK-50 body] 제작하기"
+  },
+  "685e95d28ba62d57a3235675": {
+    "en": "Stash the AK-50 handguard at the specified spot on Customs",
+    "ko": "세관(Customs)의 지정된 장소에 [AK-50 handguard] 숨기기"
+  },
+  "685e95def338135da83ff978": {
+    "en": "Stash the AK-50 barrel at the specified spot on Customs",
+    "ko": "세관(Customs)의 지정된 장소에 [AK-50 총열] 숨기기"
+  },
+  "685e95f0ac5f975749f6c1f3": {
+    "en": "Stash the AK-50 dust cover at the specified spot on Customs",
+    "ko": "세관(Customs)의 지정된 장소에 [AK-50 먼지덮개] 숨기기"
+  },
+  "684180b0b22d582a57c5a8d7": {
+    "en": "Hand over EUR",
+    "ko": "유로(EUR) 건네주기"
+  },
+  "684181808b21759f04e1c4ee": {
+    "en": "Complete the task Hobby Club",
+    "ko": "Hobby Club 퀘스트 완료하기"
+  },
+  "6841815b3d5e6b08d1f6e474": {
+    "en": "Locate the stash spot",
+    "ko": "은닉 장소 찾기"
+  },
+  "6841814c20c9a6c68800ab79": {
+    "en": "Locate and obtain the AK-50 handguard at the old sawmill on Woods",
+    "ko": "삼림(Woods)의 오래된 제재소에서 [AK-50 handguard] 찾아서 획득하기"
+  },
+  "67af730c69887224a61084ac": {
+    "en": "Eliminate any target in The Lab",
+    "ko": "연구소(The Lab)에서 아무 적 사살하기"
+  },
+  "67af6dd0f5685508d9050158": {
+    "en": "Hand over the item: Trijicon REAP-IR thermal scope",
+    "ko": "[Trijicon REAP-IR 열화상 조준경] 건네주기"
+  },
+  "67af6e1ee67a772b14e08061": {
+    "en": "Hand over the item: BNTI Zhuk body armor (EMR)",
+    "ko": "[BNTI Zhuk 방탄복 (Digital Flora)] 건네주기"
+  },
+  "67af6f1d268fd33c21524a02": {
+    "en": "Hand over the item: Vulkan-5 LShZ-5 bulletproof helmet",
+    "ko": "[Vulkan-5 LShZ-5 bulletproof helmet] 건네주기"
+  },
+  "67af6f7961ee5d07d0c210c9": {
+    "en": "Hand over the item: Maska-1SCh face shield (Killa Edition)",
+    "ko": "[Maska-1SCh 안면 보호대 (킬라 에디션)] 건네주기"
+  },
+  "67af7037f7937389517f0569": {
+    "en": "Hand over the item: HK 416A5 5.56x45 assault rifle",
+    "ko": "[HK 416A5 5.56x45 돌격소총] 건네주기"
+  },
+  "67af7055a7ffd02753b8c5bd": {
+    "en": "Hand over the item: 5.56x45mm MK 318 Mod 0 (SOST)",
+    "ko": "[5.56x45mm MK 318 Mod 0 (SOST)] 건네주기"
+  },
+  "67af70650fa4c937ca034063": {
+    "en": "Hand over the item: UVSR Taiga-1 survival machete",
+    "ko": "[UVSR Taiga-1 서바이벌 마체테] 건네주기"
+  },
+  "67af70d60ef31f2d26f1a4d5": {
+    "en": "Hand over the item: SJ6 TGLabs combat stimulant injector",
+    "ko": "[SJ6 TGLabs 전투 자극제 주사기] 건네주기"
+  },
+  "67af70e894e1096f325b8050": {
+    "en": "Hand over the item: Obdolbos 2 cocktail injector",
+    "ko": "[Obdolbos 2 cocktail injector] 건네주기"
+  },
+  "67af70f3cfdf90b749b5eb36": {
+    "en": "Hand over the item: Propital regenerative stimulant injector",
+    "ko": "[프로피탈 재생 자극제 주사기 (Propital regenerative stimulant injector)] 건네주기"
+  },
+  "67af70fe8c503a010078afd0": {
+    "en": "Hand over the item: M.U.L.E. stimulant injector",
+    "ko": "[M.U.L.E. 자극제 주사기] 건네주기"
+  },
+  "67af710c5662b533d9f5b9ca": {
+    "en": "Hand over the item: eTG-change regenerative stimulant injector",
+    "ko": "[eTG-change 재생 자극제 주사기] 건네주기"
+  },
+  "67af7117f8c948d02b632085": {
+    "en": "Hand over the item: SJ9 TGLabs combat stimulant injector",
+    "ko": "[SJ9 TGLabs 전투 자극제 주사기] 건네주기"
+  },
+  "67af7121aeed86a73d8653be": {
+    "en": "Hand over the item: SJ12 TGLabs combat stimulant injector",
+    "ko": "[SJ12 TGLabs 전투 자극제 주사기] 건네주기"
+  },
+  "67af712cf5f86ab56db8f198": {
+    "en": "Hand over the item: Meldonin injector",
+    "ko": "[Meldonin 멜도닌 주사기] 건네주기"
+  },
+  "67af7168fab0681948d9ed8b": {
+    "en": "Hand over the item: Graphics card",
+    "ko": "[GPU 그래픽 카드] 건네주기"
+  },
+  "67af71c90036a462a17a72d3": {
+    "en": "Hand over the item: Bottle of Tarkovskaya vodka",
+    "ko": "[Vodka 타르코프스카야 보드카] 건네주기"
+  },
+  "67af71d6a6e77337205f5bfe": {
+    "en": "Hand over the item: Bottle of Dan Jackiel whiskey",
+    "ko": "[Whiskey 댄 잭키엘 위스키] 건네주기"
+  },
+  "67af71f19ce81d8ebb21530f": {
+    "en": "Hand over the item: Bottle of Fierce Hatchling moonshine",
+    "ko": "[맹렬한 도끼런 밀주 병 (Bottle of Fierce Hatchling moonshine)] 건네주기"
+  },
+  "6a5cd11e5cf929b0f5d76816": {
+    "en": "Hand over the found in raid item: Metal fuel tank or Expeditionary fuel tank",
+    "ko": "레이드에서 발견한 [Metal fuel tank 금속 연료통] 또는 [Expeditionary fuel tank 여행용 연료통] 건네주기"
+  },
+  "5b4789b586f7744d190d8f43": {
+    "en": "Hand over the found in raid item: Bronze lion figurine",
+    "ko": "레이드에서 발견한 [Lion 청동 사자상] 건네주기"
+  },
+  "5b478a0986f7744d190d8f46": {
+    "en": "Hand over the found in raid item: Horse figurine",
+    "ko": "레이드에서 발견한 [Horse 말  조각상] 건네주기"
+  },
+  "6a576acbc13842ba359b767f": {
+    "en": "Hand over the found in raid item: Golden rooster figurine",
+    "ko": "레이드에서 발견한 [황금 수탉 피규어 (Golden Rooster figurine)] 건네주기"
+  },
+  "5b478a3786f77470315db7fa": {
+    "en": "Hand over the found in raid item: Cat figurine",
+    "ko": "레이드에서 발견한 [Cat 고양이 조각상] 건네주기"
+  },
+  "62a70058ec21e50cad3b6709": {
+    "en": "Hand over the found in raid item: Golden egg",
+    "ko": "레이드에서 발견한 [Golden egg 황금알] 건네주기"
+  },
+  "5b478a8486f7744d1c35328b": {
+    "en": "Hand over the found in raid item: Roler Submariner gold wrist watch",
+    "ko": "레이드에서 발견한 [Roler 롤러 서브마리너 골드 손목시계] 건네주기"
+  },
+  "5d26143c86f77469ef0f894c": {
+    "en": "Eliminate PMC operatives on Factory",
+    "ko": "공장(Factory)에서 PMC 사살하기"
+  },
+  "5d272bd386f77446085fa4f9": {
+    "en": "Eliminate Reshala's guards",
+    "ko": "르샬라(Reshala)의 경호원 사살하기"
+  },
+  "6a43cea5c14049e0e90eba57": {
+    "en": "Hand over one of Reshala's guards' armor vests",
+    "ko": "르샬라(Reshala)의 경호원이 착용한 방탄복 중 하나 건네주기"
+  },
+  "6a6a1ccf4bcac1a5fe2344f3": {
+    "en": "Hand over the found in raid Glukhar's guards' helmets",
+    "ko": "레이드에서 발견한 글루하(Glukhar)의 경호원 헬멧 건네주기"
+  },
+  "6a6a23d5aeb55e4783230255": {
+    "en": "Search Glukhar's guards and collect their helmets of Class 4 or higher",
+    "ko": "글루하(Glukhar)의 경호원을 수색하여 4클래스 이상 헬멧 수집하기"
+  },
+  "5fd8aa3206fb3a6b8154a2c3": {
+    "en": "Locate and neutralize any Boss with a bolt-action rifle",
+    "ko": "볼트액션 소총으로 아무 보스 찾아서 사살하기"
+  },
+  "6a5ffd702c6091f279537d66": {
+    "en": "Hand over the found in raid Sanitar's bag",
+    "ko": "레이드에서 발견한 [세니타의 가방 (Sanitar's Bag)] 건네주기"
+  },
+  "5edabb0b0c502106f869bc03": {
+    "en": "Locate and obtain Sanitar's surgery kit on Shoreline",
+    "ko": "해안선(Shoreline)에서 세니타(Sanitar)의 수술 키트 찾아서 획득하기"
+  },
+  "5edabb950c502106f869bc04": {
+    "en": "Hand over the item",
+    "ko": "아이템 건네주기"
+  },
+  "5edabc2ca0055865214cb5a6": {
+    "en": "Hand over the item",
+    "ko": "아이템 건네주기"
+  },
+  "5f07025e27cec53d5d24fe25": {
+    "en": "Find the item in raid: TerraGroup Labs access keycard",
+    "ko": "레이드에서 [테라그룹 연구소 출입 키카드 (TerraGroup Labs access keycard)] 찾기"
+  },
+  "5f070323d57aeb6e09253785": {
+    "en": "Find the item in raid: AHF1-M stimulant injector",
+    "ko": "레이드에서 [AHF1-M 자극제 주사기] 찾기"
+  },
+  "5f070350f6b5847ad975ceac": {
+    "en": "Find the item in raid: 3-(b-TG) stimulant injector",
+    "ko": "레이드에서 [3-(b-TG) 자극제 주사기] 찾기"
+  },
+  "608ab22755f4ac386d7e7fdc": {
+    "en": "Eliminate Scavs in the underground storage warehouse on Reserve",
+    "ko": "리저브(Reserve)의 지하 저장 창고에서 스캐브 사살하기"
+  },
+  "6a5ab8ac7119466cb512579d": {
+    "en": "Hand over any found in raid keys for the underground storage warehouse (RB-PSP and RB-PSV)",
+    "ko": "레이드에서 발견한 지하 저장 창고 열쇠(RB-PSP 및 RB-PSV) 아무거나 건네주기"
+  },
+  "608bd0a053b9dd01a116f474": {
+    "en": "Check the first armory in the eastern barracks (Black Pawn) on Reserve",
+    "ko": "리저브(Reserve)의 동쪽 병영(Black Pawn)에서 첫 번째 무기고 확인하기"
+  },
+  "608bd0c20637f21f9934b6e4": {
+    "en": "Check the second armory in the eastern barracks (Black Pawn) on Reserve",
+    "ko": "리저브(Reserve)의 동쪽 병영(Black Pawn)에서 두 번째 무기고 확인하기"
+  },
+  "608bd136c61c4b541b381da3": {
+    "en": "Check the first armory in the southern barracks (White Pawn) on Reserve",
+    "ko": "리저브(Reserve)의 남쪽 병영(White Pawn)에서 첫 번째 무기고 확인하기"
+  },
+  "608bd149f597ad0a33574d74": {
+    "en": "Check the second armory in the southern barracks (White Pawn) on Reserve",
+    "ko": "리저브(Reserve)의 남쪽 병영(White Pawn)에서 두 번째 무기고 확인하기"
+  },
+  "6a5761ff44baf1d1830bfa5c": {
+    "en": "Hand over the gear found in the rooms",
+    "ko": "방에서 찾은 장비 건네주기"
+  },
+  "6a6d0ec764f81ad96ce823eb": {
+    "en": "Locate and obtain any Russian gear in the armory rooms",
+    "ko": "무기고 안에서 아무 러시아제 장비 찾아서 획득하기"
+  },
+  "608a8356fa70fc097863b8f8": {
+    "en": "Eliminate Scavs around the main barracks on Reserve",
+    "ko": "리저브(Reserve)의 주 병영 주변에서 스캐브 사살하기"
+  },
+  "60ec18b73b5f7d790a7ad034": {
+    "en": "Eliminate PMC operatives at the specified Scav bases on Customs, Shoreline, or Woods",
+    "ko": "세관(Customs), 해안선(Shoreline), 삼림(Woods) 중 한 곳의 지정된 스캐브 기지에서 PMC 사살하기"
+  },
+  "60e82c12fd1bf4491c4e4547": {
+    "en": "Obtain the unusual cultist knives",
+    "ko": "특이한 [Cultist 광신도의 칼] 획득하기"
+  },
+  "6a5abd63b45ef5b1a87b8273": {
+    "en": "Locate and neutralize the hooded men",
+    "ko": "후드를 쓴 남자들 찾아서 사살하기"
+  },
+  "6ab4f1aeeb4a3127eba52703": {
+    "en": "Eliminate PMC operatives",
+    "ko": "PMC 사살하기"
+  },
+  "617bf4e152e86c73d372a95d": {
+    "en": "Eliminate any target around the chalets on Lighthouse",
+    "ko": "등대(Lighthouse)의 샬레 주변에서 아무 적 사살하기"
+  },
+  "6a5cd4d03a5504087ed636d3": {
+    "en": "Hand over the found in raid item: Topographic survey maps, Intelligence folder, or TerraGroup \"Blue Folders\" materials",
+    "ko": "레이드에서 발견한 [Topographic survey maps] 또는 [Intelligence 정보 파일] 또는 [테라그룹 '블루 폴더' 자료 (TerraGroup \"Blue Folders\" materials)] 건네주기"
+  },
+  "61a61c085d06a344766f3a29": {
+    "en": "Eliminate BEAR PMC operatives on Lighthouse, Ground Zero, Reserve, Shoreline, or Streets of Tarkov",
+    "ko": "등대(Lighthouse), 그라운드 제로(Ground Zero), 리저브(Reserve), 해안선(Shoreline), 타르코프 시내(Streets of Tarkov) 중 한 곳에서 BEAR PMC 사살하기"
+  },
+  "6193dabd5f6468204470571f": {
+    "en": "Eliminate Scavs along the shore and the main road on Lighthouse or Shoreline",
+    "ko": "등대(Lighthouse) 또는 해안선(Shoreline)의 해안과 주요 도로를 따라 스캐브 사살하기"
+  },
+  "6a5cd57d36c4fb654692787c": {
+    "en": "Eliminate any target with an M203 grenade launcher on Lighthouse or Reserve",
+    "ko": "등대(Lighthouse) 또는 리저브(Reserve)에서 [M203 grenade launcher]로 아무 적 사살하기"
+  },
+  "63ac1b741b5c95746621ddb4": {
+    "en": "Investigate the roof of any water treatment plant facility on Lighthouse",
+    "ko": "등대(Lighthouse)의 정수장 시설 중 아무 곳의 옥상 조사하기"
+  },
+  "639135534b15ca31f76bc318": {
+    "en": "Obtain the digital storage device from the car dealership manager's office on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)의 자동차 대리점 관리자 사무실에서 디지털 저장 장치 획득하기"
+  },
+  "639135534b15ca31f76bc319": {
+    "en": "Hand over the storage device",
+    "ko": "저장 장치 건네주기"
+  },
+  "63a7da6f5199ab1f7d4a774a": {
+    "en": "Locate the balletmeister's apartment on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)에서 발레 감독의 아파트 찾기"
+  },
+  "639135e8c115f907b14700ab": {
+    "en": "Obtain the data on vehicle movement at the Concordia residential complex parking lot on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)의 Concordia 주거 단지 주차장에서 차량 이동 자료 획득하기"
+  },
+  "639135e8c115f907b14700ac": {
+    "en": "Hand over the information",
+    "ko": "정보 건네주기"
+  },
+  "63a7cee004d3dc28a52a20f8": {
+    "en": "Locate the informant's backup hideout on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)에서 정보원의 예비 은신처 찾기"
+  },
+  "63990a1ddcdd126fef1771c1": {
+    "en": "Obtain the informant's journal",
+    "ko": "정보원의 일지 획득하기"
+  },
+  "63990ae2dcdd126fef1771c2": {
+    "en": "Bring the information to Lightkeeper",
+    "ko": "등대지기에게 정보 가져다주기"
+  },
+  "63b33cd9862e1142130b610c": {
+    "en": "Extract from Lighthouse",
+    "ko": "등대(Lighthouse)에서 탈출하기"
+  },
+  "6399b45d98e4ed53fa4632db": {
+    "en": "Obtain the forged intelligence at the Rogue base on Lighthouse",
+    "ko": "등대(Lighthouse)의 로그(Rogue) 기지에서 위조된 정보 획득하기"
+  },
+  "6399c929d65735732c6ba766": {
+    "en": "Obtain the original intelligence in the repair station on Reserve",
+    "ko": "리저브(Reserve)의 정비소에서 원본 정보 획득하기"
+  },
+  "6399ca5fe101160ce05706ac": {
+    "en": "Stash the forged intelligence under the BMP-2 in place of the original",
+    "ko": "BMP-2 아래에 원본 정보 대신 [위조된 정보] 숨기기"
+  },
+  "6399cc30b5992f573c65782b": {
+    "en": "Bring the original intelligence to Lightkeeper",
+    "ko": "등대지기에게 원본 정보 가져다주기"
+  },
+  "63a7d2acee7b4d0d5507baf2": {
+    "en": "Locate a good sniping position in Concordia overlooking the construction site",
+    "ko": "Concordia에서 건설 현장이 내려다보이는 좋은 저격 위치 찾기"
+  },
+  "639c359f0a20a7001f00c7a8": {
+    "en": "Hide AI Tactical Sound Moderator .338 LM near the red table",
+    "ko": "빨간 탁자 근처에 [AI Tactical Sound Moderator .338 LM] 숨기기"
+  },
+  "63a7d315f32fa1316250c3d2": {
+    "en": "Locate a good sniping position at Primorsky overlooking the movie theater",
+    "ko": "Primorsky에서 영화관이 내려다보이는 좋은 저격 위치 찾기"
+  },
+  "639c39807c1532d85b0162a9": {
+    "en": "Hide Trijicon REAP-IR thermal scope under Makhors' bed",
+    "ko": "Makhors의 침대 아래에 [Trijicon REAP-IR 열화상 조준경] 숨기기"
+  },
+  "63a7cd3aee7b4d0d5507baee": {
+    "en": "Locate the debtor on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)에서 채무자 찾기"
+  },
+  "6a5a9710671cbfe928bbfde2": {
+    "en": "Locate the private prison warden's apartment on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)에서 사설 감옥 교도관의 아파트 찾기"
+  },
+  "6a5a96d23542bf577a87a59d": {
+    "en": "Hand over the item: Iron gate key",
+    "ko": "[Iron gate key] 건네주기"
+  },
+  "63a98cfbc31b00242d28a95b": {
+    "en": "Scout the Shestyorochka store at Nikitskaya street",
+    "ko": "Nikitskaya street의 Shestyorochka 상점 정찰하기"
+  },
+  "63a98d24655ec5555b4aa9e7": {
+    "en": "Scout the Sparja store at Primorsky ave",
+    "ko": "Primorsky ave의 Sparja 상점 정찰하기"
+  },
+  "63a98d39da7999196148ba3a": {
+    "en": "Scout the Sparja store in Pinewood hotel",
+    "ko": "Pinewood 호텔의 Sparja 상점 정찰하기"
+  },
+  "63a98d60c0f61a5d8731cd9f": {
+    "en": "Scout the Goshan store in Concordia",
+    "ko": "Concordia의 Goshan 상점 정찰하기"
+  },
+  "63a98cdf655ec5555b4aa9e6": {
+    "en": "Hand over the found in raid item: Salty Dog beef sausage",
+    "ko": "레이드에서 발견한 [Salty Dog beef sausage] 건네주기"
+  },
+  "63a9ae63da7999196148ba5c": {
+    "en": "Eliminate any target with AK-74 series weapons on Reserve or Lighthouse",
+    "ko": "리저브(Reserve) 또는 등대(Lighthouse)에서 AK-74 계열 무기로 아무 적 사살하기"
+  },
+  "64e7bdd52d369a1c0172722f": {
+    "en": "Eliminate any target with Assault rifles or Assault carbines on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)에서 돌격소총 또는 돌격 카빈으로 아무 적 사살하기"
+  },
+  "64f3176921045e77405d63ba": {
+    "en": "Locate and obtain the ambulance paramedic's smartphone on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)에서 구급대원의 스마트폰 찾아서 획득하기"
+  },
+  "64f4fdfa67e11a7c6206de72": {
+    "en": "Extract from Streets of Tarkov through Primorsky Ave Taxi V-Ex",
+    "ko": "타르코프 시내(Streets of Tarkov)에서 Primorsky Ave Taxi V-Ex를 통해 탈출하기"
+  },
+  "64f3176921045e77405d63bb": {
+    "en": "Hand over the smartphone",
+    "ko": "스마트폰 건네주기"
+  },
+  "64f731fa39e45b527a7c4300": {
+    "en": "Locate and scout the vet clinic on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)에서 동물병원 찾아서 정찰하기"
+  },
+  "64f732240e186112c4455d84": {
+    "en": "Locate and scout the x-ray technician's room on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)에서 방사선사의 방 찾아서 정찰하기"
+  },
+  "6a568465f58d7f6b0a60fe7f": {
+    "en": "Locate the first pharmacy on Primorsky Ave on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)의 Primorsky Ave에서 첫 번째 약국 찾기"
+  },
+  "6a56846efc5f232676a88d09": {
+    "en": "Locate the second pharmacy on Primorsky Ave on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)의 Primorsky Ave에서 두 번째 약국 찾기"
+  },
+  "6a56847638efe4385b7efdb3": {
+    "en": "Locate the pharmacy near Cardinal apartment complex on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)의 Cardinal 아파트 단지 근처에서 약국 찾기"
+  },
+  "6a5684f79688ddb4fea39af6": {
+    "en": "Hand over any found in raid medicine items",
+    "ko": "레이드에서 발견한 아무 의약품 아이템 건네주기"
+  },
+  "6a5b8db01dc53f0f3ec7f0d9": {
+    "en": "Mark any ATM on Klimov Street with an MS2000 Marker on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)의 Klimov Street에서 아무 ATM에 MS2000 마커 설치하기"
+  },
+  "6572e876dc0d635f633a5718": {
+    "en": "Locate the first group of ATMs on Klimov Street on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)의 Klimov Street에서 첫 번째 ATM 묶음 찾기"
+  },
+  "6573058d6a542c099ce5d92b": {
+    "en": "Locate the first ATM inside Klimov Shopping Mall on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)의 Klimov Shopping Mall 안에서 첫 번째 ATM 찾기"
+  },
+  "65730579d50436e87723dae4": {
+    "en": "Locate the first ATM on Klimov Street on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)의 Klimov Street에서 첫 번째 ATM 찾기"
+  },
+  "657305989d1d1fe81237e9e7": {
+    "en": "Locate the third ATM on Klimov Street on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)의 Klimov Street에서 세 번째 ATM 찾기"
+  },
+  "657305913186869491d7f5fd": {
+    "en": "Locate the second ATM inside Klimov Shopping Mall on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)의 Klimov Shopping Mall 안에서 두 번째 ATM 찾기"
+  },
+  "65730593d4b1bd9359203a74": {
+    "en": "Locate the third ATM inside Klimov Shopping Mall on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)의 Klimov Shopping Mall 안에서 세 번째 ATM 찾기"
+  },
+  "6573058b4e3f646b0e364add": {
+    "en": "Locate the first group of ATMs inside Klimov Shopping Mall on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)의 Klimov Shopping Mall 안에서 첫 번째 ATM 묶음 찾기"
+  },
+  "65730597d64537696cc661c6": {
+    "en": "Locate the second ATM on Klimov Street on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)의 Klimov Street에서 두 번째 ATM 찾기"
+  },
+  "6573058f5c2ba64444301c25": {
+    "en": "Locate the second group of ATMs inside Klimov Shopping Mall on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)의 Klimov Shopping Mall 안에서 두 번째 ATM 묶음 찾기"
+  },
+  "65730595fd5ec1426ebd5484": {
+    "en": "Locate the third group of ATMs inside Klimov Shopping Mall on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)의 Klimov Shopping Mall 안에서 세 번째 ATM 묶음 찾기"
+  },
+  "65733403eefc2c312a759ddc": {
+    "en": "Locate the IT firm office on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)에서 IT 회사 사무실 찾기"
+  },
+  "65801ad655315fdce2096bec": {
+    "en": "Unravel the secret of the firm's success",
+    "ko": "회사의 성공 비결 밝혀내기"
+  },
+  "6573387d0b26ed4fde798de4": {
+    "en": "Locate the first pharmacy on Primorsky Ave on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)의 Primorsky Ave에서 첫 번째 약국 찾기"
+  },
+  "657338ded9b444e1fb07b1a8": {
+    "en": "Locate the second pharmacy on Primorsky Ave on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)의 Primorsky Ave에서 두 번째 약국 찾기"
+  },
+  "657338ed8e8e3a05445b760d": {
+    "en": "Locate the third pharmacy at Cardinal apartment complex on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)의 Cardinal 아파트 단지에서 세 번째 약국 찾기"
+  },
+  "658009db6b313a8a4ed58851": {
+    "en": "Survive and extract from the location",
+    "ko": "해당 지역에서 살아서 탈출하기"
+  },
+  "6578eb36e5020875d64645d0": {
+    "en": "Locate and neutralize Kollontay",
+    "ko": "콜론타이(Kollontay) 찾아서 사살하기"
+  },
+  "6582b05dc992d6dcc0a40c75": {
+    "en": "Hand over the found in raid Kollontay's police baton",
+    "ko": "레이드에서 발견한 [Kollontay's police baton] 건네주기"
+  },
+  "6667193a41b0135d2df10fd9": {
+    "en": "Eliminate PMC operatives without killing Scavs",
+    "ko": "스캐브를 죽이지 않고 PMC 사살하기"
+  },
+  "666719fc7c5ae40e6adcf43e": {
+    "en": "Extract from the location with the \"Unknown toxin\" status effect",
+    "ko": "\"Unknown toxin\" 상태 효과에 걸린 채 해당 지역에서 탈출하기"
+  },
+  "666729738d4b7a9182ad4a89": {
+    "en": "Find the item in raid: Ded Moroz figurine",
+    "ko": "레이드에서 [제드 마로스 피규어] 찾기"
+  },
+  "66672a1a928cfea6db3ff6cb": {
+    "en": "Hand over the item",
+    "ko": "아이템 건네주기"
+  },
+  "66672a99bf7a7a1fcee35af0": {
+    "en": "Find the item in raid: Politician Mutkevich figurine",
+    "ko": "레이드에서 [무트케비치 정치인 피규어 (Politician Mutkevich figurine)] 찾기"
+  },
+  "66672a9e351098ce6dee9d3e": {
+    "en": "Hand over the item",
+    "ko": "아이템 건네주기"
+  },
+  "66672b010cf940754acb3a83": {
+    "en": "Find the item in raid: Killa figurine",
+    "ko": "레이드에서 [Killa figurine] 찾기"
+  },
+  "66672b18eba38faad31d29c3": {
+    "en": "Hand over the item",
+    "ko": "아이템 건네주기"
+  },
+  "66672b3330d5ad1d58cc1e95": {
+    "en": "Find the item in raid: Reshala figurine",
+    "ko": "레이드에서 [Reshala figurine] 찾기"
+  },
+  "66672b47d515c72d9075fe64": {
+    "en": "Hand over the item",
+    "ko": "아이템 건네주기"
+  },
+  "66672b7dd70d15a60bb41e04": {
+    "en": "Find the item in raid: Ryzhy figurine",
+    "ko": "레이드에서 [Ryzhy 피규어] 찾기"
+  },
+  "66672b88a8236f9caf29c39e": {
+    "en": "Hand over the item",
+    "ko": "아이템 건네주기"
+  },
+  "6667306ec19fb654f22fa05a": {
+    "en": "Find the item in raid: Scav figurine",
+    "ko": "레이드에서 [Scav 스캐브 피규어] 찾기"
+  },
+  "6667308a456e86f33c87437c": {
+    "en": "Hand over the item",
+    "ko": "아이템 건네주기"
+  },
+  "666730b475bbbbfd5049b7da": {
+    "en": "Find the item in raid: Tagilla figurine",
+    "ko": "레이드에서 [Tagilla figurine] 찾기"
+  },
+  "666730d6386cf75012a431f2": {
+    "en": "Hand over the item",
+    "ko": "아이템 건네주기"
+  },
+  "666730f88db8c7927a859959": {
+    "en": "Find the item in raid: Cultist figurine",
+    "ko": "레이드에서 [Cultist figurine] 찾기"
+  },
+  "6667310584936a1238607d39": {
+    "en": "Hand over the item",
+    "ko": "아이템 건네주기"
+  },
+  "66673136b23cfc3ecab865d6": {
+    "en": "Find the item in raid: Den figurine",
+    "ko": "레이드에서 [Den figurine] 찾기"
+  },
+  "6667314ae24cc783e69ad784": {
+    "en": "Hand over the item",
+    "ko": "아이템 건네주기"
+  },
+  "666732298477f79f3f6ea229": {
+    "en": "Eliminate any Scav Boss guards without killing the Bosses",
+    "ko": "보스는 죽이지 않고 아무 스캐브 보스의 경호원 사살하기"
+  },
+  "666733e0c62a5c652f3c4b45": {
+    "en": "Stash a Cultist knife at the sunken village marked circle on Shoreline",
+    "ko": "해안선(Shoreline)의 물에 잠긴 마을에 있는 의식의 원에 [Cultist 광신도의 칼] 숨기기"
+  },
+  "666733e3f2c2969cf600991b": {
+    "en": "Stash a Cultist knife at the Health Resort east wing marked circle on Shoreline",
+    "ko": "해안선(Shoreline)의 휴양지 동관에 있는 의식의 원에 [Cultist 광신도의 칼] 숨기기"
+  },
+  "666733e565831d5bafa18bbb": {
+    "en": "Stash a Cultist knife at the river village marked circle on Woods",
+    "ko": "삼림(Woods)의 강가 마을에 있는 의식의 원에 [Cultist 광신도의 칼] 숨기기"
+  },
+  "666733e7430c8972d6a5f438": {
+    "en": "Stash a Cultist knife at the sawmill marked circle on Woods",
+    "ko": "삼림(Woods)의 제재소에 있는 의식의 원에 [Cultist 광신도의 칼] 숨기기"
+  },
+  "66813c01decf4560581ca0c0": {
+    "en": "Reach 5.0 reputation with Fence",
+    "ko": "펜스 평판 5.0 달성하기"
+  },
+  "669fb1ffe34e78d618792b41": {
+    "en": "Eliminate any target in basement tunnel network on Factory",
+    "ko": "공장(Factory)의 지하 터널망에서 아무 적 사살하기"
+  },
+  "669fb5c58c03e61e1a33ddf0": {
+    "en": "Install a WI-FI Camera in the first crane's cockpit on Factory",
+    "ko": "공장(Factory)의 첫 번째 크레인 조종실에 [WI-FI 카메라] 설치하기"
+  },
+  "669fb5c7d5fbaaa7b285e83d": {
+    "en": "Install a WI-FI Camera in the second crane's cockpit on Factory",
+    "ko": "공장(Factory)의 두 번째 크레인 조종실에 [WI-FI 카메라] 설치하기"
+  },
+  "669fb5c9d798aa41b9bd60b5": {
+    "en": "Install a WI-FI Camera in the third crane's cockpit on Factory",
+    "ko": "공장(Factory)의 세 번째 크레인 조종실에 [WI-FI 카메라] 설치하기"
+  },
+  "66a0f5a7f9eae6761253114c": {
+    "en": "Eliminate any target with SR-2M with suppressor and KP-SR2 sight on Reserve or Lighthouse",
+    "ko": "리저브(Reserve) 또는 등대(Lighthouse)에서 소음기와 [KP-SR2 sight]를 장착한 [SR-2M]으로 아무 적 사살하기"
+  },
+  "66aa5be8035c6a410dc570b2": {
+    "en": "Use the transit from Ground Zero to Streets of Tarkov (In one raid)",
+    "ko": "그라운드 제로(Ground Zero)에서 타르코프 시내(Streets of Tarkov)로 가는 지역 이동(트랜짓) 이용하기 (한 레이드 내에)"
+  },
+  "66aa5b2cecad9c067780924b": {
+    "en": "Scout the intersection of Mira Ave and the overpass on Ground Zero (In one raid)",
+    "ko": "그라운드 제로(Ground Zero)에서 Mira Ave와 고가도로의 교차 지점 정찰하기 (한 레이드 내에)"
+  },
+  "66aa5bb281dff8466b076894": {
+    "en": "Locate the passage leading to Streets of Tarkov on Ground Zero (In one raid)",
+    "ko": "그라운드 제로(Ground Zero)에서 타르코프 시내(Streets of Tarkov)로 이어지는 통로 찾기 (한 레이드 내에)"
+  },
+  "66aa74571e5e199ecd094f1b": {
+    "en": "Use the transit from Customs to Factory (In one raid)",
+    "ko": "세관(Customs)에서 공장(Factory)으로 가는 지역 이동(트랜짓) 이용하기 (한 레이드 내에)"
+  },
+  "66ab97a5c74ce045d6c32578": {
+    "en": "Locate and obtain the precision tools package in the med lab on Customs",
+    "ko": "세관(Customs)의 의료 연구실에서 정밀 공구 꾸러미 찾아서 획득하기"
+  },
+  "66ab97d56cb6e3bfd7c79fbc": {
+    "en": "Stash the package at the laboratory storage room on Factory",
+    "ko": "공장(Factory)의 연구실 창고에 [꾸러미] 숨기기"
+  },
+  "66ab9c5c60199cdb0902f8cc": {
+    "en": "Stash a Military cable at the boulder next to RUAF gate on Woods",
+    "ko": "삼림(Woods)의 RUAF 관문 옆 바위에 [Military cable 군용 케이블] 숨기기"
+  },
+  "66ab970848ddbe9d4a0c49ab": {
+    "en": "Use the transit from Woods to Reserve",
+    "ko": "삼림(Woods)에서 리저브(Reserve)로 가는 지역 이동(트랜짓) 이용하기"
+  },
+  "66ab9c7ea3a7219e87d4b75e": {
+    "en": "Stash a Bulbex cable cutter at the sandbags next to LAV III above the storage warehouse on Reserve",
+    "ko": "리저브(Reserve)의 저장 창고 위쪽 LAV III 옆 모래주머니에 [Bulbex 케이블 커터] 숨기기"
+  },
+  "66ab9da7eb102b9bcd08591d": {
+    "en": "Eliminate Scavs on Lighthouse (In one raid)",
+    "ko": "등대(Lighthouse)에서 스캐브 사살하기 (한 레이드 내에)"
+  },
+  "66ab9da7eb102b9bcd08591f": {
+    "en": "Use the transit from Lighthouse to Shoreline (In one raid)",
+    "ko": "등대(Lighthouse)에서 해안선(Shoreline)으로 가는 지역 이동(트랜짓) 이용하기 (한 레이드 내에)"
+  },
+  "66ab9da7eb102b9bcd085922": {
+    "en": "Eliminate Scavs on Shoreline (In one raid)",
+    "ko": "해안선(Shoreline)에서 스캐브 사살하기 (한 레이드 내에)"
+  },
+  "673f2d9a73ff76dd6d5a6344": {
+    "en": "Locate and scout the office at the depot on Woods",
+    "ko": "삼림(Woods)의 물류 기지에서 사무실 찾아서 정찰하기"
+  },
+  "673f2d938504a2d993bc2e68": {
+    "en": "Locate and scout the warehouses at the depot on Woods",
+    "ko": "삼림(Woods)의 물류 기지에서 창고들 찾아서 정찰하기"
+  },
+  "673f2da118e615f9f5550544": {
+    "en": "Locate and scout the garages at the depot on Woods",
+    "ko": "삼림(Woods)의 물류 기지에서 차고들 찾아서 정찰하기"
+  },
+  "674eefb9b48df9e0cbba4e2f": {
+    "en": "Complete the task A Helping Hand",
+    "ko": "A Helping Hand 퀘스트 완료하기"
+  },
+  "673f34c674ec5bf80ea69eee": {
+    "en": "Hand over the package from the depot on Woods",
+    "ko": "삼림(Woods)의 물류 기지에서 가져온 꾸러미 건네주기"
+  },
+  "673f507029a1128d5c4d7498": {
+    "en": "Locate and mark the spare BTR wheels with an MS2000 Marker",
+    "ko": "BTR 예비 바퀴를 찾아 MS2000 마커 설치하기"
+  },
+  "673f5065cdfe082966842575": {
+    "en": "Complete the main objective as soon as possible",
+    "ko": "가능한 한 빨리 주 목표 완료하기"
+  },
+  "673f5a9537550b9d7fd30777": {
+    "en": "Locate and mark the spare BTR wheels with an MS2000 Marker on Reserve",
+    "ko": "리저브(Reserve)에서 BTR 예비 바퀴를 찾아 MS2000 마커 설치하기"
+  },
+  "673f60910aed589d887b5ea1": {
+    "en": "Eliminate Scavs on Woods",
+    "ko": "삼림(Woods)에서 스캐브 사살하기"
+  },
+  "67499a4f03b8295863172dea": {
+    "en": "Use the transit from Woods to Reserve",
+    "ko": "삼림(Woods)에서 리저브(Reserve)로 가는 지역 이동(트랜짓) 이용하기"
+  },
+  "67499a61ddf14e140a675607": {
+    "en": "Eliminate Scavs on Reserve",
+    "ko": "리저브(Reserve)에서 스캐브 사살하기"
+  },
+  "673f61d9c2bc3dc676297fde": {
+    "en": "Locate and obtain the electronic jammer at the electromechanical warehouse on Reserve",
+    "ko": "리저브(Reserve)의 전기기계 창고에서 전자 교란기 찾아서 획득하기"
+  },
+  "673f61ea87e01cfaf780a482": {
+    "en": "Stash the device at the specified location on Woods",
+    "ko": "삼림(Woods)의 지정된 장소에 [장치] 숨기기"
+  },
+  "67519696567b9773f0811bae": {
+    "en": "Sell any items to Prapor",
+    "ko": "프라퍼에게 아무 아이템 판매하기"
+  },
+  "675196dff77c0b8436ec1ef5": {
+    "en": "Sell any items to Peacekeeper",
+    "ko": "피스키퍼에게 아무 아이템 판매하기"
+  },
+  "673f637a1fbc23a60a72b743": {
+    "en": "Sell any items to Ragman",
+    "ko": "래그맨에게 아무 아이템 판매하기"
+  },
+  "6740a0c33c7152ccfe151146": {
+    "en": "Stash the first metal fuel tank at the smugglers' base on Shoreline",
+    "ko": "해안선(Shoreline)의 밀수꾼 기지에 첫 번째 [Metal fuel tank 금속 연료통] 숨기기"
+  },
+  "6740a0d5b05fb787316fe7d5": {
+    "en": "Stash the second metal fuel tank at the smugglers' base on Shoreline",
+    "ko": "해안선(Shoreline)의 밀수꾼 기지에 두 번째 [Metal fuel tank 금속 연료통] 숨기기"
+  },
+  "6740a202086cf3dbf687279a": {
+    "en": "Locate and obtain Prapor's cargo on Shoreline",
+    "ko": "해안선(Shoreline)에서 프라퍼의 화물 찾아서 획득하기"
+  },
+  "6740a20cc6daae7f8f12a77d": {
+    "en": "Hand over the found cargo",
+    "ko": "찾은 화물 건네주기"
+  },
+  "6749aa9b1badcb1e8056d769": {
+    "en": "Hand over the found in raid military electronic items",
+    "ko": "레이드에서 발견한 군용 전자기기 아이템 건네주기"
+  },
+  "6740a33685a62f9581c2beaf": {
+    "en": "Hand over the found in raid PC component items",
+    "ko": "레이드에서 발견한 PC 부품 아이템 건네주기"
+  },
+  "6740a42c508599fd5a066f19": {
+    "en": "Eliminate any target on any location",
+    "ko": "아무 지역에서 아무 적 사살하기"
+  },
+  "6740b64f024f0e44fbed2c48": {
+    "en": "Locate the missing courier crew on Woods",
+    "ko": "삼림(Woods)에서 실종된 운송팀 찾기"
+  },
+  "6740b66079ff8ea717dad584": {
+    "en": "Survive and extract from the location",
+    "ko": "해당 지역에서 살아서 탈출하기"
+  },
+  "674492e56e8d2d5239a3fd37": {
+    "en": "Locate and mark the first section of the cliff path with an MS2000 Marker on Lighthouse",
+    "ko": "등대(Lighthouse)에서 절벽길의 첫 번째 구간을 찾아 MS2000 마커 설치하기"
+  },
+  "674492ebf6f84f7d09ef1abb": {
+    "en": "Locate and mark the second section of the cliff path with an MS2000 Marker on Lighthouse",
+    "ko": "등대(Lighthouse)에서 절벽길의 두 번째 구간을 찾아 MS2000 마커 설치하기"
+  },
+  "674492f0636d0661476732f2": {
+    "en": "Locate and mark the third section of the cliff path with an MS2000 Marker on Lighthouse",
+    "ko": "등대(Lighthouse)에서 절벽길의 세 번째 구간을 찾아 MS2000 마커 설치하기"
+  },
+  "674492f30f45cb752f21df39": {
+    "en": "Locate and mark the fourth section of the cliff path with an MS2000 Marker on Lighthouse",
+    "ko": "등대(Lighthouse)에서 절벽길의 네 번째 구간을 찾아 MS2000 마커 설치하기"
+  },
+  "6744a4e6c8a456e74064e7d7": {
+    "en": "Eliminate Scavs in one raid on Ground Zero",
+    "ko": "그라운드 제로(Ground Zero)에서 스캐브 사살하기 (한 레이드 내에)"
+  },
+  "6744a6b96cefb76fd3f70555": {
+    "en": "Survive and extract from the location",
+    "ko": "해당 지역에서 살아서 탈출하기"
+  },
+  "683db718d1c3c712dac4b5c9": {
+    "en": "Find the item: 6-STEN-140-M military battery",
+    "ko": "[Tank battery 6-STEN-140-M 탱크 배터리] 찾기"
+  },
+  "6744a964dc1b1e2ee134ffeb": {
+    "en": "Hand over the item: 6-STEN-140-M military battery",
+    "ko": "[Tank battery 6-STEN-140-M 탱크 배터리] 건네주기"
+  },
+  "683db86c1090d855fb0f2c23": {
+    "en": "Find the item: 6-STEN-140-M military battery",
+    "ko": "[Tank battery 6-STEN-140-M 탱크 배터리] 찾기"
+  },
+  "6744a9dfef61d56e020b5c54": {
+    "en": "Hand over the item: 6-STEN-140-M military battery",
+    "ko": "[Tank battery 6-STEN-140-M 탱크 배터리] 건네주기"
+  },
+  "6744ab1def61d56e020b5c5f": {
+    "en": "Locate the package in the specified spot on Woods",
+    "ko": "삼림(Woods)의 지정된 장소에서 꾸러미 찾기"
+  },
+  "6744ab1def61d56e020b5c60": {
+    "en": "Hand over the package",
+    "ko": "꾸러미 건네주기"
+  },
+  "6744ae5cc771515803d615ec": {
+    "en": "Stash a VOG-25 Khattabka grenade at the first RPG ammo crate on Woods",
+    "ko": "삼림(Woods)의 첫 번째 RPG 탄약 상자에 [VOG-25 카턉카 급조 수류탄] 숨기기"
+  },
+  "6744ae63b3b4be24ffc607a4": {
+    "en": "Stash a VOG-25 Khattabka grenade at the second RPG ammo crate on Woods",
+    "ko": "삼림(Woods)의 두 번째 RPG 탄약 상자에 [VOG-25 카턉카 급조 수류탄] 숨기기"
+  },
+  "6744ae65f8c1438fb9374575": {
+    "en": "Stash a VOG-25 Khattabka grenade at the third RPG ammo crate on Woods",
+    "ko": "삼림(Woods)의 세 번째 RPG 탄약 상자에 [VOG-25 카턉카 급조 수류탄] 숨기기"
+  },
+  "6745c8ccb4adeab3910332cc": {
+    "en": "Locate and obtain the incriminating letter on Customs",
+    "ko": "세관(Customs)에서 혐의를 입증하는 편지 찾아서 획득하기"
+  },
+  "6745c8ee54d6972417ad7bad": {
+    "en": "Use the transit from Customs to Reserve",
+    "ko": "세관(Customs)에서 리저브(Reserve)로 가는 지역 이동(트랜짓) 이용하기"
+  },
+  "6745c8de22c7ee46e3319c34": {
+    "en": "Stash the letter on the third floor of the military headquarters on Reserve",
+    "ko": "리저브(Reserve)의 군 사령부 3층에 [편지] 숨기기"
+  },
+  "6745c90842db81af412eae97": {
+    "en": "Use the transit from Reserve to Woods",
+    "ko": "리저브(Reserve)에서 삼림(Woods)으로 가는 지역 이동(트랜짓) 이용하기"
+  },
+  "6745c9482ac6bee79dca869a": {
+    "en": "Eliminate any target on Woods",
+    "ko": "삼림(Woods)에서 아무 적 사살하기"
+  },
+  "6745c9623d362cd373b1de93": {
+    "en": "Use the transit from Woods to Lighthouse",
+    "ko": "삼림(Woods)에서 등대(Lighthouse)로 가는 지역 이동(트랜짓) 이용하기"
+  },
+  "6745c986a3e10e0bf6472d8e": {
+    "en": "Launch a yellow signal flare at the train station warehouse on Lighthouse",
+    "ko": "등대(Lighthouse)의 기차역 창고에서 노란 신호탄 발사하기"
+  },
+  "6745c992bf76b3aeaf6370e0": {
+    "en": "Launch a yellow signal flare at the pier on Lighthouse",
+    "ko": "등대(Lighthouse)의 부두에서 노란 신호탄 발사하기"
+  },
+  "6745c9b89c84a273d4a2dc28": {
+    "en": "Eliminate Scavs while completing the other objectives",
+    "ko": "다른 목표를 수행하는 동안 스캐브 사살하기"
+  },
+  "6745cbee909d2013670a4a60": {
+    "en": "Locate and obtain the incriminating letter on Customs",
+    "ko": "세관(Customs)에서 혐의를 입증하는 편지 찾아서 획득하기"
+  },
+  "6745cbee909d2013670a4a61": {
+    "en": "Use the transit from Customs to Reserve",
+    "ko": "세관(Customs)에서 리저브(Reserve)로 가는 지역 이동(트랜짓) 이용하기"
+  },
+  "6745cbee909d2013670a4a63": {
+    "en": "Stash the letter on the third floor of the military headquarters on Reserve",
+    "ko": "리저브(Reserve)의 군 사령부 3층에 [편지] 숨기기"
+  },
+  "6745cbee909d2013670a4a64": {
+    "en": "Use the transit from Reserve to Woods",
+    "ko": "리저브(Reserve)에서 삼림(Woods)으로 가는 지역 이동(트랜짓) 이용하기"
+  },
+  "6745cbee909d2013670a4a66": {
+    "en": "Eliminate any target on Woods",
+    "ko": "삼림(Woods)에서 아무 적 사살하기"
+  },
+  "6745cbee909d2013670a4a68": {
+    "en": "Use the transit from Woods to Lighthouse",
+    "ko": "삼림(Woods)에서 등대(Lighthouse)로 가는 지역 이동(트랜짓) 이용하기"
+  },
+  "6745cbee909d2013670a4a6a": {
+    "en": "Launch a yellow signal flare at the train station warehouse on Lighthouse",
+    "ko": "등대(Lighthouse)의 기차역 창고에서 노란 신호탄 발사하기"
+  },
+  "6745cbee909d2013670a4a6c": {
+    "en": "Launch a yellow signal flare at the pier on Lighthouse",
+    "ko": "등대(Lighthouse)의 부두에서 노란 신호탄 발사하기"
+  },
+  "6745cbee909d2013670a4a6e": {
+    "en": "Eliminate Scavs while completing the other objectives",
+    "ko": "다른 목표를 수행하는 동안 스캐브 사살하기"
+  },
+  "6745fae369a58fceba103458": {
+    "en": "Eliminate PMC operatives on Woods",
+    "ko": "삼림(Woods)에서 PMC 사살하기"
+  },
+  "6745fd2e3d6070c3563039a9": {
+    "en": "Eliminate Scavs on Woods",
+    "ko": "삼림(Woods)에서 스캐브 사살하기"
+  },
+  "6745fe81eae30b9fb3bb6166": {
+    "en": "Locate and obtain Lightkeeper's cargo crate on the roof of the military hospital on Reserve",
+    "ko": "리저브(Reserve)의 군 병원 옥상에서 등대지기의 화물 상자 찾아서 획득하기"
+  },
+  "6745fe8d48cd7aeda7152b24": {
+    "en": "Stash the cargo at the Scav house on Woods",
+    "ko": "삼림(Woods)의 스캐브 집에 [화물] 숨기기"
+  },
+  "67460118d3498f1b35e0a025": {
+    "en": "Mark the Collapsed Crane BTR stop with an MS2000 Marker on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)의 Collapsed Crane BTR 정류장에 MS2000 마커 설치하기"
+  },
+  "6746011dfd1dc9d0f502e55d": {
+    "en": "Mark the Old Scav Checkpoint BTR stop with an MS2000 Marker on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)의 Old Scav Checkpoint BTR 정류장에 MS2000 마커 설치하기"
+  },
+  "674601247aa943781a1cf3fc": {
+    "en": "Mark the Pinewood Hotel BTR stop with an MS2000 Marker on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)의 Pinewood Hotel BTR 정류장에 MS2000 마커 설치하기"
+  },
+  "674601282043d1ef3c6b2eec": {
+    "en": "Mark the City Center BTR stop with an MS2000 Marker on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)의 City Center BTR 정류장에 MS2000 마커 설치하기"
+  },
+  "6746012a35218bb89951248e": {
+    "en": "Mark the Tram BTR stop with an MS2000 Marker on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)의 Tram BTR 정류장에 MS2000 마커 설치하기"
+  },
+  "6746012d871e69a9abb5873d": {
+    "en": "Mark the Rodina Cinema BTR stop with an MS2000 Marker on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)의 Rodina Cinema BTR 정류장에 MS2000 마커 설치하기"
+  },
+  "674da90a45aa075a44b4d687": {
+    "en": "Stash the first Russian armor-piercing ammo pack inside the bunker",
+    "ko": "벙커 안에 첫 번째 [러시아제 철갑탄 팩] 숨기기"
+  },
+  "674da90f96d4f32d517cb770": {
+    "en": "Stash the second Russian armor-piercing ammo pack inside the bunker",
+    "ko": "벙커 안에 두 번째 [러시아제 철갑탄 팩] 숨기기"
+  },
+  "674602682cb1c1f5999f27aa": {
+    "en": "Locate the bunker under the mountain on Woods",
+    "ko": "삼림(Woods)에서 산 아래의 벙커 찾기"
+  },
+  "674da9141cc05673dc69e7e7": {
+    "en": "Stash the third Russian armor-piercing ammo pack inside the bunker",
+    "ko": "벙커 안에 세 번째 [러시아제 철갑탄 팩] 숨기기"
+  },
+  "675197664e610fc2b88e0bf3": {
+    "en": "Sell any items to Peacekeeper",
+    "ko": "피스키퍼에게 아무 아이템 판매하기"
+  },
+  "6746061983996c4aa4765025": {
+    "en": "Locate and obtain the package with RPG ammo on Woods",
+    "ko": "삼림(Woods)에서 RPG 탄약이 든 꾸러미 찾아서 획득하기"
+  },
+  "674606266884ca9cfc83530e": {
+    "en": "Hand over the package",
+    "ko": "꾸러미 건네주기"
+  },
+  "674606bac840f707bea6242f": {
+    "en": "Use the transit from Customs to Reserve",
+    "ko": "세관(Customs)에서 리저브(Reserve)로 가는 지역 이동(트랜짓) 이용하기"
+  },
+  "674606ccff406a9f6a28e26f": {
+    "en": "Use the transit from Reserve to Woods",
+    "ko": "리저브(Reserve)에서 삼림(Woods)으로 가는 지역 이동(트랜짓) 이용하기"
+  },
+  "674606f1c63637e54bede3a6": {
+    "en": "Use the transit from Woods to Lighthouse",
+    "ko": "삼림(Woods)에서 등대(Lighthouse)로 가는 지역 이동(트랜짓) 이용하기"
+  },
+  "674607317781508c405fb979": {
+    "en": "Eliminate PMC operatives while completing the other objectives",
+    "ko": "다른 목표를 수행하는 동안 PMC 사살하기"
+  },
+  "6752f86d538945df8cc3fc3a": {
+    "en": "Locate and obtain Prapor's package on Woods",
+    "ko": "삼림(Woods)에서 프라퍼의 꾸러미 찾아서 획득하기"
+  },
+  "6752f85800c5b2c48240c45f": {
+    "en": "Complete the task Shipping Delay - Part 1",
+    "ko": "Shipping Delay - Part 1 퀘스트 완료하기"
+  },
+  "675c04f4db8807b75d0f38eb": {
+    "en": "Locate and obtain the delivery crew's shipment notes on Customs",
+    "ko": "세관(Customs)에서 배송팀의 운송 기록 찾아서 획득하기"
+  },
+  "675c04f4db8807b75d0f38ec": {
+    "en": "Hand over the found information",
+    "ko": "찾은 정보 건네주기"
+  },
+  "675c1c87caddcfa893af10e9": {
+    "en": "Install the first WI-FI Camera inside the industrial plant on Customs",
+    "ko": "세관(Customs)의 산업 공장 안에 첫 번째 [WI-FI 카메라] 설치하기"
+  },
+  "676047054c9696a7d071bc08": {
+    "en": "Install the second WI-FI Camera inside the industrial plant on Customs",
+    "ko": "세관(Customs)의 산업 공장 안에 두 번째 [WI-FI 카메라] 설치하기"
+  },
+  "6760470877d1b7790af5de11": {
+    "en": "Install the third WI-FI Camera inside the industrial plant on Customs",
+    "ko": "세관(Customs)의 산업 공장 안에 세 번째 [WI-FI 카메라] 설치하기"
+  },
+  "6760470b7d65f702a6295820": {
+    "en": "Install the fourth WI-FI Camera inside the industrial plant on Customs",
+    "ko": "세관(Customs)의 산업 공장 안에 네 번째 [WI-FI 카메라] 설치하기"
+  },
+  "675c1c980fd114390c638b89": {
+    "en": "Eliminate any target inside the industrial plant on Customs",
+    "ko": "세관(Customs)의 산업 공장 안에서 아무 적 사살하기"
+  },
+  "675c1f040a1128e59422a876": {
+    "en": "Eliminate Scavs at the old gas station on Customs",
+    "ko": "세관(Customs)의 구 주유소에서 스캐브 사살하기"
+  },
+  "675c1f17cf59d5433be7ae77": {
+    "en": "Eliminate Scavs at the new gas station on Customs",
+    "ko": "세관(Customs)의 신 주유소에서 스캐브 사살하기"
+  },
+  "675c1f311bd716cdb87947d1": {
+    "en": "Hand over the found in raid item: Metal fuel tank",
+    "ko": "레이드에서 발견한 [Metal fuel tank 금속 연료통] 건네주기"
+  },
+  "676418a60b9bcbe280972288": {
+    "en": "Eliminate PMC operatives with a bolt-action rifle with night or thermal scope",
+    "ko": "야간 또는 열화상 조준경을 장착한 볼트액션 소총으로 PMC 사살하기"
+  },
+  "67a0d92a6cf4a5745d0bc94f": {
+    "en": "Locate and obtain the chemical container on Ground Zero",
+    "ko": "그라운드 제로(Ground Zero)에서 화학물질 용기 찾아서 획득하기"
+  },
+  "6a57565d0c4e021f681b32f0": {
+    "en": "Stash the container by the police station on Streets of Tarkov",
+    "ko": "타르코프 시내(Streets of Tarkov)의 경찰서 옆에 [용기] 숨기기"
+  },
+  "683dbecbfc878c4569e892c2": {
+    "en": "Find a Bottle of Fierce Hatchling moonshine",
+    "ko": "[맹렬한 도끼런 밀주 병 (Bottle of Fierce Hatchling moonshine)] 찾기"
+  },
+  "68db9ea0e6c69908254eceee": {
+    "en": "Eliminate PMC operatives with any 9x39 caliber weapon from over 50 meters away",
+    "ko": "아무 9x39 구경 무기로 50미터 초과 거리에서 PMC 사살하기"
+  },
+  "69ce213a298a6529b30d7136": {
+    "en": "Find the item in raid: Aceso Xpress semi-automatic biochemical analyzer",
+    "ko": "레이드에서 [에이스소 엑스프레스 반자동 생화학 분석기 (Aceso Xpress semi-automatic biochemical analyzer)] 찾기"
+  },
+  "69ce1f84ebbdbf36a200627e": {
+    "en": "Locate and obtain the nuclear power unit control log on Icebreaker",
+    "ko": "쇄빙선(Icebreaker)에서 [핵연료 발전기 제어 기록] 찾아서 획득하기"
+  },
+  "69ce1f84ebbdbf36a200627f": {
+    "en": "Hand over the found item",
+    "ko": "찾은 물건 건네주기"
+  },
+  "69e5593e3f425636f1d762d9": {
+    "en": "Repair the equipment in the automation room leading to the engine room on Icebreaker",
+    "ko": "쇄빙선(Icebreaker)의 기관실로 이어지는 자동화실에서 장비 수리하기"
+  },
+  "69e5594c6dd4d9e12fa3de0d": {
+    "en": "Repair the equipment in the automation room under the engine room on Icebreaker",
+    "ko": "쇄빙선(Icebreaker)의 기관실 아래 자동화실에서 장비 수리하기"
+  },
+  "69e559525afcf4e746e98e33": {
+    "en": "Repair the equipment in the automation room near the storage room on Icebreaker",
+    "ko": "쇄빙선(Icebreaker)의 창고 근처 자동화실에서 장비 수리하기"
+  },
+  "69e559bf4b53b554a2779130": {
+    "en": "Install the hacking device in the central control station room on Icebreaker",
+    "ko": "쇄빙선(Icebreaker)의 중앙 통제실에 해킹 장치 설치하기"
   }
 }
