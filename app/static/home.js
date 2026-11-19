@@ -117,8 +117,9 @@ function renderHomeDetail(name, info) {
       chip.type = "button";
       chip.title = t("home.prepNeededBy", { list: p.from.map((f) => f.name).join(", ") });
       chip.append(document.createTextNode(p.text + (p.count ? ` ×${p.count.toLocaleString()}` : "")));
+      if (p.any_of) chip.append(el("span", "key-any-of", ` (${t("quest.keyAnyOf")})`));
       chip.addEventListener("click", () => goToSource(p.from));
-      row.append(chip);
+      appendPrepWithWiki(row, chip, p.keys, true);
     });
     line.append(row);
     rows.append(line);

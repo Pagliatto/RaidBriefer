@@ -81,6 +81,8 @@
     "nightOnly": "야간에만 가능",
     "manualName": "수동",
     "wikiName": "위키",
+    "keyAnyOf": "하나만",
+    "keyWiki": "{name} — 위키",
     "wikiNameHint": "tarkov.dev 에 아직 없어서 공식 위키를 보고 적어 둔 퀘스트예요. tarkov.dev 에 생기면 자동으로 바뀌어요.",
     "blogName": "블로그",
     "blogNameHint": "tarkov.dev 에 아직 없어서 공략 블로그를 보고 적어 둔 퀘스트예요. tarkov.dev 에 생기면 자동으로 바뀌어요.",

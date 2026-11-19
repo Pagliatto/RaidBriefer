@@ -81,6 +81,8 @@
     "nightOnly": "Night only",
     "manualName": "Manual",
     "wikiName": "Wiki",
+    "keyAnyOf": "any one",
+    "keyWiki": "{name} — wiki",
     "wikiNameHint": "Not on tarkov.dev yet, so this quest was written from the official wiki. It switches automatically once tarkov.dev has it.",
     "blogName": "Blog",
     "blogNameHint": "Not on tarkov.dev yet, so this quest was written from a guide blog. It switches automatically once tarkov.dev has it.",

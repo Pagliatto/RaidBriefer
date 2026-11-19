@@ -158,8 +158,8 @@ def _objectives_and_prep(task: dict, task_tr, item_tr, quest_items: dict, overri
     """
     objectives = []
     prep = {}  # (종류, 이름, 인레이드) → 개수 합계. 같은 물건이 여러 목표에 나오면 개수를 더한다.
-    keys = []  # 열쇠는 하나씩 따로, 중복 없이
-    key_maps = {}  # 열쇠 이름 → 필요한 맵 이름들 (None = 맵 정보 없음 → 어느 맵에서나 보여줌)
+    keys = {}  # 정렬한 열쇠 id 묶음 → 원래 순서의 대체 열쇠 목록
+    key_maps = {}  # 열쇠 id 묶음 → 필요한 맵 이름들 (None = 맵 정보 없음 → 어느 맵에서나 보여줌)
 
     item_ids = {}  # (종류, 이름, 인레이드) → 아이템 id들 (지도에 바닥 생성 위치를 찍을 때 씀)
 
@@ -180,18 +180,25 @@ def _objectives_and_prep(task: dict, task_tr, item_tr, quest_items: dict, overri
                 names.append(name)
         return names
 
+    def key_info(key_id):
+        name = _item_names([key_id], item_tr)
+        return {"id": key_id, "name": name, "wiki": tarkov_api.key_wiki(key_id)} if name else None
+
     def add_keys(ids, map_ids=None):
+        group_ids = list(dict.fromkeys(_flat(ids)))
+        group = tuple(sorted(group_ids))
+        if not group:
+            return
         maps = map_display_names(map_ids)
-        for key_id in _flat(ids):
-            name = _item_names([key_id], item_tr)
-            if not name:
-                continue
-            if name not in keys:
-                keys.append(name)
-                key_maps[name] = maps or None
-            elif key_maps.get(name) is not None:
-                # 이미 있는 열쇠: 맵을 합침 (맵 정보 없는 곳에서도 필요하면 어디서나)
-                key_maps[name] = (key_maps[name] + [m for m in maps if m not in key_maps[name]]) if maps else None
+        if group not in keys:
+            members = [info for key_id in group_ids if (info := key_info(key_id))]
+            if not members:
+                return
+            keys[group] = members
+            key_maps[group] = maps or None
+        elif key_maps[group] is not None:
+            # 같은 묶음의 맵을 합침 (맵 정보 없는 곳에서도 필요하면 어디서나)
+            key_maps[group] = (key_maps[group] + [m for m in maps if m not in key_maps[group]]) if maps else None
 
     for o in task.get("objectives", []):
         objective = _objective_text(o["description"], task_tr, overrides)
@@ -219,20 +226,32 @@ def _objectives_and_prep(task: dict, task_tr, item_tr, quest_items: dict, overri
             qi = quest_items.get(o.get("questItem"), {})
             add("가져가기", task_tr(qi.get("name", "")) if qi else "", count)
 
-        add_keys(o.get("requiredKeys"), o.get("maps"))
+        for group in o.get("requiredKeys") or []:
+            add_keys(group, o.get("maps"))
 
+    # neededKeys 는 '이 맵에서 필요한 열쇠 전부'(대체 묶음이 아님) → 하나씩. 목표 쪽에 이미 나온 열쇠는 건너뜀
+    covered = {key_id for group in keys for key_id in group}
     for needed in task.get("neededKeys") or []:
-        add_keys(needed.get("keys"), [needed.get("map")] if needed.get("map") else None)
+        for key_id in _flat(needed.get("keys")):
+            if key_id not in covered:
+                add_keys([key_id], [needed.get("map")] if needed.get("map") else None)
 
     # 화면에 보여줄 순서: 열쇠 → 가져가기 → 무기 → 착용 → 제출
     order = {"가져가기": 1, "무기": 2, "착용": 3, "제출": 4}
     # 열쇠에는 필요한 맵(maps)을 붙임 → 홈 '챙길 것'에서 고른 맵 열쇠만 보여줌
-    result = [{"kind": "열쇠", "text": k, "count": None, "fir": False, **({"maps": key_maps[k]} if key_maps.get(k) else {})}
-              for k in keys]
+    result = [{"kind": "열쇠", "text": " / ".join(k["name"] for k in members),
+               "keys": members, "any_of": len(members) > 1, "maps": key_maps[group] or [],
+               "count": None, "fir": False}
+              for group, members in keys.items()]
     for (kind, text, fir), total in sorted(prep.items(), key=lambda x: order[x[0][0]]):
         entry = {"kind": kind, "text": text, "count": total if total > 1 else None, "fir": fir}
         if (kind, text, fir) in item_ids:
             entry["ids"] = item_ids[(kind, text, fir)]
+            if kind == "제출":
+                key_items = [info for item_id in entry["ids"]
+                             if tarkov_api.is_key(item_id) and (info := key_info(item_id))]
+                if key_items:
+                    entry["keys"] = key_items
         result.append(entry)
     return objectives, result
 
@@ -247,12 +266,33 @@ def _xzy(position: dict) -> list[float]:
     return _xz(position) + [round(position.get("y", 0), 2)]
 
 
-def _where(objective: dict, map_names: dict) -> list[dict]:
+def _extract_zones() -> dict:
+    """(맵 id, 탈출구 이름) → 탈출구·Transit 영역. build마다 한 번 만든다."""
+    lookup = {}
+    for m in tarkov_api.load("maps")["maps"].values():
+        for exit in m.get("extracts") or []:
+            if exit.get("name"):
+                lookup.setdefault((m["id"], exit["name"]), []).append({**exit, "map": m["id"]})
+        for transit in m.get("transits") or []:
+            description = transit.get("description") or ""
+            if description.endswith("_DESC"):
+                key = (m["id"], description.removesuffix("_DESC"))
+                lookup.setdefault(key, []).append({**transit, "map": m["id"]})
+    return lookup
+
+
+def _where(objective: dict, map_names: dict, extract_zones: dict | None = None) -> list[dict]:
     """목표의 지도 위치들. [{"map": "세관", "points": [[x, z]], "outline": [[x, z], ...] 또는 없음}]
     - zones           : 가야 할 곳·설치·표시할 곳 (영역 모양 outline 포함)
-    - possibleLocations: 퀘스트 아이템이 있을 수 있는 곳들"""
+    - possibleLocations: 퀘스트 아이템이 있을 수 있는 곳들
+    - exitName        : 지정된 맵의 탈출구·Transit"""
     result = []
-    for zone in objective.get("zones") or []:
+    zones = list(objective.get("zones") or [])
+    if objective.get("type") == "extract" and objective.get("exitName"):
+        exit_name = objective["exitName"].strip()
+        for map_id in objective.get("maps") or []:
+            zones.extend((extract_zones or {}).get((map_id, exit_name), []))
+    for zone in zones:
         name = map_names.get(zone.get("map"), (None, False))[0]
         if not (name and zone.get("position")):
             continue
@@ -360,6 +400,7 @@ def build() -> dict:
     tasks, tr = tarkov_api.get_tasks()
     manual = quest_log.load_manual_quests()
     map_names = _map_names()
+    extract_zones = _extract_zones()
     trader_names = _trader_names()
     item_tr = tarkov_api.Translator("items")
     quest_items = tarkov_api.load("tasks").get("questItems", {})
@@ -431,7 +472,7 @@ def build() -> dict:
                 task, tr, item_tr, quest_items, overrides, map_names)
             # 목표마다 지도 위치 (목표 문장과 같은 순서)
             for objective, raw in zip(entry["objectives"], task.get("objectives", [])):
-                where = _where(raw, map_names)
+                where = _where(raw, map_names, extract_zones)
                 if where:
                     objective["where"] = where
             # 레이드 안에서 하는 목표가 있나 (맵 무관 퀘스트를 고른 맵에 같이 보여줄지 판단)

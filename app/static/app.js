@@ -172,6 +172,31 @@ function questSourceTag(source) {
   return mark;
 }
 
+function keyWikiLink(key, nameOnly = false) {
+  if (!key.wiki) return null;
+  const link = el("a", "wiki-link");
+  link.href = key.wiki;
+  link.target = "_blank";
+  link.rel = "noopener";
+  const label = t("quest.keyWiki", { name: key.name });
+  link.title = nameOnly ? key.name : label;
+  link.setAttribute("aria-label", label);
+  link.append(icon("book-open", 14));
+  return link;
+}
+
+// 클릭 동작이 있는 칩의 위키 링크는 버튼 바로 뒤의 형제 요소로 둔다.
+function appendPrepWithWiki(parent, chip, keys, nameOnly = false) {
+  const links = (keys || []).map((key) => keyWikiLink(key, nameOnly)).filter(Boolean);
+  if (!links.length) {
+    parent.append(chip);
+    return;
+  }
+  const group = el("span", "prep-with-wiki");
+  group.append(chip, ...links);
+  parent.append(group);
+}
+
 function renderQuest(q) {
   // 상인별 색상: CSS의 .trader-prapor 같은 이름으로 색을 정해 둠
   const li = el("li", `quest trader-${q.trader_key || "etc"}`);
@@ -254,9 +279,23 @@ function renderQuest(q) {
         chip.append(el("span", "check", done ? "✓" : ""));
       }
       chip.append(el("b", "", t(`prepKind.${PREP_CLASS[p.kind] || "etc"}`)));
-      chip.append(document.createTextNode(text));
+      if (p.kind === "열쇠" && p.keys && p.keys.length) {
+        chip.classList.add("prep-key-chip");
+        const names = el("span", "prep-key-names");
+        p.keys.forEach((key, index) => {
+          if (index) names.append(document.createTextNode(" / "));
+          names.append(document.createTextNode(key.name));
+          const link = keyWikiLink(key);
+          if (link) names.append(link);
+        });
+        if (p.any_of) names.append(el("span", "key-any-of", ` (${t("quest.keyAnyOf")})`));
+        chip.append(names);
+      } else {
+        chip.append(document.createTextNode(text));
+      }
       if (p.fir) chip.append(el("span", "fir", t("quest.fir")));
-      box.append(chip);
+      if (isGive) appendPrepWithWiki(box, chip, p.keys);
+      else box.append(chip);
     });
     li.append(box);
   }

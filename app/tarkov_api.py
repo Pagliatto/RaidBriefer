@@ -19,6 +19,7 @@ import tempfile
 import threading
 import time
 from pathlib import Path
+from urllib.parse import quote
 
 from app import i18n, paths
 
@@ -45,6 +46,8 @@ SPT_NAME_KEY = re.compile(r"([0-9a-fA-F]{24}) name")
 _spt_update_lock = threading.Lock()
 _spt_last_attempt = 0.0
 _spt_loaded: tuple | None = None
+
+KEY_NAME = re.compile(r"\bkey\b|keycard|key card", re.I)  # 영어 이름으로 열쇠·키카드 구분 (map_views 와 같은 규칙)
 
 BASE_URL = "https://json.tarkov.dev"
 GAME_MODE = "pve"  # PvE 모드
@@ -206,6 +209,29 @@ def update_spt_names() -> None:
         pass  # 이름 보완 실패가 실행이나 퀘스트 목록을 막지 않게 한다.
     finally:
         _spt_update_lock.release()
+
+
+def _english_item_name(item_id: str) -> str:
+    try:
+        name = load("items_en").get(f"{item_id} Name", "")
+        return name.strip() if isinstance(name, str) else ""
+    except DataError:
+        return ""
+
+
+def key_wiki(item_id: str) -> str | None:
+    """열쇠의 공식 위키 주소. 위키 페이지 이름 = 영어 아이템 이름 (공백 → _)
+    '#' 은 위키 페이지 이름에 못 써서 뺌 (예: Object #11SR keycard → Object_11SR_keycard)
+    2026-11-20 퀘스트에 나오는 열쇠 69개 모두 실제 페이지 확인"""
+    name = _english_item_name(item_id)
+    if not name:
+        return None
+    title = " ".join(name.replace("#", "").split()).replace(" ", "_")
+    return "https://escapefromtarkov.fandom.com/wiki/" + quote(title, safe="()!'")
+
+
+def is_key(item_id: str) -> bool:
+    return bool(KEY_NAME.search(_english_item_name(item_id)))
 
 
 def spt_blank_name(quest_id: str) -> bool:
