@@ -1661,3 +1661,7 @@ button.setup-trader-count.open .icon { transform: rotate(180deg); }
 
 /* 한국어 화면: 퀘스트 제목 옆 영어 이름 (작고 흐리게, 게임 밖 자료를 찾을 때 참고용) */
 .quest-name-en { margin-left: 6px; font-size: 12px; font-weight: 400; color: var(--text-faint); }
+
+/* 상단 왼쪽 로고 + 제목 (로고가 강조색 막대를 대신함) */
+.topbar h1 { display: flex; align-items: center; gap: 8px; border-inline-start: 0; padding-inline-start: 0; }
+.brand-logo { width: 26px; height: 26px; border-radius: 6px; flex: none; }

@@ -6,7 +6,7 @@
 - 지도 표시 설정 같은 브라우저 저장소는 user_data/webview 에 남김 (기본값은 닫을 때 지워짐)
 - 이미 켜져 있으면 서버를 또 켜지 않고 켜져 있는 서버에 창만 붙임
 
-실행: python -m app.window   (보통은 '프로그램_실행.bat')
+실행: python -m app.window   (보통은 'run.bat')
 """
 
 import json

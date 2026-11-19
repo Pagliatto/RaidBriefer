@@ -83,8 +83,8 @@ RaidBriefer는 아래 것들만 사용해요.
 <summary>소스 코드로 직접 실행하기 (개발용)</summary>
 
 1. **Python 3.12 이상** 설치 (설치 첫 화면에서 "Add python.exe to PATH" 체크)
-2. 이 저장소를 받고(`<> Code` → `Download ZIP`) `설치.bat` 실행
-3. `프로그램_실행.bat` 으로 창 실행, `브라우저로_열기.bat` 으로 브라우저 실행
+2. 이 저장소를 받고(`<> Code` → `Download ZIP`) `install.bat` 실행
+3. `run.bat` 으로 창 실행, `run-in-browser.bat` 으로 브라우저 실행
 4. exe 만들기: `.venv\Scripts\python.exe tools\build_exe.py` → `build\RaidBriefer-windows.zip`
 </details>
 
@@ -130,9 +130,9 @@ FHD(1920×1080) 모니터라면 반쪽 = **960×1080**이에요.
 | `.github/ISSUE_TEMPLATE/` | 깃허브 문제 신고·기능 제안 양식 |
 | `RaidBriefer.py` | exe로 묶을 때의 시작 파일 |
 | `requirements.txt` | 필요한 파이썬 부품 목록 |
-| `설치.bat` | 소스로 실행할 때 처음 한 번: 파이썬 가상환경과 부품 설치 |
-| `프로그램_실행.bat` | 소스로 실행: 프로그램 창 띄우기 |
-| `브라우저로_열기.bat` | 소스로 실행: 창 대신 브라우저로 열기 |
+| `install.bat` | 소스로 실행할 때 처음 한 번: 파이썬 가상환경과 부품 설치 |
+| `run.bat` | 소스로 실행: 프로그램 창 띄우기 |
+| `run-in-browser.bat` | 소스로 실행: 창 대신 브라우저로 열기 |
 | `LICENSE`, `NOTICE.md` | 라이선스와 출처 |
 
 실행하면 생기는 `user_data/`(내 기록·설정)와 `cache/`(받은 데이터)는 저장소에 올라가지 않아요.

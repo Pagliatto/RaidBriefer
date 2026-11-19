@@ -57,8 +57,10 @@ class MapLookup:
 
 def latest_log_folder() -> Path | None:
     """가장 최근에 만들어진 로그 폴더 (게임을 켤 때마다 새로 생김)."""
-    folders = [f for f in settings.logs_dir().glob("log_*") if f.is_dir()]
-    return max(folders, key=lambda f: f.stat().st_mtime, default=None)
+    # 폴더 이름에 날짜가 들어 있어서(log_2026.11.19_11-47-57_…) 이름순 최댓값 = 가장 최근.
+    # 폴더마다 수정 시각을 읽으면 1초마다 500개 넘게 읽어야 해서 느림 (25ms → 2ms, 2026-11-19)
+    folders = sorted(settings.logs_dir().glob("log_*"), reverse=True)
+    return next((f for f in folders if f.is_dir()), None)
 
 
 def apply_line(state: MapState, line: str, lookup: MapLookup) -> bool:

@@ -83,8 +83,8 @@ The screens are drawn with **WebView2** (the same engine as Microsoft Edge), whi
 <summary>Run from source (for developers)</summary>
 
 1. Install **Python 3.12+** (check "Add python.exe to PATH" on the first installer screen)
-2. Download this repository (`<> Code` → `Download ZIP`) and run `설치.bat` (install)
-3. Run `프로그램_실행.bat` for the program window, or `브라우저로_열기.bat` to open it in a browser
+2. Download this repository (`<> Code` → `Download ZIP`) and run `install.bat`
+3. Run `run.bat` for the program window, or `run-in-browser.bat` to open it in a browser
 4. Build the exe: `.venv\Scripts\python.exe tools\build_exe.py` → `build\RaidBriefer-windows.zip`
 </details>
 
@@ -130,9 +130,9 @@ If you only want to use the program, the [download](#install) zip is all you nee
 | `.github/ISSUE_TEMPLATE/` | GitHub forms for bug reports and feature requests |
 | `RaidBriefer.py` | Entry point when building the exe |
 | `requirements.txt` | Python packages needed |
-| `설치.bat` | Run from source, first time: create the Python environment and install packages |
-| `프로그램_실행.bat` | Run from source: open the program window |
-| `브라우저로_열기.bat` | Run from source: open in a browser instead of the window |
+| `install.bat` | Run from source, first time: create the Python environment and install packages |
+| `run.bat` | Run from source: open the program window |
+| `run-in-browser.bat` | Run from source: open in a browser instead of the window |
 | `LICENSE`, `NOTICE.md` | License and credits |
 
 `user_data/` (your records and settings) and `cache/` (downloaded data), created when you run it, are never uploaded to the repository.

@@ -18,7 +18,7 @@
   <!-- 위에 고정: 상단바 + 큰 탭 (어느 탭에서나 보임) -->
   <div class="sticky-top" id="sticky-top">
     <header class="topbar">
-      <h1>RaidBriefer</h1>
+      <h1><img class="brand-logo" src="{{ url_for('favicon', ext='svg') }}" alt="" width="26" height="26">RaidBriefer</h1>
       <!-- 게임 상태: 로비 / 로딩 / 레이드 중 · 맵 (topbar.js 가 2초마다 갱신) -->
       <span class="state-pill" id="raid-state" data-status="off"><i class="dot"></i><span id="raid-state-text">{{ t('topbar.stateOff') }}</span></span>
       <span class="raid-time" id="raid-time" hidden>

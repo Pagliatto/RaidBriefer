@@ -149,6 +149,9 @@ async function drawMap() {
     mapUI.leaflet.remove();
     mapUI.leaflet = null;
   }
+  // Leaflet 이 지도 칸에 단 'scroll' 처리기는 remove() 로 안 지워져서, 남아 있으면 옛 지도 전체가
+  // 메모리에 계속 붙잡혀 있음 (지도를 그릴 때마다 약 180KB 누수, 2026-11-19 측정) → 여기서 직접 떼어 냄
+  L.DomEvent.off(box);
   box.replaceChildren();
   mapUI.pins = {};
   mapUI.dirty = false;
