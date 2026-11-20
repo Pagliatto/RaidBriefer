@@ -280,19 +280,60 @@ function renderMapFilter(items) {
   box.replaceChildren();
   [FILTER_ALL, ...names].forEach((name) => {
     const chip = el("button", "chip" + (state.map === name ? " active" : ""), name === FILTER_ALL ? t("quest.filterAll") : mapLabel(name));
+    chip.type = "button";
+    chip.setAttribute("aria-pressed", String(state.map === name));
+    applyMapColor(chip, name);
     chip.append(el("span", "", counts.get(name)));
-    chip.addEventListener("click", () => { state.map = name; render(); });
+    chip.addEventListener("click", () => filterByMap(name));
     box.append(chip);
   });
 }
 
-// 맵 태그. 야간에만 되는 맵이면 달 표시
-function mapTag(name, nightMaps) {
-  const tag = el("span", "tag", mapLabel(name));
+// 서버의 언어별 맵 이름을 고정 키에 연결하고, 먼저 그려진 태그도 갱신한다.
+const mapColorKeys = new Map();
+function applyMapColor(node, name) {
+  node.dataset.mapColor = name;
+  let key = mapColorKeys.get(name) || name;
+  const merged = { "night-factory": "factory", "ground-zero-21": "ground-zero", "ground-zero-tutorial": "ground-zero" };
+  key = merged[key] || key;
+  key = NOT_A_MAP.includes(key) || key === FILTER_ALL ? "neutral" : key.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  [...node.classList].filter((c) => c.startsWith("map-c-")).forEach((c) => node.classList.remove(c));
+  node.classList.add("map-colored", `map-c-${key || "neutral"}`);
+}
+function registerMapColors(maps) {
+  maps.forEach((m) => mapColorKeys.set(m.name, m.key));
+  document.querySelectorAll("[data-map-color]").forEach((node) => applyMapColor(node, node.dataset.mapColor));
+}
+
+function filterByMap(name, scroll = false) {
+  state.map = name;
+  render();
+  if (scroll) {
+    const selected = document.querySelector("#map-filter .chip.active");
+    if (selected) selected.focus({ preventScroll: true });
+    document.querySelector(".quest-map-filter-row").scrollIntoView({ block: "start" });
+    rememberScroll();
+  }
+}
+
+// 퀘스트 카드에서만 필터 버튼으로 쓰고, 야간 표시는 맵 색 위에 그대로 둔다.
+function mapTag(name, nightMaps, filterable = false, mapKey = name) {
+  const tag = el(filterable ? "button" : "span", "tag", mapLabel(name));
+  applyMapColor(tag, mapKey);
   if (nightMaps && nightMaps.includes(name)) {
     tag.classList.add("night");
     tag.title = t("quest.nightOnly");
     tag.append(el("span", "moon", " ☾"));
+  }
+  if (filterable) {
+    tag.type = "button";
+    const hint = t("quest.filterByMap", { map: mapLabel(name) });
+    tag.title = tag.title ? `${hint} · ${tag.title}` : hint;
+    tag.setAttribute("aria-label", tag.title);
+    tag.addEventListener("click", (event) => {
+      event.stopPropagation();
+      filterByMap(name, true);
+    });
   }
   return tag;
 }
@@ -327,17 +368,26 @@ function questSourceTag(source) {
   return mark;
 }
 
-function keyWikiLink(key, nameOnly = false) {
-  if (!key.wiki) return null;
+// 위키는 이름 링크 대신 같은 책 아이콘과 접근성 설명을 쓴다.
+function wikiLink(url, label) {
+  if (!url) return null;
   const link = el("a", "wiki-link");
-  link.href = key.wiki;
+  link.href = url;
   link.target = "_blank";
   link.rel = "noopener";
-  const label = t("quest.keyWiki", { name: key.name });
-  link.title = nameOnly ? key.name : label;
+  link.title = label;
   link.setAttribute("aria-label", label);
   link.append(icon("book-open", 14));
+  link.addEventListener("click", (event) => event.stopPropagation());
   return link;
+}
+
+function keyWikiLink(key, nameOnly = false) {
+  return wikiLink(key.wiki, nameOnly ? key.name : t("quest.keyWiki", { name: key.name }));
+}
+
+function questWikiLink(quest) {
+  return wikiLink(quest.wiki, t("quest.questWiki", { name: quest.name }));
 }
 
 // 클릭 동작이 있는 칩의 위키 링크는 버튼 바로 뒤의 형제 요소로 둔다.
@@ -357,22 +407,15 @@ function renderQuest(q) {
   const li = el("li", `quest trader-${q.trader_key || "etc"}`);
   li.dataset.questId = q.id;  // 홈에서 "이 퀘스트로 가기" 할 때 찾는 이름표
   const top = el("div", "quest-top");
-  const name = el("p", "quest-name");
-  if (q.wiki) {
-    const a = el("a", "", q.name);
-    a.href = q.wiki;
-    a.target = "_blank";
-    a.rel = "noopener";
-    name.append(a);
-  } else {
-    name.textContent = q.name;
-  }
+  const name = el("p", "quest-name", q.name);
+  const wiki = questWikiLink(q);
+  if (wiki) name.append(wiki);
   if (q.name_en) name.append(el("span", "quest-name-en", q.name_en)); // 한국어 화면: 영어 이름 작게
   name.append(el("span", "quest-trader", q.trader));
   decorateQuestChange(li, name, q.id);
 
   const meta = el("div", "quest-meta");
-  q.maps.forEach((m) => meta.append(mapTag(m, q.night_maps)));
+  q.maps.forEach((m) => meta.append(mapTag(m, q.night_maps, true)));
   if (q.level) meta.append(el("span", "", `Lv${q.level}+`));
   const sourceTag = questSourceTag(q.source);
   if (sourceTag) meta.append(sourceTag);

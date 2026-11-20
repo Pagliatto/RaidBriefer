@@ -1,24 +1,25 @@
 // 스토리 탭
-// - 단계를 누르면 "여기까지 완료" → 그 위 단계는 전부 완료, 아래는 미완료
-// - 끝난 구간은 한 줄로 접고, 지금 할 구간만 크게 펼침
+// - 각 단계는 독립 체크. 구간 버튼은 그 구간의 일반·선택 단계만 한 번에 체크
+// - 끝난 구간은 위치와 관계없이 접고, 미완료 구간은 펼침
 // - 갈림길(choice): 선택지를 고르면 그 길의 구간만 보여줌 (The Ticket 등)
 // el(), PREP_CLASS 는 app.js 에 있는 것을 같이 씀
 //
 // 저장하는 값 (story.pos)
-//   "tour"                     : "tour-21"  ← 챕터별 마지막으로 끝낸 단계
 //   "the-ticket@kerman"        : "accept"   ← 챕터@갈림길 : 고른 선택지
-//   "the-ticket-j-17!"         : "done"     ← "해당될 때만" 단계를 직접 체크한 것
+//   "the-ticket-j-17!"         : "done"     ← 일반·선택·해당될 때만 단계의 개별 완료
 //
 // 조건(when) 종류 — 구간, 단계, 준비물에 달 수 있음
 //   "kerman": "accept"                      ← 이 챕터에서 고른 갈림길
 //   "falling-skies@case": "kept"            ← 다른 챕터에서 고른 갈림길
 //   "done:falling-skies": false             ← 그 챕터를 끝냈나 (스토리 체크 기록)
 //   "quest:6744...,6745...": true           ← 그 퀘스트(들 중 하나)를 끝냈나 (게임 로그)
-// 단계에 "manual": true → 미리 알 수 없는 조건이라 연쇄 체크에서 빼고 직접 체크
+// 단계에 "manual": true → 해당될 때만 직접 체크 (완료 판정·구간 일괄 체크에서 제외)
 
 const story = {
   data: null,
   pos: {},
+  queue: Promise.resolve(),  // 저장과 다시 불러오기를 직렬화해 늦은 응답의 덮어쓰기를 막음
+  migrating: false,
   open: new Set(),     // 펼쳐 둔 챕터 id
 };
 
@@ -38,8 +39,12 @@ function isChapterDone(chapterId) {
   if (!ch || _doneCheck.has(chapterId)) return false;
   _doneCheck.add(chapterId);
   try {
-    const { steps, pending } = visibleItems(ch);
-    return !pending && steps.length > 0 && doneIndex(ch) === steps.length - 1;
+    const { items, steps, pending } = visibleItems(ch);
+    // 변환 경로를 계산할 때만 옛 완료 조건을 유지한다 (다른 챕터의 done: 조건).
+    if (story.migrating && Object.hasOwn(story.pos, ch.id)) {
+      return !pending && steps.length > 0 && story.pos[ch.id] === steps[steps.length - 1].id;
+    }
+    return !pending && items.filter((it) => it.type === "section").every(isSectionDone);
   } finally {
     _doneCheck.delete(chapterId);
   }
@@ -74,9 +79,9 @@ function itemVisible(active, item) {
 }
 
 // 지금 보여줄 항목들 (고른 길·맞는 조건만). 아직 안 고른 갈림길이 나오면 거기서 멈춤.
-// 돌려주는 값: { items: [{type:"section", sec, steps, manual, start, end} | {type:"choice", choice, picked}], steps, pending }
-//   steps  = 연쇄 체크("여기까지 완료")에 들어가는 단계
-//   manual = "해당될 때만" 단계 (연쇄 체크에서 빠짐)
+// 돌려주는 값: { items: [{type:"section", sec, steps, manual} | {type:"choice", choice, picked}], steps, pending }
+//   steps  = 일반·선택 단계 (옛 기록 변환에도 같은 목록을 씀)
+//   manual = "해당될 때만" 단계 (완료 판정·구간 일괄 체크에서 제외)
 function visibleItems(ch) {
   const items = [];
   const steps = [];
@@ -99,7 +104,7 @@ function visibleItems(ch) {
     const normal = shown.filter((st) => !st.manual);
     const manual = shown.filter((st) => st.manual);
     if (!normal.length && !manual.length) continue;  // 조건에 맞는 단계가 하나도 없는 구간은 숨김
-    items.push({ type: "section", sec, steps: normal, manual, start: steps.length, end: steps.length + normal.length - 1 });
+    items.push({ type: "section", sec, steps: normal, manual });
     steps.push(...normal);
   }
   return { items, steps, pending };
@@ -123,10 +128,29 @@ function allSteps(ch) {
   return visibleItems(ch).steps;
 }
 
-// 몇 번째 단계까지 끝냈나 (-1 = 아직 없음, 저장된 단계가 지금 길에 없으면 -1)
-function doneIndex(ch) {
-  const id = story.pos[ch.id];
-  return id ? allSteps(ch).findIndex((s) => s.id === id) : -1;
+// 일반·선택·해당될 때만 단계가 같은 저장 규칙을 쓴다.
+function isStepDone(step) {
+  return story.pos[`${step.id}!`] === "done";
+}
+
+function isRequiredStep(step) {
+  return !step.optional && !step.manual;
+}
+
+function isSectionDone(item) {
+  return item.steps.filter(isRequiredStep).every(isStepDone);
+}
+
+function isSectionStarted(item) {
+  return [...item.steps, ...item.manual].some(isStepDone);
+}
+
+function isChapterStarted(ch) {
+  // 현재 길에서 찾을 수 없는 옛 위치는 보존하되 시작 기록으로 해석하지 않는다.
+  if (Object.hasOwn(story.pos, ch.id) && !allSteps(ch).some((s) => s.id === story.pos[ch.id])) return false;
+  return ch.sections.some((sec) => sec.choice
+    ? !!story.pos[choiceKey(ch, sec.choice.id)]
+    : (sec.steps || []).some(isStepDone));
 }
 
 function storyChip(p) {
@@ -139,23 +163,30 @@ function storyChip(p) {
   return chip;
 }
 
-function renderStep(ch, step, index, last) {
-  const done = index <= last;
+// 여러 맵에 걸친 단계도 맵마다 별도 색 태그로 표시한다.
+function appendStoryMapTags(parent, item) {
+  const names = item.map_names && item.map_names.length ? item.map_names : (item.map_name ? item.map_name.split(" / ") : []);
+  const keys = Array.isArray(item.map) ? item.map : [item.map];
+  names.forEach((name, index) => parent.append(mapTag(name, null, false, keys[index] || name)));
+}
+
+function renderStep(step) {
+  const done = isStepDone(step);
   const li = el("li", "step" + (step.optional ? " optional" : "") + (done ? " done" : ""));
   const label = el("label");
   const box = document.createElement("input");
   box.type = "checkbox";
   box.checked = done;
   box.title = done ? t("story.stepUndo") : t("story.stepDone");
-  box.addEventListener("change", () => clickStep(ch, index, last));
+  box.addEventListener("change", () => saveStory(`${step.id}!`, box.checked ? "done" : null));
   label.append(box, el("span", "step-text", step.ko));
   if (step.optional) label.append(el("span", "opt-mark", t("story.optional")));
-  if (step.map_name) label.append(el("span", "tag", step.map_name));
+  appendStoryMapTags(label, step);
   li.append(label);
   return li;
 }
 
-// "해당될 때만" 단계: 연쇄 체크와 상관없이 따로 체크 (미리 알 수 없는 조건)
+// "해당될 때만" 단계: 개별 체크만 가능 (미리 알 수 없는 조건)
 function renderManualStep(step) {
   const key = `${step.id}!`;
   const done = story.pos[key] === "done";
@@ -167,13 +198,13 @@ function renderManualStep(step) {
   box.title = t("story.manualHint");
   box.addEventListener("change", () => saveStory(key, box.checked ? "done" : null));
   label.append(box, el("span", "step-text", step.ko), el("span", "manual-mark", t("story.manualMark")));
-  if (step.map_name) label.append(el("span", "tag", step.map_name));
+  appendStoryMapTags(label, step);
   li.append(label);
   return li;
 }
 
 // 구간 내용 (팁·준비물·사진·단계·보상)
-function sectionBody(ch, item, last) {
+function sectionBody(item) {
   const { sec } = item;
   const box = el("div", "section-body");
   if (sec.tip) box.append(el("p", "story-tip", sec.tip));
@@ -207,17 +238,28 @@ function sectionBody(ch, item, last) {
     box.append(row);
   }
   const ul = el("ul", "steps");
-  item.steps.forEach((s, i) => ul.append(renderStep(ch, s, item.start + i, last)));
+  item.steps.forEach((s) => ul.append(renderStep(s)));
   item.manual.forEach((s) => ul.append(renderManualStep(s)));
   box.append(ul);
   if (sec.reward) box.append(el("p", "story-reward", t("story.reward", { reward: sec.reward })));
   return box;
 }
 
-function sectionHead(sec, extraClass) {
+function sectionHead(item, extraClass) {
+  const { sec } = item;
   const head = el("div", "story-section-head" + (extraClass ? " " + extraClass : ""));
   head.append(el("h3", "", sec.title));
-  if (sec.map_name) head.append(el("span", "tag", sec.map_name));
+  appendStoryMapTags(head, sec);
+  const check = el("button", "choice-change", t(isSectionDone(item) ? "story.sectionUndo" : "story.sectionDone"));
+  check.type = "button";
+  check.disabled = !item.steps.length;
+  check.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const value = isSectionDone(item) ? null : "done";
+    saveStoryChanges(Object.fromEntries(item.steps.map((s) => [`${s.id}!`, value])));
+  });
+  head.append(check);
   return head;
 }
 
@@ -258,11 +300,12 @@ function renderChoice(ch, item, isCurrent) {
 
 function renderChapter(ch) {
   const { items, steps, pending } = visibleItems(ch);
-  const last = doneIndex(ch);
-  const doneCount = last + 1;
+  const required = steps.filter(isRequiredStep);
+  const doneCount = required.filter(isStepDone).length;
+  const nextStep = required.find((s) => !isStepDone(s));
 
   // 지금 할 구간 (없으면: 안 고른 갈림길이 있거나, 챕터 완료)
-  const current = items.find((it) => it.type === "section" && it.end > last) || null;
+  const current = items.find((it) => it.type === "section" && !isSectionDone(it)) || null;
   const finishedAll = !current && !pending;
 
   const card = document.createElement("details");
@@ -279,15 +322,15 @@ function renderChapter(ch) {
   top.append(el("span", "chapter-name", ch.name));
   const bar = el("span", "chapter-bar");
   const fill = el("span");
-  fill.style.width = steps.length ? `${Math.round((doneCount / steps.length) * 100)}%` : "0%";
+  fill.style.width = required.length ? `${Math.round((doneCount / required.length) * 100)}%` : (finishedAll ? "100%" : "0%");
   bar.append(fill);
   // 갈림길을 아직 안 고르면 뒤 단계 수를 모르니 "+" 표시
-  top.append(bar, el("span", "chapter-count", `${doneCount}/${steps.length}${pending ? "+" : ""}`));
+  top.append(bar, el("span", "chapter-count", `${doneCount}/${required.length}${pending ? "+" : ""}`));
   summary.append(top);
   const next = el("div", "chapter-next");
   if (current) {
-    next.append(document.createTextNode(t("story.next", { title: current.sec.title })));
-    if (current.sec.map_name) next.append(el("span", "tag", current.sec.map_name));
+    next.append(document.createTextNode(t("story.next", { title: nextStep.ko })));
+    appendStoryMapTags(next, nextStep.map_names && nextStep.map_names.length ? nextStep : current.sec);
   } else if (pending) {
     next.append(el("span", "chapter-choice", t("story.choice", { title: pending.title })));
   } else {
@@ -299,79 +342,44 @@ function renderChapter(ch) {
   const body = el("div", "chapter-body");
   const links = el("p", "chapter-links");
   links.append(document.createTextNode(ch.requirement ? t("story.requirement", { text: ch.requirement }) : ""));
-  [[t("story.library"), ch.library], [t("story.wiki"), ch.wiki]].forEach(([text, href], i) => {
-    if (!href) return;
-    if (i) links.append(document.createTextNode(" · "));
-    const a = el("a", "", text);
-    a.href = href;
-    a.target = "_blank";
-    a.rel = "noopener";
-    links.append(a);
-  });
+  if (ch.library) {
+    const library = el("a", "", t("story.library"));
+    library.href = ch.library;
+    library.target = "_blank";
+    library.rel = "noopener";
+    links.append(library);
+  }
+  const wiki = wikiLink(ch.wiki, t("story.wiki"));
+  if (wiki) links.append(wiki);
   body.append(links);
 
-  // 지금 위치 (구간이면 그 구간, 아니면 안 고른 갈림길) 앞/뒤로 나누기
-  const curIdx = current ? items.indexOf(current) : items.length;
-  const before = items.slice(0, curIdx);
-  const after = items.slice(curIdx + 1);
-
-  // ① 끝난 구간 + 이미 고른 갈림길: 한 줄로 모아서 접어 둠
-  const finishedSecs = before.filter((it) => it.type === "section");
-  if (before.length) {
+  // 완료한 구간은 앞뒤 위치에 관계없이 한 그룹에 모은다.
+  const finishedSecs = items.filter((it) => it.type === "section" && isSectionDone(it));
+  if (finishedSecs.length) {
     const group = document.createElement("details");
     group.className = "finished-group";
-    const names = finishedSecs.length
-      ? ` (${finishedSecs[0].sec.title} ~ ${finishedSecs[finishedSecs.length - 1].sec.title})` : "";
-    const choicesMade = before.filter((it) => it.type === "choice" && it.picked).length;
-    group.append(el("summary", "",
-      t("story.finished", { n: finishedSecs.length, names }) + (choicesMade ? t("story.finishedChoices", { n: choicesMade }) : "")));
-    before.forEach((it) => {
-      if (it.type === "notice") return;  // 안내 카드는 접지 않고 아래에 따로 보여줌
-      if (it.type === "choice") {
-        if (it.picked) group.append(renderChoice(ch, it, false));
-        return;
-      }
+    group.append(el("summary", "", t("story.finished", { n: finishedSecs.length, names: "" })));
+    finishedSecs.forEach((it) => {
       const box = el("div", "story-section");
-      box.append(sectionHead(it.sec), sectionBody(ch, it, last));
+      box.append(sectionHead(it), sectionBody(it));
       group.append(box);
     });
-    if (before.some((it) => it.type !== "notice")) body.append(group);
-    // 안내 카드(예: 구원자 길 막힘)는 항상 눈에 보이게
-    before.filter((it) => it.type === "notice").forEach((it) => body.append(renderNotice(it)));
+    body.append(group);
   }
 
-  // ② 지금 할 구간: 크게 펼침
-  if (current) {
-    const box = el("div", "story-section current");
-    box.append(el("p", "current-label", t("story.currentLabel")));
-    box.append(sectionHead(current.sec), sectionBody(ch, current, last));
-    body.append(box);
-  }
-
-  // ③ 남은 구간: 제목만, 누르면 펼침 / 갈림길은 카드로
-  const rest = current ? after : [];
-  rest.forEach((it) => {
+  // 미완료 구간은 모두 펼치고 갈림길·안내 카드는 경로 순서대로 유지한다.
+  items.forEach((it) => {
     if (it.type === "choice") {
-      body.append(renderChoice(ch, it, false));
-      return;
-    }
-    if (it.type === "notice") {
+      body.append(renderChoice(ch, it, !current && !it.picked));
+    } else if (it.type === "notice") {
       body.append(renderNotice(it));
-      return;
+    } else if (!isSectionDone(it)) {
+      const box = el("div", "story-section" + (it === current ? " current" : ""));
+      if (it === current) box.append(el("p", "current-label", t("story.currentLabel")));
+      box.append(sectionHead(it), sectionBody(it));
+      body.append(box);
     }
-    const item = document.createElement("details");
-    item.className = "story-section upcoming";
-    const sum = el("summary");
-    sum.append(sectionHead(it.sec));
-    item.append(sum, sectionBody(ch, it, last));
-    body.append(item);
   });
-
-  // 지금 할 구간이 없고 안 고른 갈림길이 있으면 → 그 갈림길이 지금 할 일
-  if (!current && pending) {
-    const pendingItem = items[items.length - 1];
-    body.append(renderChoice(ch, pendingItem, true));
-  }
 
   card.append(body);
   return card;
@@ -389,38 +397,76 @@ function renderStory() {
   notifyChanged("story-changed");
 }
 
-// 단계를 눌렀을 때: 그 단계까지 완료.
-// 이미 끝낸 마지막 단계를 다시 누르면 한 단계 되돌림.
-function clickStep(ch, index, last) {
-  const steps = allSteps(ch);
-  const target = index === last ? index - 1 : index;
-  saveStory(ch.id, target >= 0 ? steps[target].id : null);
+// 저장·불러오기는 순서대로 처리해 실패 복구가 뒤의 체크를 지우지 않게 한다.
+function queueStory(task) {
+  const result = story.queue.then(task);
+  story.queue = result.catch(() => {});
+  return result;
 }
 
-// 스토리 값 하나 저장 (단계 위치 또는 갈림길 선택). value 가 null 이면 지움.
-async function saveStory(key, value) {
+function saveStory(key, value) {
+  return saveStoryChanges({ [key]: value });
+}
+
+function saveStoryChanges(changes) {
+  return queueStory(() => persistStoryChanges(changes));
+}
+
+// 마이그레이션은 서버가 성공하기 전까지 메모리의 옛 키도 건드리지 않는다.
+async function persistStoryChanges(changes, optimistic = true) {
+  if (!Object.keys(changes).length) return true;
   const before = story.pos;
-  story.pos = { ...story.pos };
-  if (value) story.pos[key] = value; else delete story.pos[key];
-  renderStory();
+  if (optimistic) {
+    story.pos = { ...before };
+    Object.entries(changes).forEach(([key, value]) => {
+      if (value) story.pos[key] = value; else delete story.pos[key];
+    });
+    renderStory();
+  }
   try {
     const res = await fetch("/api/check/story", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ key, value }),
+      body: JSON.stringify({ changes }),
     });
     if (!res.ok) throw new Error();
     story.pos = await res.json();
+    if (optimistic) renderStory();
+    return true;
   } catch (err) {
     story.pos = before;
     const notice = document.getElementById("story-notice");
     notice.textContent = t("story.saveFailed");
     notice.hidden = false;
+    if (optimistic) renderStory();
+    return false;
   }
-  renderStory();
 }
 
-async function loadStory() {
+async function migrateStory() {
+  const changes = {};
+  story.migrating = true;
+  try {
+    // 모두 같은 옛 상태로 경로를 계산한 뒤 모든 챕터를 한 번에 저장한다.
+    story.data.chapters.forEach((ch) => {
+      if (!Object.hasOwn(story.pos, ch.id)) return;
+      const steps = allSteps(ch);
+      const savedIndex = steps.findIndex((s) => s.id === story.pos[ch.id]);
+      if (savedIndex < 0) return;  // 숨겨졌거나 사라진 위치: 옛 키를 그대로 보존
+      steps.slice(0, savedIndex + 1).forEach((s) => { changes[`${s.id}!`] = "done"; });
+      changes[ch.id] = null;
+    });
+  } finally {
+    story.migrating = false;
+  }
+  await persistStoryChanges(changes, false);
+}
+
+function loadStory() {
+  return queueStory(loadStoryData);
+}
+
+async function loadStoryData() {
   const notice = document.getElementById("story-notice");
   try {
     const [dataRes, posRes] = await Promise.all([fetch("/api/story"), fetch("/api/check/story")]);
@@ -433,6 +479,7 @@ async function loadStory() {
       story.pos = Object.fromEntries(Object.entries(pos).filter(([, v]) => typeof v === "string"));
     }
     notice.hidden = true;
+    if (posRes.ok) await migrateStory();
     renderStory();
   } catch (err) {
     notice.textContent = t("story.loadFailed", { error: err.message });

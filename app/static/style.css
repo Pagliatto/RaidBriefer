@@ -810,7 +810,7 @@ body.map-mode .scroll-buttons { display: none; }
   display: flex; flex-direction: column;
   height: calc(100dvh - var(--sticky-h, 120px));
 }
-.map-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.map-bar { display: flex; flex: none; flex-wrap: nowrap; align-items: center; gap: 10px; margin-bottom: 6px; }
 .map-bar select {
   font: inherit; font-size: 15px; font-weight: 600; padding: 3px 8px;
   background: var(--surface-2); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);
@@ -910,8 +910,16 @@ body.map-mode .scroll-buttons { display: none; }
 .drawer-quest.flash { animation: drawer-flash 1.4s ease; }
 @keyframes drawer-flash { 0%, 40% { background: var(--accent-bg); } 100% { background: transparent; } }
 
-/* 지도 위쪽 줄의 '먹을 것' 아이콘들 (맵 고르기와 퀘스트 버튼 사이) */
-.loot-strip { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+/* 도구 줄 아래 필요템: 왼쪽 제목을 고정하고 모든 아이콘을 여러 줄로 표시한다. */
+.loot-strip {
+  flex: none; min-width: 0; display: flex; align-items: flex-start; gap: 8px;
+  padding: 5px 8px 8px; margin-bottom: 6px;
+  border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface);
+}
+.loot-items { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; gap: 7px 4px; align-items: center; }
+.loot-strip > .loot-label { flex: none; line-height: 32px; }
+.loot-items > .loot-icon { flex: none; }
+.loot-items .loot-text { min-width: 0; max-width: 100%; padding: 0 2px; }
 .loot-strip[hidden] { display: none; }
 .loot-label { font-size: 12px; font-weight: 700; color: var(--accent); margin-right: 2px; white-space: nowrap; }
 .loot-icon {
@@ -929,7 +937,6 @@ body.map-mode .scroll-buttons { display: none; }
 .loot-icon.on-map { border-color: var(--accent); }
 /* 지도에 위치가 있는 아이템: 지도 표시(먹을 것 분홍 네모)와 같은 색의 작은 네모 */
 .loot-icon.on-map::after { content: ""; position: absolute; left: 2px; top: 2px; width: 6px; height: 6px; border-radius: 2px; background: #ee9fc0; border: 1px solid #111; }
-.loot-more { height: 34px; padding: 0 8px; border-radius: 6px; font-size: 12px; border: 1px dashed var(--border); background: none; color: var(--accent); }
 
 /* 먹을 것 바닥 생성 위치: 작은 마름모 (퀘스트 번호 핀과 모양이 다름) */
 .loot-pin span {
@@ -1346,9 +1353,6 @@ body.map-mode .scroll-buttons { display: none; }
 @media (min-width: 1100px) { .map-drawer { width: 320px; } }
 @media (max-width: 900px) {
   .map-drawer { width: 260px; }
-  /* 태블릿 세로: 도구 줄 두 줄 (첫 줄 = 표시·맵·퀘스트, 둘째 줄 = 먹을 것) */
-  .map-bar { flex-wrap: wrap; row-gap: 6px; }
-  .map-bar .loot-strip { order: 10; flex-basis: 100%; }
 }
 
 /* 퀘스트 번호를 가장 눈에 띄게: 서랍 번호 키우고, 고른 목표는 테두리 */
@@ -1907,13 +1911,6 @@ button.home-map, button.home-story-row, button.choice-option, button.prep-item, 
 .whats-new-link:hover { color: var(--text); }
 .whats-new-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .home-raid-mark[hidden], #data-updating[hidden] { display: none; }
-@media (min-width: 901px) {
-  .map-bar { flex-wrap: nowrap; gap: 6px; }
-  .map-bar select { flex: none; }  /* 맵 이름은 안 잘리게 (영어 'Streets of Tarkov (15)'), 줄어드는 건 먹을 것 줄 */
-  .map-bar .loot-strip { min-width: 0; }
-  .map-bar .loot-strip { flex-wrap: nowrap; overflow-x: auto; padding-block: 3px; }
-  .map-bar .loot-strip > * { flex-shrink: 0; }
-}
 /* BTR 트래커 링크 (지도 위쪽 줄, 시내·삼림·등대만) */
 .btr-tracker-link {
   flex: none; display: inline-flex; align-items: center; gap: 4px; height: 30px; padding: 0 8px;
@@ -1985,12 +1982,11 @@ button.home-map, button.home-story-row, button.choice-option, button.prep-item, 
 /* 표시 서랍: 이름 + 개수가 한 줄에 들어가게 폭을 조금 넓힘 (비트코인스폰 36 등, 2026-11-20) */
 .layer-drawer { width: 176px; }
 .layer-name { white-space: nowrap; }
-/* 지도 위쪽 줄 필요템 아이콘: 넘치면 스크롤은 되지만 막대는 숨김 (영어 Needed items 등) */
-.map-bar .loot-strip { scrollbar-width: none; }
-.map-bar .loot-strip::-webkit-scrollbar { display: none; }
 
 /* 지도 위쪽 줄 통일 (2026-11-20 사용자: 버튼이 따로 놂) — 높이 32 · 모서리 5 · 같은 테두리·바탕 · 글자 13(맵 이름 14) */
 .map-bar { gap: 8px; }
+.map-bar > * { flex-shrink: 0; }
+@media (max-width: 900px) { .map-bar { gap: 6px; } }
 .map-bar > button, .map-bar > select, .map-bar > a.btr-tracker-link {
   box-sizing: border-box; height: 32px; min-height: 32px; border-radius: 5px;
   border: 1px solid var(--border-strong); background: var(--surface-2); color: var(--text);
@@ -1999,9 +1995,59 @@ button.home-map, button.home-story-row, button.choice-option, button.prep-item, 
 .map-bar > select { font-size: 14px; padding-right: 26px; }
 .map-bar > a.btr-tracker-link .icon { color: var(--info); }
 .map-bar > a.btr-tracker-link:hover, .map-bar > a.btr-tracker-link:focus-visible { border-color: var(--info); }
-.map-bar .loot-strip { align-items: center; gap: 4px; }
-.map-bar .loot-strip .loot-label { font-size: 13px; font-weight: 600; color: var(--text-dim); margin-right: 2px; }
-.map-bar .loot-strip .loot-icon { box-sizing: border-box; width: 32px; min-width: 32px; height: 32px; border-radius: 5px; border-color: var(--border-strong); }
-.map-bar .loot-strip .loot-more { height: 32px; border-radius: 5px; }
-.map-bar .loot-strip .loot-icon img { width: 28px; height: 28px; }
-.map-bar .loot-strip .loot-icon.on-map { border-color: #ee9fc0; }  /* 지도에 위치가 있는 필요템 = 분홍 */
+.loot-strip .loot-label { font-size: 13px; font-weight: 600; color: var(--text-dim); margin-right: 2px; }
+.loot-strip .loot-icon { box-sizing: border-box; width: 32px; min-width: 32px; height: 32px; border-radius: 5px; border-color: var(--border-strong); }
+.loot-strip .loot-icon img { width: 28px; height: 28px; }
+.loot-strip .loot-icon.on-map { border-color: #ee9fc0; }  /* 지도에 위치가 있는 필요템 = 분홍 */
+
+/* 맵 전용 색: 색상환을 고르게 나눠 맵끼리 바로 구분되게 (2026-11-21 사용자: 흐리면 구분 안 됨). 모든 태그·필터에서 공유 */
+:root {
+  --map-customs: #e3b261;
+  --map-woods: #6fcf7f;
+  --map-shoreline: #5fa9ec;
+  --map-interchange: #a987f0;
+  --map-factory: #e8925a;
+  --map-reserve: #cfd06a;
+  --map-lighthouse: #4fcfb8;
+  --map-streets-of-tarkov: #d47fd8;
+  --map-ground-zero: #ec80a8;
+  --map-the-lab: #7d8ff0;
+  --map-labyrinth: #e8706f;
+  --map-terminal: #a8d86a;
+  --map-icebreaker: #5fcde0;
+  --map-neutral: #b4b8bc;
+}
+.map-colored { --map-color: var(--map-neutral); }
+.map-c-customs { --map-color: var(--map-customs); }
+.map-c-woods { --map-color: var(--map-woods); }
+.map-c-shoreline { --map-color: var(--map-shoreline); }
+.map-c-interchange { --map-color: var(--map-interchange); }
+.map-c-factory { --map-color: var(--map-factory); }
+.map-c-reserve { --map-color: var(--map-reserve); }
+.map-c-lighthouse { --map-color: var(--map-lighthouse); }
+.map-c-streets-of-tarkov { --map-color: var(--map-streets-of-tarkov); }
+.map-c-ground-zero { --map-color: var(--map-ground-zero); }
+.map-c-the-lab { --map-color: var(--map-the-lab); }
+.map-c-labyrinth, .map-c-the-labyrinth { --map-color: var(--map-labyrinth); }
+.map-c-terminal { --map-color: var(--map-terminal); }
+.map-c-icebreaker { --map-color: var(--map-icebreaker); }
+.map-c-neutral { --map-color: var(--map-neutral); }
+/* 스토리의 복수 맵 태그도 좁은 화면에서는 다음 줄로 이어진다. */
+.story-section-head { flex-wrap: wrap; }
+.tag.map-colored {
+  color: var(--map-color);
+  background: color-mix(in srgb, var(--map-color) 18%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--map-color) 50%, var(--surface));
+}
+button.tag.map-colored { font-family: inherit; line-height: inherit; cursor: pointer; }
+button.tag.map-colored:hover { background: var(--surface-3); border-color: var(--text-faint); }
+button.tag.map-colored:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+#map-filter .chip.map-colored::before {
+  content: ""; display: inline-block; flex: none; width: 7px; height: 7px;
+  border-radius: 50%; background: var(--map-color); margin-right: 6px; width: 8px; height: 8px;
+}
+.quest-name .wiki-link { color: var(--text-dim); margin-left: 4px; vertical-align: middle; }
+.quest-name .wiki-link:hover, .quest-name .wiki-link:focus-visible { color: var(--accent); text-decoration: none; }
+.drawer-quest-heading { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.drawer-quest-heading .drawer-quest-name { flex: 1; width: auto; }
+.drawer-quest-heading .wiki-link { flex: none; }

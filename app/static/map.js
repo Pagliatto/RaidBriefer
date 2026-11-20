@@ -107,7 +107,7 @@ function openHoverCard(marker, html) {
 // 열쇠 이름 + 위키 📖 (퀘스트 열쇠 링크와 같은 모양)
 function keyWithWiki(name, wiki) {
   if (!wiki) return escapeHtml(name);
-  return `${escapeHtml(name)} <a class="wiki-link" href="${escapeHtml(wiki)}" target="_blank" rel="noopener" title="${escapeHtml(t("quest.keyWiki", { name }))}">${iconSvg("book-open", 14)}</a>`;
+  return `${escapeHtml(name)} ${keyWikiLink({ name, wiki }).outerHTML}`;
 }
 
 // 지도 표시 공통 모양: 색 네모 + 아이콘 (2026-11-20 사용자). 퀘스트 목표만 번호 동그라미로 따로
@@ -136,6 +136,7 @@ async function loadMapList() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "");
     mapUI.maps = data;
+    registerMapColors(data);
     document.dispatchEvent(new Event("maps-changed"));
   } catch (error) {
     document.getElementById("map-view").replaceChildren(el("p", "empty", t("map.loadFailed", { error: error.message })));
@@ -356,7 +357,6 @@ function drawPins() {
 }
 
 // ---------- 먹을 것 (지도 위쪽 줄에 아이콘 + 바닥 생성 위치가 있으면 지도에 ◆) ----------
-const LOOT_LIMIT = 8; // 이보다 많으면 '+N' 으로 접어 둠
 const ICON_URL = (id) => `https://assets.tarkov.dev/${id}-icon.webp`; // tarkov.dev 아이템 아이콘
 
 // '윌스턴 담배 (Wilston cigarettes) / Malboro …' → '윌스턴 담배 등'
@@ -380,8 +380,9 @@ function renderLootBar() {
   bar.hidden = !items.length;
   if (!items.length) return;
   bar.append(el("span", "loot-label", t("map.loot")));
-  const shown = mapUI.lootOpen ? items : items.slice(0, LOOT_LIMIT);
-  shown.forEach((item) => {
+  const row = el("div", "loot-items");
+  bar.append(row);
+  items.forEach((item) => {
     const chip = el("button", "loot-icon");
     chip.type = "button";
     chip.dataset.key = item.text;
@@ -399,18 +400,8 @@ function renderLootBar() {
     }
     if (item.count > 1) chip.append(el("b", "loot-count", `×${item.count}`));
     chip.addEventListener("click", () => focusLoot(item.text));
-    bar.append(chip);
+    row.append(chip);
   });
-  if (items.length > LOOT_LIMIT) {
-    const more = el("button", "loot-more", mapUI.lootOpen ? t("map.lootFold") : `+${items.length - LOOT_LIMIT}`);
-    more.type = "button";
-    more.addEventListener("click", () => {
-      mapUI.lootOpen = !mapUI.lootOpen;
-      renderLootBar();
-      setTimeout(() => mapUI.leaflet && fitFull(mapUI.leaflet, false), 0); // 줄 높이가 바뀌면 지도 크기 다시
-    });
-    bar.append(more);
-  }
   markLootChips();
 }
 
@@ -593,7 +584,11 @@ function renderDrawer() {
     name.title = t("map.questDetailHint");
     name.append(el("span", "", q.name), el("span", "drawer-more", "›"));
     name.addEventListener("click", () => goToQuests([q.id]));
-    li.append(name);
+    const heading = el("div", "drawer-quest-heading");
+    heading.append(name);
+    const wiki = questWikiLink(q);
+    if (wiki) heading.append(wiki);
+    li.append(heading);
     const goals = el("ul", "drawer-goals");
     q.objectives.forEach((o) => {
       const n = numbers.get(o);
@@ -734,6 +729,12 @@ document.addEventListener("tab-shown", (e) => {
   if (mapUI.dirty || !mapUI.leaflet) drawMap();
   else setTimeout(() => mapUI.leaflet && fitFull(mapUI.leaflet, false), 0);
 });
+
+// 필요템 줄 수가 바뀌거나 사라져도 남은 지도 크기에 맞춘다.
+const lootBarObserver = new ResizeObserver(() => {
+  if (mapUI.leaflet && currentTab() === "map") fitFull(mapUI.leaflet, false);
+});
+lootBarObserver.observe(document.getElementById("loot-bar"));
 
 // 창 크기가 바뀌면 (태블릿 돌리기 등) 다시 맞춤
 let resizeTimer = null;

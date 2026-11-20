@@ -2,24 +2,30 @@
 // - 어디 갈까? : 맵마다 진행 중 퀘스트 수 + 스토리 다음 단계 수
 // - 고른 맵    : 챙길 것(열쇠·가져가기·무기·착용) 모아 보기, 퀘스트·스토리 목록
 // - 진행 중인 스토리 : 챕터별 진행률과 다음 맵
-// state(app.js), story / allSteps / doneIndex(story.js), el / PREP_CLASS(app.js) 를 같이 씀
+// state(app.js), story / visibleItems / 체크 판정(story.js), el / PREP_CLASS(app.js) 를 같이 씀
 
 const home = { map: null };  // 고른 맵 이름 (null = 접힘, 처음에는 접혀 있음)
 
-// 챕터별 "다음에 할 단계"와 그 맵 (홈에는 시작한 챕터만: 단계를 하나라도 체크한 것)
+// 챕터별 첫 미완료 필수 단계 (홈에는 단계 체크나 갈림길 선택으로 시작한 챕터만)
 function storyNext(includeNotStarted = false) {
   if (!story.data) return [];
-  return story.data.chapters.filter((ch) => includeNotStarted || doneIndex(ch) >= 0).map((ch) => {
-    const { steps, pending } = visibleItems(ch);
-    const last = doneIndex(ch);
-    const next = steps[last + 1] || null;
-    let section = null;
-    if (next) section = ch.sections.find((s) => (s.steps || []).includes(next));
+  return story.data.chapters.filter((ch) => includeNotStarted || isChapterStarted(ch)).map((ch) => {
+    const { items, steps, pending } = visibleItems(ch);
+    const required = steps.filter(isRequiredStep);
+    const next = required.find((s) => !isStepDone(s)) || null;
+    const unfinished = items.filter((it) => it.type === "section" && !isSectionDone(it));
+    const section = next ? unfinished.find((it) => it.steps.includes(next)).sec : null;
+    // 첫 미완료 구간 + 따로 시작해 둔 미완료 구간의 필수 단계 맵을 모은다.
+    const mapSteps = unfinished.filter((it, index) => index === 0 || isSectionStarted(it))
+      .flatMap((it) => it.steps.filter((s) => isRequiredStep(s) && !isStepDone(s)).map((step) => ({
+        step, section: it.sec,
+        maps: step.map_names && step.map_names.length ? step.map_names : (it.sec.map_names || []),
+      })));
     return {
-      ch, done: last + 1, total: steps.length, next, section,
-      pending: next ? null : pending,  // 단계는 다 했고 갈림길 선택을 기다리는 중
-      // 다음 단계의 맵 (여러 개일 수 있음, 없으면 구간의 맵)
-      maps: next ? ((next.map_names && next.map_names.length) ? next.map_names : ((section && section.map_names) || [])) : [],
+      ch, done: required.filter(isStepDone).length, total: required.length, next, section,
+      pending: next ? null : pending,
+      maps: [...new Set(mapSteps.flatMap((entry) => entry.maps))],
+      mapSteps,
       map: next ? (next.map_name || (section && section.map_name)) : null,
     };
   });
@@ -37,7 +43,10 @@ function collectByMap() {
       if (!NOT_A_MAP.includes(m)) slot(m).quests.push(q);  // "모든 맵"·"레이드 밖"은 맵 카드에서 뺌
     }));
   }
-  storyNext().forEach((s) => s.maps.forEach((m) => slot(m).stories.push(s)));
+  storyNext().forEach((s) => s.maps.forEach((m) => {
+    const entry = s.mapSteps.find((candidate) => candidate.maps.includes(m));
+    slot(m).stories.push({ ...s, next: entry.step });
+  }));
   // 할 일이 많은 맵이 앞으로
   return [...byMap.entries()].sort((a, b) =>
     (b[1].quests.length + b[1].stories.length) - (a[1].quests.length + a[1].stories.length));
@@ -215,7 +224,7 @@ function renderHomeStory(list) {
     row.append(el("span", "home-story-name", s.ch.name));
     const next = el("span", "home-story-next");
     if (s.next) {
-      next.textContent = s.section ? s.section.title : s.next.ko;
+      next.textContent = s.next.ko;
       if (s.map) next.append(el("span", "tag", s.map));
     } else if (s.pending) {
       next.append(el("span", "chapter-choice", t("home.storyChoice", { title: s.pending.title })));

@@ -309,16 +309,27 @@ def api_check_get(kind):
 
 @app.route("/api/check/<kind>", methods=["POST"])
 def api_check_set(kind):
-    """보내는 내용: {"key": "...", "value": true / false / "단계id" / 은신처 레벨 숫자 / null}"""
-    body = request.get_json(silent=True) or {}
-    key = body.get("key")
-    value = body.get("value")
-    ok_value = (value is None or isinstance(value, bool)
-                or (isinstance(value, str) and len(value) <= 100)
-                or (isinstance(value, int) and 0 <= value <= 10))  # 은신처 레벨
-    if kind not in progress.KINDS or not isinstance(key, str) or not key or len(key) > 300 or not ok_value:
+    """단일 {key, value} 저장. 스토리는 {changes: {키: 값 또는 null}} 일괄 저장도 지원."""
+    body = request.get_json(silent=True)
+    if kind not in progress.KINDS or not isinstance(body, dict):
         return jsonify({"error": i18n.t("server.badRequest")}), 400
-    result = progress.set_check(kind, key, value)
+    if "changes" in body:
+        changes = body["changes"]
+        if kind != "story" or not isinstance(changes, dict) or not 1 <= len(changes) <= 500:
+            return jsonify({"error": i18n.t("server.badRequest")}), 400
+    else:
+        key = body.get("key")
+        if not isinstance(key, str):
+            return jsonify({"error": i18n.t("server.badRequest")}), 400
+        changes = {key: body.get("value")}
+    # 하나라도 잘못된 값이면 쓰기 전에 전체 요청을 거절한다.
+    for key, value in changes.items():
+        ok_value = (value is None or isinstance(value, bool)
+                    or (isinstance(value, str) and len(value) <= 100)
+                    or (isinstance(value, int) and 0 <= value <= 10))  # 은신처 레벨
+        if not isinstance(key, str) or not key or len(key) > 300 or not ok_value:
+            return jsonify({"error": i18n.t("server.badRequest")}), 400
+    result = progress.set_checks(kind, changes)
     if kind == "added":  # 직접 추가한 퀘스트는 퀘스트 목록 자체가 바뀌므로 다시 계산
         _cache["data"] = None
     return jsonify(result)

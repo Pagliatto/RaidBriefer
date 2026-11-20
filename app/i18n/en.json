@@ -85,6 +85,8 @@
     "manualName": "Manual",
     "wikiName": "Wiki",
     "keyAnyOf": "any one",
+    "questWiki": "Open {name} on the wiki",
+    "filterByMap": "Show only {map}",
     "keyWiki": "{name} — wiki",
     "wikiNameHint": "Not on tarkov.dev yet, so this quest was written from the official wiki. It switches automatically once tarkov.dev has it.",
     "blogName": "Blog",
@@ -124,8 +126,10 @@
     "markAllSeen": "Mark all seen"
   },
   "story": {
-    "stepUndo": "Revert to here",
-    "stepDone": "Done up to here",
+    "stepUndo": "Uncheck this step",
+    "stepDone": "Check this step",
+    "sectionDone": "Check section",
+    "sectionUndo": "Uncheck section",
     "optional": "(optional)",
     "manualHint": "Check this only if it applies to you",
     "manualMark": "If applicable",

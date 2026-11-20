@@ -1,7 +1,7 @@
 """사용자가 직접 체크한 내용을 저장하는 파일.
 
 - handed : 제출한 아이템            {"퀘스트id|아이템": true}
-- story  : 챕터별 '여기까지 완료'   {"챕터id": "마지막으로 끝낸 단계id"}
+- story  : 단계별 완료 {"단계id!": "done"}, 갈림길 {"챕터id@갈림길id": "선택지id"}
 - 저장 위치: user_data/progress.json  (사람마다 다르니 Git에는 올리지 않음)
 - 프레스티지를 새로 하면 퀘스트와 스토리가 모두 초기화되므로 체크도 전부 비운다.
 """
@@ -60,13 +60,19 @@ def get(kind: str) -> dict:
 
 def set_check(kind: str, key: str, value) -> dict:
     """값을 저장하고(비어 있거나 False·0이면 지움), 바뀐 목록을 돌려준다.
-    value: True/False (체크), 단계id 글자 (스토리 위치), 숫자 (은신처 레벨)"""
+    value: True/False (체크), 문자열 (스토리 완료·갈림길), 숫자 (은신처 레벨)"""
+    return set_checks(kind, {key: value})
+
+
+def set_checks(kind: str, changes: dict) -> dict:
+    """여러 체크를 같은 잠금 안에서 읽고 한 번에 저장한다 (빈 값은 삭제)."""
     with _lock:
         data = _read()
-        if value:
-            data[kind][key] = value
-        else:
-            data[kind].pop(key, None)
+        for key, value in changes.items():
+            if value:
+                data[kind][key] = value
+            else:
+                data[kind].pop(key, None)
         _write(data)
         return data[kind]
 
