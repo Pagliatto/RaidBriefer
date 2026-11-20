@@ -775,7 +775,8 @@ loadMapList();
 const LAYER_KEYS = ["quests", "loot", "extracts", "scavExtracts", "transits", "btrStops", "keys", "bitcoin", "keySpawns", "valuables"];
 const LAYER_INFO = {
   quests: { label: t("map.layerQuests"), mark: "shape:quest", on: true },
-  loot: { label: t("map.layerLoot"), mark: "mk:loot:package", on: true },  // 바닥 위치를 아는 아이템만 (없으면 0)
+  // 필요템 바닥 위치: 맵마다 0~몇 개뿐이라 스위치 없이 항상 표시 (위쪽 줄 아이콘을 누르면 그 자리로, 2026-11-20 사용자)
+  loot: { label: t("map.layerLoot"), mark: "mk:loot:package", on: true, always: true },
   extracts: { label: t("map.layerExtracts"), mark: "mk:extract-pmc:door-open", on: true },
   scavExtracts: { label: t("map.layerScavExtracts"), mark: "mk:extract-scav:door-open", on: false },
   transits: { label: t("map.layerTransits"), mark: "mk:transit:arrow-left-right", on: true },
@@ -790,7 +791,20 @@ const layerState = (() => {
   try { return JSON.parse(localStorage.getItem(LAYER_STORAGE) || "{}"); } catch (e) { return {}; }
 })();
 
+// 기존에 켠 기타 귀중품은 한 번만 끄고, 이후 사용자가 켠 설정은 유지.
+try {
+  const resetKey = "tarkovhelper.valuablesReset2026";
+  if (localStorage.getItem(resetKey) !== "1") {
+    if (layerState.valuables === true) {
+      layerState.valuables = false;
+      localStorage.setItem(LAYER_STORAGE, JSON.stringify(layerState));
+    }
+    localStorage.setItem(resetKey, "1");
+  }
+} catch (e) { /* 저장소를 못 쓰는 창 */ }
+
 function layerOn(key) {
+  if (LAYER_INFO[key].always) return true;  // 스위치 없이 항상 보이는 표시
   return key in layerState ? layerState[key] : LAYER_INFO[key].on;
 }
 
@@ -810,6 +824,7 @@ function renderLayerDrawer() {
   list.replaceChildren();
   LAYER_KEYS.forEach((key) => {
     const info = LAYER_INFO[key];
+    if (info.always) return;  // 항상 보이는 표시는 서랍에 스위치를 두지 않음
     const on = layerOn(key);
     const btn = el("button", `layer-toggle layer-${key}${on ? " on" : ""}`);
     btn.type = "button";

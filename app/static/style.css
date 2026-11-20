@@ -1911,7 +1911,7 @@ button.home-map, button.home-story-row, button.choice-option, button.prep-item, 
 .mk-transit { --mk: #c08cf0; }
 .mk-btr { --mk: #5fd0d8; }
 .mk-lock { --mk: #c9cfd3; }
-.mk-keyspawn { --mk: var(--accent); }
+.mk-keyspawn { --mk: #ff8a70; }  /* 산호색: BTR 청록·비트코인 주황·먹을 것 분홍과 구분 */
 .mk-bitcoin { --mk: #f2a33a; }
 .mk-loot { --mk: #ee9fc0; }
 .mk-valuable { --mk: #e3c25a; }
@@ -1958,3 +1958,27 @@ button.home-map, button.home-story-row, button.choice-option, button.prep-item, 
 @media (prefers-reduced-motion: reduce) {
   .home-raid-mark .home-ripple, .data-update-arc, .ho-card.hideout-change-flash::after { animation: none; }
 }
+
+/* 표시 서랍: 이름 + 개수가 한 줄에 들어가게 폭을 조금 넓힘 (비트코인스폰 36 등, 2026-11-20) */
+.layer-drawer { width: 176px; }
+.layer-name { white-space: nowrap; }
+/* 지도 위쪽 줄 필요템 아이콘: 넘치면 스크롤은 되지만 막대는 숨김 (영어 Needed items 등) */
+.map-bar .loot-strip { scrollbar-width: none; }
+.map-bar .loot-strip::-webkit-scrollbar { display: none; }
+
+/* 지도 위쪽 줄 통일 (2026-11-20 사용자: 버튼이 따로 놂) — 높이 32 · 모서리 5 · 같은 테두리·바탕 · 글자 13(맵 이름 14) */
+.map-bar { gap: 8px; }
+.map-bar > button, .map-bar > select, .map-bar > a.btr-tracker-link {
+  box-sizing: border-box; height: 32px; min-height: 32px; border-radius: 5px;
+  border: 1px solid var(--border-strong); background: var(--surface-2); color: var(--text);
+  font-size: 13px; font-weight: 600; padding: 0 10px;
+}
+.map-bar > select { font-size: 14px; padding-right: 26px; }
+.map-bar > a.btr-tracker-link .icon { color: var(--info); }
+.map-bar > a.btr-tracker-link:hover, .map-bar > a.btr-tracker-link:focus-visible { border-color: var(--info); }
+.map-bar .loot-strip { align-items: center; gap: 4px; }
+.map-bar .loot-strip .loot-label { font-size: 13px; font-weight: 600; color: var(--text-dim); margin-right: 2px; }
+.map-bar .loot-strip .loot-icon { box-sizing: border-box; width: 32px; min-width: 32px; height: 32px; border-radius: 5px; border-color: var(--border-strong); }
+.map-bar .loot-strip .loot-more { height: 32px; border-radius: 5px; }
+.map-bar .loot-strip .loot-icon img { width: 28px; height: 28px; }
+.map-bar .loot-strip .loot-icon.on-map { border-color: #ee9fc0; }  /* 지도에 위치가 있는 필요템 = 분홍 */
