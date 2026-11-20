@@ -5,12 +5,15 @@
 """
 
 import atexit
+import json
 import time
 from pathlib import Path
 
 from flask import Flask, abort, jsonify, render_template, request, send_file
 
-from app import brightness, game_state, hideout, i18n, updater, map_views, progress, quest_log, quests, settings, story, tarkov_api
+from app import brightness, game_state, hideout, i18n, updater, map_views, paths, progress, quest_log, quests, settings, story, tarkov_api
+
+from app.version import VERSION
 
 HOST = "127.0.0.1"  # 지금은 이 PC에서만 열림 (휴대폰 접속은 다음 단계)
 PORT = 8765
@@ -199,6 +202,41 @@ def api_brightness_restore():
     return jsonify(brightness.restore())
 
 
+def _release_notes() -> dict | None:
+    """현재 버전의 읽을 수 있는 안내만 사용한다. 없거나 깨지면 안내를 생략한다."""
+    try:
+        data = json.loads((paths.DATA_DIR / "release_notes.json").read_text(encoding="utf-8"))
+        notes = data.get(VERSION) if isinstance(data, dict) else None
+        if not isinstance(notes, dict):
+            return None
+        result = {lang: [line for line in lines if isinstance(line, str) and line.strip()]
+                  for lang, lines in notes.items() if lang in ("ko", "en") and isinstance(lines, list)}
+        if not any(result.values()):
+            return None
+        if notes.get("action") == "brightness":
+            result["action"] = "brightness"
+        return result
+    except (OSError, ValueError):
+        return None
+
+
+@app.route("/api/whats-new")
+def api_whats_new():
+    current = settings.load()
+    notes = _release_notes()
+    show = bool(current["setup_done"] and current["last_seen_version"] != VERSION and notes)
+    return jsonify({"version": VERSION, "show": show, "notes": notes})
+
+
+@app.route("/api/whats-new/seen", methods=["POST"])
+def api_whats_new_seen():
+    body = request.get_json(silent=True)
+    if not isinstance(body, dict) or body.get("version") != VERSION:
+        return jsonify({"error": i18n.t("server.badRequest")}), 400
+    settings.save({"last_seen_version": VERSION})
+    return jsonify({"version": VERSION, "seen": True})
+
+
 @app.route("/api/settings", methods=["GET"])
 def api_settings_get():
     current = settings.load()
@@ -230,7 +268,10 @@ def api_settings_set():
     if "setup_done" in body:  # 처음 설정 화면을 끝냄(true) / 다시 하기(false)
         if not isinstance(body["setup_done"], bool):
             return jsonify({"error": i18n.t("server.badRequest")}), 400
-        saved = settings.save({"setup_done": body["setup_done"]})
+        changes = {"setup_done": body["setup_done"]}
+        if body["setup_done"]:
+            changes["last_seen_version"] = VERSION
+        saved = settings.save(changes)
         return jsonify({**saved, "check": settings.check_game_dir(saved["game_dir"])})
     if body.get("find"):
         found = settings.find_game_dir()

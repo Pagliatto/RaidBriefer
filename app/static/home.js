@@ -4,10 +4,6 @@
 // - 진행 중인 스토리 : 챕터별 진행률과 다음 맵
 // state(app.js), story / allSteps / doneIndex(story.js), el / PREP_CLASS(app.js) 를 같이 씀
 
-function bossText(boss) {
-  return t("map.bossChance", { name: boss.name, chance: Math.round(boss.spawnChance * 1000) / 10 });
-}
-
 const home = { map: null };  // 고른 맵 이름 (null = 접힘, 처음에는 접혀 있음)
 
 // 챕터별 "다음에 할 단계"와 그 맵 (홈에는 시작한 챕터만: 단계를 하나라도 체크한 것)
@@ -111,8 +107,17 @@ function renderHomeDetail(name, info) {
   const map = typeof mapUI !== "undefined" && mapUI.maps.find((m) => m.name === name);
   const bosses = (map && map.bosses) || [];
   if (bosses.length) {
-    const line = el("p", "home-bosses");
-    line.append(el("span", "home-label home-bosses-label", t("home.bossLabel")), document.createTextNode(bosses.map(bossText).join(" · ")));
+    const line = el("div", "prep-group home-bosses");
+    line.append(el("span", "prep-group-label home-bosses-label", t("home.bossLabel")));
+    const row = el("div", "prep");
+    bosses.forEach((boss) => {
+      const chance = Math.round(boss.spawnChance * 1000) / 10;
+      const tone = boss.spawnChance >= 1 ? "bad" : boss.spawnChance >= 0.5 ? "warn" : "dim";
+      const chip = el("span", "prep-item home-boss");
+      chip.append(el("span", "", boss.name), el("b", "boss-chance " + tone, chance + "%"));
+      row.append(chip);
+    });
+    line.append(row);
     box.append(line);
   }
 

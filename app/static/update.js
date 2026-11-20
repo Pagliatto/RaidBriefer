@@ -15,8 +15,9 @@ const updateUI = {
 };
 const UPDATE_LATER_KEY = "raidbriefer.updateLater";
 
-function updateInRaid() {
-  return typeof topbar !== "undefined" && ["loading", "raid"].includes((topbar.state || {}).status);
+function updateInRaid(state = null) {
+  const current = state || (typeof topbar !== "undefined" ? topbar.state : null);
+  return ["loading", "raid"].includes((current || {}).status);
 }
 
 function laterVersion() {
@@ -125,3 +126,95 @@ window.addEventListener("game-state", drawUpdate);
 
 // 서버가 깃허브에 묻는 데 몇 초 걸려서, 처음에는 몇 번 다시 확인
 [1500, 5000, 12000].forEach((ms) => setTimeout(loadUpdate, ms));
+
+// 처음 설정 확인이 끝난 뒤 현재 버전 안내를 읽는다.
+const whatsNewUI = {
+  dialog: document.getElementById("whats-new"),
+  link: document.getElementById("whats-new-open"),
+  info: null,
+  pending: false,
+  requested: false,
+  checking: false,
+  seen: null,
+  unsaved: null,
+  saving: false,
+};
+
+async function saveWhatsNewSeen() {
+  if (!whatsNewUI.unsaved || whatsNewUI.saving) return;
+  whatsNewUI.saving = true;
+  const version = whatsNewUI.unsaved;
+  try {
+    const res = await fetch("/api/whats-new/seen", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ version }),
+    });
+    if (res.ok && whatsNewUI.unsaved === version) whatsNewUI.unsaved = null;
+  } catch (e) { /* 연결이 돌아오면 다시 저장한다. */ }
+  finally { whatsNewUI.saving = false; }
+}
+
+async function loadWhatsNew() {
+  try {
+    const res = await fetch("/api/whats-new");
+    if (!res.ok) return;
+    const info = await res.json();
+    whatsNewUI.info = info;
+    whatsNewUI.link.hidden = !info.notes;
+    whatsNewUI.pending = !!(info.show && whatsNewUI.seen !== info.version);
+    tryOpenWhatsNew();
+  } catch (e) { /* 다음 설정 확인 때 다시 읽는다. */ }
+}
+
+async function tryOpenWhatsNew() {
+  const ui = whatsNewUI;
+  if (!ui.info?.notes || (!ui.pending && !ui.requested) || ui.checking || ui.dialog.open) return;
+  if (document.body.classList.contains("in-setup")) return;
+  // 첫 상단바 응답 전의 기본값(off)으로 레이드 여부를 판단하지 않는다.
+  ui.checking = true;
+  try {
+    const res = await fetch("/api/state");
+    if (!res.ok || updateInRaid(await res.json()) || updateInRaid()) return;
+    if (document.body.classList.contains("in-setup")) return;
+    const settingsDialog = document.getElementById("settings");
+    if (ui.requested && settingsDialog.open) settingsDialog.close();
+    if (document.querySelector("dialog[open]") || !document.getElementById("brightness-popup").hidden) return;
+    const notes = ui.info.notes;
+    const languages = [document.documentElement.lang, "en", "ko"];
+    const lines = languages.map((lang) => notes[lang]).find((list) => Array.isArray(list) && list.length) || [];
+    if (!lines.length) return;
+    document.getElementById("whats-new-title").textContent = t("whatsNew.title", { version: ui.info.version });
+    document.getElementById("whats-new-list").replaceChildren(...lines.map((line) => el("li", "", line)));
+    document.getElementById("whats-new-action").hidden = notes.action !== "brightness";
+    ui.dialog.returnValue = "";
+    ui.dialog.showModal();
+    document.getElementById("whats-new-ok").focus();
+  } catch (e) { /* 게임 상태를 확인하지 못하면 안내도 다음에 띄운다. */ }
+  finally { ui.checking = false; }
+}
+
+whatsNewUI.link.addEventListener("click", () => {
+  whatsNewUI.requested = true;
+  tryOpenWhatsNew();
+});
+document.getElementById("whats-new-ok").addEventListener("click", () => whatsNewUI.dialog.close());
+document.getElementById("whats-new-action").addEventListener("click", () => whatsNewUI.dialog.close("brightness"));
+whatsNewUI.dialog.addEventListener("close", () => {
+  const ui = whatsNewUI;
+  if (ui.dialog.returnValue === "deferred") return;
+  ui.pending = false;
+  ui.requested = false;
+  ui.seen = ui.info.version;
+  ui.unsaved = ui.info.version;
+  saveWhatsNewSeen();
+  if (ui.dialog.returnValue === "brightness") window.openBrightnessPopup();
+});
+window.addEventListener("game-state", () => {
+  if (updateInRaid() && whatsNewUI.dialog.open) {
+    // 레이드 때문에 숨긴 것은 읽은 것으로 저장하지 않는다.
+    whatsNewUI.requested = true;
+    whatsNewUI.dialog.close("deferred");
+  } else tryOpenWhatsNew();
+});
+window.addEventListener("settings-changed", loadWhatsNew);
+setInterval(() => { saveWhatsNewSeen(); tryOpenWhatsNew(); }, 5000);

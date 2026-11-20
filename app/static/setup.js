@@ -119,6 +119,7 @@ setupUI.get("setup-game-dir").addEventListener("keydown", (e) => {
   try {
     const { data } = await setupRequest(null);
     if (!data.setup_done) openSetup();
+    await loadWhatsNew();
   } catch (error) {
     // 서버 연결이 안 되면 평소 화면 그대로 (상단바·퀘스트 쪽에서 오류 안내)
   }

@@ -152,7 +152,7 @@ For errors, these help a lot:
 ## License and credits
 
 - Source code: **MIT** ([LICENSE](LICENSE))
-- Storyline data (`data/story/`) and quests not on tarkov.dev yet (`data/manual_quests.json`): summarized and translated from the official wiki — **CC BY-NC-SA 3.0**
+- Storyline data (`data/story/`) and quests not on tarkov.dev yet (`data/corrections.json`): summarized and translated from the official wiki — **CC BY-NC-SA 3.0**
 - Map images: tarkov.dev SVG Maps — **CC BY-NC-SA 4.0**
 - Data: [tarkov.dev](https://tarkov.dev) (The Hideout); quest names/maps missing there: [SPT](https://github.com/SP-Tushonka/server-csharp) data files
 

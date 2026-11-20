@@ -283,6 +283,20 @@
   </section>
 
   <!-- 설정 창 (⚙ 버튼) -->
+  <dialog class="settings whats-new" id="whats-new" aria-labelledby="whats-new-title">
+    <form method="dialog" class="settings-head">
+      <h2 id="whats-new-title"></h2>
+      <button class="settings-close" aria-label="{{ t('settings.close') }}" title="{{ t('settings.close') }}"><span data-icon="x"></span></button>
+    </form>
+    <div class="settings-item">
+      <ul class="whats-new-list" id="whats-new-list"></ul>
+      <div class="settings-actions">
+        <button type="button" id="whats-new-action" hidden>{{ t('whatsNew.brightness') }}</button>
+        <button type="button" class="primary" id="whats-new-ok" autofocus>{{ t('whatsNew.ok') }}</button>
+      </div>
+    </div>
+  </dialog>
+
   <dialog class="settings" id="settings">
     <form method="dialog" class="settings-head">
       <h2>{{ t('settings.title') }}</h2>
@@ -348,7 +362,8 @@
 
     <section class="settings-item" data-stab="about" hidden>
       <h3>{{ t('update.settingsTitle') }}</h3>
-      <p class="settings-help"><b id="update-current"></b><br>
+      <p class="settings-help"><b id="update-current"></b>
+        <button type="button" class="whats-new-link" id="whats-new-open" hidden>{{ t('whatsNew.link') }}</button><br>
         <span id="update-status"></span><br>
         {{ t('update.settingsPrivacy') }}</p>
     </section>

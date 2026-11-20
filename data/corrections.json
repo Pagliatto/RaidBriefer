@@ -1,0 +1,897 @@
+{
+  "_about": "퀘스트 id를 키로 적는 보완·수정 이름표이며, 필드별 우선순위는 수동(game: 다른 출처에 없거나 오류를 바로잡는 특수한 경우의 게임 직접 확인값) > tarkov.dev(same_as 포함) > SPT(이름·맵만) > 위키·블로그 > 미확인이다. same_as = 같은 퀘스트인데 tarkov.dev에는 다른 id로 있는 경우 그 id. 선택 항목: maps(맵 구분값 목록), objectives([{text, original, optional?}]), prep([{kind, text, count, fir}]), level. from = 정보 출처(wiki: 공식 위키, blog: 공략 블로그, game: 게임 화면 직접 확인). link_blog = 위키로 출처를 변경하기 전의 블로그 주소. check = 사용자 검토 대기 표시(wiki/blog); 검토 완료 후 제거하며 from은 유지한다. replaced_by / replaced_by_en = 삭제·대체된 퀘스트의 후속 퀘스트 안내(한국어/영어). raid(true/false) = 레이드 안에서 하는 퀘스트인지 직접 지정 (tarkov.dev에 있는 퀘스트에도 쓸 수 있음). 영어 화면용(선택): name_en, objective_en, prep[].text_en (objectives 는 original 이 영어 문장). 필드별 우선순위: game > dev > SPT > wiki > blog > unknown. checked = 마지막 확인 날짜(YYYY-MM-DD). BTR 정류장 보완값은 btr_stops에 기록한다.",
+  "quests": {
+    "6aba40a15ef26da1360746b8": {
+      "same_as": "671a59e43d73dac1360765cc",
+      "name": "Dangerous Props",
+      "trader": "스키어",
+      "objective": "MPS Auto Assault-12 샷건으로 아무 타겟 20명 사살 (지역 상관없음)",
+      "link": "https://ytyler.tistory.com/451",
+      "objective_en": "Eliminate 20 targets with an MPS Auto Assault-12 shotgun (any location)",
+      "from": "blog",
+      "checked": "2026-11-20"
+    },
+    "6a763df2161e4b45b1015663": {
+      "name": "낯이 익은데...",
+      "trader": "스키어",
+      "maps": [
+        "lighthouse"
+      ],
+      "objectives": [
+        {
+          "text": "Kirasa-N 또는 NFM THOR CRV 방탄복을 착용한 상태로 등대(Lighthouse)에서 장갑 열차를 통해 탈출하기",
+          "original": "Extract from Lighthouse through the Armored Train while wearing a Kirasa-N or NFM THOR CRV body armor"
+        }
+      ],
+      "prep": [
+        {
+          "kind": "착용",
+          "text": "BNTI Kirasa-N 방탄복 또는 NFM THOR CRV 방탄복 (색상 무관)",
+          "text_en": "BNTI Kirasa-N or NFM THOR CRV body armor (any color)"
+        }
+      ],
+      "link": "https://escapefromtarkov.fandom.com/wiki/A_Familiar_Face...",
+      "name_en": "A Familiar Face...",
+      "from": "wiki",
+      "checked": "2026-11-20"
+    },
+    "625d6ff5ddc94657c21a1625": {
+      "name": "네트워크 제공자 - 파트 1",
+      "name_en": "Network Provider - Part 1",
+      "trader": "메카닉",
+      "objectives": [
+        {
+          "text": "레이드에서 발견한 [전자기기 부품 (Electronic components)] 4개 건네주기",
+          "original": "Hand over the 4 found in raid Electronic components"
+        },
+        {
+          "text": "레이드에서 발견한 [COFDM 군용 무선 신호 송신기] 4개 건네주기",
+          "original": "Hand over the 4 found in raid Military COFDM Wireless Signal Transmitters"
+        },
+        {
+          "text": "레이드에서 발견한 [Gas analyzer 가스 분석기] 4개 건네주기",
+          "original": "Hand over the 4 found in raid Gas analyzers"
+        },
+        {
+          "text": "레이드에서 발견한 [파손된 GPhone 스마트폰] 4개 건네주기",
+          "original": "Hand over the 4 found in raid Broken GPhone smartphones"
+        }
+      ],
+      "objective_en": "Hand over 4 each of Electronic components, Military COFDM Wireless Signal Transmitter, Gas analyzer and Broken GPhone smartphone, all Found in Raid.",
+      "link": "https://escapefromtarkov.fandom.com/wiki/Network_Provider_-_Part_1",
+      "replaced_by": "빛을 향하여 (To the Light) 연작 — 시작: 빛을 향하여 - 믿되, 검증하라 (6a880acc9216d0f5aa078305)",
+      "replaced_by_en": "To the Light quest chain — starts with To the Light - Trust but Verify (6a880acc9216d0f5aa078305)",
+      "from": "wiki",
+      "link_blog": "https://ytyler.tistory.com/438",
+      "checked": "2026-11-20"
+    },
+    "625d6ffaf7308432be1d44c5": {
+      "name": "네트워크 제공자 - 파트 2",
+      "name_en": "Network Provider - Part 2",
+      "trader": "메카닉",
+      "maps": [
+        "lighthouse"
+      ],
+      "objectives": [
+        {
+          "text": "등대(Lighthouse) 정수 처리 시설의 MI-8 헬리콥터 내부에 [무선 중계기] 설치하기",
+          "original": "Set up the radio repeater inside the MI-8 helicopter at the water treatment plant on Lighthouse"
+        },
+        {
+          "text": "등대(Lighthouse)의 버려진 USEC 별장 안에 [무선 중계기] 설치하기",
+          "original": "Set up the radio repeater inside the abandoned USEC cottage on Lighthouse"
+        },
+        {
+          "text": "등대(Lighthouse)의 등대를 내려다보는 고지대에 [무선 중계기] 설치하기",
+          "original": "Set up the radio repeater at a high elevation overlooking the lighthouse on Lighthouse"
+        },
+        {
+          "text": "등대(Lighthouse) 해안의 침수된 건물 지붕에 [무선 중계기] 설치하기",
+          "original": "Set up the radio repeater on the roof of the sunken building at the shore on Lighthouse"
+        }
+      ],
+      "objective_en": "Install four Radio repeaters on Lighthouse: inside the water treatment plant's MI-8, inside the abandoned USEC cottage, on high ground overlooking the lighthouse, and on the coastal sunken building's roof.",
+      "link": "https://escapefromtarkov.fandom.com/wiki/Network_Provider_-_Part_2",
+      "from": "wiki",
+      "link_blog": "https://ytyler.tistory.com/441",
+      "checked": "2026-11-20"
+    },
+    "625d6ffcaa168e51321d69d7": {
+      "name": "Assessment - Part 1",
+      "name_en": "Assessment - Part 1",
+      "trader": "메카닉",
+      "maps": [
+        "lighthouse"
+      ],
+      "objectives": [
+        {
+          "text": "등대(Lighthouse) 반도 인근에서 PMC 15명 사살하기",
+          "original": "Eliminate 15 PMC operatives near the Lighthouse peninsula"
+        }
+      ],
+      "objective_en": "Eliminate 15 PMCs near the Lighthouse peninsula.",
+      "link": "https://escapefromtarkov.fandom.com/wiki/Assessment_-_Part_1",
+      "from": "wiki",
+      "link_blog": "https://ytyler.tistory.com/443",
+      "checked": "2026-11-20"
+    },
+    "625d6fff4149f1149b5b12c9": {
+      "name": "Assessment - Part 2",
+      "name_en": "Assessment - Part 2",
+      "trader": "메카닉",
+      "maps": [
+        "woods"
+      ],
+      "objectives": [
+        {
+          "text": "삼림(Woods)의 첫 번째 벙커를 찾아 [MS2000 마커] 설치하기",
+          "original": "Locate and mark the first bunker with an MS2000 marker on Woods"
+        },
+        {
+          "text": "삼림(Woods)의 두 번째 벙커를 찾아 [MS2000 마커] 설치하기",
+          "original": "Locate and mark the second bunker with an MS2000 marker on Woods"
+        },
+        {
+          "text": "삼림(Woods)의 세 번째 벙커를 찾아 [MS2000 마커] 설치하기",
+          "original": "Locate and mark the third bunker with an MS2000 marker on Woods"
+        },
+        {
+          "text": "삼림(Woods)의 네 번째 벙커를 찾아 [MS2000 마커] 설치하기",
+          "original": "Locate and mark the fourth bunker with an MS2000 marker on Woods"
+        }
+      ],
+      "objective_en": "Locate and mark the first, second, third and fourth bunkers on Woods with MS2000 markers.",
+      "link": "https://escapefromtarkov.fandom.com/wiki/Assessment_-_Part_2",
+      "from": "wiki",
+      "link_blog": "https://ytyler.tistory.com/444",
+      "checked": "2026-11-20"
+    },
+    "625d7001c4874104f230c0c5": {
+      "name": "Assessment - Part 3",
+      "name_en": "Assessment - Part 3",
+      "trader": "메카닉",
+      "maps": [
+        "the-lab"
+      ],
+      "objectives": [
+        {
+          "text": "연구소(The Lab)에서 레이더(Raiders) 7명 사살하기",
+          "original": "Eliminate 7 Raiders in The Lab"
+        },
+        {
+          "text": "레이드에서 [SJ1 TGLabs 전투 자극제 주사기] 15개 발견하기",
+          "original": "Find 15 SJ1 TGLabs combat stimulant injector in raid"
+        },
+        {
+          "text": "레이드에서 [SJ6 TGLabs 전투 자극제 주사기] 5개 발견하기",
+          "original": "Find 5 SJ6 TGLabs combat stimulant injector in raid"
+        },
+        {
+          "text": "레이드에서 [SJ9 TGLabs 전투 자극제 주사기] 1개 발견하기",
+          "original": "Find 1 SJ9 TGLabs combat stimulant injector in raid"
+        },
+        {
+          "text": "메카닉에게 [SJ1 TGLabs 전투 자극제 주사기] 15개 건네주기",
+          "original": "Hand over 15 SJ1 TGLabs combat stimulant injector to Mechanic"
+        },
+        {
+          "text": "메카닉에게 [SJ6 TGLabs 전투 자극제 주사기] 5개 건네주기",
+          "original": "Hand over 5 SJ6 TGLabs combat stimulant injector to Mechanic"
+        },
+        {
+          "text": "메카닉에게 [SJ9 TGLabs 전투 자극제 주사기] 1개 건네주기",
+          "original": "Hand over 1 SJ9 TGLabs combat stimulant injector to Mechanic"
+        }
+      ],
+      "objective_en": "Kill 7 Raiders in The Lab; find 15 SJ1, 5 SJ6 and 1 SJ9 TGLabs combat stimulant injectors in raid and deliver them to Mechanic.",
+      "link": "https://escapefromtarkov.fandom.com/wiki/Assessment_-_Part_3",
+      "from": "wiki",
+      "link_blog": "https://ytyler.tistory.com/446",
+      "checked": "2026-11-20"
+    },
+    "625d70031ed3bb5bcc5bd9e5": {
+      "name": "Key to the Tower",
+      "name_en": "Key to the Tower",
+      "trader": "메카닉",
+      "maps": [
+        "lighthouse"
+      ],
+      "objectives": [
+        {
+          "text": "레이드에서 [Plexiglass 조각] 2개 발견하기",
+          "original": "Find 2 Pieces of plexiglass in raid"
+        },
+        {
+          "text": "레이드에서 [Insulating tape 절연 테이프] 1개 발견하기",
+          "original": "Find 1 Insulating tape in raid"
+        },
+        {
+          "text": "레이드에서 [MCB 군용 회로기판] 2개 발견하기",
+          "original": "Find 2 Military circuit boards in raid"
+        },
+        {
+          "text": "레이드에서 [COFDM 군용 무선 신호 송신기] 1개 발견하기",
+          "original": "Find 1 Military COFDM Wireless Signal Transmitter in raid"
+        },
+        {
+          "text": "레이드에서 [멀쩡한 LCD] 1개 발견하기",
+          "original": "Find 1 Working LCD in raid"
+        },
+        {
+          "text": "등대(Lighthouse)에서 [Radio transmitter body] 1개 획득하기",
+          "original": "Obtain 1 Radio transmitter body on Lighthouse"
+        },
+        {
+          "text": "메카닉에게 [Plexiglass 조각] 2개 건네주기",
+          "original": "Hand over 2 Pieces of plexiglass to Mechanic"
+        },
+        {
+          "text": "메카닉에게 [Insulating tape 절연 테이프] 1개 건네주기",
+          "original": "Hand over 1 Insulating tape to Mechanic"
+        },
+        {
+          "text": "메카닉에게 [MCB 군용 회로기판] 2개 건네주기",
+          "original": "Hand over 2 Military circuit boards to Mechanic"
+        },
+        {
+          "text": "메카닉에게 [COFDM 군용 무선 신호 송신기] 1개 건네주기",
+          "original": "Hand over 1 Military COFDM Wireless Signal Transmitter to Mechanic"
+        },
+        {
+          "text": "메카닉에게 [멀쩡한 LCD] 1개 건네주기",
+          "original": "Hand over 1 Working LCD to Mechanic"
+        },
+        {
+          "text": "메카닉에게 [Radio transmitter body] 1개 건네주기",
+          "original": "Hand over 1 Radio transmitter body to Mechanic"
+        }
+      ],
+      "objective_en": "Find in raid: 2 Pieces of plexiglass, 1 Insulating tape, 2 Military circuit boards, 1 Military COFDM Wireless Signal Transmitter and 1 Working LCD. Obtain 1 Radio transmitter body on Lighthouse and deliver all items to Mechanic.",
+      "link": "https://escapefromtarkov.fandom.com/wiki/Key_to_the_Tower",
+      "from": "wiki",
+      "link_blog": "https://ytyler.tistory.com/452",
+      "checked": "2026-11-20"
+    },
+    "625d7005a4eb80027c4f2e09": {
+      "name": "Knock-Knock",
+      "name_en": "Knock-Knock",
+      "trader": "메카닉",
+      "maps": [
+        "lighthouse"
+      ],
+      "objectives": [
+        {
+          "text": "등대(Lighthouse) 반도 근처에서 [Radio transmitter] 작동 확인하기",
+          "original": "Check if the radio transmitter works near the Lighthouse peninsula"
+        },
+        {
+          "text": "해당 지역에서 살아서 탈출하기",
+          "original": "Survive and extract from the location"
+        }
+      ],
+      "objective_en": "Test the Radio transmitter near the Lighthouse peninsula, then survive and extract.",
+      "link": "https://escapefromtarkov.fandom.com/wiki/Knock-Knock",
+      "replaced_by": "빛을 향하여 - 첫 인사 (To the Light - Getting Acquainted, 625d700cc48e6c62a440fab5)",
+      "replaced_by_en": "To the Light - Getting Acquainted (625d700cc48e6c62a440fab5)",
+      "from": "wiki",
+      "link_blog": "https://ytyler.tistory.com/453",
+      "checked": "2026-11-20"
+    },
+    "625d700cc48e6c62a440fab5": {
+      "name": "빛을 향하여 - 첫 인사",
+      "name_en": "To the Light - Getting Acquainted",
+      "trader": "메카닉",
+      "maps": [
+        "lighthouse"
+      ],
+      "objectives": [
+        {
+          "text": "등대(Lighthouse)에서 [V3 Flash drive] 획득하기",
+          "original": "Obtain the V3 Flash drive on Lighthouse"
+        },
+        {
+          "text": "[V3 Flash drive]로 [Radio transmitter] 재설정하기",
+          "original": "Reflash the Radio transmitter using the V3 Flash drive"
+        },
+        {
+          "text": "[V3 Flash drive] 건네주기",
+          "original": "Hand over the flash drive"
+        },
+        {
+          "text": "등대(Lighthouse)의 등대 건물 방문하기",
+          "original": "Visit the Lighthouse building"
+        }
+      ],
+      "objective_en": "Get the V3 Flash drive on Lighthouse, use it to reflash the Radio transmitter, turn in the flash drive and visit the lighthouse building.",
+      "link": "https://escapefromtarkov.fandom.com/wiki/To_the_Light_-_Getting_Acquainted",
+      "from": "wiki",
+      "link_blog": "https://ytyler.tistory.com/656",
+      "checked": "2026-11-20"
+    },
+    "69380a92628ee476240c07d3": {
+      "name": "Missing in Action",
+      "name_en": "Missing in Action",
+      "trader": null,
+      "maps": [
+        "woods",
+        "reserve",
+        "interchange"
+      ],
+      "objectives": [
+        {
+          "text": "삼림(Woods)의 스캐브 집에 [Pack of Arseniy buckwheat] 1개 숨기기",
+          "original": "Stash a Pack of Arseniy buckwheat at the Scav house on Woods"
+        },
+        {
+          "text": "삼림(Woods)의 스캐브 집에 [Vodka 타르코프스카야 보드카] 1개 숨기기",
+          "original": "Stash a Bottle of Tarkovskaya vodka at the Scav house on Woods"
+        },
+        {
+          "text": "삼림(Woods)의 스캐브 집에 [Iskra 전투식량] 1개 숨기기",
+          "original": "Stash an Iskra ration pack at the Scav house on Woods"
+        },
+        {
+          "text": "리저브(Reserve)의 경비병 막사에 [Pack of Arseniy buckwheat] 1개 숨기기",
+          "original": "Stash a Pack of Arseniy buckwheat at the guard barrack on Reserve"
+        },
+        {
+          "text": "리저브(Reserve)의 경비병 막사에 [Vodka 타르코프스카야 보드카] 1개 숨기기",
+          "original": "Stash a Bottle of Tarkovskaya vodka at the guard barrack on Reserve"
+        },
+        {
+          "text": "리저브(Reserve)의 경비병 막사에 [Iskra 전투식량] 1개 숨기기",
+          "original": "Stash an Iskra ration pack at the guard barrack on Reserve"
+        },
+        {
+          "text": "인터체인지(Interchange)의 Path to River 판잣집에 [Pack of Arseniy buckwheat] 1개 숨기기",
+          "original": "Stash a Pack of Arseniy buckwheat at the Path to River shack on Interchange"
+        },
+        {
+          "text": "인터체인지(Interchange)의 Path to River 판잣집에 [Vodka 타르코프스카야 보드카] 1개 숨기기",
+          "original": "Stash a Bottle of Tarkovskaya vodka at the Path to River shack on Interchange"
+        },
+        {
+          "text": "인터체인지(Interchange)의 Path to River 판잣집에 [Iskra 전투식량] 1개 숨기기",
+          "original": "Stash an Iskra ration pack at the Path to River shack on Interchange"
+        }
+      ],
+      "objective_en": "Stash one each of Pack of Arseniy buckwheat, Bottle of Tarkovskaya vodka and Iskra ration pack at the Scav house on Woods, guard barrack on Reserve and Path to River shack on Interchange.",
+      "link": "https://escapefromtarkov.fandom.com/wiki/Missing_in_Action",
+      "from": "wiki",
+      "link_blog": "https://ytyler.tistory.com/541",
+      "checked": "2026-11-20"
+    },
+    "6a7637fed31fb1191903fc07": {
+      "name": "전장의 안개",
+      "name_en": "Fog of War",
+      "trader": "프라퍼",
+      "maps": [
+        "lighthouse"
+      ],
+      "objectives": [
+        {
+          "text": "등대(Lighthouse) 정수 처리장 북쪽 BRDM 장갑차 주변의 로그(Rogue) 진지 정찰하기",
+          "original": "Scout the Rogues' position near the BRDM car in the northern part of the water treatment plant on Lighthouse"
+        },
+        {
+          "text": "등대(Lighthouse) 정수 처리장 남서쪽 감시 초소가 있는 로그(Rogue) 검문소 정찰하기",
+          "original": "Scout the Rogues' checkpoint with the guard tower in the southwestern part of the water treatment plant on Lighthouse"
+        },
+        {
+          "text": "등대(Lighthouse) 정수 처리장 건물 중 한 곳의 옥상에서 정수 처리장 일대 정찰하기",
+          "original": "Scout the water treatment plant territory from the roof of any of the plant buildings on Lighthouse"
+        }
+      ],
+      "objective_en": "On Lighthouse, scout the Rogues near the water treatment plant's northern BRDM and southwestern checkpoint with a guard tower, then survey the plant grounds from any plant building's roof.",
+      "link": "https://escapefromtarkov.fandom.com/wiki/Fog_of_War",
+      "from": "wiki",
+      "link_blog": "https://ytyler.tistory.com/628",
+      "checked": "2026-11-20"
+    },
+    "6a763a2fce9a947b4d0918a6": {
+      "name": "일시적 회선 장애",
+      "name_en": "Number Temporarily Unavailable",
+      "trader": "프라퍼",
+      "maps": [
+        "lighthouse"
+      ],
+      "objectives": [
+        {
+          "text": "등대(Lighthouse)의 프라퍼 새 숙영지에 [전자기기 부품 (Electronic components)] 3개 숨기기",
+          "original": "Stash 3 Electronic components at Prapor's new camp on Lighthouse"
+        },
+        {
+          "text": "등대(Lighthouse)의 프라퍼 새 숙영지에 [Military cable 군용 케이블] 1개 숨기기",
+          "original": "Stash a Military cable at Prapor's new camp on Lighthouse"
+        },
+        {
+          "text": "등대(Lighthouse)의 프라퍼 새 숙영지에 [Capacitors 축전기] 3개 숨기기",
+          "original": "Stash 3 Capacitors at Prapor's new camp on Lighthouse"
+        }
+      ],
+      "objective_en": "Stash 3 Electronic components, 1 Military cable and 3 Capacitors at Prapor's new camp on Lighthouse.",
+      "link": "https://escapefromtarkov.fandom.com/wiki/Number_Temporarily_Unavailable",
+      "from": "wiki",
+      "link_blog": "https://ytyler.tistory.com/631",
+      "checked": "2026-11-20"
+    },
+    "6a763c7bd31fb1191903fc15": {
+      "name": "전폭적인 지원",
+      "name_en": "All-Inclusive Support",
+      "trader": "프라퍼",
+      "maps": [
+        "lighthouse"
+      ],
+      "objectives": [
+        {
+          "text": "등대(Lighthouse)에서 아무 적 15명 사살하기",
+          "original": "Eliminate any 15 targets on Lighthouse"
+        },
+        {
+          "text": "등대(Lighthouse)의 버려진 산속 호숫가 오두막에서 붉은색 신호탄 발사하기",
+          "original": "Launch a red signal flare at the abandoned mountain lake cabin on Lighthouse"
+        },
+        {
+          "text": "등대(Lighthouse)에서 리저브(Reserve)로 Transit 이용하기",
+          "original": "Use the transit from Lighthouse to Reserve"
+        }
+      ],
+      "objective_en": "Kill any 15 targets on Lighthouse, fire a red flare at the abandoned mountain lake cabin, and take the Transit to Reserve.",
+      "link": "https://escapefromtarkov.fandom.com/wiki/All-Inclusive_Support",
+      "from": "wiki",
+      "link_blog": "https://ytyler.tistory.com/636",
+      "checked": "2026-11-20"
+    },
+    "6a763f35ce9a947b4d0918b6": {
+      "name": "공터 정찰",
+      "name_en": "Scope the Clearing",
+      "trader": "스키어",
+      "maps": [
+        "lighthouse"
+      ],
+      "objectives": [
+        {
+          "text": "등대(Lighthouse) 밀수꾼 기차역 승강장에 첫 번째 [WI-FI 카메라] 설치하기",
+          "original": "Plant the first Wi-Fi Camera at the smuggler train platform on Lighthouse"
+        },
+        {
+          "text": "등대(Lighthouse) 밀수꾼 기차역 승강장에 두 번째 [WI-FI 카메라] 설치하기",
+          "original": "Plant the second Wi-Fi Camera at the smuggler train platform on Lighthouse"
+        },
+        {
+          "text": "등대(Lighthouse)에서 삼림(Woods)으로 가는 Transit 길목에 세 번째 [WI-FI 카메라] 설치하기",
+          "original": "Plant the third Wi-Fi Camera at the Woods transit on Lighthouse"
+        }
+      ],
+      "objective_en": "Install the first and second Wi-Fi cameras on the smuggler train station platform and the third near the Transit to Woods, all on Lighthouse.",
+      "link": "https://escapefromtarkov.fandom.com/wiki/Scope_the_Clearing",
+      "from": "wiki",
+      "link_blog": "https://ytyler.tistory.com/643",
+      "checked": "2026-11-20"
+    },
+    "6a76422ae432ba0a190a7fe4": {
+      "name": "추적 따돌리기",
+      "name_en": "Lose the Tail",
+      "trader": "프라퍼",
+      "maps": [
+        "lighthouse"
+      ],
+      "objectives": [
+        {
+          "text": "등대(Lighthouse)에서 글루하(Glukhar) 경호원 5명 사살하기",
+          "original": "Eliminate 5 of Glukhar's guards on Lighthouse"
+        },
+        {
+          "text": "등대(Lighthouse)에서 글루하(Glukhar) 찾아서 사살하기",
+          "original": "Locate and neutralize Glukhar on Lighthouse"
+        }
+      ],
+      "objective_en": "Eliminate 5 of Glukhar's guards and Glukhar on Lighthouse.",
+      "link": "https://escapefromtarkov.fandom.com/wiki/Lose_the_Tail",
+      "from": "wiki",
+      "link_blog": "https://ytyler.tistory.com/640",
+      "checked": "2026-11-20"
+    },
+    "6a764367850f975dc00bc5bd": {
+      "name": "콜사인 말라카이트",
+      "name_en": "Callsign Malachite",
+      "trader": "프라퍼",
+      "maps": [
+        "lighthouse"
+      ],
+      "objectives": [
+        {
+          "text": "등대(Lighthouse)에서 [BEAR operative's personnel file] 찾아서 획득하기",
+          "original": "Locate and obtain the BEAR operative's personnel file on Lighthouse"
+        },
+        {
+          "text": "[S.I. 트레탸코프의 인사 기록부] 읽기",
+          "original": "(Optional) Read S.I. Tretyakov's personnel file",
+          "optional": true
+        },
+        {
+          "text": "발견한 정보 건네주기",
+          "original": "Hand over the found intel"
+        }
+      ],
+      "objective_en": "Find the BEAR operative's personnel file on Lighthouse and turn in the intel. Optionally read S.I. Tretyakov's personnel file.",
+      "link": "https://escapefromtarkov.fandom.com/wiki/Callsign_Malachite",
+      "from": "wiki",
+      "link_blog": "https://ytyler.tistory.com/644",
+      "checked": "2026-11-20"
+    },
+    "6a880acc9216d0f5aa078305": {
+      "name": "빛을 향하여 - 믿되, 검증하라",
+      "name_en": "To the Light - Trust but Verify",
+      "trader": "메카닉",
+      "maps": [
+        "the-lab"
+      ],
+      "objectives": [
+        {
+          "text": "연구소(The Lab) 무기 실험 구역 인근 서버실에 [가짜 데이터가 담긴 하드 드라이브] 숨기기 (한 레이드 내에)",
+          "original": "Stash the Hard drive with false data in the server room near the weapon testing area in The Lab (In one raid)"
+        },
+        {
+          "text": "그 후 Ventilation Shaft로 탈출하기",
+          "original": "(Optional) After that, extract through the Ventilation Shaft",
+          "optional": true
+        },
+        {
+          "text": "연구소(The Lab)에서 Ventilation Shaft로 탈출하기 (한 레이드 내에)",
+          "original": "Extract from The Lab through the Ventilation Shaft (In one raid)"
+        }
+      ],
+      "objective_en": "In one raid, stash the Hard drive with false data in The Lab's server room near the weapon testing area and leave via Ventilation Shaft. Optional: extract through that shaft after stashing the drive.",
+      "link": "https://escapefromtarkov.fandom.com/wiki/To_the_Light_-_Trust_but_Verify",
+      "from": "wiki",
+      "link_blog": "https://ytyler.tistory.com/639",
+      "checked": "2026-11-20"
+    },
+    "6a880f5d9438980c42076efe": {
+      "name": "빛을 향하여 - 거짓된 연락",
+      "name_en": "To the Light - False Call",
+      "trader": "메카닉",
+      "maps": [
+        "customs"
+      ],
+      "objectives": [
+        {
+          "text": "21:00~06:00 사이 세관(Customs)에서 스캐브 5명 사살하기 (한 레이드 내에)",
+          "original": "Eliminate 5 Scavs during 21:00-06:00 on Customs (In one raid)"
+        },
+        {
+          "text": "21:00~06:00 사이 세관(Customs)에서 PMC 1명 사살하기 (한 레이드 내에)",
+          "original": "Eliminate 1 PMC operative during 21:00-06:00 on Customs (In one raid)"
+        },
+        {
+          "text": "세관(Customs) 다리 인근 편의점의 에어컨에 [WI-FI 카메라] 숨기기 (한 레이드 내에)",
+          "original": "Hide a Wi-Fi camera at the AC unit at the convenience store near the bridge on Customs (In one raid)"
+        },
+        {
+          "text": "세관(Customs)에서 해안선(Shoreline)으로 가는 Transit 지점에서 황색 신호탄 발사하기 (한 레이드 내에)",
+          "original": "Launch a yellow signal flare at the Shoreline transit on Customs (In one raid)"
+        }
+      ],
+      "objective_en": "In one raid on Customs, kill 5 Scavs and 1 PMC between 21:00 and 06:00, hide a Wi-Fi camera at the convenience store's AC unit near the bridge, and fire a yellow flare at the Shoreline Transit.",
+      "link": "https://escapefromtarkov.fandom.com/wiki/To_the_Light_-_False_Call",
+      "from": "wiki",
+      "link_blog": "https://ytyler.tistory.com/641",
+      "checked": "2026-11-20"
+    },
+    "6a8814d20d25ca7b2908e13e": {
+      "name": "빛을 향하여 - 날개 꺾기",
+      "name_en": "To the Light - Clip Their Wings",
+      "trader": "메카닉",
+      "maps": [
+        "woods",
+        "customs",
+        "shoreline"
+      ],
+      "objectives": [
+        {
+          "text": "삼림(Woods) 산의 기상 관측소에 [Signal Jammer 전파 교란기] 설치하기 (한 레이드 내에)",
+          "original": "Plant a Signal jammer at the weather station on the mountain on Woods (In one raid)"
+        },
+        {
+          "text": "삼림(Woods) 제재소 경비초소에 [Signal Jammer 전파 교란기] 설치하기 (한 레이드 내에)",
+          "original": "Plant a Signal jammer at the sawmill guardhouse on Woods (In one raid)"
+        },
+        {
+          "text": "삼림(Woods)에서 세관(Customs)으로 Transit 이용하기 (한 레이드 내에)",
+          "original": "Use the transit from Woods to Customs (In one raid)"
+        },
+        {
+          "text": "세관(Customs) 도로변 공사장 2층에 [Signal Jammer 전파 교란기] 설치하기 (한 레이드 내에)",
+          "original": "Plant a Signal jammer on the second floor of the roadside construction site on Customs (In one raid)"
+        },
+        {
+          "text": "세관(Customs)에서 해안선(Shoreline)으로 Transit 이용하기 (한 레이드 내에)",
+          "original": "Use the transit from Customs to Shoreline (In one raid)"
+        },
+        {
+          "text": "해안선(Shoreline) 헬스 리조트 행정동 2층 기록보관소에 [Signal Jammer 전파 교란기] 설치하기 (한 레이드 내에)",
+          "original": "Plant a Signal jammer at the second floor archives in the Health Resort admin building on Shoreline (In one raid)"
+        }
+      ],
+      "objective_en": "In one raid, place Signal jammers at Woods' mountain weather station and sawmill guardhouse; Transit to Customs for the roadside construction site's second floor, then to Shoreline for the Health Resort admin building's second-floor archives.",
+      "link": "https://escapefromtarkov.fandom.com/wiki/To_the_Light_-_Clip_Their_Wings",
+      "from": "wiki",
+      "link_blog": "https://ytyler.tistory.com/645",
+      "checked": "2026-11-20"
+    },
+    "6a8820cb1f2b560baf0408a1": {
+      "name": "빛을 향하여 - 돌을 던질 시간",
+      "name_en": "To the Light - A Time to Throw Stones",
+      "trader": "메카닉",
+      "maps": [
+        "the-lab"
+      ],
+      "objectives": [
+        {
+          "text": "연구소(The Lab)에서 PMC 2명 사살하기 (한 레이드 내에)",
+          "original": "Eliminate 2 PMC operatives within one raid in The Lab"
+        }
+      ],
+      "objective_en": "Kill 2 PMC operatives in a single raid in The Lab.",
+      "link": "https://escapefromtarkov.fandom.com/wiki/To_the_Light_-_A_Time_to_Throw_Stones",
+      "from": "wiki",
+      "link_blog": "https://ytyler.tistory.com/650",
+      "checked": "2026-11-20"
+    },
+    "6a8b8266f47489e5720a63b7": {
+      "name": "차비는 내야지!",
+      "name_en": "Pay the Fare!",
+      "trader": "래그맨",
+      "objectives": [
+        {
+          "text": "레이드에서 [Pipe grip wrench 파이프 그립 렌치] 발견하기",
+          "original": "Find the item in raid: Pipe grip wrench"
+        },
+        {
+          "text": "해당 아이템 건네주기",
+          "original": "Hand over the item"
+        },
+        {
+          "text": "레이드에서 [Ratchet wrench 라쳇 렌치] 발견하기",
+          "original": "Find the item in raid: Ratchet wrench"
+        },
+        {
+          "text": "해당 아이템 건네주기",
+          "original": "Hand over the item"
+        },
+        {
+          "text": "레이드에서 [Electric drill 전동 드릴] 발견하기",
+          "original": "Find the item in raid: Electric drill"
+        },
+        {
+          "text": "해당 아이템 건네주기",
+          "original": "Hand over the item"
+        }
+      ],
+      "objective_en": "Find a Pipe grip wrench, Ratchet wrench and Electric drill in raid, and turn in each item.",
+      "link": "https://escapefromtarkov.fandom.com/wiki/Pay_the_Fare!",
+      "prep": [
+        {
+          "kind": "제출",
+          "text": "[Pipe grip wrench 파이프 그립 렌치]",
+          "text_en": "[Pipe grip wrench]",
+          "count": 1,
+          "fir": true
+        },
+        {
+          "kind": "제출",
+          "text": "[Ratchet wrench 라쳇 렌치]",
+          "text_en": "[Ratchet wrench]",
+          "count": 1,
+          "fir": true
+        },
+        {
+          "kind": "제출",
+          "text": "[Electric drill 전동 드릴]",
+          "text_en": "[Electric drill]",
+          "count": 1,
+          "fir": true
+        }
+      ],
+      "from": "wiki",
+      "link_blog": "https://ytyler.tistory.com/626",
+      "checked": "2026-11-20"
+    },
+    "6a446573cd2959c3a609f2a9": {
+      "name": "렌치와 물은 답을 알고 있다",
+      "name_en": "Wrench and Waterboarding",
+      "trader": "스키어",
+      "maps": [
+        "the-lab"
+      ],
+      "objectives": [
+        {
+          "text": "연구소(The Lab) 방문하기",
+          "original": "Visit The Lab"
+        }
+      ],
+      "objective_en": "Visit The Lab.",
+      "link": "https://escapefromtarkov.fandom.com/wiki/Wrench_and_Waterboarding",
+      "from": "wiki",
+      "checked": "2026-11-20"
+    },
+    "6a764462e432ba0a190a7fe9": {
+      "name": "이송 보조",
+      "name_en": "Ease the Move",
+      "trader": "피스키퍼",
+      "maps": [
+        "lighthouse"
+      ],
+      "objectives": [
+        {
+          "text": "등대(Lighthouse)의 버려진 섬 마을에서 첫 번째 로그 은닉처를 찾아 [MS2000 마커] 설치하기",
+          "original": "Locate and mark the first Rogue stash at the abandoned island village with an MS2000 Marker on Lighthouse"
+        },
+        {
+          "text": "등대(Lighthouse)의 버려진 섬 마을에서 두 번째 로그 은닉처를 찾아 [MS2000 마커] 설치하기",
+          "original": "Locate and mark the second Rogue stash at the abandoned island village with an MS2000 Marker on Lighthouse"
+        },
+        {
+          "text": "등대(Lighthouse)의 동굴에서 로그 은닉처를 찾아 [MS2000 마커] 설치하기",
+          "original": "Locate and mark the Rogue stash at the grotto with an MS2000 Marker on Lighthouse"
+        }
+      ],
+      "objective_en": "Find and mark three Rogue stashes on Lighthouse with MS2000 Markers: two in the abandoned island village and one at the grotto.",
+      "link": "https://escapefromtarkov.fandom.com/wiki/Ease_the_Move",
+      "prep": [
+        {
+          "kind": "가져가기",
+          "text": "[MS2000 마커]",
+          "text_en": "[MS2000 Marker]",
+          "count": 3,
+          "fir": false
+        }
+      ],
+      "from": "wiki",
+      "link_blog": "https://ytyler.tistory.com/657",
+      "checked": "2026-11-20"
+    },
+    "6a76466e752258ce02073d07": {
+      "name": "뿌리째 뽑아내기",
+      "name_en": "Cut Down to the Root",
+      "trader": "예거",
+      "maps": [
+        "lighthouse"
+      ],
+      "objectives": [
+        {
+          "text": "등대(Lighthouse)에서 로그(Rogue) 15명 사살하기",
+          "original": "Eliminate 15 Rogues on Lighthouse"
+        }
+      ],
+      "objective_en": "Kill 15 Rogues on Lighthouse.",
+      "link": "https://escapefromtarkov.fandom.com/wiki/Cut_Down_to_the_Root",
+      "from": "wiki",
+      "checked": "2026-11-20"
+    },
+    "6a885ad91006f9d30a0ed61b": {
+      "name": "귀중 자산 보호",
+      "name_en": "Preserve a Valuable Piece",
+      "trader": "등대지기",
+      "maps": [
+        "lighthouse"
+      ],
+      "objectives": [
+        {
+          "text": "등대(Lighthouse)에서 PMC 7명 사살하기",
+          "original": "Eliminate 7 PMC operatives on Lighthouse"
+        }
+      ],
+      "objective_en": "Kill 7 PMC operatives on Lighthouse.",
+      "link": "https://escapefromtarkov.fandom.com/wiki/Preserve_a_Valuable_Piece",
+      "from": "wiki",
+      "checked": "2026-11-20"
+    },
+    "6aad73ddedf6e9696e0f60d4": {
+      "name": "새로운 시작",
+      "name_en": "New Beginning",
+      "trader": "래그맨",
+      "maps": [
+        "the-lab"
+      ],
+      "objectives": [
+        {
+          "text": "PMC 10명 사살하기",
+          "original": "Eliminate 10 PMC operatives"
+        },
+        {
+          "text": "연구소(The Lab)에서 살아서 탈출하기",
+          "original": "Survive and extract from The Lab"
+        },
+        {
+          "text": "레이드에서 발견한 [PMC figurine] 2개 건네주기",
+          "original": "Hand over 2 found in raid PMC figurines"
+        },
+        {
+          "text": "레이드에서 발견한 [Scav 스캐브 피규어] 2개 건네주기",
+          "original": "Hand over 2 found in raid Scav figurines"
+        },
+        {
+          "text": "레이드에서 발견한 [Boss figurine] 2개 건네주기",
+          "original": "Hand over 2 found in raid Boss figurines"
+        },
+        {
+          "text": "레이드에서 발견한 [Trader figurine] 2개 건네주기",
+          "original": "Hand over 2 found in raid Trader figurines"
+        }
+      ],
+      "objective_en": "Kill 10 PMC operatives, survive an extract from The Lab, and deliver 2 each of PMC, Scav, Boss and Trader figurines found in raid.",
+      "link": "https://escapefromtarkov.fandom.com/wiki/New_Beginning_(Prestige_2)",
+      "level": 20,
+      "from": "wiki",
+      "checked": "2026-11-20"
+    },
+    "6aad73e67a336545ed0657f3": {
+      "name": "새로운 시작",
+      "name_en": "New Beginning",
+      "trader": "래그맨",
+      "maps": [
+        "the-lab",
+        "streets-of-tarkov"
+      ],
+      "objectives": [
+        {
+          "text": "PMC 15명 사살하기",
+          "original": "Eliminate 15 PMC operatives"
+        },
+        {
+          "text": "레이더(Raiders) 20명 사살하기",
+          "original": "Eliminate 20 Raiders"
+        },
+        {
+          "text": "연구소(The Lab)에서 살아서 탈출하기",
+          "original": "Survive and extract from The Lab"
+        },
+        {
+          "text": "타르코프 시내(Streets of Tarkov)에서 살아서 탈출하기",
+          "original": "Survive and extract from Streets of Tarkov"
+        },
+        {
+          "text": "레이드에서 발견한 [PMC figurine] 3개 건네주기",
+          "original": "Hand over 3 found in raid PMC figurines"
+        },
+        {
+          "text": "레이드에서 발견한 [Scav 스캐브 피규어] 3개 건네주기",
+          "original": "Hand over 3 found in raid Scav figurines"
+        },
+        {
+          "text": "레이드에서 발견한 [Boss figurine] 3개 건네주기",
+          "original": "Hand over 3 found in raid Boss figurines"
+        },
+        {
+          "text": "레이드에서 발견한 [Trader figurine] 3개 건네주기",
+          "original": "Hand over 3 found in raid Trader figurines"
+        }
+      ],
+      "objective_en": "Kill 15 PMC operatives and 20 Raiders, survive extracts from The Lab and Streets of Tarkov, and deliver 3 each of PMC, Scav, Boss and Trader figurines found in raid.",
+      "link": "https://escapefromtarkov.fandom.com/wiki/New_Beginning_(Prestige_3)",
+      "level": 30,
+      "from": "wiki",
+      "checked": "2026-11-20"
+    }
+  },
+  "btr_stops": {
+    "_note": "BTR stops missing on tarkov.dev. Used only while tarkov.dev has no stops for that map. Lighthouse positions were read from the stop map image on the official wiki (BTR Driver page, Lighthouse_BTR_stops_map.png, 2026-11-20) and aligned to the tarkov.dev map with 8 reference points (about 10 m accuracy). All stops are at ground level.",
+    "lighthouse": {
+      "source": "wiki",
+      "link": "https://escapefromtarkov.fandom.com/wiki/BTR_Driver",
+      "checked": "2026-11-20",
+      "stops": [
+        {"name": "Northern Checkpoint", "x": 106.0, "z": -950.3},
+        {"name": "WTP Building 2 Parking", "x": -168.8, "z": -751.5},
+        {"name": "WTP Building 1 Parking", "x": 34.1, "z": -577.2},
+        {"name": "Village Crossroads", "x": -209.3, "z": -240.2},
+        {"name": "Construction Site", "x": -4.7, "z": -182.6},
+        {"name": "UN Checkpoint", "x": 1.6, "z": 124.4},
+        {"name": "Southern Road", "x": -235.1, "z": 430.9},
+        {"name": "Road to Lighthouse", "x": -21.9, "z": 478.6}
+      ]
+    }
+  }
+}

@@ -14,7 +14,7 @@ import time
 import urllib.request
 from pathlib import Path
 
-from app import paths, tarkov_api
+from app import corrections, paths, tarkov_api
 
 VIEWS_URL = "https://raw.githubusercontent.com/the-hideout/tarkov-dev/main/src/data/maps.json"
 SVG_HOST = "https://assets.tarkov.dev/maps/svg/"
@@ -163,11 +163,8 @@ def _xzy(position: dict) -> list[float]:
 
 
 def _manual_btr_stops() -> dict:
-    """data/manual_btr_stops.json (없거나 깨지면 빈 값)"""
-    try:
-        return json.loads((paths.DATA_DIR / "manual_btr_stops.json").read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return {}
+    """공통 보완 파일의 BTR 정류장 (메타데이터 제외)."""
+    return corrections.section("btr_stops")
 
 
 def features(map_key: str) -> dict:

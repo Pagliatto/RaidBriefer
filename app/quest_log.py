@@ -14,7 +14,7 @@ import re
 from datetime import datetime
 from pathlib import Path
 
-from app import i18n, paths, settings, tarkov_api
+from app import corrections, i18n, settings, tarkov_api
 
 
 # ---------- 가장 최근 프레스티지(초기화) 찾기 ----------
@@ -61,16 +61,9 @@ REPEATABLE_TEMPLATES = {
     "616052ea3054fc0e2c24ce6e",  # 같은 계열 번호 (처치 과제로 알려짐, 로그에선 아직 못 봄)
 }
 
-# tarkov.dev에 아직 없는 퀘스트의 이름표 (직접 적어 둔 것)
-MANUAL_QUESTS_FILE = paths.DATA_DIR / "manual_quests.json"
-
-
 def load_manual_quests() -> dict:
-    try:
-        data = json.loads(MANUAL_QUESTS_FILE.read_text(encoding="utf-8"))
-    except (FileNotFoundError, json.JSONDecodeError):
-        return {}
-    return {k: v for k, v in data.items() if not k.startswith("_")}
+    """공통 보완 파일의 퀘스트 항목 (메타데이터 제외)."""
+    return corrections.section("quests")
 
 
 def quest_name(quest_id: str, tasks: dict, tr, manual: dict) -> str:
@@ -214,4 +207,4 @@ if __name__ == "__main__":
         if info["status"] == "진행 중":
             name = quest_name(quest_id, tasks, tr, manual)
             print(f"  {name}  (받은 시각 {info['time']:%m-%d %H:%M})")
-    print("\n* = tarkov.dev에 없어서 data/manual_quests.json에 직접 적은 이름")
+    print("\n* = tarkov.dev에 없어서 data/corrections.json에 직접 적은 이름")

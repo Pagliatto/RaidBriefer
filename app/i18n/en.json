@@ -217,7 +217,6 @@
     "drawer": "Quests",
     "layerTitle": "Map layers",
     "loadingMap": "Loading the map…",
-    "bossChance": "{name} {chance}%",
     "layerBtrStops": "BTR stops",
     "btrTracker": "BTR tracker",
     "btrTrackerHint": "BTR position and timing (tarkovbtr.com, external site)"
@@ -381,6 +380,12 @@
     "primary": "Primary monitor",
     "monitorDetails": "{name} ({width}×{height})",
     "monitorMissing": "Check monitor connection"
+  },
+  "whatsNew": {
+    "title": "What's new in v{version}",
+    "ok": "OK",
+    "brightness": "Open brightness settings",
+    "link": "What's new in this version"
   },
   "skills": {
     "HideoutManagement": "Hideout Management",

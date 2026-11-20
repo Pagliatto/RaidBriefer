@@ -14,7 +14,7 @@ belong to Battlestate Games Limited.
 |---|---|
 | 소스 코드 (`app/`, `tools/`, 배치 파일) | **MIT** — `LICENSE` 참고 |
 | 스토리 데이터 (`data/story/`) | **CC BY-NC-SA 3.0** — 공식 위키 내용을 번역·요약한 2차 저작물 (아래 참고) |
-| tarkov.dev 에 없는 퀘스트 (`data/manual_quests.json`) | **CC BY-NC-SA 3.0** — 공식 위키의 퀘스트 목표를 옮기고 번역한 것 (항목마다 위키 주소) |
+| tarkov.dev 에 없는 퀘스트 (`data/corrections.json`) | **CC BY-NC-SA 3.0** — 공식 위키의 퀘스트 목표를 옮기고 번역한 것 (항목마다 위키 주소) |
 | 로고·아이콘 (`docs/logo/`, `app/static/icons/`) | MIT (이 프로젝트에서 만든 것) |
 
 **비상업 조건**: 스토리 데이터와 지도 그림이 "비상업(NC)" 조건이라, RaidBriefer 를 유료로 팔거나 광고를 붙여 배포하면 안 됩니다.

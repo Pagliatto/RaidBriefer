@@ -18,7 +18,7 @@ DEFAULT_GAME_DIR = r"C:\Battlestate Games\Escape from Tarkov"
 # edition: 게임 에디션 → 은신처 시작 레벨이 달라짐 (창고, 광신도 제단). 위키 기준
 # hideout_all: 은신처 재료 합계에 조건이 남은 시설(지금 못 짓는 시설)까지 합칠지 (기본: 지을 수 있는 시설만)
 DEFAULTS = {"game_dir": DEFAULT_GAME_DIR, "setup_done": False, "edition": "standard", "hideout_all": False, "lang": "",
-            "brightness_mode": "off", "brightness_strength": 35, "brightness_monitor": ""}  # lang 비어 있음 = 윈도우 언어를 따름
+            "last_seen_version": "", "brightness_mode": "off", "brightness_strength": 35, "brightness_monitor": ""}  # lang 비어 있음 = 윈도우 언어를 따름
 EDITIONS = ("standard", "left_behind", "prepare_for_escape", "edge_of_darkness", "unheard")
 
 _lock = threading.Lock()
@@ -41,6 +41,11 @@ def save(changes: dict) -> dict:
     global _cache
     load()
     updates = {k: v for k, v in changes.items() if k in DEFAULTS}
+    if "last_seen_version" in updates:
+        from app.version import VERSION
+
+        if updates["last_seen_version"] not in ("", VERSION):
+            updates.pop("last_seen_version")
     if "brightness_mode" in updates and updates["brightness_mode"] not in ("off", "raid", "always"):
         updates.pop("brightness_mode")
     if "brightness_strength" in updates:

@@ -357,6 +357,12 @@ def _manual_trader(entry: dict, trader_names: dict) -> tuple[str, str]:
     return trader_names.get(trader_id, (entry["trader"], ""))
 
 
+def hidden_quest(quest_id: str, tasks: dict, manual: dict) -> bool:
+    """dev·보완에 없는 이벤트와 이름이 빈 스토리 단계만 숨긴다."""
+    return (quest_id not in tasks and quest_id not in manual
+            and (tarkov_api.spt_blank_name(quest_id) or tarkov_api.spt_event_quest(quest_id)))
+
+
 def catalog() -> list[dict]:
     """처음 설정에서 고를 수 있는 전체 퀘스트 (이름·상인·레벨). 로그로 이미 아는 것은 화면에서 거름"""
     tarkov_api.update_all()
@@ -424,8 +430,7 @@ def build() -> dict:
     # 수동 데이터의 same_as 연결도 포함해, dev·수동 퀘스트는 숨기지 않는다.
     hidden_quests = {
         quest_id for quest_id in set(status) | set(log_gap)
-        if quest_id not in tasks and quest_id not in manual
-        and (tarkov_api.spt_blank_name(quest_id) or tarkov_api.spt_event_quest(quest_id))
+        if hidden_quest(quest_id, tasks, manual)
     }
     log_gap = [quest_id for quest_id in log_gap if quest_id not in hidden_quests]
 

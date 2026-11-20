@@ -152,7 +152,7 @@ FHD(1920×1080) 모니터라면 반쪽 = **960×1080**이에요.
 ## 라이선스와 출처
 
 - 소스 코드: **MIT** ([LICENSE](LICENSE))
-- 스토리 데이터(`data/story/`)와 tarkov.dev 에 아직 없는 퀘스트(`data/manual_quests.json`): 공식 위키를 번역·요약한 것이라 **CC BY-NC-SA 3.0**
+- 스토리 데이터(`data/story/`)와 tarkov.dev 에 아직 없는 퀘스트(`data/corrections.json`): 공식 위키를 번역·요약한 것이라 **CC BY-NC-SA 3.0**
 - 지도 그림: tarkov.dev SVG Maps, **CC BY-NC-SA 4.0**
 - 데이터: [tarkov.dev](https://tarkov.dev) (The Hideout), 거기에 없는 퀘스트 이름·맵: [SPT](https://github.com/SP-Tushonka/server-csharp) 데이터 파일
 

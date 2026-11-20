@@ -183,13 +183,18 @@
     if (returnFocus) button.focus();
   }
 
-  button.addEventListener("click", () => {
-    if (!popup.hidden) return closePopup(true);
+  function openPopup() {
     popup.hidden = false;
     button.setAttribute("aria-expanded", "true");
     positionPopup();
     popup.focus();
     refresh();
+  }
+  // 버전 안내의 바로가기에서도 같은 열기 동작을 사용한다.
+  window.openBrightnessPopup = openPopup;
+  button.addEventListener("click", () => {
+    if (!popup.hidden) return closePopup(true);
+    openPopup();
   });
   document.addEventListener("click", (event) => {
     if (!get("brightness-slot").contains(event.target)) closePopup();
