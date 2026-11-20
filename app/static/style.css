@@ -1896,6 +1896,7 @@ button.home-map, button.home-story-row, button.choice-option, button.prep-item, 
 
 /* 이번 버전 안내: 설정 창의 표면과 버튼을 재사용한다. */
 .whats-new { width: min(420px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow-y: auto; }
+.whats-new[open] { min-height: 0; } /* 설정 창의 최소 높이(640px)를 물려받지 않게: 내용만큼만 */
 .whats-new .settings-head { gap: 8px; }
 .whats-new .settings-head h2 { min-width: 0; overflow-wrap: anywhere; }
 .whats-new .settings-close { flex-shrink: 0; }

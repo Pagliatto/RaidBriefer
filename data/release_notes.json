@@ -1,13 +1,17 @@
 {
   "1.0.7": {
     "ko": [
-      "게임 밝기 조절: 위쪽 줄의 밝기 아이콘(모니터 모양)에서 레이드 중에만 밝게 할 수 있어요 (테두리 없는 창 모드에서 작동)",
+      "게임 밝기: 위쪽 줄의 밝기 아이콘(모니터 모양)에서 레이드 중에만 게임을 밝게 할 수 있어요 (테두리 없는 창 모드). 이제 지도 탭에서도 창이 가려지지 않아요",
+      "퀘스트 변화 표시를 쉽게 지워요: 마우스로 훑거나, '✓ 모두 확인' 버튼, 또는 퀘스트 탭을 나가면 본 것은 자동으로",
       "홈: 보스 등장 확률을 준비물과 같은 칸으로 정리했어요",
+      "창을 너무 작게 줄여 화면이 깨지지 않도록 최소 크기를 정했어요",
       "새 버전을 처음 켤 때 바뀐 점을 이렇게 알려 드려요"
     ],
     "en": [
-      "Game brightness: use the brightness icon (monitor) in the top bar to brighten the game only during raids (works in borderless window mode)",
+      "Game brightness: use the brightness icon (monitor) in the top bar to brighten the game only during raids (borderless window mode). The popup no longer hides behind the map",
+      "Quest change marks are easier to clear: hover over them, use the '✓ Mark all seen' button, or just leave the Quests tab",
       "Home: boss spawn chances now use the same row style as the loadout",
+      "The window has a minimum size so the layout no longer breaks when it gets too small",
       "You'll see a short note like this the first time you open a new version"
     ],
     "action": "brightness"
