@@ -77,6 +77,7 @@
     "listHidden": "Hidden",
     "listHiddenHint": "Quests you hid (won't do)",
     "mapFilterLabel": "Filter by map",
+    "mapFilterTitle": "Map",
     "filterAll": "All",
     "nightOnly": "Night only",
     "manualName": "Manual",
@@ -112,7 +113,13 @@
     "anyMap": "Any map",
     "unknownMap": "Map unknown",
     "outOfRaid": "Outside a raid",
-    "manualNameHint": "Checked and written from the game itself. This takes priority over other data."
+    "manualNameHint": "Checked and written from the game itself. This takes priority over other data.",
+    "changeNew": "New",
+    "changeCompleted": "Completed",
+    "changeFailed": "Failed",
+    "changeHint": "Hover for 1 second, click or focus to mark as seen",
+    "unseenChanges": "Unseen quest changes",
+    "markAllSeen": "Mark all seen"
   },
   "story": {
     "stepUndo": "Revert to here",
@@ -302,6 +309,7 @@
     "stateLobby": "Lobby",
     "stateLoading": "Loading map",
     "stateRaid": "In raid",
+    "stateEnded": "Raid ended",
     "elapsed": "Elapsed",
     "left": "Left",
     "clockHint": "Tarkov in-game time (the two times shown when choosing a raid)",

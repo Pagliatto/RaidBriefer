@@ -90,15 +90,10 @@ html { scroll-padding-top: var(--sticky-h, 120px); }
   color: var(--text-dim);
   white-space: nowrap;
 }
-.state-pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-faint); }
-/* 게임 꺼짐 = 기본 회색 / 로비 = 파랑 / 로딩 = 노랑 깜빡 / 레이드 = 초록 깜빡 */
+/* 게임 꺼짐 = 기본 회색 / 로비 = 파랑 / 로딩 = 노랑 / 레이드 = 초록 */
 .state-pill[data-status="lobby"] { background: var(--info-bg); color: var(--info); }
-.state-pill[data-status="lobby"] .dot { background: var(--info); }
 .state-pill[data-status="loading"] { background: var(--accent-bg); color: var(--accent); }
-.state-pill[data-status="loading"] .dot { background: var(--accent); animation: blink 1s infinite; }
 .state-pill[data-status="raid"] { background: var(--ok-bg); color: var(--ok); }
-.state-pill[data-status="raid"] .dot { background: var(--ok); animation: blink 2s infinite; }
-@keyframes blink { 50% { opacity: 0.25; } }
 
 /* 레이드 경과 / 남은 시간 */
 .raid-time { font-size: 14px; color: var(--text-dim); white-space: nowrap; }
@@ -1464,7 +1459,6 @@ body { font-variant-numeric: tabular-nums; }
   background: var(--warn-bg);
   border-color: color-mix(in srgb, var(--warn) 32%, var(--warn-bg));
 }
-.state-pill[data-status="loading"] .dot { background: var(--warn); }
 .clock.night, .state-pill[data-status="lobby"] {
   color: var(--info);
   background: var(--info-bg);
@@ -1583,7 +1577,7 @@ body { font-variant-numeric: tabular-nums; }
   .settings-close, .setup-ho-levels button { min-width: 40px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .state-pill .dot, .transition, .transition-bar i, .flash { animation: none !important; }
+  .state-mark *, .transition, .transition-bar i, .flash { animation: none !important; }
   .raid-bar-fill, .transition.leaving, .floor-stack, .floor-plane, .floor-label,
   .map-drawer, .layer-drawer, .ho-switch-track, .ho-switch-track::after { transition: none; }
 }
@@ -1681,3 +1675,131 @@ button.setup-trader-count.open .icon { transform: rotate(180deg); }
 .wiki-link:hover, .wiki-link:focus-visible { color: var(--accent); }
 .wiki-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 @media (pointer: coarse), (max-width: 900px) { .wiki-link { min-width: 32px; min-height: 40px; } }
+
+/* Signal 상태 마크와 고정 폭 상단바 (960px 기준). 파문은 슬롯 밖까지 표시. */
+.topbar { gap: 8px; }
+.topbar h1 { flex: 0 0 150px; width: 150px; margin-inline-end: 0; white-space: nowrap; }
+.topbar .state-pill { flex: 0 0 190px; width: 190px; min-width: 0; gap: 10px; overflow: visible; }
+#raid-state-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.topbar .raid-time {
+  flex: 0 0 140px; width: 140px; min-width: 0;
+  display: grid; grid-template-columns: max-content minmax(0, 1fr); grid-template-rows: repeat(2, 12px);
+  column-gap: 6px; row-gap: 0; padding: 3px 8px;
+  font-variant-numeric: tabular-nums;
+}
+.topbar .raid-time b { margin: 0; font-size: 13px; line-height: 12px; text-align: right; }
+.topbar .raid-time.idle b { color: var(--text-faint); }
+.topbar .tarkov-clock { flex: 0 0 186px; width: 186px; }
+.topbar .tarkov-clock > span { flex: 0 0 90px; width: 90px; justify-content: center; font-variant-numeric: tabular-nums; }
+.topbar .settings-button { flex: 0 0 32px; width: 32px; min-width: 32px; height: 32px; min-height: 32px; }
+.state-pill[data-status="off"], .state-pill[data-status="ended"] { color: var(--text-faint); }
+.state-mark { display: block; width: 18px; height: 18px; flex: 0 0 18px; overflow: visible; fill: none; stroke: currentColor; stroke-width: 2px; stroke-linecap: round; }
+.state-mark circle, .state-mark path { vector-effect: non-scaling-stroke; }
+.state-mark > g { display: none; }
+.state-pill[data-status="off"] .mark-off,
+.state-pill[data-status="lobby"] .mark-lobby,
+.state-pill[data-status="loading"] .mark-loading,
+.state-pill[data-status="raid"] .mark-raid,
+.state-pill[data-status="ended"] .mark-ended { display: inline; }
+.state-mark .mark-dot { fill: currentColor; stroke: none; }
+.state-mark .mark-helper { opacity: .5; }
+.state-mark .mark-arc, .state-mark .mark-ripple, .state-mark .mark-settle { transform-box: view-box; transform-origin: 8px 8px; }
+/* 기본 도형은 모션 줄이기에서도 구분되는 정적 상태. */
+.state-mark .mark-ripple { transform: scale(1.25); opacity: .9; }
+.state-mark .mark-second { transform: scale(1.9); opacity: .65; }
+.state-pill[data-status="lobby"] .mark-breathe { animation: signal-breathe 4s ease-in-out infinite; }
+.state-pill[data-status="loading"] .mark-arc { animation: signal-turn 2.4s linear infinite; }
+.state-pill[data-status="raid"] .mark-ripple { animation: signal-ripple 3.2s cubic-bezier(.2,.6,.4,1) infinite; }
+.state-pill[data-status="raid"] .mark-second { animation-delay: -1.6s; }
+.state-pill[data-status="ended"] .mark-settle { animation: signal-settle 3.6s ease-out forwards; }
+@keyframes signal-breathe { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+@keyframes signal-turn { to { transform: rotate(360deg); } }
+@keyframes signal-ripple { from { transform: scale(1); opacity: .9; } to { transform: scale(2.2); opacity: 0; } }
+@keyframes signal-settle { from { transform: scale(1); opacity: 1; } to { transform: scale(.55); opacity: .7; } }
+
+/* 남은 시간 한 줄 + 미확인 퀘스트 변경. 기존 고정 슬롯과 Signal 마크 유지. */
+.topbar .raid-time {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  position: relative; isolation: isolate; padding: 3px 8px;
+}
+.topbar .raid-time b { font-size: 15px; line-height: 1.5; font-weight: 700; }
+.topbar .raid-time.idle .label { display: none; }
+.topbar .raid-time.low::before {
+  content: ""; position: absolute; inset: -1px; z-index: -1; pointer-events: none;
+  border: 1px solid var(--bad); border-radius: inherit; background: var(--bad-bg);
+  opacity: .5; animation: raid-time-breathe 2.8s ease-in-out infinite;
+}
+@keyframes raid-time-breathe { 0%, 100% { opacity: .3; } 50% { opacity: .9; } }
+
+#tab-quest .subtabs { flex-wrap: wrap; align-items: center; }
+.tab[data-tab="quest"], .subtab { position: relative; }
+.quest-change-dot {
+  position: absolute; top: 4px; right: 4px; width: 6px; height: 6px;
+  border-radius: 50%; background: var(--info); pointer-events: none;
+}
+.subtab[data-list="completed"] .quest-change-dot { background: var(--ok); }
+.subtab[data-list="failed"] .quest-change-dot { background: var(--bad); }
+.quest-mark-seen {
+  min-height: 32px; padding: 0 8px; margin-left: auto; border: 1px solid transparent;
+  border-radius: var(--radius); background: transparent; color: var(--text-faint); font-size: 12px;
+}
+.quest-mark-seen:hover { color: var(--text); background: var(--surface-2); }
+.quest-mark-seen[hidden] { display: none; }
+.quest[data-change] { position: relative; --change-color: var(--info); }
+.quest[data-change="completed"] { --change-color: var(--ok); }
+.quest[data-change="failed"] { --change-color: var(--bad); }
+.quest:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.quest-change-badge {
+  display: inline-block; vertical-align: middle; margin-left: 8px; padding: 0 5px;
+  border: 1px solid currentColor; border-radius: var(--radius-sm);
+  color: var(--change-color); font-size: 12px; font-weight: 600; white-space: nowrap;
+  opacity: 1; transition: opacity .24s ease-out;
+}
+.quest-change-badge.seen { opacity: 0; pointer-events: none; }
+.quest.quest-change-flash::after {
+  content: ""; position: absolute; inset: 0; border: 1px solid var(--change-color);
+  border-radius: inherit; background: color-mix(in srgb, var(--change-color) 12%, transparent);
+  pointer-events: none; opacity: 0; animation: quest-change-flash 2.4s ease-out;
+}
+/* 반복 없이 처음 1.2초에 강조를 마치고, 최소 2.4초 주기를 유지. */
+@keyframes quest-change-flash { 0%, 15% { opacity: 1; } 50%, 100% { opacity: 0; } }
+@media (pointer: coarse), (max-width: 900px) { .quest-mark-seen { min-height: 40px; } }
+@media (prefers-reduced-motion: reduce) {
+  .topbar .raid-time.low::before { animation: none; opacity: 1; }
+  .quest.quest-change-flash::after { animation: none; }
+  .quest-change-badge { transition: none; }
+}
+
+/* 언어별 상태 폭, 남은 시간 3단계, 퀘스트 목록 탭과 맵 칩 구분. */
+.topbar .state-pill {
+  flex-basis: var(--state-pill-w, 120px); width: var(--state-pill-w, 120px);
+  justify-content: flex-start; text-align: left;
+}
+.topbar .raid-time.low-2::before { animation-duration: 1.8s; }
+.topbar .raid-time.low-3::before { animation-duration: 1.2s; }
+
+#tab-quest .subtabs {
+  gap: 4px; margin-bottom: 12px; border-bottom: 1px solid var(--border);
+}
+#tab-quest .subtabs .subtab {
+  min-height: 36px; padding: 6px 12px; border: 0; border-bottom: 2px solid transparent;
+  border-radius: 0; background: transparent; color: var(--text-dim); font-size: 14px;
+  white-space: nowrap;
+}
+#tab-quest .subtabs .subtab:hover { color: var(--text); }
+#tab-quest .subtabs .subtab.active { color: var(--accent); border-bottom-color: var(--accent); }
+#tab-quest .subtabs .subtab b { color: inherit; }
+#tab-quest .quest-mark-seen { flex-shrink: 0; }
+#tab-quest .quest-map-filter-row {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start;
+  gap: 8px; margin-bottom: 14px;
+}
+#tab-quest .quest-map-filter-title {
+  color: var(--text-faint); font-size: 12px; line-height: 30px; white-space: nowrap;
+}
+#tab-quest #map-filter { min-width: 0; margin-bottom: 0; }
+#tab-quest #map-filter .chip { min-height: 30px; height: auto; padding-inline: 10px; }
+@media (pointer: coarse), (max-width: 900px) {
+  #tab-quest .subtabs .subtab, #tab-quest #map-filter .chip { min-height: 40px; }
+  #tab-quest .quest-map-filter-title { line-height: 40px; }
+}

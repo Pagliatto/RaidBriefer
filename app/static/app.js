@@ -20,6 +20,151 @@ const state = {
   map: FILTER_ALL,      // 맵 거르기 (FILTER_ALL = 전체)
 };
 
+// 직전 목록과 미확인 변경을 분리: 재시작·재렌더 후에도 배지와 1회 강조를 유지.
+const QUEST_SEEN_KEY = "rb-quest-seen";
+const QUEST_CHANGES_KEY = "rb-quest-changes";
+const QUEST_CHANGE_LABEL = {
+  in_progress: "quest.changeNew", completed: "quest.changeCompleted", failed: "quest.changeFailed",
+};
+function readQuestStorage(key) {
+  try {
+    const value = JSON.parse(localStorage.getItem(key));
+    return value && typeof value === "object" && !Array.isArray(value) ? value : null;
+  } catch (err) { return null; }
+}
+let questBaseline = readQuestStorage(QUEST_SEEN_KEY);
+if (questBaseline && Object.values(questBaseline).some((s) => !Object.hasOwn(QUEST_CHANGE_LABEL, s))) {
+  questBaseline = null;
+}
+const questChanges = Object.create(null);
+if (questBaseline) {
+  Object.entries(readQuestStorage(QUEST_CHANGES_KEY) || {}).forEach(([id, change]) => {
+    if (change && Object.hasOwn(QUEST_CHANGE_LABEL, change.status) && questBaseline[id] === change.status) {
+      questChanges[id] = { status: change.status, flashed: change.flashed === true };
+    }
+  });
+}
+function saveQuestChanges() {
+  try {
+    localStorage.setItem(QUEST_SEEN_KEY, JSON.stringify(questBaseline));
+    localStorage.setItem(QUEST_CHANGES_KEY, JSON.stringify(questChanges));
+  } catch (err) { /* 저장소가 막혀도 이번 실행에서는 계속 동작 */ }
+}
+function trackQuestChanges(data) {
+  const next = Object.create(null);
+  Object.keys(QUEST_CHANGE_LABEL).forEach((status) => {
+    data[status].forEach((q) => { next[q.id] = status; });
+  });
+  if (questBaseline) {
+    Object.entries(next).forEach(([id, status]) => {
+      if (questBaseline[id] !== status) questChanges[id] = { status, flashed: false };
+    });
+  }
+  Object.keys(questChanges).forEach((id) => {
+    if (questChanges[id].status !== next[id]) delete questChanges[id];
+  });
+  questBaseline = next;
+  saveQuestChanges();
+}
+function updateQuestChangeDots() {
+  const statuses = new Set(Object.values(questChanges).map((change) => change.status));
+  const hiddenUnseen = Object.keys(questChanges).some((id) =>
+    questChanges[id].status === "in_progress" && state.hidden[id]);
+  document.querySelectorAll('.tab[data-tab="quest"], .subtab').forEach((button) => {
+    const list = button.dataset.list;
+    const unseen = !list ? statuses.size > 0 : list === "hidden" ? hiddenUnseen : statuses.has(list);
+    let dot = button.querySelector(".quest-change-dot");
+    if (unseen && !dot) {
+      dot = el("span", "quest-change-dot");
+      dot.setAttribute("role", "img");
+      dot.setAttribute("aria-label", t("quest.unseenChanges"));
+      dot.title = t("quest.unseenChanges");
+      button.append(dot);
+    } else if (!unseen && dot) dot.remove();
+  });
+  document.getElementById("quest-mark-seen").hidden = statuses.size === 0;
+}
+function markQuestChangesSeen(entries) {
+  // 낡은 카드의 호버 타이머가 새 상태를 지우지 않도록 같은 변경인지 확인.
+  const seen = new Set();
+  entries.forEach(([id, change]) => {
+    if (questChanges[id] !== change) return;
+    delete questChanges[id];
+    seen.add(id);
+  });
+  if (!seen.size) return;
+  saveQuestChanges();
+  document.querySelectorAll("#quest-list .quest").forEach((card) => {
+    if (!seen.has(card.dataset.questId)) return;
+    const badge = card.querySelector(".quest-change-badge");
+    if (badge) {
+      badge.classList.add("seen");
+      badge.setAttribute("aria-hidden", "true");
+    }
+    card.removeAttribute("tabindex");
+  });
+  updateQuestChangeDots();
+}
+document.getElementById("quest-mark-seen").addEventListener("click", () => {
+  markQuestChangesSeen(Object.entries(questChanges));
+});
+
+// 숨긴 탭·화면 밖에서는 소비하지 않고 카드가 실제로 보일 때만 한 번 강조.
+const questChangeObserver = new IntersectionObserver((entries) => {
+  let changed = false;
+  entries.forEach(({ target: card, isIntersecting }) => {
+    if (!isIntersecting || !card.isConnected || document.hidden || document.getElementById("tab-quest").hidden) return;
+    const change = questChanges[card.dataset.questId];
+    if (!change || change.flashed) return;
+    change.flashed = true;
+    card.classList.add("quest-change-flash");
+    questChangeObserver.unobserve(card);
+    changed = true;
+  });
+  if (changed) saveQuestChanges();
+});
+const questHoverTimers = new Map();
+function clearQuestHover(card) {
+  clearTimeout(questHoverTimers.get(card));
+  questHoverTimers.delete(card);
+}
+function resetQuestHover() {
+  questHoverTimers.forEach((timer) => clearTimeout(timer));
+  questHoverTimers.clear();
+}
+function observeQuestChanges() {
+  questChangeObserver.disconnect();
+  if (document.hidden || document.getElementById("tab-quest").hidden) return;
+  document.querySelectorAll("#quest-list .quest").forEach((card) => {
+    const change = questChanges[card.dataset.questId];
+    if (change && !change.flashed) questChangeObserver.observe(card);
+  });
+}
+document.addEventListener("tab-shown", () => { resetQuestHover(); observeQuestChanges(); });
+document.addEventListener("visibilitychange", () => { resetQuestHover(); observeQuestChanges(); });
+window.addEventListener("blur", resetQuestHover);
+function decorateQuestChange(card, name, id) {
+  const change = questChanges[id];
+  if (!change) return;
+  card.dataset.change = change.status;
+  card.tabIndex = 0;
+  const badge = el("span", "quest-change-badge", t(QUEST_CHANGE_LABEL[change.status]));
+  badge.title = t("quest.changeHint");
+  name.append(badge);
+  const dismiss = () => { clearQuestHover(card); markQuestChangesSeen([[id, change]]); };
+  card.addEventListener("mouseenter", () => {
+    clearQuestHover(card);
+    questHoverTimers.set(card, setTimeout(() => {
+      clearQuestHover(card);
+      if (card.isConnected && !document.hidden && !document.getElementById("tab-quest").hidden) dismiss();
+    }, 1000));
+  });
+  card.addEventListener("mouseleave", () => clearQuestHover(card));
+  // 하위 버튼이 먼저 목록을 다시 그려도 확인 처리는 잃지 않음.
+  card.addEventListener("click", dismiss, true);
+  card.addEventListener("focusin", dismiss);
+}
+
 // 진행 중인데 숨기지 않은 퀘스트 (홈 화면도 이것만 씀)
 function activeQuests() {
   return state.data ? state.data.in_progress.filter((q) => !state.hidden[q.id]) : [];
@@ -214,6 +359,7 @@ function renderQuest(q) {
   }
   if (q.name_en) name.append(el("span", "quest-name-en", q.name_en)); // 한국어 화면: 영어 이름 작게
   name.append(el("span", "quest-trader", q.trader));
+  decorateQuestChange(li, name, q.id);
 
   const meta = el("div", "quest-meta");
   q.maps.forEach((m) => meta.append(mapTag(m, q.night_maps)));
@@ -307,6 +453,8 @@ const PREP_CLASS = { "열쇠": "key", "가져가기": "bring", "무기": "weapon
 function render() {
   const data = state.data;
   if (!data) return;
+  resetQuestHover();
+  questChangeObserver.disconnect();
   ["in_progress", "completed", "failed", "hidden"].forEach((k) => {
     document.getElementById(`count-${k}`).textContent = questsOf(k).length;
   });
@@ -333,19 +481,29 @@ function render() {
   let footer = data.data_message + " · " +
     (data.prestige_since ? t("quest.footerPrestige", { date: data.prestige_since }) : t("quest.footerAllLogs"));
   document.getElementById("footer").textContent = footer;
+  updateQuestChangeDots();
+  observeQuestChanges();
 }
 
+let questLoadRevision = 0;
 async function load() {
+  const revision = ++questLoadRevision;
   const notice = document.getElementById("notice");
   try {
     const res = await fetch("/api/quests");
     const body = await res.json();
+    if (revision !== questLoadRevision) return;
     if (!res.ok) throw new Error(body.error || t("common.unknownError"));
+    if (!Object.keys(QUEST_CHANGE_LABEL).every((key) => Array.isArray(body[key]))) {
+      throw new Error(t("common.unknownError"));
+    }
+    trackQuestChanges(body);
     state.data = body;
     notice.hidden = true;
     render();
     notifyChanged("quests-changed");
   } catch (err) {
+    if (revision !== questLoadRevision) return;
     notice.textContent = t("quest.loadFailed", { error: err.message });
     notice.hidden = false;
     if (!state.data) {

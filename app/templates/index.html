@@ -20,10 +20,29 @@
     <header class="topbar">
       <h1><img class="brand-logo" src="{{ url_for('favicon', ext='svg') }}" alt="" width="26" height="26">RaidBriefer</h1>
       <!-- 게임 상태: 로비 / 로딩 / 레이드 중 · 맵 (topbar.js 가 2초마다 갱신) -->
-      <span class="state-pill" id="raid-state" data-status="off"><i class="dot"></i><span id="raid-state-text">{{ t('topbar.stateOff') }}</span></span>
-      <span class="raid-time" id="raid-time" hidden>
-        <span class="label">{{ t('topbar.elapsed') }}</span> <b id="raid-elapsed">0:00</b>
-        <span class="label">{{ t('topbar.left') }}</span> <b id="raid-left">0:00</b>
+      <span class="state-pill" id="raid-state" data-status="off" title="{{ t('topbar.stateOff') }}">
+        <svg class="state-mark" viewBox="0 0 16 16" aria-hidden="true">
+          <g class="mark-off"><circle cx="8" cy="8" r="3"/></g>
+          <g class="mark-lobby"><circle class="mark-dot mark-breathe" cx="8" cy="8" r="3"/></g>
+          <g class="mark-loading">
+            <circle class="mark-helper" cx="8" cy="8" r="6.5"/>
+            <path class="mark-arc" d="M8 1.5A6.5 6.5 0 0 1 14.5 8"/>
+            <circle class="mark-dot" cx="8" cy="8" r="3"/>
+          </g>
+          <g class="mark-raid">
+            <circle class="mark-ripple" cx="8" cy="8" r="5"/>
+            <circle class="mark-ripple mark-second" cx="8" cy="8" r="5"/>
+            <circle class="mark-dot" cx="8" cy="8" r="3"/>
+          </g>
+          <g class="mark-ended">
+            <circle class="mark-settle" cx="8" cy="8" r="6.5"/>
+            <path d="M5.5 8h5"/>
+          </g>
+        </svg>
+        <span id="raid-state-text">{{ t('topbar.stateOff') }}</span>
+      </span>
+      <span class="raid-time idle" id="raid-time">
+        <span class="label">{{ t('topbar.left') }}</span> <b id="raid-left">-- : --</b>
       </span>
       <!-- 타르코프 게임 속 시각 (레이드 시간대 두 개) -->
       <span class="tarkov-clock" title="{{ t('topbar.clockHint') }}">
@@ -81,9 +100,13 @@
         <button class="subtab" data-list="completed">{{ t('quest.listCompleted') }} <b id="count-completed">-</b></button>
         <button class="subtab" data-list="failed">{{ t('quest.listFailed') }} <b id="count-failed">-</b></button>
         <button class="subtab" data-list="hidden" title="{{ t('quest.listHiddenHint') }}">{{ t('quest.listHidden') }} <b id="count-hidden">-</b></button>
+        <button type="button" class="quest-mark-seen" id="quest-mark-seen" hidden>{{ t('quest.markAllSeen') }}</button>
       </div>
 
-      <div class="map-filter" id="map-filter" aria-label="{{ t('quest.mapFilterLabel') }}"></div>
+      <div class="quest-map-filter-row">
+        <span class="quest-map-filter-title">{{ t('quest.mapFilterTitle') }}</span>
+        <div class="map-filter" id="map-filter" aria-label="{{ t('quest.mapFilterLabel') }}"></div>
+      </div>
 
       <p class="notice" id="notice" hidden></p>
       <ul class="quest-list" id="quest-list">
