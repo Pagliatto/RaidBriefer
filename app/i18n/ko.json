@@ -119,7 +119,7 @@
     "changeNew": "새 퀘스트",
     "changeCompleted": "완료",
     "changeFailed": "실패",
-    "changeHint": "1초 동안 마우스를 올리거나 클릭·포커스하면 확인 처리해요",
+    "changeHint": "마우스를 올리거나 클릭하면 확인 처리해요. 퀘스트 탭을 나가면 화면에 보였던 것도 확인돼요",
     "unseenChanges": "아직 확인하지 않은 퀘스트 변경",
     "markAllSeen": "모두 확인"
   },
@@ -342,6 +342,7 @@
     "brightnessMonitor": "이 모니터의 밝기를 조절할 수 없어요. 연결을 확인하고 프로그램을 다시 시작해 주세요.",
     "brightnessFailed": "모니터 밝기를 읽거나 적용하지 못했어요.",
     "brightnessStorage": "밝기 복원 정보를 읽거나 저장하지 못했어요.",
+    "brightnessOtherApp": "다른 RaidBriefer 창이 이미 밝기를 조절하고 있어요. 이 창에서는 조절하지 않아요.",
     "brightnessRestoreFailed": "모니터 밝기를 원래대로 복원하지 못했어요. 연결을 확인하고 다시 복원해 주세요."
   },
   "data": {

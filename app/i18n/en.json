@@ -119,7 +119,7 @@
     "changeNew": "New",
     "changeCompleted": "Completed",
     "changeFailed": "Failed",
-    "changeHint": "Hover for 1 second, click or focus to mark as seen",
+    "changeHint": "Hover or click to mark as seen. Changes you saw are also marked when you leave the Quests tab",
     "unseenChanges": "Unseen quest changes",
     "markAllSeen": "Mark all seen"
   },
@@ -342,6 +342,7 @@
     "brightnessMonitor": "This monitor's brightness can't be adjusted. Check its connection and restart the program.",
     "brightnessFailed": "Couldn't read or apply the monitor brightness.",
     "brightnessStorage": "Couldn't read or save brightness recovery data.",
+    "brightnessOtherApp": "Another RaidBriefer window is already controlling brightness. This one won't change it.",
     "brightnessRestoreFailed": "Couldn't restore the monitor brightness. Check its connection and try restoring again."
   },
   "data": {

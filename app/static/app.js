@@ -83,6 +83,7 @@ function updateQuestChangeDots() {
     } else if (!unseen && dot) dot.remove();
   });
   document.getElementById("quest-mark-seen").hidden = statuses.size === 0;
+  document.getElementById("quest-mark-seen-count").textContent = Object.keys(questChanges).length;
 }
 function markQuestChangesSeen(entries) {
   // 낡은 카드의 호버 타이머가 새 상태를 지우지 않도록 같은 변경인지 확인.
@@ -140,7 +141,16 @@ function observeQuestChanges() {
     if (change && !change.flashed) questChangeObserver.observe(card);
   });
 }
-document.addEventListener("tab-shown", () => { resetQuestHover(); observeQuestChanges(); });
+let questTabOpen = false;
+document.addEventListener("tab-shown", (e) => {
+  resetQuestHover();
+  // 퀘스트 탭을 떠나면, 화면에 한 번 보였던(반짝인) 변화 표시는 확인한 것으로 침
+  if (questTabOpen && e.detail !== "quest") {
+    markQuestChangesSeen(Object.entries(questChanges).filter(([, change]) => change.flashed));
+  }
+  questTabOpen = e.detail === "quest";
+  observeQuestChanges();
+});
 document.addEventListener("visibilitychange", () => { resetQuestHover(); observeQuestChanges(); });
 window.addEventListener("blur", resetQuestHover);
 function decorateQuestChange(card, name, id) {
@@ -157,7 +167,7 @@ function decorateQuestChange(card, name, id) {
     questHoverTimers.set(card, setTimeout(() => {
       clearQuestHover(card);
       if (card.isConnected && !document.hidden && !document.getElementById("tab-quest").hidden) dismiss();
-    }, 1000));
+    }, 300)); // 목록을 훑기만 해도 지워지게 (스크롤하며 스친 정도는 남음)
   });
   card.addEventListener("mouseleave", () => clearQuestHover(card));
   // 하위 버튼이 먼저 목록을 다시 그려도 확인 처리는 잃지 않음.

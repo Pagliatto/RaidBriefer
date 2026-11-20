@@ -120,7 +120,10 @@ _overridden = False
 _error = None
 _ERROR_KEYS = ("server.brightnessUnavailable", "server.brightnessMonitor",
                "server.brightnessFailed", "server.brightnessStorage",
-               "server.brightnessRestoreFailed")
+               "server.brightnessRestoreFailed", "server.brightnessOtherApp")
+MUTEX_NAME = r"Local\RaidBriefer.Brightness"  # 밝기를 잡은 프로그램 표시 (프로그램이 꺼지면 Windows 가 자동으로 풂)
+ERROR_ALREADY_EXISTS = 183
+_mutex = None
 
 
 def _record_error(error):
@@ -320,7 +323,7 @@ def _restore_devices(devices):
 
 def init():
     """Capture startup baselines once, recovering only an exact journal match."""
-    global _started, _journal
+    global _started, _journal, _mutex
     if sys.platform != "win32":
         return
     with _lock:
@@ -328,6 +331,14 @@ def init():
             return
         _started = True
         try:
+            # 밝기는 먼저 켜진 RaidBriefer 하나만 조절한다. 두 개가 같은 모니터를 잡으면
+            # 서로의 '원래 밝기'를 덮어써서 레이드 중에 밝기가 혼자 바뀐다.
+            kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+            kernel32.CreateMutexW.restype = wintypes.HANDLE
+            kernel32.CreateMutexW.argtypes = (ctypes.c_void_p, wintypes.BOOL, wintypes.LPCWSTR)
+            _mutex = kernel32.CreateMutexW(None, False, MUTEX_NAME)
+            if not _mutex or ctypes.get_last_error() == ERROR_ALREADY_EXISTS:
+                raise RuntimeError("server.brightnessOtherApp")
             attached = monitors()
             if not attached:
                 raise RuntimeError("server.brightnessUnavailable")

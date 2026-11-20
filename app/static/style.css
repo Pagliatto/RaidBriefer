@@ -824,7 +824,7 @@ body.map-mode .scroll-buttons { display: none; }
 .drawer-toggle b { color: var(--accent); }
 
 /* 지도 + 서랍: 서랍을 열면 지도가 좁아짐 (덮지 않음) */
-.map-layout { flex: 1; min-height: 0; display: flex; gap: 8px; }
+.map-layout { flex: 1; min-height: 0; display: flex; gap: 8px; isolation: isolate; } /* 지도(Leaflet 층 400~1000)가 위쪽 고정 줄의 팝업(밝기 창)을 덮지 않게, 층 번호를 지도 안에 가둠 */
 .map-view {
   flex: 1; min-width: 0; position: relative;
   border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
@@ -1743,10 +1743,12 @@ button.setup-trader-count.open .icon { transform: rotate(180deg); }
 .subtab[data-list="completed"] .quest-change-dot { background: var(--ok); }
 .subtab[data-list="failed"] .quest-change-dot { background: var(--bad); }
 .quest-mark-seen {
-  min-height: 32px; padding: 0 8px; margin-left: auto; border: 1px solid transparent;
-  border-radius: var(--radius); background: transparent; color: var(--text-faint); font-size: 12px;
+  min-height: 32px; padding: 0 10px; margin-left: auto; border: 1px solid var(--info);
+  border-radius: var(--radius); background: transparent; color: var(--info); font-size: 12px;
+  display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;
 }
 .quest-mark-seen:hover { color: var(--text); background: var(--surface-2); }
+.quest-mark-seen b { font-weight: 700; }
 .quest-mark-seen[hidden] { display: none; }
 .quest[data-change] { position: relative; --change-color: var(--info); }
 .quest[data-change="completed"] { --change-color: var(--ok); }
