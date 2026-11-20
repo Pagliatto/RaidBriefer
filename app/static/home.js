@@ -124,6 +124,7 @@ function renderHomeDetail(name, info) {
       const tone = boss.spawnChance >= 1 ? "bad" : boss.spawnChance >= 0.5 ? "warn" : "dim";
       const chip = el("span", "prep-item home-boss");
       chip.append(el("span", "", boss.name), el("b", "boss-chance " + tone, chance + "%"));
+      if (boss.members && boss.members.length) chip.title = boss.members.join(" · ");  // 군즈: 마우스를 올리면 세 명
       row.append(chip);
     });
     line.append(row);

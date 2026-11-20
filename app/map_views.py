@@ -14,7 +14,7 @@ import time
 import urllib.request
 from pathlib import Path
 
-from app import corrections, paths, tarkov_api
+from app import corrections, i18n, paths, tarkov_api
 
 VIEWS_URL = "https://raw.githubusercontent.com/the-hideout/tarkov-dev/main/src/data/maps.json"
 SVG_HOST = "https://assets.tarkov.dev/maps/svg/"
@@ -111,6 +111,7 @@ def map_list() -> list[dict]:
     names = {m["normalizedName"]: tr(m["name"]) for m in maps.values()}
     result = {}
     boss_chances = {}
+    boss_members = {}  # 함께 나오는 보스 팀 (군즈) → 멤버 이름
     for m in maps.values():
         key = m["normalizedName"]
         if key in HIDDEN_MAPS:
@@ -124,13 +125,18 @@ def map_list() -> list[dict]:
             if not (mob.startswith("boss") or mob == "sectantPriest"):
                 continue
             name = tr(mob)
+            # 군즈: Knight 가 Big Pipe·Birdeye 와 같이 나오면 한 팀으로 (쇄빙선 Knight 는 혼자라 그대로)
+            escorts = {e.get("mob") for e in boss.get("escorts") or [] if isinstance(e, dict)}
+            if mob == "bossKnight" and GOONS_ESCORTS <= escorts:
+                name = i18n.t("home.goons")
+                boss_members[name] = [tr(mob)] + [tr(x) for x in sorted(GOONS_ESCORTS)]
             chance = boss.get("spawnChance")
             if not isinstance(chance, (int, float)) or not 0 <= chance <= 1:
                 continue
             chances[name] = max(chances.get(name, 0), chance)
     for key, item in result.items():
         item["bosses"] = [
-            {"name": name, "spawnChance": chance}
+            {"name": name, "spawnChance": chance, "members": boss_members.get(name, [])}
             for name, chance in sorted(boss_chances[key].items(), key=lambda x: (-x[1], x[0]))
         ]
     return sorted(result.values(), key=lambda x: x["name"])
@@ -154,6 +160,7 @@ def loose_spots(map_key: str, item_ids: set[str]) -> dict[str, list]:
     return result
 
 
+GOONS_ESCORTS = {"followerBigPipe", "followerBirdEye"}  # Knight 와 같이 나오는 군즈 멤버
 BITCOIN_ID = "59faff1d86f7746c51718c9c"  # 현물 비트코인
 KEY_NAME = re.compile(r"\bkey\b|keycard|key card", re.I)  # 영어 이름으로 열쇠·키카드 구분
 

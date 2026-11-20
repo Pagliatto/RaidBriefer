@@ -402,7 +402,37 @@ function renderLootBar() {
     chip.addEventListener("click", () => focusLoot(item.text));
     row.append(chip);
   });
+  // 두 줄 이상일 때만 보이는 접기/펼치기 (접으면 첫 줄만, 상태는 기억)
+  const toggle = el("button", "loot-toggle");
+  toggle.type = "button";
+  toggle.hidden = true;
+  toggle.addEventListener("click", () => {
+    lootCollapsed = !lootCollapsed;
+    try { localStorage.setItem(LOOT_COLLAPSE_STORAGE, lootCollapsed ? "1" : "0"); } catch (e) { /* 저장소를 못 쓰는 창 */ }
+    updateLootToggle();
+  });
+  bar.append(toggle);
   markLootChips();
+  updateLootToggle();
+}
+
+const LOOT_COLLAPSE_STORAGE = "tarkovhelper.lootCollapsed";
+let lootCollapsed = false;
+try { lootCollapsed = localStorage.getItem(LOOT_COLLAPSE_STORAGE) === "1"; } catch (e) { /* 무시 */ }
+
+// 첫 줄 아래로 넘어간 아이콘 수를 세서 버튼 글자·보이기를 정함 (창 크기가 바뀌어도 다시 계산)
+function updateLootToggle() {
+  const bar = document.getElementById("loot-bar");
+  const toggle = bar.querySelector(".loot-toggle");
+  const chips = [...bar.querySelectorAll(".loot-items > .loot-icon")];
+  if (!toggle || !chips.length || bar.hidden) return;
+  const firstTop = chips[0].offsetTop;
+  const hiddenCount = chips.filter((c) => c.offsetTop > firstTop).length;
+  toggle.hidden = hiddenCount === 0;
+  const collapsed = lootCollapsed && hiddenCount > 0;
+  bar.classList.toggle("collapsed", collapsed);
+  toggle.textContent = collapsed ? t("map.lootExpand", { n: hiddenCount }) : t("map.lootCollapse");
+  toggle.setAttribute("aria-expanded", String(!collapsed));
 }
 
 // 바닥 생성 위치가 데이터에 있는 아이템만 지도에 ◆ (귀중품 위주. 상자에서 나오는 건 위치 데이터가 없음)
@@ -732,6 +762,7 @@ document.addEventListener("tab-shown", (e) => {
 
 // 필요템 줄 수가 바뀌거나 사라져도 남은 지도 크기에 맞춘다.
 const lootBarObserver = new ResizeObserver(() => {
+  updateLootToggle();
   if (mapUI.leaflet && currentTab() === "map") fitFull(mapUI.leaflet, false);
 });
 lootBarObserver.observe(document.getElementById("loot-bar"));

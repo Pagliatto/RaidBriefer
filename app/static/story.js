@@ -250,16 +250,25 @@ function sectionHead(item, extraClass) {
   const head = el("div", "story-section-head" + (extraClass ? " " + extraClass : ""));
   head.append(el("h3", "", sec.title));
   appendStoryMapTags(head, sec);
-  const check = el("button", "choice-change", t(isSectionDone(item) ? "story.sectionUndo" : "story.sectionDone"));
-  check.type = "button";
-  check.disabled = !item.steps.length;
-  check.addEventListener("click", (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    const value = isSectionDone(item) ? null : "done";
-    saveStoryChanges(Object.fromEntries(item.steps.map((s) => [`${s.id}!`, value])));
-  });
-  head.append(check);
+  // 오른쪽 위 버튼 두 개: 하나라도 안 했으면 '전체 체크', 하나라도 했으면 '전체 해제' (둘 다 보일 수 있음)
+  // 태그와 헷갈리지 않게 아이콘 + 네모 버튼. "해당될 때만" 단계는 건드리지 않음
+  const actions = el("span", "section-actions");
+  const addAction = (iconName, labelKey, hintKey, value, show) => {
+    if (!show) return;
+    const btn = el("button", `section-action ${value ? "check" : "uncheck"}`);
+    btn.type = "button";
+    btn.title = t(hintKey);
+    btn.append(icon(iconName, 14), el("span", "", t(labelKey)));
+    btn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      saveStoryChanges(Object.fromEntries(item.steps.map((s) => [`${s.id}!`, value])));
+    });
+    actions.append(btn);
+  };
+  addAction("check", "story.sectionDone", "story.sectionDoneHint", "done", item.steps.some((s) => !isStepDone(s)));
+  addAction("x", "story.sectionUndo", "story.sectionUndoHint", null, item.steps.some(isStepDone));
+  if (actions.childElementCount) head.append(actions);
   return head;
 }
 
