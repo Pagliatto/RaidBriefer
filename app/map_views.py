@@ -218,6 +218,7 @@ def features(map_key: str) -> dict:
             result["locks"].append({
                 "key": item_name(lock.get("key", "")) or "열쇠",
                 "key_id": lock.get("key"),
+                "wiki": tarkov_api.key_wiki(lock["key"]) if lock.get("key") else None,  # 마우스를 올리면 뜨는 창의 📖 링크
                 "type": lock.get("lockType", "door"),
                 "power": bool(lock.get("needsPower")),
                 "pos": _xzy(lock["position"]),
@@ -227,13 +228,14 @@ def features(map_key: str) -> dict:
         if not loose.get("position"):
             continue
         ids = loose.get("items") or []
-        keys = [item_name(i) for i in ids if KEY_NAME.search(items.en.get(f"{i} Name", ""))]
+        key_ids = [i for i in ids if KEY_NAME.search(items.en.get(f"{i} Name", "")) and item_name(i)]
         others = [item_name(i) for i in ids if i != BITCOIN_ID and not KEY_NAME.search(items.en.get(f"{i} Name", ""))]
         others = [n for n in others if n]
         result["loot"].append({
             "pos": _xzy(loose["position"]),
             "bitcoin": BITCOIN_ID in ids,
-            "keys": [k for k in keys if k],
+            "keys": [item_name(i) for i in key_ids],
+            "keyWikis": [tarkov_api.key_wiki(i) for i in key_ids],  # keys 와 같은 순서
             "items": others[:4],
             "more": max(0, len(others) - 4),
         })

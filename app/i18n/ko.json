@@ -220,8 +220,7 @@
     "bossChance": "{name} {chance}%",
     "layerBtrStops": "BTR 정류장",
     "btrTracker": "BTR 트래커",
-    "btrTrackerHint": "BTR 위치·시간 예상 (tarkovbtr.com, 외부 사이트)",
-    "btrWikiSource": "위키"
+    "btrTrackerHint": "BTR 위치·시간 예상 (tarkovbtr.com, 외부 사이트)"
   },
   "floors": {
     "Underground": "지하",

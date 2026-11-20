@@ -81,6 +81,42 @@ function gamePos(p) {
   return [p[1], p[0]];
 }
 
+// 잠긴 문·열쇠 자리의 '마우스 올림 창' (2026-11-20 사용자)
+// 아이콘에 올리면 뜨고, 창 위로 마우스를 옮기면 그대로 있음(위키 📖 를 누를 수 있게).
+// 창·아이콘 밖으로 나가면 잠깐 뒤 닫히고, 다른 아이콘에 올리면 그 창으로 바뀜
+const hoverCard = { popup: null, timer: null };
+function closeHoverCardSoon() {
+  clearTimeout(hoverCard.timer);
+  hoverCard.timer = setTimeout(() => {
+    if (hoverCard.popup && mapUI.leaflet) mapUI.leaflet.closePopup(hoverCard.popup);
+    hoverCard.popup = null;
+  }, 250);
+}
+function openHoverCard(marker, html) {
+  clearTimeout(hoverCard.timer);
+  if (hoverCard.popup && hoverCard.popup.source === marker && hoverCard.popup.isOpen()) return;
+  const popup = L.popup({ closeButton: false, autoPan: false, className: "hover-card", offset: [0, -6] })
+    .setLatLng(marker.getLatLng()).setContent(html);
+  popup.source = marker;
+  popup.openOn(mapUI.leaflet);  // 열려 있던 다른 창은 Leaflet 이 닫음
+  hoverCard.popup = popup;
+  const box = popup.getElement();
+  box.addEventListener("mouseenter", () => clearTimeout(hoverCard.timer));
+  box.addEventListener("mouseleave", closeHoverCardSoon);
+}
+// 열쇠 이름 + 위키 📖 (퀘스트 열쇠 링크와 같은 모양)
+function keyWithWiki(name, wiki) {
+  if (!wiki) return escapeHtml(name);
+  return `${escapeHtml(name)} <a class="wiki-link" href="${escapeHtml(wiki)}" target="_blank" rel="noopener" title="${escapeHtml(t("quest.keyWiki", { name }))}">${iconSvg("book-open", 14)}</a>`;
+}
+
+// 지도 표시 공통 모양: 색 네모 + 아이콘 (2026-11-20 사용자). 퀘스트 목표만 번호 동그라미로 따로
+// kind: 색 (CSS .mk-<kind>), icon: icons.js 이름, size: 한 변 px
+function markerIcon(kind, icon, size) {
+  const glyph = Math.round(size * 0.68);
+  return L.divIcon({ className: `feature mk mk-${kind}`, html: `<span>${iconSvg(icon, glyph, 2.4)}</span>`, iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
+}
+
 // 상인 색 (CSS .trader-○○ 의 --trader 값)
 const traderColorCache = {};
 function traderColor(key) {
@@ -402,7 +438,7 @@ async function drawLoot() {
     mapUI.lootSpots[item.text] = points.map((p) => L.latLng(gamePos(p)));
     points.forEach((p) => {
       const pin = L.marker(gamePos(p), {
-        icon: L.divIcon({ className: "loot-pin", html: "<span></span>", iconSize: [12, 12], iconAnchor: [6, 6] }),
+        icon: markerIcon("loot", "package", 14),
         keyboard: false,
       }).bindTooltip(shortItem(item.text), { direction: "top", offset: [0, -6] });
       const floor = floorOf(p);
@@ -739,15 +775,15 @@ loadMapList();
 const LAYER_KEYS = ["quests", "loot", "extracts", "scavExtracts", "transits", "btrStops", "keys", "bitcoin", "keySpawns", "valuables"];
 const LAYER_INFO = {
   quests: { label: t("map.layerQuests"), mark: "shape:quest", on: true },
-  loot: { label: t("map.layerLoot"), mark: "shape:loot", on: true },  // 바닥 위치를 아는 아이템만 (없으면 0)
-  extracts: { label: t("map.layerExtracts"), mark: "shape:extract", on: true },
-  scavExtracts: { label: t("map.layerScavExtracts"), mark: "shape:scav", on: false },
-  transits: { label: t("map.layerTransits"), mark: "shape:transit", on: true },
-  btrStops: { label: t("map.layerBtrStops"), mark: "icon:bus", on: true },
-  keys: { label: t("map.layerLocks"), mark: "icon:lock", on: true },          // 열쇠로 여는 곳
-  bitcoin: { label: t("map.layerBitcoin"), mark: "icon:bitcoin", on: true },
-  keySpawns: { label: t("map.layerKeySpawns"), mark: "icon:key", on: true },      // 열쇠·키카드가 바닥에 생기는 곳
-  valuables: { label: t("map.layerValuables"), mark: "shape:valuable", on: false }, // 맵마다 수백 곳이라 기본은 끔
+  loot: { label: t("map.layerLoot"), mark: "mk:loot:package", on: true },  // 바닥 위치를 아는 아이템만 (없으면 0)
+  extracts: { label: t("map.layerExtracts"), mark: "mk:extract-pmc:door-open", on: true },
+  scavExtracts: { label: t("map.layerScavExtracts"), mark: "mk:extract-scav:door-open", on: false },
+  transits: { label: t("map.layerTransits"), mark: "mk:transit:arrow-left-right", on: true },
+  btrStops: { label: t("map.layerBtrStops"), mark: "mk:btr:bus", on: true },
+  keys: { label: t("map.layerLocks"), mark: "mk:lock:lock", on: true },          // 열쇠로 여는 곳
+  bitcoin: { label: t("map.layerBitcoin"), mark: "mk:bitcoin:bitcoin", on: true },
+  keySpawns: { label: t("map.layerKeySpawns"), mark: "mk:keyspawn:key", on: true },      // 열쇠·키카드가 바닥에 생기는 곳
+  valuables: { label: t("map.layerValuables"), mark: "mk:valuable:gem", on: false }, // 맵마다 수백 곳이라 기본은 끔
 };
 const LAYER_STORAGE = "tarkovhelper.layers";
 const layerState = (() => {
@@ -780,7 +816,10 @@ function renderLayerDrawer() {
     btn.setAttribute("aria-pressed", on);
     // 기호: 지도에 찍히는 모양 그대로 (그림 아이콘 또는 같은 색·모양의 작은 도형)
     const mark = el("span", "layer-mark");
-    if (info.mark.startsWith("icon:")) mark.innerHTML = iconSvg(info.mark.slice(5), 14);
+    if (info.mark.startsWith("mk:")) {
+      const [, kind, icon] = info.mark.split(":");
+      mark.innerHTML = `<span class="mk mk-${kind} mk-legend"><span>${iconSvg(icon, 11, 2.4)}</span></span>`;
+    } else if (info.mark.startsWith("icon:")) mark.innerHTML = iconSvg(info.mark.slice(5), 14);
     else mark.append(el("i", `legend legend-${info.mark.slice(6)}`));
     // 이 맵에 몇 개 있는지 (0이면 지도에 안 보이는 이유를 알 수 있게)
     const count = layerCount(key);
@@ -819,45 +858,44 @@ async function drawFeatures(leaf, m) {
     return; // 표시물을 못 받아도 지도와 퀘스트는 그대로
   }
   if (mapUI.leaflet !== leaf) return; // 그사이 다른 맵으로 바뀜
-  const add = (groupKey, p, icon, tooltip, permanent = false) => {
+  // card: true 면 링크가 든 '마우스 올림 창' (창 위로 옮겨도 안 사라짐), 아니면 보통 설명
+  const add = (groupKey, p, icon, tooltip, card = false) => {
     const marker = L.marker(gamePos(p), { icon, keyboard: false });
-    if (tooltip) marker.bindTooltip(tooltip, permanent
-      ? { permanent: true, direction: "right", offset: [6, 0], className: groupKey === "btrStops" ? "feature-label btr-label" : "feature-label" }
-      : { direction: "top", offset: [0, -8] });
+    if (tooltip && card) {
+      marker.on("mouseover", () => openHoverCard(marker, tooltip));
+      marker.on("mouseout", closeHoverCardSoon);
+    } else if (tooltip) marker.bindTooltip(tooltip, { direction: "top", offset: [0, -8] });
     const floor = floorOf(p);
     marker.on("click", () => goToFloorOf(floor)); // 누르면 그 표시가 있는 층으로
     marker.addTo(mapUI.groups[groupKey]);
     mapUI.floorItems.push({ layer: marker, floor });
   };
-  const dot = (cls, size) => L.divIcon({ className: `feature ${cls}`, html: "<span></span>", iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
 
-  // 탈출구·트랜짓: 이름(영어)을 항상 옆에 표시 → 한눈에 어디로 나갈지
+  // 탈출구·트랜짓·BTR 정류장: 이름은 마우스를 올릴 때만 (항상 띄우면 지도를 가림, 2026-11-20 사용자)
   data.extracts.forEach((e) => {
     const group = e.faction === "scav" ? "scavExtracts" : "extracts";
-    add(group, e.pos, dot(`extract extract-${e.faction}`, 16), escapeHtml(e.name), true);
+    add(group, e.pos, markerIcon(`extract-${e.faction}`, "door-open", 18), escapeHtml(e.name));
   });
-  data.transits.forEach((tr) => add("transits", tr.pos, dot("transit", 16), escapeHtml(tr.name), true));
-  (data.btrStops || []).forEach((stop) => add("btrStops", stop.pos,
-    L.divIcon({ className: "feature btr-pin", html: `<span>${iconSvg("bus", 11, 2.6)}</span>`, iconSize: [16, 16], iconAnchor: [8, 8] }),
-    // dev 에 없어서 위키 그림으로 넣은 정류장(등대)은 이름 옆에 작게 출처 표시
-    escapeHtml(stop.name) + (stop.source === "wiki" ? ` <small class="btr-src">${escapeHtml(t("map.btrWikiSource"))}</small>` : ""), true));
+  data.transits.forEach((tr) => add("transits", tr.pos, markerIcon("transit", "arrow-left-right", 18), escapeHtml(tr.name)));
+  (data.btrStops || []).forEach((stop) => add("btrStops", stop.pos, markerIcon("btr", "bus", 18), escapeHtml(stop.name)));
   // 열쇠 문: 마우스를 올리면 필요한 열쇠
   data.locks.forEach((lock) => {
     const where = lock.type === "trunk" ? t("map.lockTrunk") : "";
     const power = lock.power ? t("map.lockPower") : "";
-    add("keys", lock.pos, L.divIcon({ className: "feature lock-pin", html: `<span>${iconSvg("lock", 13, 2.4)}</span>`, iconSize: [16, 16], iconAnchor: [8, 8] }),
-      `<b>${escapeHtml(lock.key)}</b>${where}${power}`);
+    add("keys", lock.pos, markerIcon("lock", "lock", 16),
+      `<b>${keyWithWiki(lock.key, lock.wiki)}</b>${where}${power}`, true);
   });
   // 바닥 아이템 자리: 비트코인 / 열쇠 자리 / 기타 귀중품 (마우스를 올리면 그 자리 아이템)
   data.loot.forEach((spot) => {
-    if (spot.bitcoin) add("bitcoin", spot.pos, L.divIcon({ className: "feature btc-pin", html: `<span>${iconSvg("bitcoin", 11, 2.6)}</span>`, iconSize: [16, 16], iconAnchor: [8, 8] }), `<b>${t("map.bitcoin")}</b>`);
+    if (spot.bitcoin) add("bitcoin", spot.pos, markerIcon("bitcoin", "bitcoin", 16), `<b>${t("map.bitcoin")}</b>`);
     if (spot.keys.length) {
-      const list = spot.keys.slice(0, 5).map(escapeHtml).join("<br>") + (spot.keys.length > 5 ? t("map.andMore", { n: spot.keys.length - 5 }) : "");
-      add("keySpawns", spot.pos, L.divIcon({ className: "feature keyspawn-pin", html: `<span>${iconSvg("key", 13, 2.4)}</span>`, iconSize: [16, 16], iconAnchor: [8, 8] }), `<b>${t("map.keySpawn")}</b><br>${list}`);
+      const list = spot.keys.slice(0, 5).map((name, i) => keyWithWiki(name, (spot.keyWikis || [])[i])).join("<br>") +
+        (spot.keys.length > 5 ? t("map.andMore", { n: spot.keys.length - 5 }) : "");
+      add("keySpawns", spot.pos, markerIcon("keyspawn", "key", 16), `<b>${t("map.keySpawn")}</b><br>${list}`, true);
     }
     if (spot.items.length) {
       const more = spot.more ? t("map.andMore", { n: spot.more }) : "";
-      add("valuables", spot.pos, dot("valuable", 7), spot.items.map(escapeHtml).join("<br>") + more);
+      add("valuables", spot.pos, markerIcon("valuable", "gem", 12), spot.items.map(escapeHtml).join("<br>") + more);
     }
   });
   applyFloor();

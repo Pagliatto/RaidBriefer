@@ -927,7 +927,8 @@ body.map-mode .scroll-buttons { display: none; }
   font-size: 10px; font-weight: 700; line-height: 14px; background: var(--bg); color: var(--text); border: 1px solid var(--border);
 }
 .loot-icon.on-map { border-color: var(--accent); }
-.loot-icon.on-map::after { content: "◆"; position: absolute; left: 1px; top: -3px; font-size: 9px; color: var(--accent); }
+/* 지도에 위치가 있는 아이템: 지도 표시(먹을 것 분홍 네모)와 같은 색의 작은 네모 */
+.loot-icon.on-map::after { content: ""; position: absolute; left: 2px; top: 2px; width: 6px; height: 6px; border-radius: 2px; background: #ee9fc0; border: 1px solid #111; }
 .loot-more { height: 34px; padding: 0 8px; border-radius: 6px; font-size: 12px; border: 1px dashed var(--border); background: none; color: var(--accent); }
 
 /* 먹을 것 바닥 생성 위치: 작은 마름모 (퀘스트 번호 핀과 모양이 다름) */
@@ -1898,9 +1899,30 @@ button.home-map, button.home-story-row, button.choice-option, button.prep-item, 
 }
 .btr-tracker-link:hover, .btr-tracker-link:focus-visible { border-color: var(--info); }
 .btr-tracker-link[hidden] { display: none; }
-.leaflet-tooltip.btr-label .btr-src { font-size: 10px; color: var(--text-faint); }
-/* BTR 정류장: 비트코인과 같은 16px 동그란 바탕 (파랑) */
-.btr-pin span { display: grid; place-items: center; border-radius: 50%; background: var(--info); color: #111; border: 1px solid #111; }
+/* 지도 표시 공통: 색 네모 + 아이콘 (퀘스트 목표 번호 동그라미만 따로) — 2026-11-20 사용자 */
+.mk span {
+  display: grid; place-items: center; width: 100%; height: 100%; box-sizing: border-box;
+  border-radius: 5px; border: 1px solid #111; color: #111; background: var(--mk, #ccc);
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.6);
+}
+.mk-extract-pmc { --mk: #7fd16b; }
+.mk-extract-shared { --mk: #f0d470; }
+.mk-extract-scav { --mk: #6fb3ec; }
+.mk-transit { --mk: #c08cf0; }
+.mk-btr { --mk: #5fd0d8; }
+.mk-lock { --mk: #c9cfd3; }
+.mk-keyspawn { --mk: var(--accent); }
+.mk-bitcoin { --mk: #f2a33a; }
+.mk-loot { --mk: #ee9fc0; }
+.mk-valuable { --mk: #e3c25a; }
+.mk-valuable span { border-radius: 3px; }
+/* 잠긴 문·열쇠 자리 마우스 올림 창 */
+.hover-card .leaflet-popup-content-wrapper { background: var(--surface-2); color: var(--text); border: 1px solid var(--border-strong); border-radius: var(--radius); box-shadow: var(--shadow-popover); }
+.hover-card .leaflet-popup-content { margin: 8px 10px; font-size: 13px; line-height: 1.6; }
+.hover-card .leaflet-popup-tip { background: var(--surface-2); }
+.hover-card .wiki-link { display: inline-flex; vertical-align: middle; min-width: 22px; min-height: 22px; }
+/* 표시 서랍의 기호도 같은 모양 */
+.mk-legend { display: inline-block; width: 16px; height: 16px; vertical-align: middle; }
 .leaflet-tooltip.feature-label.btr-label { font-size: 11px; font-weight: 400; padding: 1px 4px; }
 .layer-btrStops .layer-mark { color: var(--info); }
 .home-raid-mark {

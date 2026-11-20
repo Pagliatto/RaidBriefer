@@ -220,8 +220,7 @@
     "bossChance": "{name} {chance}%",
     "layerBtrStops": "BTR stops",
     "btrTracker": "BTR tracker",
-    "btrTrackerHint": "BTR position and timing (tarkovbtr.com, external site)",
-    "btrWikiSource": "wiki"
+    "btrTrackerHint": "BTR position and timing (tarkovbtr.com, external site)"
   },
   "floors": {
     "Underground": "Underground",
