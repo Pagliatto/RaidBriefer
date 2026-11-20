@@ -170,7 +170,7 @@ function appendStoryMapTags(parent, item) {
   names.forEach((name, index) => parent.append(mapTag(name, null, false, keys[index] || name)));
 }
 
-function renderStep(step) {
+function renderStep(step, current = false) {
   const done = isStepDone(step);
   const li = el("li", "step" + (step.optional ? " optional" : "") + (done ? " done" : ""));
   const label = el("label");
@@ -182,6 +182,10 @@ function renderStep(step) {
   label.append(box, el("span", "step-text", step.ko));
   if (step.optional) label.append(el("span", "opt-mark", t("story.optional")));
   appendStoryMapTags(label, step);
+  if (current) {
+    li.classList.add("current-step");
+    label.append(el("span", "step-now", t("story.stepNow")));
+  }
   li.append(label);
   return li;
 }
@@ -204,7 +208,7 @@ function renderManualStep(step) {
 }
 
 // 구간 내용 (팁·준비물·사진·단계·보상)
-function sectionBody(item) {
+function sectionBody(item, current = false) {
   const { sec } = item;
   const box = el("div", "section-body");
   if (sec.tip) box.append(el("p", "story-tip", sec.tip));
@@ -238,7 +242,8 @@ function sectionBody(item) {
     box.append(row);
   }
   const ul = el("ul", "steps");
-  item.steps.forEach((s) => ul.append(renderStep(s)));
+  const next = current && item.steps.find((s) => isRequiredStep(s) && !isStepDone(s));
+  item.steps.forEach((s) => ul.append(renderStep(s, s === next)));
   item.manual.forEach((s) => ul.append(renderManualStep(s)));
   box.append(ul);
   if (sec.reward) box.append(el("p", "story-reward", t("story.reward", { reward: sec.reward })));
@@ -385,7 +390,7 @@ function renderChapter(ch) {
     } else if (!isSectionDone(it)) {
       const box = el("div", "story-section" + (it === current ? " current" : ""));
       if (it === current) box.append(el("p", "current-label", t("story.currentLabel")));
-      box.append(sectionHead(it), sectionBody(it));
+      box.append(sectionHead(it), sectionBody(it, it === current));
       body.append(box);
     }
   });
@@ -425,6 +430,10 @@ function saveStoryChanges(changes) {
 async function persistStoryChanges(changes, optimistic = true) {
   if (!Object.keys(changes).length) return true;
   const before = story.pos;
+  // 저장 전 미완료였던 구간만 비교한다. 마이그레이션·재조회는 강조하지 않는다.
+  const unfinished = new Map(optimistic ? story.data.chapters.map((ch) => [ch.id,
+    new Set(visibleItems(ch).items.filter((it) => it.type === "section" && !isSectionDone(it)).map((it) => it.sec)),
+  ]) : []);
   if (optimistic) {
     story.pos = { ...before };
     Object.entries(changes).forEach(([key, value]) => {
@@ -440,7 +449,16 @@ async function persistStoryChanges(changes, optimistic = true) {
     });
     if (!res.ok) throw new Error();
     story.pos = await res.json();
-    if (optimistic) renderStory();
+    if (optimistic) {
+      renderStory();
+      story.data.chapters.forEach((ch) => {
+        const completed = visibleItems(ch).items.some((it) => it.type === "section" && unfinished.get(ch.id).has(it.sec) && isSectionDone(it));
+        if (!completed) return;
+        const card = [...document.querySelectorAll(".chapter")].find((node) => node.dataset.chapterId === ch.id);
+        playActionEffect(card && card.querySelector(".finished-group > summary"));
+        playActionEffect(card && card.querySelector(".story-section.current .story-section-head h3"));
+      });
+    }
     return true;
   } catch (err) {
     story.pos = before;

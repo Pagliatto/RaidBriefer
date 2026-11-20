@@ -57,7 +57,7 @@ function fitArea(leaf, bounds, { maxZoom = leaf.getMaxZoom(), padding = 20, anim
   let zoom = Math.log2(Math.min((size.x - padding * 2) / w, (size.y - padding * 2) / h));
   zoom = Math.max(leaf.getMinZoom(), Math.min(maxZoom, zoom));
   const center = leaf.unproject(L.point((Math.max(...xs) + Math.min(...xs)) / 2, (Math.max(...ys) + Math.min(...ys)) / 2), 0);
-  if (animate) leaf.flyTo(center, zoom, { duration: 0.6 });
+  if (animate && !reducedMotion()) leaf.flyTo(center, zoom, { duration: 0.6 });
   else leaf.setView(center, zoom, { animate: false });
 }
 
@@ -66,7 +66,7 @@ function fitArea(leaf, bounds, { maxZoom = leaf.getMaxZoom(), padding = 20, anim
 function fitFull(leaf, reset) {
   if (!mapUI.bounds) return;
   const wasFull = leaf.getZoom() <= leaf.getMinZoom() + 0.05;
-  leaf.invalidateSize();
+  leaf.invalidateSize({ pan: !reducedMotion(), animate: false });
   leaf.setMinZoom(0);
   const center = leaf.getCenter();
   const zoom = leaf.getZoom();
@@ -218,6 +218,10 @@ async function drawMap() {
   const leaf = L.map(box, {
     crs: tdCRS(view),
     zoomSnap: 0.1,
+    zoomAnimation: !reducedMotion(),
+    fadeAnimation: !reducedMotion(),
+    markerZoomAnimation: !reducedMotion(),
+    inertia: !reducedMotion(),
     wheelPxPerZoomLevel: 120,
     attributionControl: false,
     zoomControl: false, // +/− 버튼 없음 (휠·두 손가락으로 확대). 손을 덜 대는 게 원칙
@@ -406,6 +410,7 @@ function renderLootBar() {
   const toggle = el("button", "loot-toggle");
   toggle.type = "button";
   toggle.hidden = true;
+  toggle.append(icon("chevron-down", 14), el("span", "loot-toggle-text"));
   toggle.addEventListener("click", () => {
     lootCollapsed = !lootCollapsed;
     try { localStorage.setItem(LOOT_COLLAPSE_STORAGE, lootCollapsed ? "1" : "0"); } catch (e) { /* 저장소를 못 쓰는 창 */ }
@@ -431,7 +436,7 @@ function updateLootToggle() {
   toggle.hidden = hiddenCount === 0;
   const collapsed = lootCollapsed && hiddenCount > 0;
   bar.classList.toggle("collapsed", collapsed);
-  toggle.textContent = collapsed ? t("map.lootExpand", { n: hiddenCount }) : t("map.lootCollapse");
+  toggle.querySelector(".loot-toggle-text").textContent = collapsed ? t("map.lootExpand", { n: hiddenCount }) : t("map.lootCollapse");
   toggle.setAttribute("aria-expanded", String(!collapsed));
 }
 
@@ -547,7 +552,9 @@ function zoomIntoCluster(c) {
     return;
   }
   const center = L.latLngBounds(c.items.map((item) => item.home)).getCenter();
-  leaf.flyTo(center, Math.min(max, leaf.getZoom() + 2), { duration: 0.5 });
+  const zoom = Math.min(max, leaf.getZoom() + 2);
+  if (reducedMotion()) leaf.setView(center, zoom, { animate: false });
+  else leaf.flyTo(center, zoom, { duration: 0.5 });
 }
 
 function closeCluster(c) {
@@ -674,7 +681,7 @@ function highlightDrawer(n, flash = false) {
   const target = document.querySelector(`#drawer-list .has-pin[data-pin="${n}"]`);
   if (!target) return;
   // 서랍이 막 열리는 중이면 펼쳐진 뒤에 스크롤
-  setTimeout(() => target.scrollIntoView({ block: "center", behavior: "smooth" }), flash ? 250 : 0);
+  setTimeout(() => target.scrollIntoView({ block: "center", behavior: reducedMotion() ? "instant" : "smooth" }), flash ? 250 : 0);
   if (flash) {
     const quest = target.closest(".drawer-quest");
     quest.classList.remove("flash");

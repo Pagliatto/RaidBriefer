@@ -268,6 +268,22 @@ function el(tag, className, text) {
   return node;
 }
 
+// 사용자 동작에서만 호출하며 재렌더링에 효과 상태를 남기지 않는다.
+function reducedMotion() {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+function playActionEffect(node, className = "polish-emphasis") {
+  if (!node || document.hidden || !node.getClientRects().length || reducedMotion()) return;
+  const clear = () => {
+    node.classList.remove(className);
+    node.removeEventListener("animationend", clear);
+    node.removeEventListener("animationcancel", clear);
+  };
+  node.addEventListener("animationend", clear);
+  node.addEventListener("animationcancel", clear);
+  node.classList.add(className);
+}
+
 function renderMapFilter(items) {
   const counts = new Map([[FILTER_ALL, items.length]]);
   items.forEach((q) => q.maps.forEach((m) => counts.set(m, (counts.get(m) || 0) + 1)));
@@ -634,10 +650,10 @@ async function toggleHanded(key, done) {
 
 // ---------- 맨 위로 / 맨 아래로 ----------
 document.getElementById("to-top").addEventListener("click", () => {
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  window.scrollTo({ top: 0, behavior: reducedMotion() ? "instant" : "smooth" });
 });
 document.getElementById("to-bottom").addEventListener("click", () => {
-  window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "smooth" });
+  window.scrollTo({ top: document.documentElement.scrollHeight, behavior: reducedMotion() ? "instant" : "smooth" });
 });
 
 loadHanded().then(load);

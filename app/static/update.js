@@ -60,6 +60,13 @@ function drawUpdate() {
   updateUI.banner.hidden = !show;
   if (!show) return;
   updateUI.notes.href = s.page;
+  // 같은 상태를 다시 조회해도 원호를 새로 만들지 않는다.
+  const mark = document.getElementById("update-state-icon");
+  if (mark.dataset.status !== s.status) {
+    mark.dataset.status = s.status;
+    mark.replaceChildren(s.status === "downloading" ? el("i", "data-update-arc")
+      : icon(s.status === "failed" ? "triangle-alert" : "package", 16));
+  }
   if (s.status === "failed") {
     updateUI.text.textContent = t("update.failed");
     updateUI.apply.textContent = t("update.openPage");
@@ -184,7 +191,13 @@ async function tryOpenWhatsNew() {
     const lines = languages.map((lang) => notes[lang]).find((list) => Array.isArray(list) && list.length) || [];
     if (!lines.length) return;
     document.getElementById("whats-new-title").textContent = t("whatsNew.title", { version: ui.info.version });
-    document.getElementById("whats-new-list").replaceChildren(...lines.map((line) => el("li", "", line)));
+    document.getElementById("whats-new-list").replaceChildren(...lines.map((line) => {
+      const row = el("li");
+      const dot = el("i", "whats-new-dot");
+      dot.setAttribute("aria-hidden", "true");
+      row.append(dot, el("span", "", line));
+      return row;
+    }));
     document.getElementById("whats-new-action").hidden = notes.action !== "brightness";
     ui.dialog.returnValue = "";
     ui.dialog.showModal();

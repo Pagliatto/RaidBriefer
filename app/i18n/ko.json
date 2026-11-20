@@ -151,6 +151,7 @@
     "finished": "✓ 완료한 구간 {n}개{names}",
     "finishedChoices": " · 고른 갈림길 {n}개",
     "currentLabel": "현재 단계",
+    "stepNow": "현재",
     "coming": "준비 중인 챕터: {n}개",
     "saveFailed": "체크를 저장하지 못했어요. 프로그램이 켜져 있는지 확인해 주세요.",
     "loadFailed": "스토리 정보를 불러오지 못했어요. {error}",

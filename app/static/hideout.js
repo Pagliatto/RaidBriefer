@@ -5,6 +5,7 @@ const hideout = {
   data: null,          // /api/hideout
   showTotals: false,   // 다음 레벨 재료 합계 펼침
   showDone: false,     // 다 지은 시설 펼침
+  saving: false,       // 저장 응답 전 중복 조작 방지
 };
 const HO_ICON = (id) => `https://assets.tarkov.dev/${id}-icon.webp`;
 
@@ -123,22 +124,52 @@ async function loadHideout() {
     renderHideout();
     // 지도 '먹을 것'·홈 '뭘 모아 올까?' 가 은신처 재료를 같이 쓰게 알림 (4단계에서 연결)
     document.dispatchEvent(new Event("hideout-changed"));
+    return true;
   } catch (error) {
     document.getElementById("ho-summary").replaceChildren(el("p", "notice", t("hideout.loadFailed", { error: error.message })));
+    return false;
   }
 }
 
 async function saveHideout(kind, key, value) {
+  if (hideout.saving) return;
+  hideout.saving = true;
+  document.querySelectorAll(".ho-fix button, .ho-item").forEach((button) => { button.disabled = true; });
+  const before = hideout.data && hideout.data.stations.find((s) => s.id === key);
   try {
-    await fetch(`/api/check/${kind}`, {
+    const res = await fetch(`/api/check/${kind}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ key, value }),
     });
+    if (!res.ok) throw new Error();
+    // 실제 저장·재조회 성공 뒤, 응답의 값이 요청과 일치하는 곳만 강조한다.
+    if (!await loadHideout()) return;
+    if (kind === "hideout") {
+      const station = hideout.data.stations.find((s) => s.id === key);
+      if (station && station.level === value && before && before.level !== value) {
+        const card = [...document.querySelectorAll(".ho-card")].find((node) => node.dataset.stationId === key);
+        playActionEffect(card && card.querySelector(".ho-level"));
+      }
+    } else if (kind === "hideout_got") {
+      const item = hideout.data.stations.flatMap((s) => s.next ? s.next.items : []).find((item) => item.key === key);
+      if (item && !!item.got === value) {
+        playActionEffect([...document.querySelectorAll(".ho-item")].find((node) => node.dataset.itemKey === key));
+      }
+    }
   } catch (error) {
     alert(t("common.saveFailedShort"));
+  } finally {
+    hideout.saving = false;
+    document.querySelectorAll(".ho-item").forEach((button) => { button.disabled = false; });
+    document.querySelectorAll(".ho-card").forEach((card) => {
+      const station = hideout.data.stations.find((s) => s.id === card.dataset.stationId);
+      if (!station) return;
+      const buttons = card.querySelectorAll(".ho-fix button");
+      buttons[0].disabled = station.level <= station.default_level;
+      buttons[1].disabled = station.level >= station.max_level;
+    });
   }
-  await loadHideout();
 }
 
 // 숫자: 100000 → 100,000
@@ -156,6 +187,8 @@ function hoTime(seconds) {
 // 재료 아이콘 (누르면 '모았음' 체크)
 function hoItem(item) {
   const btn = el("button", `ho-item${item.got ? " got" : ""}`);
+  btn.dataset.itemKey = item.key;
+  btn.disabled = hideout.saving;
   btn.type = "button";
   btn.title = t("hideout.itemHint", { name: item.name, count: hoCount(item.count), fir: item.fir ? t("hideout.itemFir") : "", action: item.got ? t("hideout.itemUncheck") : t("hideout.itemCheck") });
   const img = el("img");
@@ -198,13 +231,13 @@ function hoCard(s) {
   minus.type = "button";
   minus.title = t("hideout.levelDown");
   minus.setAttribute("aria-label", t("hideout.levelDownLabel", { name: s.name }));
-  minus.disabled = s.level <= s.default_level;
+  minus.disabled = hideout.saving || s.level <= s.default_level;
   minus.addEventListener("click", () => saveHideout("hideout", s.id, s.level - 1));
   const plus = el("button", "", "+");
   plus.type = "button";
   plus.title = t("hideout.levelUp");
   plus.setAttribute("aria-label", t("hideout.levelUpLabel", { name: s.name }));
-  plus.disabled = s.level >= s.max_level;
+  plus.disabled = hideout.saving || s.level >= s.max_level;
   plus.addEventListener("click", () => saveHideout("hideout", s.id, s.level + 1));
   fix.append(minus, el("b", "ho-level", String(s.level)), plus);
   head.append(fix);

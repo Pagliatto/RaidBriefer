@@ -151,6 +151,7 @@
     "finished": "✓ {n} parts done{names}",
     "finishedChoices": " · {n} decisions made",
     "currentLabel": "Current",
+    "stepNow": "Now",
     "coming": "Chapters in preparation: {n}",
     "saveFailed": "Couldn't save your selection. Make sure the program is running.",
     "loadFailed": "Couldn't load the storyline. {error}",

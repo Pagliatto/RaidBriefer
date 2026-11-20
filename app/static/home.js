@@ -93,13 +93,24 @@ function renderHomeMaps(entries) {
     mark.setAttribute("aria-hidden", "true");
     mark.append(el("i"), el("i", "home-ripple"), el("i", "home-ripple second"));
     card.append(mark);
-    card.append(el("span", "home-map-name", name));
+    const title = el("span", "home-map-name");
+    const dot = el("i", "home-map-dot");
+    dot.setAttribute("aria-hidden", "true");
+    applyMapColor(dot, name);
+    title.append(dot, document.createTextNode(name));
+    card.append(title);
     const counts = el("span", "home-map-count");
     counts.textContent = t("home.mapQuestCount", { n: info.quests.length }) + (info.stories.length ? t("home.mapStoryCount", { n: info.stories.length }) : "");
     card.append(counts);
     card.setAttribute("aria-expanded", home.map === name);
     // 같은 맵을 한 번 더 누르면 접기
-    card.addEventListener("click", () => { home.map = home.map === name ? null : name; renderHome(); });
+    card.addEventListener("click", () => {
+      home.map = home.map === name ? null : name;
+      renderHome();
+      // 실제 선택 때 제목만 한 번 나타내고, 자동 갱신에는 재생하지 않는다.
+      const title = document.querySelector(".home-detail-title");
+      if (home.map) playActionEffect(title, "home-title-appear");
+    });
     box.append(card);
   });
   updateHomeRaidMarks();

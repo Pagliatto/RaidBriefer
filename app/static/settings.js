@@ -9,13 +9,16 @@ const settingsUI = {
 };
 
 function showSettingsResult(text, ok) {
-  settingsUI.result.textContent = text;
-  settingsUI.result.className = `settings-result ${ok ? "ok" : "bad"}`;
+  const pending = ok === null;
+  settingsUI.result.className = "settings-result " + (pending ? "pending" : ok ? "ok" : "bad");
+  const mark = pending ? el("i", "data-update-arc") : icon(ok ? "check" : "triangle-alert", 14);
+  mark.setAttribute("aria-hidden", "true");
+  settingsUI.result.replaceChildren(mark, el("span", "", text));
 }
 
 async function sendSettings(body) {
   settingsUI.buttons.forEach((b) => (b.disabled = true));
-  showSettingsResult(t("setup.checking"), true);
+  showSettingsResult(t("setup.checking"), null);
   try {
     const res = await fetch("/api/settings", {
       method: body ? "POST" : "GET",
