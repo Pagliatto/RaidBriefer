@@ -28,7 +28,7 @@ WINDOW_FILE = USER_DIR / "window.json"
 ICON_FILE = Path(__file__).resolve().parent / "static" / "icons" / "RaidBriefer.ico"
 
 DEFAULT_SIZE = (960, 1080)  # FHD(1920×1080) 모니터의 반쪽, 세로로 긴 창
-MIN_SIZE = (820, 760)  # 이보다 작으면 위쪽 줄이 두 줄로 깨짐 (안쪽 약 804×720, 영어 기준)
+MIN_SIZE = (840, 760)  # 이보다 작으면 위쪽 줄이 두 줄로 깨짐 (영어 + 세로 스크롤바 기준, 안쪽 약 824×720)
 
 
 def _url(port: int) -> str:

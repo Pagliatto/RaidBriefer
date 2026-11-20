@@ -48,6 +48,9 @@ _spt_last_attempt = 0.0
 _spt_loaded: tuple | None = None
 _data_update_lock = threading.Lock()
 _data_update_count = 0
+# 데이터 받기는 한 번에 하나만: 프로그램을 켜면 퀘스트·지도 요청이 동시에 받기를 시작해서,
+# 한쪽이 파일을 바꾸는 순간 다른 쪽이 읽다가 실패하는 일이 있었음 (지도 탭 오류)
+_update_all_lock = threading.Lock()
 
 
 def _data_activity(delta: int) -> None:
@@ -105,7 +108,15 @@ def _write_json(path: Path, value) -> None:
     # 임시 파일에 먼저 쓰고 바꿔치기 → 쓰는 도중 꺼져도 기존 파일이 안 깨짐
     temp = path.with_suffix(".tmp")
     temp.write_text(json.dumps(value, ensure_ascii=False), encoding="utf-8")
-    temp.replace(path)
+    for attempt in range(5):
+        try:
+            temp.replace(path)
+            return
+        except PermissionError:
+            # Windows: 다른 요청이 그 파일을 읽는 중이면 바꿔치기가 잠깐 막힘 → 조금 뒤 다시
+            if attempt == 4:
+                raise
+            time.sleep(0.2)
 
 
 def _compact_cache(name: str, data):
@@ -343,7 +354,13 @@ def update_all(force: bool = False) -> str:
     """필요하면 바뀐 파일만 새로 받는다. 안내 메시지를 돌려준다.
 
     force=True면 확인 시각과 상관없이 지금 바로 확인한다.
+    동시에 불리면 앞의 것이 끝날 때까지 기다린 뒤, 방금 받은 저장본을 그대로 쓴다.
     """
+    with _update_all_lock:
+        return _update_all(force)
+
+
+def _update_all(force: bool) -> str:
     meta = _read_meta()
     saved = _all_saved()
     now = time.time()
@@ -401,16 +418,22 @@ _loaded: dict = {}  # 파일 이름 → (수정 시각, 내용). 같은 파일�
 def load(name: str):
     """저장된 파일 하나의 내용을 돌려준다. (먼저 update_all을 불러야 함)"""
     path = _cache_path(name)
-    try:
-        mtime = path.stat().st_mtime
-        hit = _loaded.get(name)
-        if hit and hit[0] == mtime:
-            return hit[1]
-        data = json.loads(path.read_text(encoding="utf-8"))
-        _loaded[name] = (mtime, data)
-        return data
-    except (FileNotFoundError, json.JSONDecodeError, OSError) as error:
-        raise DataError(i18n.t("data.notSaved", name=name)) from error
+    for attempt in range(3):
+        try:
+            mtime = path.stat().st_mtime
+            hit = _loaded.get(name)
+            if hit and hit[0] == mtime:
+                return hit[1]
+            data = json.loads(path.read_text(encoding="utf-8"))
+            _loaded[name] = (mtime, data)
+            return data
+        except PermissionError as error:
+            # Windows: 다른 쪽이 막 새 파일로 바꾸는 중이면 잠깐 못 읽음 → 조금 뒤 다시
+            if attempt == 2:
+                raise DataError(i18n.t("data.notSaved", name=name)) from error
+            time.sleep(0.2)
+        except (FileNotFoundError, json.JSONDecodeError, OSError) as error:
+            raise DataError(i18n.t("data.notSaved", name=name)) from error
 
 
 # ---------- 번역 ----------
