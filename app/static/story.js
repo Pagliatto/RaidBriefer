@@ -326,8 +326,12 @@ function renderChapter(ch) {
   card.className = "chapter" + (finishedAll ? " finished" : "");
   card.dataset.chapterId = ch.id;
   card.open = story.open.has(ch.id);
+  let wasOpen = card.open;
   card.addEventListener("toggle", () => {
     if (card.open) story.open.add(ch.id); else story.open.delete(ch.id);
+    if (card.open && !wasOpen) animateOpen(card.querySelector(".chapter-body"), "fade", 150);
+    else if (!card.open) cancelWindowMotion(card.querySelector(".chapter-body"));
+    wasOpen = card.open;
   });
 
   // 접혀 있어도 보이는 줄: 이름 · 진행률 · 다음 할 일
@@ -377,6 +381,12 @@ function renderChapter(ch) {
       const box = el("div", "story-section");
       box.append(sectionHead(it), sectionBody(it));
       group.append(box);
+    });
+    group.addEventListener("toggle", () => {
+      [...group.children].filter((child) => child.tagName !== "SUMMARY").forEach((child) => {
+        if (group.open) animateOpen(child, "fade", 150);
+        else cancelWindowMotion(child);
+      });
     });
     body.append(group);
   }
@@ -521,7 +531,10 @@ document.addEventListener("quests-changed", () => { if (story.data) renderStory(
 
 // ---------- 사진 크게 보기 (팝업) ----------
 // 가운데에 크게 띄우고, 어디를 누르든(사진·바깥) 또는 Esc 로 닫힘. 잠깐잠깐 확인하는 용도
+let photoRevision = 0;
+let photoFocus = null;
 function openPhoto(im) {
+  const revision = ++photoRevision;
   let box = document.getElementById("photo-popup");
   if (!box) {
     box = el("div", "photo-popup");
@@ -535,18 +548,26 @@ function openPhoto(im) {
     document.body.append(box);
     document.addEventListener("keydown", (e) => { if (e.key === "Escape") closePhoto(); });
   }
+  if (!box.classList.contains("open") || isWindowClosing(box)) photoFocus = document.activeElement;
+  cancelWindowMotion(box);
   const img = box.querySelector("img");
   img.alt = im.caption;
   img.src = im.thumb; // 작은 그림을 먼저 보여주고
   const full = new Image();
   full.referrerPolicy = "no-referrer";
-  full.onload = () => { if (box.classList.contains("open")) img.src = im.full; }; // 다 받으면 선명한 그림으로
+  full.onload = () => { if (revision === photoRevision && box.classList.contains("open") && !isWindowClosing(box)) img.src = im.full; }; // 다 받으면 선명한 그림으로
   full.src = im.full;
   box.querySelector(".photo-caption").textContent = t("story.photoCaption", { caption: im.caption });
   box.classList.add("open");
+  animateOpen(box, "photo", 200);
+  box.tabIndex = -1;
+  box.focus({ preventScroll: true });
 }
 
 function closePhoto() {
   const box = document.getElementById("photo-popup");
-  if (box) box.classList.remove("open");
+  if (!box?.classList.contains("open") || isWindowClosing(box)) return;
+  ++photoRevision;
+  animateClose(box, () => box.classList.remove("open"), "photo");
+  if (photoFocus?.isConnected) photoFocus.focus({ preventScroll: true });
 }

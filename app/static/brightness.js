@@ -178,22 +178,26 @@
   }
 
   function closePopup(returnFocus = false) {
-    popup.hidden = true;
+    if (popup.hidden || isWindowClosing(popup)) return;
     button.setAttribute("aria-expanded", "false");
-    if (returnFocus) button.focus();
+    const restoreFocus = returnFocus || popup.contains(document.activeElement);
+    animateClose(popup, () => { popup.hidden = true; }, "popover");
+    if (restoreFocus) button.focus();
   }
 
   function openPopup() {
+    cancelWindowMotion(popup);
     popup.hidden = false;
     button.setAttribute("aria-expanded", "true");
     positionPopup();
+    animateOpen(popup, "popover");
     popup.focus();
     refresh();
   }
   // 버전 안내의 바로가기에서도 같은 열기 동작을 사용한다.
   window.openBrightnessPopup = openPopup;
   button.addEventListener("click", () => {
-    if (!popup.hidden) return closePopup(true);
+    if (!popup.hidden && !isWindowClosing(popup)) return closePopup(true);
     openPopup();
   });
   document.addEventListener("click", (event) => {

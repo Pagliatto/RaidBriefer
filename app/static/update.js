@@ -43,6 +43,18 @@ function drawUpdateDot() {
   } else if (!unseen && dot) dot.remove();
 }
 
+function showUpdateBanner(show) {
+  const banner = updateUI.banner;
+  if (show) {
+    if (!banner.hidden && !isWindowClosing(banner)) return;
+    banner.hidden = false;
+    animateOpen(banner, "banner");
+  } else if (!banner.hidden && !isWindowClosing(banner)) {
+    if (banner.contains(document.activeElement)) document.getElementById("settings-open").focus();
+    animateClose(banner, () => { banner.hidden = true; }, "banner");
+  }
+}
+
 function drawUpdate() {
   drawUpdateDot();
   const s = updateUI.info;
@@ -57,7 +69,7 @@ function drawUpdate() {
   // 탭 아래 안내
   const busy = s && (s.status === "downloading" || s.status === "installing");
   const show = s && (busy || s.status === "failed" || (s.available && !updateLaterChosen(s.latest))) && !updateInRaid();
-  updateUI.banner.hidden = !show;
+  showUpdateBanner(Boolean(show));
   if (!show) return;
   updateUI.notes.href = s.page;
   // 같은 상태를 다시 조회해도 원호를 새로 만들지 않는다.
@@ -124,7 +136,7 @@ updateUI.apply.addEventListener("click", async () => {
 updateUI.later.addEventListener("click", () => {
   updateUI.dismissed = updateUI.info.latest;
   try { localStorage.setItem(UPDATE_LATER_KEY, updateUI.info.latest); } catch (e) { /* 저장 못 해도 이번엔 숨김 */ }
-  updateUI.banner.hidden = true;
+  showUpdateBanner(false);
   drawUpdateDot();
 });
 
@@ -184,7 +196,7 @@ async function tryOpenWhatsNew() {
     if (!res.ok || updateInRaid(await res.json()) || updateInRaid()) return;
     if (document.body.classList.contains("in-setup")) return;
     const settingsDialog = document.getElementById("settings");
-    if (ui.requested && settingsDialog.open) settingsDialog.close();
+    if (ui.requested && settingsDialog.open) closeAnimatedDialog(settingsDialog);
     if (document.querySelector("dialog[open]") || !document.getElementById("brightness-popup").hidden) return;
     const notes = ui.info.notes;
     const languages = [document.documentElement.lang, "en", "ko"];
@@ -200,7 +212,7 @@ async function tryOpenWhatsNew() {
     }));
     document.getElementById("whats-new-action").hidden = notes.action !== "brightness";
     ui.dialog.returnValue = "";
-    ui.dialog.showModal();
+    openAnimatedDialog(ui.dialog);
     document.getElementById("whats-new-ok").focus();
   } catch (e) { /* 게임 상태를 확인하지 못하면 안내도 다음에 띄운다. */ }
   finally { ui.checking = false; }
@@ -210,23 +222,24 @@ whatsNewUI.link.addEventListener("click", () => {
   whatsNewUI.requested = true;
   tryOpenWhatsNew();
 });
-document.getElementById("whats-new-ok").addEventListener("click", () => whatsNewUI.dialog.close());
-document.getElementById("whats-new-action").addEventListener("click", () => whatsNewUI.dialog.close("brightness"));
-whatsNewUI.dialog.addEventListener("close", () => {
+document.getElementById("whats-new-ok").addEventListener("click", () => closeAnimatedDialog(whatsNewUI.dialog));
+document.getElementById("whats-new-action").addEventListener("click", () => closeAnimatedDialog(whatsNewUI.dialog, "brightness"));
+bindAnimatedDialog(whatsNewUI.dialog);
+whatsNewUI.dialog.addEventListener("window-closed", (event) => {
   const ui = whatsNewUI;
-  if (ui.dialog.returnValue === "deferred") return;
+  if (event.detail === "deferred") return;
   ui.pending = false;
   ui.requested = false;
   ui.seen = ui.info.version;
   ui.unsaved = ui.info.version;
   saveWhatsNewSeen();
-  if (ui.dialog.returnValue === "brightness") window.openBrightnessPopup();
+  if (event.detail === "brightness") window.openBrightnessPopup();
 });
 window.addEventListener("game-state", () => {
   if (updateInRaid() && whatsNewUI.dialog.open) {
     // 레이드 때문에 숨긴 것은 읽은 것으로 저장하지 않는다.
     whatsNewUI.requested = true;
-    whatsNewUI.dialog.close("deferred");
+    closeAnimatedDialog(whatsNewUI.dialog, "deferred");
   } else tryOpenWhatsNew();
 });
 window.addEventListener("settings-changed", loadWhatsNew);

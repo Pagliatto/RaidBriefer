@@ -88,20 +88,43 @@ const hoverCard = { popup: null, timer: null };
 function closeHoverCardSoon() {
   clearTimeout(hoverCard.timer);
   hoverCard.timer = setTimeout(() => {
-    if (hoverCard.popup && mapUI.leaflet) mapUI.leaflet.closePopup(hoverCard.popup);
-    hoverCard.popup = null;
+    const popup = hoverCard.popup;
+    const inner = popup?.getElement()?.querySelector(".hover-card-motion");
+    if (!inner) return;
+    animateClose(inner, () => {
+      popup.remove();
+      if (hoverCard.popup === popup) hoverCard.popup = null;
+    });
   }, 250);
 }
 function openHoverCard(marker, html) {
   clearTimeout(hoverCard.timer);
-  if (hoverCard.popup && hoverCard.popup.source === marker && hoverCard.popup.isOpen()) return;
+  if (hoverCard.popup && hoverCard.popup.source === marker && hoverCard.popup.isOpen()) {
+    const inner = hoverCard.popup.getElement().querySelector(".hover-card-motion");
+    if (isWindowClosing(inner)) animateOpen(inner, "rise");
+    return;
+  }
+  const previous = hoverCard.popup?.getElement()?.querySelector(".hover-card-motion");
+  if (previous) cancelWindowMotion(previous);
   const popup = L.popup({ closeButton: false, autoPan: false, className: "hover-card", offset: [0, -6] })
     .setLatLng(marker.getLatLng()).setContent(html);
   popup.source = marker;
   popup.openOn(mapUI.leaflet);  // 열려 있던 다른 창은 Leaflet 이 닫음
   hoverCard.popup = popup;
   const box = popup.getElement();
-  box.addEventListener("mouseenter", () => clearTimeout(hoverCard.timer));
+  // Leaflet 본체의 위치 transform은 건드리지 않고 내용과 꼬리만 감싼다.
+  const inner = el("div", "hover-card-motion");
+  inner.append(...box.childNodes);
+  box.append(inner);
+  animateOpen(inner, "rise");
+  popup.on("remove", () => {
+    cancelWindowMotion(inner);
+    if (hoverCard.popup === popup) hoverCard.popup = null;
+  });
+  box.addEventListener("mouseenter", () => {
+    clearTimeout(hoverCard.timer);
+    if (isWindowClosing(inner)) animateOpen(inner, "rise");
+  });
   box.addEventListener("mouseleave", closeHoverCardSoon);
 }
 // 열쇠 이름 + 위키 📖 (퀘스트 열쇠 링크와 같은 모양)
@@ -691,32 +714,42 @@ function highlightDrawer(n, flash = false) {
 }
 
 function setDrawer(open) {
+  const changed = mapUI.drawerOpen !== open;
   mapUI.drawerOpen = open;
   document.querySelector(".map-layout").classList.toggle("drawer-closed", !open);
   const btn = document.getElementById("drawer-toggle");
   btn.setAttribute("aria-expanded", open);
   const arrow = btn.querySelector(".drawer-arrow");
   if (arrow) arrow.innerHTML = iconSvg(open ? "chevron-right" : "chevron-left", 15);
-  // 서랍이 열리고 닫힌 뒤 지도 크기를 다시 맞춤
-  setTimeout(() => mapUI.leaflet && fitFull(mapUI.leaflet, false), 230);
+  // 폭은 즉시 확정하고 지도 크기를 먼저 맞춘 뒤 서랍 내용만 나타낸다.
+  document.getElementById("map-drawer").inert = !open;
+  if (changed && mapUI.leaflet) fitFull(mapUI.leaflet, false);
+  const list = document.getElementById("drawer-list");
+  if (open && changed) animateOpen(list, "fade", 150);
+  else if (!open) cancelWindowMotion(list);
 }
 
 // ---------- 화면 전환 안내 ("세관 불러오는 중") ----------
+let transitionRevision = 0;
+let transitionTimer;
 async function showTransition(title, text, action) {
+  const revision = ++transitionRevision;
+  clearTimeout(transitionTimer);
   const box = document.getElementById("transition");
   document.getElementById("transition-map").textContent = title;
   document.getElementById("transition-text").textContent = text;
   box.hidden = false;
-  box.classList.remove("leaving");
+  animateOpen(box, "notice", 200);
   const started = Date.now();
   try {
     await action();
   } finally {
-    const wait = Math.max(0, TRANSITION_MS - (Date.now() - started));
-    setTimeout(() => {
-      box.classList.add("leaving");
-      setTimeout(() => { box.hidden = true; }, 300);
-    }, wait);
+    if (revision === transitionRevision) {
+      const wait = Math.max(0, TRANSITION_MS - (Date.now() - started));
+      transitionTimer = setTimeout(() => {
+        if (revision === transitionRevision) animateClose(box, () => { box.hidden = true; }, "notice");
+      }, wait);
+    }
   }
 }
 
@@ -894,11 +927,16 @@ function layerCount(key) {
 }
 
 function setLayerDrawer(open) {
+  const changed = mapUI.layerDrawerOpen !== open;
   mapUI.layerDrawerOpen = open;
   document.querySelector(".map-layout").classList.toggle("layers-closed", !open);
   document.getElementById("layer-toggle-btn").setAttribute("aria-expanded", open);
   try { localStorage.setItem("tarkovhelper.layerDrawer", open ? "1" : "0"); } catch (e) { /* 무시 */ }
-  setTimeout(() => mapUI.leaflet && fitFull(mapUI.leaflet, false), 230);
+  document.getElementById("layer-drawer").inert = !open;
+  if (changed && mapUI.leaflet) fitFull(mapUI.leaflet, false);
+  const list = document.getElementById("layer-list");
+  if (open && changed) animateOpen(list, "fade", 150);
+  else if (!open) cancelWindowMotion(list);
 }
 
 // ---------- 탈출구·트랜짓·열쇠 문·귀중품 ----------

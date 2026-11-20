@@ -848,7 +848,7 @@ body.map-mode .scroll-buttons { display: none; }
 .map-drawer {
   flex: none; width: 340px; overflow-y: auto;
   border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface);
-  transition: width 0.2s ease, opacity 0.2s ease;
+  /* 서랍 폭은 즉시 변경하고 내용만 공통 함수로 페이드한다. */
 }
 .map-layout.drawer-closed .map-drawer { width: 0; opacity: 0; border-width: 0; }
 /* 출처: 따로 줄을 차지하지 않게 지도 오른쪽 아래에 작게 */
@@ -907,10 +907,8 @@ body.map-mode .scroll-buttons { display: none; }
   position: fixed; inset: 0; z-index: 2000;
   display: grid; place-items: center;
   background: rgba(10, 11, 12, 0.94);
-  animation: fade-in 0.25s ease;
 }
 .transition[hidden] { display: none; }
-.transition.leaving { opacity: 0; transition: opacity 0.3s ease; }
 .transition-box { text-align: center; }
 .transition-map { font-size: 40px; font-weight: 700; color: var(--text); letter-spacing: -0.02em; }
 .transition-text { margin-top: 4px; font-size: 16px; color: var(--text-dim); }
@@ -984,7 +982,7 @@ body.map-mode .scroll-buttons { display: none; }
 .layer-drawer {
   flex: none; width: 150px; overflow-y: auto;
   border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface);
-  transition: width 0.2s ease, opacity 0.2s ease;
+  /* 서랍 폭은 즉시 변경하고 내용만 공통 함수로 페이드한다. */
 }
 .map-layout.layers-closed .layer-drawer { width: 0; opacity: 0; border-width: 0; }
 .layer-title { padding: 8px 10px 4px; font-size: 12px; font-weight: 700; color: var(--text-faint); white-space: nowrap; }
@@ -1606,7 +1604,7 @@ body { font-variant-numeric: tabular-nums; }
 }
 @media (prefers-reduced-motion: reduce) {
   .state-mark *, .transition, .transition-bar i, .flash { animation: none !important; }
-  .raid-bar-fill, .transition.leaving, .floor-stack, .floor-plane, .floor-label,
+  .raid-bar-fill, .floor-stack, .floor-plane, .floor-label,
   .map-drawer, .layer-drawer, .ho-switch-track, .ho-switch-track::after { transition: none; }
 }
 
@@ -1616,7 +1614,7 @@ body { font-variant-numeric: tabular-nums; }
   flex-direction: column; align-items: center; justify-content: center; gap: 10px;
   padding: 24px; background: rgb(5 9 11 / 88%); cursor: zoom-out;
 }
-.photo-popup.open { display: flex; animation: fade-in 0.15s ease; }
+.photo-popup.open { display: flex; }
 .photo-popup img {
   max-width: 94vw; max-height: 84vh; object-fit: contain;
   border-radius: var(--radius); border: 1px solid var(--border-strong); background: var(--surface);
@@ -2117,4 +2115,17 @@ button.tag.map-colored:focus-visible { outline: 2px solid var(--accent); outline
   .loot-toggle .icon { transition: none; }
   .layer-toggle:active:not(:disabled), .update-banner button:active:not(:disabled),
   .update-link:active, .btr-tracker-link:active { transform: none; }
+}
+
+/* 창 효과: 배치는 즉시 확정하고 transform/opacity만 움직인다. */
+.settings.window-opening::backdrop { animation: window-backdrop-in 180ms ease-out both; }
+@keyframes window-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
+.window-dialog-exit {
+  position: fixed; inset: 0; z-index: 4000;
+  background: rgba(0, 0, 0, .6); pointer-events: none;
+}
+.window-dialog-exit * { pointer-events: none !important; }
+.window-dialog-exit .settings { max-height: none; }
+@media (prefers-reduced-motion: reduce) {
+  .settings.window-opening::backdrop { animation: none; }
 }

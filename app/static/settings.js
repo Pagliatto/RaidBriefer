@@ -50,7 +50,7 @@ document.querySelectorAll(".settings-tab").forEach((b) => b.addEventListener("cl
 
 document.getElementById("settings-open").addEventListener("click", () => {
   showSettingsTab("general"); // 열 때는 항상 '일반'부터
-  settingsUI.dialog.showModal();
+  openAnimatedDialog(settingsUI.dialog);
   sendSettings(null); // 열 때마다 지금 값과 확인 결과를 새로 보여줌
 });
 document.getElementById("settings-save").addEventListener("click", () =>
@@ -59,10 +59,10 @@ document.getElementById("settings-find").addEventListener("click", () => sendSet
 settingsUI.input.addEventListener("keydown", (e) => {
   if (e.key === "Enter") sendSettings({ game_dir: settingsUI.input.value });
 });
-// 창 바깥(어두운 부분)을 누르면 닫기
-settingsUI.dialog.addEventListener("click", (e) => {
-  if (e.target === settingsUI.dialog) settingsUI.dialog.close();
-});
+// Esc·닫기 버튼·바깥 클릭에 같은 닫기 처리를 사용한다.
+bindAnimatedDialog(settingsUI.dialog);
+// setup.js가 처음 설정 화면을 열기 전에 같은 닫기 효과를 시작한다.
+document.getElementById("settings-setup").addEventListener("click", () => closeAnimatedDialog(settingsUI.dialog));
 
 // 전체 초기화: 확인 창 → 모든 기록 지움 → 새로고침하면 처음 설정이 뜸
 document.getElementById("settings-reset").addEventListener("click", async () => {

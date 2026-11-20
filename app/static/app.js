@@ -195,7 +195,10 @@ function questsOf(list) {
 
 // ---------- 큰 탭 (홈 / 퀘스트 / 스토리) ----------
 // 화면만 바꿈 (기록은 안 남김)
+let tabAnimationTimer;
 function showTab(name) {
+  clearTimeout(tabAnimationTimer);
+  const changed = currentTab() !== name;
   document.querySelectorAll(".tab").forEach((b) => {
     const on = b.dataset.tab === name;
     b.classList.toggle("active", on);
@@ -203,10 +206,18 @@ function showTab(name) {
   });
   document.querySelectorAll("main > .panel").forEach((p) => {
     p.hidden = p.id !== `tab-${name}`;
+    if (p.hidden) cancelWindowMotion(p);
   });
   // 지도 탭은 화면 전체를 지도로 씀 (스크롤 없음)
   document.body.classList.toggle("map-mode", name === "map");
   document.dispatchEvent(new CustomEvent("tab-shown", { detail: name }));
+  if (changed) {
+    const panel = document.getElementById(`tab-${name}`);
+    if (name === "map") {
+      // tab-shown에서 예약한 fitFull 이후에 시작하고, 빠르게 떠난 탭에는 효과를 남기지 않는다.
+      tabAnimationTimer = setTimeout(() => { if (!panel.hidden) animateOpen(panel, "fade", 150); }, 0);
+    } else animateOpen(panel, "rise", 150);
+  }
 }
 
 // ---------- 뒤로 가기 (마우스 뒤로 버튼 / 브라우저 뒤로) ----------
@@ -272,6 +283,115 @@ function el(tag, className, text) {
 function reducedMotion() {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
+// 창 효과는 실제 열기/닫기 때만 실행한다. 재열기는 이전 완료 콜백까지 취소한다.
+const windowMotions = new WeakMap();
+const activeWindowMotions = new Set();
+function isWindowClosing(node) { return windowMotions.get(node)?.closing === true; }
+function cancelWindowMotion(node) {
+  const motion = windowMotions.get(node);
+  if (!motion) return;
+  clearTimeout(motion.timer);
+  motion.animations.forEach((animation) => animation.cancel());
+  node.classList.remove("window-opening");
+  node.inert = motion.inert;
+  windowMotions.delete(node);
+  activeWindowMotions.delete(motion);
+}
+function animateWindow(node, closing, done, kind, duration) {
+  if (!node || (closing && isWindowClosing(node))) return;
+  cancelWindowMotion(node);
+  if (reducedMotion() || document.hidden || !node.getClientRects().length || !node.animate) { done?.(); return; }
+  const motion = { node, closing, inert: node.inert, animations: [] };
+  windowMotions.set(node, motion);
+  activeWindowMotions.add(motion);
+  if (closing) node.inert = true;
+  else node.classList.add("window-opening");
+  const finish = () => {
+    if (windowMotions.get(node) !== motion) return;
+    // 숨김/제거부터 적용한 뒤 채우기 효과를 해제해 마지막 프레임이 번쩍이지 않게 한다.
+    done?.();
+    cancelWindowMotion(node);
+  };
+  motion.finish = finish;
+  const add = (target, transform = null, fade = true) => {
+    if (!target) return;
+    const from = fade ? { opacity: 0 } : {};
+    const to = fade ? { opacity: 1 } : {};
+    if (transform) { from.transform = transform; to.transform = "none"; }
+    motion.animations.push(target.animate(closing ? [to, from] : [from, to], {
+      duration, easing: closing ? "ease-in" : "ease-out", fill: "both",
+    }));
+  };
+  if (kind === "banner") {
+    [...node.children].forEach((child) => add(child, "translateY(-6px)"));
+  } else {
+    const transform = kind === "dialog" ? "scale(.98)" : kind === "popover" ? "translateY(-6px)"
+      : kind === "rise" ? "translateY(4px)" : null;
+    add(node, transform);
+    if (kind === "photo") add(node.querySelector("img"), "scale(.94)", false);
+    if (kind === "notice") add(node.querySelector(".transition-box"), "scale(.98)", false);
+    if (kind === "dialog-exit") add(node.firstElementChild, "scale(.98)", false);
+  }
+  Promise.all(motion.animations.map((animation) => animation.finished)).then(finish, () => {});
+  // 백그라운드 전환이나 애니메이션 취소 때도 숨김 처리가 남지 않도록 보장한다.
+  motion.timer = setTimeout(finish, duration + 50);
+}
+function animateOpen(node, kind = "fade", duration = 180) {
+  animateWindow(node, false, null, kind, duration);
+}
+function animateClose(node, done, kind = "fade", duration = 140) {
+  animateWindow(node, true, done, kind, duration);
+}
+window.matchMedia("(prefers-reduced-motion: reduce)").addEventListener("change", (event) => {
+  if (event.matches) [...activeWindowMotions].forEach((motion) => motion.finish());
+});
+
+// 모달의 입력 잠금은 즉시 해제하고, 접근성 트리에서 제외한 잔상만 짧게 닫는다.
+const dialogExits = new WeakMap();
+function clearDialogExit(dialog) {
+  const exit = dialogExits.get(dialog);
+  if (exit) { cancelWindowMotion(exit); exit.remove(); dialogExits.delete(dialog); }
+}
+function openAnimatedDialog(dialog) {
+  clearDialogExit(dialog);
+  if (dialog.open) return;
+  dialog.showModal();
+  animateOpen(dialog, "dialog");
+}
+function closeAnimatedDialog(dialog, value = "") {
+  if (!dialog.open) return;
+  cancelWindowMotion(dialog);
+  clearDialogExit(dialog);
+  if (!reducedMotion() && !document.hidden) {
+    const rect = dialog.getBoundingClientRect();
+    const exit = el("div", "window-dialog-exit");
+    exit.inert = true;
+    exit.setAttribute("aria-hidden", "true");
+    const card = el("div", dialog.className);
+    card.append(...[...dialog.childNodes].map((child) => child.cloneNode(true)));
+    card.querySelectorAll("[id]").forEach((child) => child.removeAttribute("id"));
+    Object.assign(card.style, { position: "fixed", margin: "0", boxSizing: "border-box",
+      left: rect.left + "px", top: rect.top + "px", width: rect.width + "px", height: rect.height + "px", overflow: "hidden" });
+    exit.append(card);
+    document.body.append(exit);
+    card.scrollTop = dialog.scrollTop;
+    dialogExits.set(dialog, exit);
+    animateClose(exit, () => { exit.remove(); dialogExits.delete(dialog); }, "dialog-exit");
+  }
+  dialog.close(value);
+  // native close 이벤트는 큐에 남을 수 있으므로 이번 닫기의 값을 동기적으로 전달한다.
+  dialog.dispatchEvent(new CustomEvent("window-closed", { detail: value }));
+}
+function bindAnimatedDialog(dialog) {
+  dialog.addEventListener("cancel", (event) => { event.preventDefault(); closeAnimatedDialog(dialog); });
+  dialog.addEventListener("submit", (event) => {
+    if (event.target.getAttribute("method") !== "dialog") return;
+    event.preventDefault();
+    closeAnimatedDialog(dialog, event.submitter?.value || "");
+  });
+  dialog.addEventListener("click", (event) => { if (event.target === dialog) closeAnimatedDialog(dialog); });
+}
+
 function playActionEffect(node, className = "polish-emphasis") {
   if (!node || document.hidden || !node.getClientRects().length || reducedMotion()) return;
   const clear = () => {
