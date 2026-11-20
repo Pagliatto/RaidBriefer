@@ -15,5 +15,21 @@
       "You'll see a short note like this the first time you open a new version"
     ],
     "action": "brightness"
+  },
+  "1.0.8": {
+    "ko": [
+      "스토리: 단계를 하나씩 따로 체크해요. 구간마다 '✓ 전체 체크 / ✕ 전체 해제' 버튼이 있어요. 지금까지 체크한 기록은 자동으로 옮겨져요",
+      "퀘스트: 이름 옆 📖 아이콘으로 위키를 열고, 맵 태그를 누르면 그 맵만 볼 수 있어요. 맵마다 색이 달라요",
+      "지도: 필요템을 따로 한 줄에 전부 보여 주고, 길어지면 접을 수 있어요",
+      "홈: Knight·Big Pipe·Birdeye 는 '군즈'로 함께 보여요",
+      "켤 때 지도 탭이 가끔 오류를 내던 문제를 고쳤어요"
+    ],
+    "en": [
+      "Storyline: each step is checked on its own, with 'Check all / Uncheck all' buttons per section. Your existing progress is moved over automatically",
+      "Quests: open the wiki with the 📖 icon next to the name, and click a map tag to show only that map. Each map has its own color",
+      "Map: needed items get their own row showing everything, and it can be collapsed",
+      "Home: Knight, Big Pipe and Birdeye are shown together as the Goons",
+      "Fixed an occasional map tab error right after launch"
+    ]
   }
 }
