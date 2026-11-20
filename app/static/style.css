@@ -1773,10 +1773,15 @@ button.setup-trader-count.open .icon { transform: rotate(180deg); }
 }
 
 /* 언어별 상태 폭, 남은 시간 3단계, 퀘스트 목록 탭과 맵 칩 구분. */
+/* 상태 칸: 언어별 고정 너비(가장 긴 상태·맵 이름 기준). 켜는 중에 너비가 바뀌지 않게 계산 없이 고정
+   표시(점)는 왼쪽에 고정, 이름만 남은 공간의 가운데 */
 .topbar .state-pill {
-  flex-basis: var(--state-pill-w, 120px); width: var(--state-pill-w, 120px);
-  justify-content: flex-start; text-align: left;
+  --state-pill-w: 140px;  /* 한국어: 타르코프 시내·그라운드 제로 */
+  flex-basis: var(--state-pill-w); width: var(--state-pill-w);
+  justify-content: flex-start;
 }
+.topbar .state-pill #raid-state-text { flex: 1 1 auto; min-width: 0; text-align: center; }
+html[lang="en"] .topbar .state-pill { --state-pill-w: 184px; }  /* 영어: Game not running */
 .topbar .raid-time.low-2::before { animation-duration: 1.8s; }
 .topbar .raid-time.low-3::before { animation-duration: 1.2s; }
 

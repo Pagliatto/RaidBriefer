@@ -34,38 +34,6 @@ function tarkovTime(nowMs, extraHours) {
 const STATE_LABEL = { off: "stateOff", lobby: "stateLobby", loading: "stateLoading", raid: "stateRaid", ended: "stateEnded" };
 const TOPBAR_ENDED_MS = 30000;
 
-// 글꼴 준비 후 한 번 측정. 지도 목록이 늦으면 도착 시 한 번만 보완하고 고정한다.
-async function initStatePillWidth() {
-  await document.fonts.ready;
-  const pill = topbar.get("raid-state");
-  const style = getComputedStyle(pill);
-  const context = document.createElement("canvas").getContext("2d");
-  if (!context) return;
-  context.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
-  const labels = Object.values(STATE_LABEL).map((key) => t(`topbar.${key}`));
-  const mapNames = () => typeof mapUI === "undefined" ? [] : mapUI.maps.map((map) => map.name);
-  const measure = (names) => {
-    const widest = Math.max(...labels.concat(names).map((text) => context.measureText(text).width));
-    const extra = 18 + parseFloat(style.columnGap) + parseFloat(style.paddingLeft)
-      + parseFloat(style.paddingRight) + parseFloat(style.borderLeftWidth) + parseFloat(style.borderRightWidth);
-    const width = Math.max(120, Math.min(200, Math.ceil((widest + extra) / 4) * 4));
-    pill.style.setProperty("--state-pill-w", `${width}px`);
-  };
-  const names = mapNames();
-  measure(names);
-  if (names.length) return;
-  // map.js가 이미 불러오는 목록을 재사용하며 추가 요청이나 상태별 재측정은 하지 않는다.
-  const select = topbar.get("map-select");
-  if (!select) return;
-  const observer = new MutationObserver(() => {
-    const arrived = mapNames();
-    if (!arrived.length) return;
-    measure(arrived);
-    observer.disconnect();
-  });
-  observer.observe(select, { childList: true });
-}
-
 // 시각 하나를 알약 칸에: 낮 ☀ 노랑 / 밤 ☾ 파랑
 function drawClock(id, time) {
   const box = topbar.get(id);
@@ -149,7 +117,6 @@ async function pollState() {
   drawTopbar();
 }
 
-initStatePillWidth();
 pollState();
 setInterval(pollState, 2000);
 setInterval(drawTopbar, 1000);
