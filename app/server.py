@@ -4,12 +4,13 @@
 그다음 브라우저에서 http://127.0.0.1:8765 를 연다.
 """
 
+import atexit
 import time
 from pathlib import Path
 
 from flask import Flask, abort, jsonify, render_template, request, send_file
 
-from app import game_state, hideout, i18n, updater, map_views, progress, quest_log, quests, settings, story
+from app import brightness, game_state, hideout, i18n, updater, map_views, progress, quest_log, quests, settings, story
 
 HOST = "127.0.0.1"  # 지금은 이 PC에서만 열림 (휴대폰 접속은 다음 단계)
 PORT = 8765
@@ -166,6 +167,37 @@ def api_state():
     return jsonify(state)
 
 
+@app.get("/api/brightness")
+def api_brightness_get():
+    return jsonify(brightness.status())
+
+
+@app.post("/api/brightness")
+def api_brightness_set():
+    body = request.get_json(silent=True)
+    if not isinstance(body, dict):
+        return jsonify({"error": i18n.t("server.badRequest")}), 400
+    return jsonify(brightness.configure(body))
+
+
+@app.post("/api/brightness/preview")
+def api_brightness_preview():
+    return jsonify(brightness.preview())
+
+
+@app.post("/api/brightness/identify")
+def api_brightness_identify():
+    body = request.get_json(silent=True)
+    if not isinstance(body, dict) or not isinstance(body.get("monitor"), str):
+        return jsonify({"error": i18n.t("server.badRequest")}), 400
+    return jsonify(brightness.identify(body["monitor"]))
+
+
+@app.post("/api/brightness/restore")
+def api_brightness_restore():
+    return jsonify(brightness.restore())
+
+
 @app.route("/api/settings", methods=["GET"])
 def api_settings_get():
     current = settings.load()
@@ -254,6 +286,8 @@ def serve(port: int = PORT) -> None:
     """서버 켜기 (브라우저 방식·프로그램 창 방식이 같이 씀). 끝날 때까지 돌아오지 않음"""
     import threading
 
+    atexit.register(brightness.shutdown)
+    brightness.init()
     game_state.start()  # 게임 로그를 뒤에서 계속 지켜보기 (상단바 상태)
     updater.check_in_background()  # 새 버전이 있는지 깃허브에 한 번 물어봄
     # 프레스티지 찾기는 처음 한 번 몇 초 걸려서 미리 해 둠 (화면이 기다리지 않게)

@@ -17,7 +17,8 @@ DEFAULT_GAME_DIR = r"C:\Battlestate Games\Escape from Tarkov"
 # setup_done: 처음 실행 때 뜨는 '처음 설정' 화면을 끝냈는지
 # edition: 게임 에디션 → 은신처 시작 레벨이 달라짐 (창고, 광신도 제단). 위키 기준
 # hideout_all: 은신처 재료 합계에 조건이 남은 시설(지금 못 짓는 시설)까지 합칠지 (기본: 지을 수 있는 시설만)
-DEFAULTS = {"game_dir": DEFAULT_GAME_DIR, "setup_done": False, "edition": "standard", "hideout_all": False, "lang": ""}  # lang 비어 있음 = 윈도우 언어를 따름
+DEFAULTS = {"game_dir": DEFAULT_GAME_DIR, "setup_done": False, "edition": "standard", "hideout_all": False, "lang": "",
+            "brightness_mode": "off", "brightness_strength": 35, "brightness_monitor": ""}  # lang 비어 있음 = 윈도우 언어를 따름
 EDITIONS = ("standard", "left_behind", "prepare_for_escape", "edge_of_darkness", "unheard")
 
 _lock = threading.Lock()
@@ -38,9 +39,22 @@ def load() -> dict:
 
 def save(changes: dict) -> dict:
     global _cache
-    current = load()
-    current.update({k: v for k, v in changes.items() if k in DEFAULTS})
+    load()
+    updates = {k: v for k, v in changes.items() if k in DEFAULTS}
+    if "brightness_mode" in updates and updates["brightness_mode"] not in ("off", "raid", "always"):
+        updates.pop("brightness_mode")
+    if "brightness_strength" in updates:
+        strength = updates["brightness_strength"]
+        if type(strength) is not int or not 0 <= strength <= 60:
+            updates.pop("brightness_strength")
+    if "brightness_monitor" in updates:
+        from app import brightness  # 늦게 불러와 순환 import와 잠금 순서 충돌을 피함
+
+        monitor = updates["brightness_monitor"]
+        if not isinstance(monitor, str) or (monitor and monitor not in {m["id"] for m in brightness.monitors()}):
+            updates.pop("brightness_monitor")
     with _lock:
+        current = {**_cache, **updates}
         USER_DIR.mkdir(exist_ok=True)
         temp = SETTINGS_FILE.with_suffix(".tmp")
         temp.write_text(json.dumps(current, ensure_ascii=False, indent=2), encoding="utf-8")

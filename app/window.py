@@ -19,7 +19,7 @@ from pathlib import Path
 
 import webview
 
-from app import paths, server, updater
+from app import brightness, paths, server, updater
 
 USER_DIR = paths.USER_DIR
 WINDOW_FILE = USER_DIR / "window.json"
@@ -98,11 +98,14 @@ def main() -> None:
     updater.set_exit_handler(window.destroy)  # 업데이트할 때 창을 닫아서 도우미가 파일을 바꿀 수 있게
 
     USER_DIR.mkdir(exist_ok=True)
-    webview.start(
-        private_mode=False,  # 지도 표시 설정·마지막 맵 기억이 창을 닫아도 남게
-        storage_path=str(USER_DIR / "webview"),
-        icon=str(ICON_FILE) if ICON_FILE.exists() else None,
-    )
+    try:
+        webview.start(
+            private_mode=False,  # 지도 표시 설정·마지막 맵 기억이 창을 닫아도 남게
+            storage_path=str(USER_DIR / "webview"),
+            icon=str(ICON_FILE) if ICON_FILE.exists() else None,
+        )
+    finally:
+        brightness.shutdown()
     # 창을 닫으면 여기로 옴 → 서버·로그 감시는 daemon 이라 프로그램과 함께 끝남
 
 

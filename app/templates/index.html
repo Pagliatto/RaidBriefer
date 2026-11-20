@@ -49,6 +49,36 @@
         <span id="clock-a">--:--</span>
         <span id="clock-b">--:--</span>
       </span>
+      <div class="brightness-slot" id="brightness-slot">
+        <button type="button" class="settings-button brightness-button" id="brightness-open" data-state="off" aria-label="{{ t('brightness.title') }}" title="{{ t('brightness.title') }}" aria-haspopup="dialog" aria-controls="brightness-popup" aria-expanded="false"><span data-icon="monitor-cog" data-size="17"></span><span class="brightness-dot" aria-hidden="true"></span></button>
+        <section class="brightness-popup" id="brightness-popup" role="dialog" aria-labelledby="brightness-title" tabindex="-1" hidden>
+          <h2 id="brightness-title">{{ t('brightness.title') }}</h2>
+          <p class="brightness-monitor" id="brightness-selected"></p>
+          <p class="brightness-message" id="brightness-message" role="status">{{ t('brightness.loading') }}</p>
+          <fieldset class="brightness-controls" id="brightness-controls" disabled hidden>
+            <div class="brightness-modes" role="group" aria-label="{{ t('brightness.mode') }}">
+              <button type="button" class="chip" data-brightness-mode="raid" aria-pressed="false">{{ t('brightness.raid') }}</button>
+              <button type="button" class="chip" data-brightness-mode="always" aria-pressed="false">{{ t('brightness.always') }}</button>
+              <button type="button" class="chip" data-brightness-mode="off" aria-pressed="false">{{ t('brightness.off') }}</button>
+            </div>
+            <div class="brightness-strength-head"><label for="brightness-strength">{{ t('brightness.strength') }}</label><output id="brightness-value" for="brightness-strength"></output></div>
+            <input type="range" id="brightness-strength" min="0" max="60" step="5" value="0">
+            <div class="brightness-presets">
+              <button type="button" class="chip" data-brightness-strength="0">{{ t('brightness.percent', value=0) }}</button>
+              <button type="button" class="chip" data-brightness-strength="20">{{ t('brightness.percent', value=20) }}</button>
+              <button type="button" class="chip" data-brightness-strength="40">{{ t('brightness.percent', value=40) }}</button>
+              <button type="button" class="chip" data-brightness-strength="60">{{ t('brightness.percent', value=60) }}</button>
+            </div>
+            <div class="brightness-steps" id="brightness-steps" role="group" aria-label="{{ t('brightness.darkSteps') }}"></div>
+            <p class="brightness-hint">{{ t('brightness.darkHint') }}</p>
+            <div class="settings-actions brightness-actions">
+              <button type="button" id="brightness-preview">{{ t('brightness.preview') }}</button>
+              <button type="button" id="brightness-restore">{{ t('brightness.restore') }}</button>
+            </div>
+            <p class="brightness-note" id="brightness-note"></p>
+          </fieldset>
+        </section>
+      </div>
       <button type="button" class="settings-button" id="settings-open" aria-label="{{ t('topbar.settings') }}" title="{{ t('topbar.settings') }}"><span data-icon="settings" data-size="17"></span></button>
     </header>
     <!-- 남은 레이드 시간: 왼쪽부터 줄어들어 오른쪽 끝으로 모임 -->
@@ -284,6 +314,17 @@
       <div class="edition-pick" id="settings-edition"></div>
     </section>
 
+    <section class="settings-item" data-stab="general">
+      <h3><label for="brightness-monitor">{{ t('brightness.monitorLabel') }}</label></h3>
+      <select class="brightness-monitor-select" id="brightness-monitor" disabled>
+        <option value="">{{ t('brightness.automatic') }}</option>
+      </select>
+      <div class="settings-actions">
+        <button type="button" id="brightness-identify" disabled>{{ t('brightness.identify') }}</button>
+      </div>
+      <p class="settings-help brightness-settings-message" id="brightness-settings-message" role="status">{{ t('brightness.loading') }}</p>
+    </section>
+
     <section class="settings-item" data-stab="records" hidden>
       <h3>{{ t('settings.setupTitle') }}</h3>
       <p class="settings-help">{{ t('settings.setupHelp')|safe }}</p>
@@ -334,6 +375,7 @@
   <script src="{{ url_for('static', filename='story.js') }}"></script>
   <script src="{{ url_for('static', filename='home.js') }}"></script>
   <script src="{{ url_for('static', filename='topbar.js') }}"></script>
+  <script src="{{ url_for('static', filename='brightness.js') }}"></script>
   <script src="{{ url_for('static', filename='settings.js') }}"></script>
   <script src="{{ url_for('static', filename='update.js') }}"></script>
   <script src="{{ url_for('static', filename='setup.js') }}"></script>
