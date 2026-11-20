@@ -169,6 +169,7 @@ async function loadMapList() {
   try { saved = localStorage.getItem(MAP_KEY_STORAGE); } catch (e) { /* 저장소를 못 쓰는 창 */ }
   mapUI.current = mapUI.maps.find((m) => m.key === saved) || mapUI.maps[0];
   fillMapSelect();
+  drawBtrTrackerLink();  // 처음 켤 때 마지막 맵이 등대·삼림·시내면 바로 보이게 (전에는 맵을 바꿔야 나왔음)
   // 페이지를 열었을 때 이미 레이드 중이면 바로 그 맵으로
   if (typeof topbar !== "undefined") onGameState(topbar.state);
 }

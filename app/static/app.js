@@ -195,9 +195,7 @@ function questsOf(list) {
 
 // ---------- 큰 탭 (홈 / 퀘스트 / 스토리) ----------
 // 화면만 바꿈 (기록은 안 남김)
-let tabAnimationTimer;
 function showTab(name) {
-  clearTimeout(tabAnimationTimer);
   const changed = currentTab() !== name;
   document.querySelectorAll(".tab").forEach((b) => {
     const on = b.dataset.tab === name;
@@ -213,10 +211,8 @@ function showTab(name) {
   document.dispatchEvent(new CustomEvent("tab-shown", { detail: name }));
   if (changed) {
     const panel = document.getElementById(`tab-${name}`);
-    if (name === "map") {
-      // tab-shown에서 예약한 fitFull 이후에 시작하고, 빠르게 떠난 탭에는 효과를 남기지 않는다.
-      tabAnimationTimer = setTimeout(() => { if (!panel.hidden) animateOpen(panel, "fade", 150); }, 0);
-    } else animateOpen(panel, "rise", 150);
+    // 지도 탭은 효과 없이 바로 (2026-11-21 사용자: 흐려졌다 선명해지는 게 점멸처럼 보임)
+    if (name !== "map") animateOpen(panel, "rise", 150);
   }
 }
 

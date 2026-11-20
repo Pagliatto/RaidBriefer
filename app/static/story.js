@@ -326,12 +326,9 @@ function renderChapter(ch) {
   card.className = "chapter" + (finishedAll ? " finished" : "");
   card.dataset.chapterId = ch.id;
   card.open = story.open.has(ch.id);
-  let wasOpen = card.open;
+  // 펼치기 효과는 뺌 (2026-11-21 사용자: 다시 그릴 때마다 여러 번 깜빡임)
   card.addEventListener("toggle", () => {
     if (card.open) story.open.add(ch.id); else story.open.delete(ch.id);
-    if (card.open && !wasOpen) animateOpen(card.querySelector(".chapter-body"), "fade", 150);
-    else if (!card.open) cancelWindowMotion(card.querySelector(".chapter-body"));
-    wasOpen = card.open;
   });
 
   // 접혀 있어도 보이는 줄: 이름 · 진행률 · 다음 할 일
@@ -381,12 +378,6 @@ function renderChapter(ch) {
       const box = el("div", "story-section");
       box.append(sectionHead(it), sectionBody(it));
       group.append(box);
-    });
-    group.addEventListener("toggle", () => {
-      [...group.children].filter((child) => child.tagName !== "SUMMARY").forEach((child) => {
-        if (group.open) animateOpen(child, "fade", 150);
-        else cancelWindowMotion(child);
-      });
     });
     body.append(group);
   }
