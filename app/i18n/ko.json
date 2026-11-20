@@ -18,6 +18,7 @@
     "mapQuestCount": "퀘스트 {n}",
     "mapStoryCount": " · 스토리 {n}",
     "mapTodo": "{name}에서 할 일",
+    "bossLabel": "보스",
     "prepLabel": "챙길 것",
     "prepNeededBy": "필요: {list}",
     "prepNone": "따로 챙길 건 없어요.",
@@ -53,7 +54,8 @@
     "settingsLatest": "최신 버전이에요.",
     "settingsNew": "새 버전 {latest}이 있어요. 위쪽 안내에서 업데이트할 수 있어요.",
     "settingsUnknown": "최신 버전을 확인하지 못했어요. (인터넷 연결 확인)",
-    "settingsPrivacy": "켤 때 깃허브에 최신 버전만 물어봐요. 기록이나 개인 정보는 보내지 않아요."
+    "settingsPrivacy": "켤 때 깃허브에 최신 버전만 물어봐요. 기록이나 개인 정보는 보내지 않아요.",
+    "unseenAvailable": "새 버전이 있어요"
   },
   "tabs": {
     "home": "홈",
@@ -174,7 +176,8 @@
     "groupCan": "지금 지을 수 있음",
     "groupLocked": "조건이 남음",
     "doneHide": "다 지은 시설 접기 ({n}) ▴",
-    "doneShow": "다 지은 시설 보기 ({n}) ▾"
+    "doneShow": "다 지은 시설 보기 ({n}) ▾",
+    "unseenBuildable": "새로 건설할 수 있는 시설이 있어요"
   },
   "map": {
     "loadFailed": "지도 정보를 불러오지 못했어요. {error}",
@@ -213,7 +216,12 @@
     "auto": "● 지금 레이드 맵",
     "drawer": "퀘스트",
     "layerTitle": "지도에 표시",
-    "loadingMap": "지도를 불러오는 중…"
+    "loadingMap": "지도를 불러오는 중…",
+    "bossChance": "{name} {chance}%",
+    "layerBtrStops": "BTR 정류장",
+    "btrTracker": "BTR 트래커",
+    "btrTrackerHint": "BTR 위치·시간 예상 (tarkovbtr.com, 외부 사이트)",
+    "btrWikiSource": "위키"
   },
   "floors": {
     "Underground": "지하",
@@ -345,7 +353,8 @@
     "noData": "tarkov.dev에서 정보를 받지 못했고, 저장된 정보도 없어요. ({error}) 인터넷 연결을 확인하고 잠시 후 다시 시도해 주세요.",
     "updated": "tarkov.dev에서 바뀐 정보를 받아왔어요: {names}",
     "upToDate": "tarkov.dev 확인 완료: 바뀐 정보가 없어요.",
-    "notSaved": "{name} 정보가 아직 저장되어 있지 않아요."
+    "notSaved": "{name} 정보가 아직 저장되어 있지 않아요.",
+    "updating": "데이터 받는 중…"
   },
   "brightness": {
     "title": "게임 밝기",
@@ -368,12 +377,10 @@
     "monitorLabel": "밝기 조절 모니터",
     "automatic": "주 모니터 (자동)",
     "identify": "이 모니터 확인",
-    "monitorNumber": "{number}번",
+    "monitorNumber": "모니터 {number}",
+    "duplicateName": "{name} ({number}번)",
     "primary": "주 모니터",
-    "resolution": "{width}×{height}",
-    "left": "왼쪽",
-    "right": "오른쪽",
-    "middle": "가운데",
+    "monitorDetails": "{name} ({width}×{height})",
     "monitorMissing": "모니터 연결 확인 필요"
   },
   "skills": {

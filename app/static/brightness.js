@@ -19,17 +19,15 @@
   let monitorSignature = "";
 
   function monitorName(monitor, detailed = false) {
-    const parts = [t("brightness.monitorNumber", { number: monitor.number })];
-    if (monitor.primary) parts.push(t("brightness.primary"));
+    const name = (monitor.name || "").trim();
+    const duplicate = name && state.monitors.some((m) => m.id !== monitor.id && (m.name || "").trim() === name);
+    let label = name || t("brightness.monitorNumber", { number: monitor.number });
+    if (duplicate) label = t("brightness.duplicateName", { name, number: monitor.number });
+    if (monitor.primary) label += " · " + t("brightness.primary");
     if (detailed) {
-      parts.push(t("brightness.resolution", { width: monitor.width, height: monitor.height }));
-      const xs = state.monitors.map((m) => m.x);
-      const left = Math.min(...xs);
-      const right = Math.max(...xs);
-      const side = left === right ? "middle" : monitor.x === left ? "left" : monitor.x === right ? "right" : "middle";
-      parts.push(t(`brightness.${side}`));
+      label = t("brightness.monitorDetails", { name: label, width: monitor.width, height: monitor.height });
     }
-    return parts.join(" · ");
+    return label;
   }
 
   function drawStrength(value) {

@@ -18,6 +18,7 @@
     "mapQuestCount": "Quests {n}",
     "mapStoryCount": " · Story {n}",
     "mapTodo": "To do on {name}",
+    "bossLabel": "Bosses",
     "prepLabel": "What to bring",
     "prepNeededBy": "Needed for: {list}",
     "prepNone": "Nothing special to bring.",
@@ -53,7 +54,8 @@
     "settingsLatest": "You're on the latest version.",
     "settingsNew": "New version {latest} is available. You can update from the notice at the top.",
     "settingsUnknown": "Couldn't check for the latest version. (check your internet connection)",
-    "settingsPrivacy": "On startup, it only asks GitHub for the latest version. No records or personal data are sent."
+    "settingsPrivacy": "On startup, it only asks GitHub for the latest version. No records or personal data are sent.",
+    "unseenAvailable": "A new version is available"
   },
   "tabs": {
     "home": "Home",
@@ -174,7 +176,8 @@
     "groupCan": "Can build now",
     "groupLocked": "Unmet requirements",
     "doneHide": "Hide maxed stations ({n}) ▴",
-    "doneShow": "Show maxed stations ({n}) ▾"
+    "doneShow": "Show maxed stations ({n}) ▾",
+    "unseenBuildable": "New stations can be built"
   },
   "map": {
     "loadFailed": "Couldn't load map data. {error}",
@@ -213,7 +216,12 @@
     "auto": "● Current raid map",
     "drawer": "Quests",
     "layerTitle": "Show on map",
-    "loadingMap": "Loading the map…"
+    "loadingMap": "Loading the map…",
+    "bossChance": "{name} {chance}%",
+    "layerBtrStops": "BTR stops",
+    "btrTracker": "BTR tracker",
+    "btrTrackerHint": "BTR position and timing (tarkovbtr.com, external site)",
+    "btrWikiSource": "wiki"
   },
   "floors": {
     "Underground": "Underground",
@@ -345,7 +353,8 @@
     "noData": "Couldn't get data from tarkov.dev and there's no saved data. ({error}) Check your internet connection and try again shortly.",
     "updated": "Downloaded updated data from tarkov.dev: {names}",
     "upToDate": "tarkov.dev check done: nothing changed.",
-    "notSaved": "{name} data isn't saved yet."
+    "notSaved": "{name} data isn't saved yet.",
+    "updating": "Updating data…"
   },
   "brightness": {
     "title": "Game brightness",
@@ -369,11 +378,9 @@
     "automatic": "Primary monitor (auto)",
     "identify": "Identify monitor",
     "monitorNumber": "Monitor {number}",
-    "primary": "Primary",
-    "resolution": "{width}×{height}",
-    "left": "Left",
-    "right": "Right",
-    "middle": "Middle",
+    "duplicateName": "{name} ({number})",
+    "primary": "Primary monitor",
+    "monitorDetails": "{name} ({width}×{height})",
     "monitorMissing": "Check monitor connection"
   },
   "skills": {

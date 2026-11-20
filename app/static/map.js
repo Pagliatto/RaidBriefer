@@ -100,6 +100,7 @@ async function loadMapList() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "");
     mapUI.maps = data;
+    document.dispatchEvent(new Event("maps-changed"));
   } catch (error) {
     document.getElementById("map-view").replaceChildren(el("p", "empty", t("map.loadFailed", { error: error.message })));
     return;
@@ -132,7 +133,17 @@ function chooseMap(key, remember = true) {
     try { localStorage.setItem(MAP_KEY_STORAGE, key); } catch (e) { /* 무시 */ }
   }
   document.getElementById("map-select").value = key;
+  drawBtrTrackerLink();
   drawMap();
+}
+
+// BTR 트래커 링크: tarkovbtr.com 이 다루는 맵(시내·삼림·등대)에서만 (2026-11-20 사용자)
+const BTR_TRACKER_MAPS = { "streets-of-tarkov": "streets", woods: "woods", lighthouse: "lighthouse" };
+function drawBtrTrackerLink() {
+  const link = document.getElementById("btr-tracker-link");
+  const site = mapUI.current && BTR_TRACKER_MAPS[mapUI.current.key];
+  link.hidden = !site;
+  if (site) link.href = `https://tarkovbtr.com/?map=${site}`;
 }
 
 // 이 맵의 진행 중 퀘스트 (숨긴 것 제외) → 그다음 '모든 맵' 퀘스트
@@ -725,13 +736,14 @@ loadMapList();
 
 // ---------- 표시 켜기/끄기 (왼쪽 서랍) ----------
 // 퀘스트·먹을 것·탈출구·트랜짓·열쇠·귀중품. 고른 값은 이 브라우저에 기억 (다음에 켜도 그대로)
-const LAYER_KEYS = ["quests", "loot", "extracts", "scavExtracts", "transits", "keys", "bitcoin", "keySpawns", "valuables"];
+const LAYER_KEYS = ["quests", "loot", "extracts", "scavExtracts", "transits", "btrStops", "keys", "bitcoin", "keySpawns", "valuables"];
 const LAYER_INFO = {
   quests: { label: t("map.layerQuests"), mark: "shape:quest", on: true },
   loot: { label: t("map.layerLoot"), mark: "shape:loot", on: true },  // 바닥 위치를 아는 아이템만 (없으면 0)
   extracts: { label: t("map.layerExtracts"), mark: "shape:extract", on: true },
   scavExtracts: { label: t("map.layerScavExtracts"), mark: "shape:scav", on: false },
   transits: { label: t("map.layerTransits"), mark: "shape:transit", on: true },
+  btrStops: { label: t("map.layerBtrStops"), mark: "icon:bus", on: true },
   keys: { label: t("map.layerLocks"), mark: "icon:lock", on: true },          // 열쇠로 여는 곳
   bitcoin: { label: t("map.layerBitcoin"), mark: "icon:bitcoin", on: true },
   keySpawns: { label: t("map.layerKeySpawns"), mark: "icon:key", on: true },      // 열쇠·키카드가 바닥에 생기는 곳
@@ -810,7 +822,7 @@ async function drawFeatures(leaf, m) {
   const add = (groupKey, p, icon, tooltip, permanent = false) => {
     const marker = L.marker(gamePos(p), { icon, keyboard: false });
     if (tooltip) marker.bindTooltip(tooltip, permanent
-      ? { permanent: true, direction: "right", offset: [6, 0], className: "feature-label" }
+      ? { permanent: true, direction: "right", offset: [6, 0], className: groupKey === "btrStops" ? "feature-label btr-label" : "feature-label" }
       : { direction: "top", offset: [0, -8] });
     const floor = floorOf(p);
     marker.on("click", () => goToFloorOf(floor)); // 누르면 그 표시가 있는 층으로
@@ -825,6 +837,10 @@ async function drawFeatures(leaf, m) {
     add(group, e.pos, dot(`extract extract-${e.faction}`, 16), escapeHtml(e.name), true);
   });
   data.transits.forEach((tr) => add("transits", tr.pos, dot("transit", 16), escapeHtml(tr.name), true));
+  (data.btrStops || []).forEach((stop) => add("btrStops", stop.pos,
+    L.divIcon({ className: "feature btr-pin", html: `<span>${iconSvg("bus", 11, 2.6)}</span>`, iconSize: [16, 16], iconAnchor: [8, 8] }),
+    // dev 에 없어서 위키 그림으로 넣은 정류장(등대)은 이름 옆에 작게 출처 표시
+    escapeHtml(stop.name) + (stop.source === "wiki" ? ` <small class="btr-src">${escapeHtml(t("map.btrWikiSource"))}</small>` : ""), true));
   // 열쇠 문: 마우스를 올리면 필요한 열쇠
   data.locks.forEach((lock) => {
     const where = lock.type === "trunk" ? t("map.lockTrunk") : "";

@@ -4,6 +4,10 @@
 // - 진행 중인 스토리 : 챕터별 진행률과 다음 맵
 // state(app.js), story / allSteps / doneIndex(story.js), el / PREP_CLASS(app.js) 를 같이 씀
 
+function bossText(boss) {
+  return t("map.bossChance", { name: boss.name, chance: Math.round(boss.spawnChance * 1000) / 10 });
+}
+
 const home = { map: null };  // 고른 맵 이름 (null = 접힘, 처음에는 접혀 있음)
 
 // 챕터별 "다음에 할 단계"와 그 맵 (홈에는 시작한 챕터만: 단계를 하나라도 체크한 것)
@@ -78,6 +82,12 @@ function renderHomeMaps(entries) {
   entries.forEach(([name, info]) => {
     const card = el("button", "home-map" + (home.map === name ? " active" : ""));
     card.type = "button";
+    card.dataset.mapName = name;
+    const mark = el("span", "home-raid-mark");
+    mark.hidden = true;
+    mark.setAttribute("aria-hidden", "true");
+    mark.append(el("i"), el("i", "home-ripple"), el("i", "home-ripple second"));
+    card.append(mark);
     card.append(el("span", "home-map-name", name));
     const counts = el("span", "home-map-count");
     counts.textContent = t("home.mapQuestCount", { n: info.quests.length }) + (info.stories.length ? t("home.mapStoryCount", { n: info.stories.length }) : "");
@@ -87,6 +97,7 @@ function renderHomeMaps(entries) {
     card.addEventListener("click", () => { home.map = home.map === name ? null : name; renderHome(); });
     box.append(card);
   });
+  updateHomeRaidMarks();
 }
 
 function renderHomeDetail(name, info) {
@@ -95,6 +106,15 @@ function renderHomeDetail(name, info) {
   if (!name) return;
 
   box.append(el("h3", "home-detail-title", t("home.mapTodo", { name })));
+
+  // 보스 등장 확률: 들어가기 전에 챙길 것과 같이 보도록 '할 일' 칸에만 (카드는 좁아서 잘림)
+  const map = typeof mapUI !== "undefined" && mapUI.maps.find((m) => m.name === name);
+  const bosses = (map && map.bosses) || [];
+  if (bosses.length) {
+    const line = el("p", "home-bosses");
+    line.append(el("span", "home-label home-bosses-label", t("home.bossLabel")), document.createTextNode(bosses.map(bossText).join(" · ")));
+    box.append(line);
+  }
 
   // 챙길 것
   const prep = gatherPrep(info, name);
@@ -328,3 +348,15 @@ function renderHome() {
 document.addEventListener("quests-changed", renderHome);
 document.addEventListener("hideout-changed", renderHome); // 은신처 체크·건설 완료하면 '뭘 모아 올까?'도 다시
 document.addEventListener("story-changed", renderHome);
+
+function updateHomeRaidMarks() {
+  const s = typeof topbar !== "undefined" ? topbar.state : {};
+  const current = typeof mapUI !== "undefined" && mapUI.maps.find((m) => m.ids.includes(s.map_id));
+  document.querySelectorAll(".home-map").forEach((card) => {
+    const active = ["raid", "loading"].includes(s.status) && card.dataset.mapName === (current ? current.name : s.map_name);
+    const mark = card.querySelector(".home-raid-mark");
+    if (mark) mark.hidden = !active;
+  });
+}
+window.addEventListener("game-state", updateHomeRaidMarks);
+document.addEventListener("maps-changed", () => renderHomeMaps(collectByMap()));

@@ -9,7 +9,7 @@
 4. 실패한 뒤에는 바로 또 시도하지 않고 점점 오래 기다린다 (서버 배려)
 
 저장 파일
-- cache/pve_tasks.json 등 : 받은 데이터 그대로
+- cache/pve_tasks.json 등 : 받은 데이터 (맵·아이템 번역은 사용하는 필드만)
 - cache/_meta.json         : 파일별 ETag(버전 표시)와 마지막 확인 시각
 """
 
@@ -46,6 +46,20 @@ SPT_NAME_KEY = re.compile(r"([0-9a-fA-F]{24}) name")
 _spt_update_lock = threading.Lock()
 _spt_last_attempt = 0.0
 _spt_loaded: tuple | None = None
+_data_update_lock = threading.Lock()
+_data_update_count = 0
+
+
+def _data_activity(delta: int) -> None:
+    global _data_update_count
+    with _data_update_lock:
+        _data_update_count += delta
+
+
+def is_updating() -> bool:
+    """Concurrent tarkov.dev / SPT downloads share a nonblocking status flag."""
+    with _data_update_lock:
+        return _data_update_count > 0
 
 KEY_NAME = re.compile(r"\bkey\b|keycard|key card", re.I)  # 영어 이름으로 열쇠·키카드 구분 (map_views 와 같은 규칙)
 
@@ -64,6 +78,12 @@ DATA_FILES = [
     "items_ko", "items_en",  # 아이템 이름 번역만 (아이템 전체 정보는 너무 커서 안 받음)
     "hideout", "hideout_ko", "hideout_en",  # 은신처 시설·레벨별 필요 재료 (약 100KB)
 ]
+
+MAP_CACHE_FIELDS = frozenset({
+    "id", "name", "normalizedName", "scenePath", "wiki", "raidDuration", "accessKeys",
+    "extracts", "transits", "locks", "lootLoose", "bosses", "btrStops",
+})
+COMPACT_CACHE_FILES = {"maps", "maps_ko", "maps_en", "items_ko", "items_en"}
 
 # 실패하면 기다리는 시간: 1분 → 2분 → 4분 ... 최대 60분
 RETRY_START_SECONDS = 60
@@ -86,6 +106,21 @@ def _write_json(path: Path, value) -> None:
     temp = path.with_suffix(".tmp")
     temp.write_text(json.dumps(value, ensure_ascii=False), encoding="utf-8")
     temp.replace(path)
+
+
+def _compact_cache(name: str, data):
+    """필드 이름·순서를 유지하며 사용하지 않는 큰 데이터만 제외한다."""
+    if name in {"maps", "maps_ko", "maps_en"}:
+        # maps_ko/en은 현재 번역 사전이므로 그대로 둔다. 구조가 같을 때만 맵처럼 줄인다.
+        if isinstance(data, dict) and isinstance(data.get("maps"), dict):
+            return {"maps": {
+                map_id: {key: value for key, value in info.items() if key in MAP_CACHE_FIELDS}
+                for map_id, info in data["maps"].items()
+            }}
+    elif name in {"items_ko", "items_en"}:
+        # Translator("items")와 영어 이름 조회는 Name만 사용한다 (ShortName은 사용 안 함).
+        return {key: value for key, value in data.items() if key.endswith(" Name")}
+    return data
 
 
 def _read_spt_names() -> dict:
@@ -113,6 +148,7 @@ def update_spt_names() -> None:
     global _spt_last_attempt, _spt_loaded
     if not _spt_update_lock.acquire(blocking=False):
         return
+    downloading = False
     try:
         saved = _read_spt_names()
         now = time.time()
@@ -131,6 +167,8 @@ def update_spt_names() -> None:
         if now - _spt_last_attempt < SPT_RETRY_SECONDS:
             return
         _spt_last_attempt = now
+        _data_activity(1)
+        downloading = True
         names = {"ko": {}, "en": {}, **saved}
         changed = False
         if names_due:
@@ -208,6 +246,8 @@ def update_spt_names() -> None:
     except Exception:
         pass  # 이름 보완 실패가 실행이나 퀘스트 목록을 막지 않게 한다.
     finally:
+        if downloading:
+            _data_activity(-1)
         _spt_update_lock.release()
 
 
@@ -315,6 +355,7 @@ def update_all(force: bool = False) -> str:
         minutes = int((meta["next_try"] - now) // 60) + 1
         return i18n.t("data.retryLater", minutes=minutes, time=_time_text(meta["checked_at"]))
 
+    _data_activity(1)
     try:
         results = {}
         for name in DATA_FILES:
@@ -328,13 +369,23 @@ def update_all(force: bool = False) -> str:
         if saved:
             return i18n.t("data.checkFailed", error=error, time=_time_text(meta["checked_at"]))
         raise DataError(i18n.t("data.noData", error=error)) from error
+    finally:
+        _data_activity(-1)
 
     # 전부 확인에 성공했을 때만 저장 → 일부만 새것이 되는 일이 없음
     changed = []
     for name, (data, etag) in results.items():
         if data is not None:
-            _write_json(_cache_path(name), data)
+            _write_json(_cache_path(name), _compact_cache(name, data))
+            _loaded.pop(name, None)
             changed.append(name)
+        elif name in COMPACT_CACHE_FILES:
+            # 304여도 이전의 큰 저장본은 정상 갱신 때 한 번 줄인다. 재다운로드는 필요 없다.
+            cached = load(name)
+            compact = _compact_cache(name, cached)
+            if compact != cached:
+                _write_json(_cache_path(name), compact)
+                _loaded.pop(name, None)
         meta["files"][name] = {"etag": etag}
     meta.update(checked_at=now, retry_wait=0, next_try=0)
     _write_json(META_FILE, meta)

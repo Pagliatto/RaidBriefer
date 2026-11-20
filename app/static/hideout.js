@@ -8,11 +8,117 @@ const hideout = {
 };
 const HO_ICON = (id) => `https://assets.tarkov.dev/${id}-icon.webp`;
 
+const HIDEOUT_SEEN_KEY = "rb-hideout-seen";
+const HIDEOUT_CHANGES_KEY = "rb-hideout-changes";
+let hideoutBaseline = readQuestStorage(HIDEOUT_SEEN_KEY);
+if (hideoutBaseline && Object.values(hideoutBaseline).some((level) => !Number.isInteger(level) || level < 1)) {
+  hideoutBaseline = null;
+}
+const hideoutChanges = Object.create(null);
+if (hideoutBaseline) {
+  Object.entries(readQuestStorage(HIDEOUT_CHANGES_KEY) || {}).forEach(([id, change]) => {
+    if (change && Number.isInteger(change.level) && change.level === hideoutBaseline[id]) {
+      hideoutChanges[id] = { level: change.level, flashed: change.flashed === true };
+    }
+  });
+}
+function saveHideoutChanges() {
+  try {
+    localStorage.setItem(HIDEOUT_SEEN_KEY, JSON.stringify(hideoutBaseline));
+    localStorage.setItem(HIDEOUT_CHANGES_KEY, JSON.stringify(hideoutChanges));
+  } catch (e) { /* Keep this session working when storage is unavailable. */ }
+}
+function trackHideoutChanges(data) {
+  const next = Object.create(null);
+  data.stations.filter((s) => s.next && s.buildable).forEach((s) => { next[s.id] = s.next.level; });
+  if (hideoutBaseline) {
+    Object.entries(next).forEach(([id, level]) => {
+      if (hideoutBaseline[id] !== level) hideoutChanges[id] = { level, flashed: false };
+    });
+  }
+  Object.keys(hideoutChanges).forEach((id) => {
+    if (hideoutChanges[id].level !== next[id]) delete hideoutChanges[id];
+  });
+  hideoutBaseline = next;
+  saveHideoutChanges();
+  updateHideoutDot();
+}
+function updateHideoutDot() {
+  const button = document.querySelector('.tab[data-tab="hideout"]');
+  let dot = button.querySelector(".hideout-change-dot");
+  if (Object.keys(hideoutChanges).length && !dot) {
+    dot = el("span", "hideout-change-dot");
+    dot.setAttribute("role", "img");
+    dot.setAttribute("aria-label", t("hideout.unseenBuildable"));
+    dot.title = t("hideout.unseenBuildable");
+    button.append(dot);
+  } else if (!Object.keys(hideoutChanges).length && dot) dot.remove();
+}
+const hideoutHoverTimers = new Map();
+function clearHideoutHover(card) {
+  clearTimeout(hideoutHoverTimers.get(card));
+  hideoutHoverTimers.delete(card);
+}
+function resetHideoutHover() {
+  hideoutHoverTimers.forEach((timer) => clearTimeout(timer));
+  hideoutHoverTimers.clear();
+}
+const hideoutChangeObserver = new IntersectionObserver((entries) => {
+  let changed = false;
+  entries.forEach(({ target: card, isIntersecting }) => {
+    if (!isIntersecting || !card.isConnected || document.hidden || document.getElementById("tab-hideout").hidden) return;
+    const change = hideoutChanges[card.dataset.stationId];
+    if (!change || change.flashed) return;
+    change.flashed = true;
+    card.classList.add("hideout-change-flash");
+    hideoutChangeObserver.unobserve(card);
+    changed = true;
+  });
+  if (changed) saveHideoutChanges();
+});
+function observeHideoutChanges() {
+  hideoutChangeObserver.disconnect();
+  if (document.hidden || document.getElementById("tab-hideout").hidden) return;
+  document.querySelectorAll("#ho-list .ho-card").forEach((card) => {
+    const change = hideoutChanges[card.dataset.stationId];
+    if (change && !change.flashed) hideoutChangeObserver.observe(card);
+  });
+}
+function decorateHideoutChange(card, s) {
+  const change = hideoutChanges[s.id];
+  if (!change) return;
+  card.tabIndex = 0;
+  card.title = t("hideout.unseenBuildable");
+  const dismiss = () => {
+    clearHideoutHover(card);
+    if (hideoutChanges[s.id] !== change) return;
+    delete hideoutChanges[s.id];
+    card.removeAttribute("tabindex");
+    card.removeAttribute("title");
+    saveHideoutChanges();
+    updateHideoutDot();
+  };
+  card.addEventListener("mouseenter", () => {
+    clearHideoutHover(card);
+    hideoutHoverTimers.set(card, setTimeout(() => {
+      clearHideoutHover(card);
+      if (card.isConnected && !document.hidden && !document.getElementById("tab-hideout").hidden) dismiss();
+    }, 1000));
+  });
+  card.addEventListener("mouseleave", () => clearHideoutHover(card));
+  card.addEventListener("click", dismiss, true);
+  card.addEventListener("focusin", dismiss);
+}
+document.addEventListener("tab-shown", () => { resetHideoutHover(); observeHideoutChanges(); });
+document.addEventListener("visibilitychange", () => { resetHideoutHover(); observeHideoutChanges(); });
+window.addEventListener("blur", resetHideoutHover);
+
 async function loadHideout() {
   try {
     const res = await fetch("/api/hideout");
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "");
+    trackHideoutChanges(data);
     hideout.data = data;
     renderHideout();
     // 지도 '먹을 것'·홈 '뭘 모아 올까?' 가 은신처 재료를 같이 쓰게 알림 (4단계에서 연결)
@@ -66,6 +172,8 @@ function hoItem(item) {
 function hoCard(s) {
   const card = el("article", `ho-card${s.next ? (s.buildable ? " buildable" : " locked") : " done"}`);
   card.dataset.station = s.name; // 홈·지도에서 '이 재료가 필요한 시설'로 갈 때 찾는 이름표
+  card.dataset.stationId = s.id;
+  decorateHideoutChange(card, s);
   const head = el("div", "ho-head");
   if (s.image) {
     const img = el("img", "ho-image");
@@ -124,6 +232,8 @@ function hoCard(s) {
 }
 
 function renderHideout() {
+  resetHideoutHover();
+  hideoutChangeObserver.disconnect();
   const d = hideout.data;
   if (!d) return;
   const can = d.stations.filter((s) => s.next && s.buildable);
@@ -211,6 +321,7 @@ function renderHideout() {
       list.append(grid);
     }
   }
+  observeHideoutChanges();
 }
 
 // 홈 '뭘 모아 올까?'·지도 '먹을 것'에서 은신처 재료를 누르면: 은신처 탭에서 그 시설 카드로 (반짝임)

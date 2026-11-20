@@ -157,6 +157,8 @@
         <button type="button" class="layer-toggle-btn" id="layer-toggle-btn" aria-expanded="false" title="{{ t('map.layerToggleHint') }}"><span data-icon="layers" data-size="15"></span> {{ t('map.layerToggle') }}</button>
         <select id="map-select" aria-label="{{ t('map.selectLabel') }}"></select>
         <span class="map-auto" id="map-auto" hidden>{{ t('map.auto') }}</span>
+        <!-- BTR 트래커(외부 사이트, tarkovbtr.com): BTR 이 다니는 맵에서만 보임 -->
+        <a class="btr-tracker-link" id="btr-tracker-link" href="#" target="_blank" rel="noopener" title="{{ t('map.btrTrackerHint') }}" hidden><span data-icon="bus" data-size="14"></span> {{ t('map.btrTracker') }}</a>
         <!-- 먹을 것: 아직 제출 안 한 인레이드 아이템을 아이콘으로 (서랍을 접어도 보임) -->
         <div class="loot-strip" id="loot-bar" hidden></div>
         <button type="button" class="drawer-toggle" id="drawer-toggle" aria-expanded="true">{{ t('map.drawer') }} <b id="drawer-count">0</b> <span class="drawer-arrow" data-icon="chevron-right" data-size="15"></span></button>
@@ -184,7 +186,10 @@
     </section>
   </main>
 
-  <footer class="footer" id="footer"></footer>
+  <footer class="footer" id="data-footer">
+    <span id="footer"></span>
+    <span id="data-updating" role="status" hidden><i class="data-update-arc" aria-hidden="true"></i>{{ t('data.updating') }}</span>
+  </footer>
 
   <!-- 화면이 바뀔 때 잠깐 보여주는 안내 (예: "세관 불러오는 중") -->
   <div class="transition" id="transition" hidden>

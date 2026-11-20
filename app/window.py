@@ -10,6 +10,8 @@
 """
 
 import json
+import os
+import shutil
 import sys
 import threading
 import time
@@ -77,6 +79,33 @@ def _save_geometry(window) -> None:
         pass  # 창 위치를 못 남겨도 프로그램 사용에는 문제없음
 
 
+def _prepare_webview() -> None:
+    # 영상 DRM·광고 필터·음성·하이픈 사전은 쓰지 않으므로 구성 요소 다운로드를 막는다.
+    # 기존 인수와 페이지 렌더링·HTTP 캐시·Local Storage 설정은 그대로 둔다.
+    key = "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS"
+    existing = os.environ.get(key, "")
+    flag = "--disable-component-update"
+    if flag not in existing.split():
+        os.environ[key] = (existing + " " + flag).strip()
+
+    # 허용한 구성 요소 폴더만 정리한다. Default에는 지도 설정·퀘스트 상태가 있으므로 손대지 않는다.
+    try:
+        root = USER_DIR.resolve() / "webview" / "EBWebView"
+        if root.resolve() != root:
+            return  # 링크로 다른 위치에 연결된 저장소는 정리하지 않는다.
+        for name in ("WidevineCdm", "component_crx_cache", "Subresource Filter",
+                     "Speech Recognition", "hyphen-data"):
+            target = root / name
+            try:
+                if (target.resolve() == target and target.is_dir()
+                        and not target.is_symlink() and not target.is_junction()):
+                    shutil.rmtree(target, ignore_errors=True)
+            except (OSError, RuntimeError):
+                pass  # 사용 중이거나 접근할 수 없는 폴더는 남겨 둔다.
+    except (OSError, RuntimeError):
+        pass
+
+
 def main() -> None:
     updater.cleanup()  # 업데이트 직후라면 작업 폴더 정리
     port = server.PORT
@@ -86,6 +115,7 @@ def main() -> None:
         _start_server(port)
     # 이미 켜져 있으면(브라우저 방식으로 켰거나 창을 하나 더 열었을 때) 그 서버를 같이 씀
 
+    _prepare_webview()
     window = webview.create_window(
         "RaidBriefer",
         _url(port),

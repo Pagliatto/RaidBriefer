@@ -10,6 +10,8 @@ const updateUI = {
   notes: document.getElementById("update-notes"),
   later: document.getElementById("update-later"),
   info: null,
+  dismissed: null,
+  starting: false,
 };
 const UPDATE_LATER_KEY = "raidbriefer.updateLater";
 
@@ -21,7 +23,27 @@ function laterVersion() {
   try { return localStorage.getItem(UPDATE_LATER_KEY); } catch (e) { return null; }
 }
 
+function updateLaterChosen(version) {
+  return updateUI.dismissed === version || laterVersion() === version;
+}
+
+function drawUpdateDot() {
+  const s = updateUI.info;
+  const unseen = s && s.available && !updateLaterChosen(s.latest) && !updateUI.starting &&
+    !["downloading", "installing"].includes(s.status);
+  const button = document.getElementById("settings-open");
+  let dot = button.querySelector(".update-available-dot");
+  if (unseen && !dot) {
+    dot = el("span", "update-available-dot");
+    dot.setAttribute("role", "img");
+    dot.setAttribute("aria-label", t("update.unseenAvailable"));
+    dot.title = t("update.unseenAvailable");
+    button.append(dot);
+  } else if (!unseen && dot) dot.remove();
+}
+
 function drawUpdate() {
+  drawUpdateDot();
   const s = updateUI.info;
   // 설정 창의 '버전' 칸
   const cur = document.getElementById("update-current");
@@ -33,7 +55,7 @@ function drawUpdate() {
   }
   // 탭 아래 안내
   const busy = s && (s.status === "downloading" || s.status === "installing");
-  const show = s && (busy || s.status === "failed" || (s.available && laterVersion() !== s.latest)) && !updateInRaid();
+  const show = s && (busy || s.status === "failed" || (s.available && !updateLaterChosen(s.latest))) && !updateInRaid();
   updateUI.banner.hidden = !show;
   if (!show) return;
   updateUI.notes.href = s.page;
@@ -58,6 +80,7 @@ async function loadUpdate() {
   } catch (e) {
     return; // 서버가 잠깐 안 될 때는 다음에
   }
+  updateUI.starting = false;
   drawUpdate();
 }
 
@@ -69,6 +92,8 @@ updateUI.apply.addEventListener("click", async () => {
     return;
   }
   updateUI.apply.disabled = true;
+  updateUI.starting = true;
+  drawUpdateDot();
   try {
     const res = await fetch("/api/update/apply", {
       method: "POST",
@@ -76,6 +101,7 @@ updateUI.apply.addEventListener("click", async () => {
       body: JSON.stringify({ confirm: true }),
     });
     updateUI.info = await res.json();
+    if (!res.ok || updateUI.info.status === "failed") updateUI.starting = false;
   } catch (e) {
     // 업데이트가 시작되면 프로그램이 곧 꺼지므로 연결이 끊길 수 있음
   }
@@ -88,8 +114,10 @@ updateUI.apply.addEventListener("click", async () => {
 });
 
 updateUI.later.addEventListener("click", () => {
+  updateUI.dismissed = updateUI.info.latest;
   try { localStorage.setItem(UPDATE_LATER_KEY, updateUI.info.latest); } catch (e) { /* 저장 못 해도 이번엔 숨김 */ }
   updateUI.banner.hidden = true;
+  drawUpdateDot();
 });
 
 // 레이드에 들어가면 숨기고, 나오면 다시

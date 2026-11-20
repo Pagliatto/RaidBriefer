@@ -110,6 +110,7 @@ def map_list() -> list[dict]:
     tr = tarkov_api.Translator("maps")
     names = {m["normalizedName"]: tr(m["name"]) for m in maps.values()}
     result = {}
+    boss_chances = {}
     for m in maps.values():
         key = m["normalizedName"]
         if key in HIDDEN_MAPS:
@@ -117,6 +118,21 @@ def map_list() -> list[dict]:
         key = MERGED_MAPS.get(key, key)
         item = result.setdefault(key, {"key": key, "name": names.get(key, key), "ids": []})
         item["ids"].append(m["id"])
+        chances = boss_chances.setdefault(key, {})
+        for boss in m.get("bosses") or []:
+            mob = boss.get("mob") or ""
+            if not (mob.startswith("boss") or mob == "sectantPriest"):
+                continue
+            name = tr(mob)
+            chance = boss.get("spawnChance")
+            if not isinstance(chance, (int, float)) or not 0 <= chance <= 1:
+                continue
+            chances[name] = max(chances.get(name, 0), chance)
+    for key, item in result.items():
+        item["bosses"] = [
+            {"name": name, "spawnChance": chance}
+            for name, chance in sorted(boss_chances[key].items(), key=lambda x: (-x[1], x[0]))
+        ]
     return sorted(result.values(), key=lambda x: x["name"])
 
 
@@ -146,6 +162,14 @@ def _xzy(position: dict) -> list[float]:
     return [round(position.get("x", 0), 2), round(position.get("z", 0), 2), round(position.get("y", 0), 2)]
 
 
+def _manual_btr_stops() -> dict:
+    """data/manual_btr_stops.json (없거나 깨지면 빈 값)"""
+    try:
+        return json.loads((paths.DATA_DIR / "manual_btr_stops.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
 def features(map_key: str) -> dict:
     """지도에 같이 표시할 것들 (tarkov.dev maps).
     - extracts : 탈출구 (영어 이름, pmc/scav/shared)
@@ -156,15 +180,26 @@ def features(map_key: str) -> dict:
     maps = tarkov_api.load("maps")["maps"]
     m = next((x for x in maps.values() if x["normalizedName"] == map_key), None)
     if not m:
-        return {"extracts": [], "transits": [], "locks": [], "loot": []}
+        return {"extracts": [], "transits": [], "locks": [], "loot": [], "btrStops": []}
     en = tarkov_api.load("maps_en")
     items = tarkov_api.Translator("items")
+    map_names = tarkov_api.Translator("maps")
 
     def item_name(item_id: str) -> str:
         name = items(f"{item_id} Name")
         return "" if name.endswith(" Name") else name
 
-    result = {"extracts": [], "transits": [], "locks": [], "loot": []}
+    result = {"extracts": [], "transits": [], "locks": [], "loot": [], "btrStops": []}
+    for stop in m.get("btrStops") or []:
+        result["btrStops"].append({
+            "name": map_names(stop.get("name") or ""),
+            "pos": _xzy(stop),
+        })
+    if not result["btrStops"]:
+        # tarkov.dev 에 아직 없는 맵(등대)은 직접 적은 정류장 (위키 그림 기준). dev 에 생기면 dev 가 이김
+        manual = _manual_btr_stops().get(map_key) or {}
+        for stop in manual.get("stops") or []:
+            result["btrStops"].append({"name": stop["name"], "pos": _xzy(stop), "source": manual.get("source", "manual")})
     for e in m.get("extracts") or []:
         if e.get("position"):
             result["extracts"].append({

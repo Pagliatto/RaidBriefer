@@ -50,6 +50,8 @@ function drawTopbar() {
   drawClock("clock-b", tarkovTime(now, 12));
 
   const s = topbar.state;
+  topbar.get("data-footer").classList.toggle("data-is-updating", !!s.data_updating);
+  topbar.get("data-updating").hidden = !s.data_updating;
   const pill = topbar.get("raid-state");
   const status = s.status === "lobby" && now < topbar.endedUntil ? "ended" : s.status;
   if (pill.dataset.status !== status) pill.dataset.status = status;

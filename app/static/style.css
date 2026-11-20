@@ -1876,3 +1876,63 @@ button.home-map, button.home-story-row, button.choice-option, button.prep-item, 
 }
 .brightness-settings-message { margin: 8px 0 0; text-wrap: pretty; }
 @media (prefers-reduced-motion: reduce) { .brightness-dot { animation: none !important; } }
+
+/* 보스 확률(홈 '할 일' 칸), BTR 정류장, 움직이는 표시 */
+.home-map { position: relative; }
+.home-map-name { padding-right: 12px; }
+.home-bosses { margin: 4px 0 10px; font-size: 14px; color: var(--text-dim); }
+.home-bosses-label { display: inline; margin-right: 8px; }
+.home-raid-mark[hidden], #data-updating[hidden] { display: none; }
+@media (min-width: 901px) {
+  .map-bar { flex-wrap: nowrap; gap: 6px; }
+  .map-bar select { flex: none; }  /* 맵 이름은 안 잘리게 (영어 'Streets of Tarkov (15)'), 줄어드는 건 먹을 것 줄 */
+  .map-bar .loot-strip { min-width: 0; }
+  .map-bar .loot-strip { flex-wrap: nowrap; overflow-x: auto; padding-block: 3px; }
+  .map-bar .loot-strip > * { flex-shrink: 0; }
+}
+/* BTR 트래커 링크 (지도 위쪽 줄, 시내·삼림·등대만) */
+.btr-tracker-link {
+  flex: none; display: inline-flex; align-items: center; gap: 4px; height: 30px; padding: 0 8px;
+  border: 1px solid var(--border-strong); border-radius: var(--radius-sm); color: var(--info);
+  font-size: 13px; font-weight: 600; white-space: nowrap; text-decoration: none;
+}
+.btr-tracker-link:hover, .btr-tracker-link:focus-visible { border-color: var(--info); }
+.btr-tracker-link[hidden] { display: none; }
+.leaflet-tooltip.btr-label .btr-src { font-size: 10px; color: var(--text-faint); }
+/* BTR 정류장: 비트코인과 같은 16px 동그란 바탕 (파랑) */
+.btr-pin span { display: grid; place-items: center; border-radius: 50%; background: var(--info); color: #111; border: 1px solid #111; }
+.leaflet-tooltip.feature-label.btr-label { font-size: 11px; font-weight: 400; padding: 1px 4px; }
+.layer-btrStops .layer-mark { color: var(--info); }
+.home-raid-mark {
+  position: absolute; top: 12px; right: 12px; width: 6px; height: 6px;
+  color: var(--ok); pointer-events: none;
+}
+.home-raid-mark i { position: absolute; inset: 0; border-radius: 50%; background: currentColor; }
+.home-raid-mark .home-ripple {
+  background: transparent; border: 1px solid currentColor; transform: scale(1.25); opacity: .9;
+  animation: signal-ripple 3.2s cubic-bezier(.2,.6,.4,1) infinite;
+}
+.home-raid-mark .home-ripple.second { transform: scale(1.9); opacity: .65; animation-delay: -1.6s; }
+.footer { display: grid; }
+#data-footer > span { grid-area: 1 / 1; min-width: 0; }
+#data-footer.data-is-updating > #footer { visibility: hidden; }
+#data-updating { display: flex; align-items: center; gap: 7px; color: var(--text-dim); }
+.data-update-arc {
+  flex: none; width: 12px; height: 12px; border: 1.5px solid transparent;
+  border-top-color: currentColor; border-right-color: currentColor; border-radius: 50%;
+  animation: signal-turn 2.4s linear infinite;
+}
+.tab[data-tab="hideout"], #settings-open, .ho-card { position: relative; }
+.hideout-change-dot, .update-available-dot {
+  position: absolute; top: 4px; right: 4px; width: 6px; height: 6px;
+  border-radius: 50%; background: var(--ok); pointer-events: none;
+}
+.update-available-dot { background: var(--accent); }
+.ho-card.hideout-change-flash::after {
+  content: ""; position: absolute; inset: 0; border: 1px solid var(--ok); border-radius: inherit;
+  background: color-mix(in srgb, var(--ok) 12%, transparent); pointer-events: none;
+  opacity: 0; animation: quest-change-flash 2.4s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-raid-mark .home-ripple, .data-update-arc, .ho-card.hideout-change-flash::after { animation: none; }
+}

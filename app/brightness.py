@@ -21,6 +21,10 @@ Ramp = (wintypes.WORD * 256) * 3
 ATTACHED = 0x1
 PRIMARY = 0x4
 ENUM_CURRENT_SETTINGS = 0xFFFFFFFF
+QDC_ONLY_ACTIVE_PATHS = 0x2
+DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME = 1
+DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME = 2
+ERROR_INSUFFICIENT_BUFFER = 122
 
 
 class DISPLAY_DEVICEW(ctypes.Structure):
@@ -47,6 +51,54 @@ class DEVMODEW(ctypes.Structure):
         ("dmDitherType", wintypes.DWORD), ("dmReserved1", wintypes.DWORD),
         ("dmReserved2", wintypes.DWORD), ("dmPanningWidth", wintypes.DWORD),
         ("dmPanningHeight", wintypes.DWORD),
+    ]
+
+
+class LUID(ctypes.Structure):
+    _fields_ = [("LowPart", wintypes.DWORD), ("HighPart", wintypes.LONG)]
+
+
+class DISPLAYCONFIG_RATIONAL(ctypes.Structure):
+    _fields_ = [("Numerator", wintypes.UINT), ("Denominator", wintypes.UINT)]
+
+
+class DISPLAYCONFIG_PATH_SOURCE_INFO(ctypes.Structure):
+    _fields_ = [("adapterId", LUID), ("id", wintypes.UINT),
+                ("modeInfoIdx", wintypes.UINT), ("statusFlags", wintypes.UINT)]
+
+
+class DISPLAYCONFIG_PATH_TARGET_INFO(ctypes.Structure):
+    _fields_ = [
+        ("adapterId", LUID), ("id", wintypes.UINT), ("modeInfoIdx", wintypes.UINT),
+        ("outputTechnology", wintypes.UINT), ("rotation", wintypes.UINT),
+        ("scaling", wintypes.UINT), ("refreshRate", DISPLAYCONFIG_RATIONAL),
+        ("scanLineOrdering", wintypes.UINT), ("targetAvailable", wintypes.BOOL),
+        ("statusFlags", wintypes.UINT),
+    ]
+
+
+class DISPLAYCONFIG_PATH_INFO(ctypes.Structure):
+    _fields_ = [("sourceInfo", DISPLAYCONFIG_PATH_SOURCE_INFO),
+                ("targetInfo", DISPLAYCONFIG_PATH_TARGET_INFO), ("flags", wintypes.UINT)]
+
+
+class DISPLAYCONFIG_DEVICE_INFO_HEADER(ctypes.Structure):
+    _fields_ = [("type", wintypes.UINT), ("size", wintypes.UINT),
+                ("adapterId", LUID), ("id", wintypes.UINT)]
+
+
+class DISPLAYCONFIG_SOURCE_DEVICE_NAME(ctypes.Structure):
+    _fields_ = [("header", DISPLAYCONFIG_DEVICE_INFO_HEADER),
+                ("viewGdiDeviceName", wintypes.WCHAR * 32)]
+
+
+class DISPLAYCONFIG_TARGET_DEVICE_NAME(ctypes.Structure):
+    _fields_ = [
+        ("header", DISPLAYCONFIG_DEVICE_INFO_HEADER), ("flags", wintypes.UINT),
+        ("outputTechnology", wintypes.UINT), ("edidManufactureId", wintypes.WORD),
+        ("edidProductCodeId", wintypes.WORD), ("connectorInstance", wintypes.UINT),
+        ("monitorFriendlyDeviceName", wintypes.WCHAR * 64),
+        ("monitorDevicePath", wintypes.WCHAR * 128),
     ]
 
 
@@ -99,12 +151,62 @@ def _windows():
     _user32, _gdi32 = user32, gdi32
 
 
+def _monitor_names():
+    """Windows 디스플레이 설정의 실제 이름을 GDI 장치 이름에 연결한다. 실패해도 밝기는 사용 가능."""
+    names = {}
+    try:
+        get_sizes = _user32.GetDisplayConfigBufferSizes
+        get_sizes.argtypes = [wintypes.UINT, ctypes.POINTER(wintypes.UINT),
+                              ctypes.POINTER(wintypes.UINT)]
+        get_sizes.restype = wintypes.LONG
+        query = _user32.QueryDisplayConfig
+        query.argtypes = [wintypes.UINT, ctypes.POINTER(wintypes.UINT),
+                          ctypes.POINTER(DISPLAYCONFIG_PATH_INFO),
+                          ctypes.POINTER(wintypes.UINT), ctypes.c_void_p, ctypes.c_void_p]
+        query.restype = wintypes.LONG
+        get_info = _user32.DisplayConfigGetDeviceInfo
+        get_info.argtypes = [ctypes.POINTER(DISPLAYCONFIG_DEVICE_INFO_HEADER)]
+        get_info.restype = wintypes.LONG
+        for _ in range(3):  # 크기 조회 중 모니터가 연결/해제되면 버퍼 크기부터 다시 확인한다.
+            path_count, mode_count = wintypes.UINT(), wintypes.UINT()
+            if get_sizes(QDC_ONLY_ACTIVE_PATHS, ctypes.byref(path_count), ctypes.byref(mode_count)) != 0:
+                return names
+            display_paths = (DISPLAYCONFIG_PATH_INFO * path_count.value)()
+            # DISPLAYCONFIG_MODE_INFO는 64바이트, 8바이트 정렬. 이름 조회에는 내용이 필요 없다.
+            modes = (ctypes.c_uint64 * (8 * mode_count.value))()
+            result = query(QDC_ONLY_ACTIVE_PATHS, ctypes.byref(path_count), display_paths,
+                           ctypes.byref(mode_count), modes, None)
+            if result == ERROR_INSUFFICIENT_BUFFER:
+                continue
+            if result != 0:
+                return names
+            for path in display_paths[:path_count.value]:
+                source = DISPLAYCONFIG_SOURCE_DEVICE_NAME()
+                source.header = DISPLAYCONFIG_DEVICE_INFO_HEADER(
+                    DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME, ctypes.sizeof(source),
+                    path.sourceInfo.adapterId, path.sourceInfo.id)
+                target = DISPLAYCONFIG_TARGET_DEVICE_NAME()
+                target.header = DISPLAYCONFIG_DEVICE_INFO_HEADER(
+                    DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME, ctypes.sizeof(target),
+                    path.targetInfo.adapterId, path.targetInfo.id)
+                if (get_info(ctypes.byref(source.header)) == 0
+                        and get_info(ctypes.byref(target.header)) == 0):
+                    name = target.monitorFriendlyDeviceName.strip()
+                    if name:
+                        names.setdefault(source.viewGdiDeviceName, name)
+            return names
+    except Exception:
+        pass  # 원격 세션·지원하지 않는 드라이버 등에서는 번호로 표시한다.
+    return names
+
+
 def monitors():
     if sys.platform != "win32":
         return []
     with _lock:
         try:
             _windows()
+            names = _monitor_names()
             out, index = [], 0
             while True:
                 device = DISPLAY_DEVICEW()
@@ -117,6 +219,7 @@ def monitors():
                     if not _user32.EnumDisplaySettingsW(device.DeviceName, ENUM_CURRENT_SETTINGS, ctypes.byref(mode)):
                         raise RuntimeError("server.brightnessFailed")
                     out.append({"id": device.DeviceName, "number": len(out) + 1,
+                                "name": names.get(device.DeviceName, ""),
                                 "primary": bool(device.StateFlags & PRIMARY),
                                 "width": mode.dmPelsWidth, "height": mode.dmPelsHeight,
                                 "x": mode.dmPosition.x, "y": mode.dmPosition.y})

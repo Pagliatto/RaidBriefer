@@ -10,7 +10,7 @@ from pathlib import Path
 
 from flask import Flask, abort, jsonify, render_template, request, send_file
 
-from app import brightness, game_state, hideout, i18n, updater, map_views, progress, quest_log, quests, settings, story
+from app import brightness, game_state, hideout, i18n, updater, map_views, progress, quest_log, quests, settings, story, tarkov_api
 
 HOST = "127.0.0.1"  # 지금은 이 PC에서만 열림 (휴대폰 접속은 다음 단계)
 PORT = 8765
@@ -163,6 +163,7 @@ def api_update_apply():
 def api_state():
     """지금 게임 상태 (상단바·화면 자동 전환용). 화면이 2초마다 물어봄"""
     state = game_state.get()
+    state["data_updating"] = tarkov_api.is_updating()
     state["quest_rev"] = quest_log.log_rev()  # 바뀌면 화면이 퀘스트를 새로 불러옴
     return jsonify(state)
 

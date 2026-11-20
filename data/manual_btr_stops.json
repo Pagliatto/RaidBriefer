@@ -1,0 +1,17 @@
+{
+  "_note": "BTR stops missing on tarkov.dev. Used only while tarkov.dev has no stops for that map. Lighthouse positions were read from the stop map image on the official wiki (BTR Driver page, Lighthouse_BTR_stops_map.png, 2026-11-20) and aligned to the tarkov.dev map with 8 reference points (about 10 m accuracy). All stops are at ground level.",
+  "lighthouse": {
+    "source": "wiki",
+    "link": "https://escapefromtarkov.fandom.com/wiki/BTR_Driver",
+    "stops": [
+      {"name": "Northern Checkpoint", "x": 106.0, "z": -950.3},
+      {"name": "WTP Building 2 Parking", "x": -168.8, "z": -751.5},
+      {"name": "WTP Building 1 Parking", "x": 34.1, "z": -577.2},
+      {"name": "Village Crossroads", "x": -209.3, "z": -240.2},
+      {"name": "Construction Site", "x": -4.7, "z": -182.6},
+      {"name": "UN Checkpoint", "x": 1.6, "z": 124.4},
+      {"name": "Southern Road", "x": -235.1, "z": 430.9},
+      {"name": "Road to Lighthouse", "x": -21.9, "z": 478.6}
+    ]
+  }
+}
