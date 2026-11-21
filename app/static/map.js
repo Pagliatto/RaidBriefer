@@ -688,12 +688,73 @@ function renderDrawer() {
     list.append(li);
   };
 
+  // 스토리: 목록 맨 위에 구분해서 (2026-11-21 사용자: 지도 한 화면에서 스토리도)
+  const storyCount = renderDrawerStories(list, m);
+  if (storyCount) list.append(el("li", "drawer-divider drawer-section-title", t("map.drawerQuests")));
   if (!here.length && !anywhere.length) list.append(el("li", "empty", t("map.noQuests")));
   here.forEach(addQuest);
   if (anywhere.length) {
     list.append(el("li", "drawer-divider", `${mapLabel(ALL_MAPS)} (${anywhere.length})`));
     anywhere.forEach(addQuest);
   }
+}
+
+// 지도 서랍 맨 위 '스토리' 칸: 지금 맵에서 할 스토리 단계 (홈과 같은 규칙: 진행 중 구간 + 다음 구간)
+// 체크는 여기서 바로(스토리 탭과 같은 기록), 위치 설명은 펼쳐서, 사진만 스토리 탭으로
+function renderDrawerStories(list, m) {
+  if (typeof storyNext !== "function" || typeof story === "undefined" || !story.data) return 0;
+  const chapters = storyNext()
+    .map((s) => ({ s, entries: s.mapSteps.filter((entry) => entry.maps.includes(m.name)) }))
+    .filter((c) => c.entries.length);
+  if (!chapters.length) return 0;
+  list.append(el("li", "drawer-divider drawer-section-title drawer-story-title", t("map.drawerStory")));
+  chapters.forEach(({ s, entries }) => {
+    const li = el("li", "drawer-quest drawer-story");
+    const name = el("button", "drawer-quest-name");
+    name.type = "button";
+    name.title = t("map.storyOpenHint");
+    name.append(el("span", "", s.ch.name), el("span", "drawer-more", "›"));
+    name.addEventListener("click", () => {
+      story.open.add(s.ch.id);
+      if (typeof renderStory === "function") renderStory();
+      goTab("story");
+      const card = [...document.querySelectorAll(".chapter")].find((c) => c.dataset.chapterId === s.ch.id);
+      if (card) setTimeout(() => card.scrollIntoView({ block: "start" }), 30);
+    });
+    const heading = el("div", "drawer-quest-heading");
+    heading.append(name);
+    li.append(heading);
+    // 구간(장소)별로 묶음: 구간 이름 = 장소 설명
+    const sections = new Map();
+    entries.forEach((entry) => {
+      if (!sections.has(entry.section)) sections.set(entry.section, []);
+      sections.get(entry.section).push(entry.step);
+    });
+    sections.forEach((steps, sec) => {
+      li.append(el("p", "drawer-story-place", sec.title));
+      const goals = el("ul", "drawer-goals drawer-story-steps");
+      steps.forEach((step) => {
+        const row = el("li");
+        const label = el("label");
+        const box = document.createElement("input");
+        box.type = "checkbox";
+        box.checked = isStepDone(step);
+        box.title = t("story.stepDone");
+        box.addEventListener("change", () => saveStoryChanges({ [`${step.id}!`]: box.checked ? "done" : null }));
+        label.append(box, el("span", "", step.ko));
+        row.append(label);
+        goals.append(row);
+      });
+      li.append(goals);
+      if (sec.tip) {
+        const more = el("details", "drawer-story-tip");
+        more.append(el("summary", "", t("map.storyWhere")), el("p", "", sec.tip));
+        li.append(more);
+      }
+    });
+    list.append(li);
+  });
+  return chapters.length;
 }
 
 // 서랍의 목표를 누르면 지도에서 그 목표 위치로 이동

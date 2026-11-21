@@ -2160,3 +2160,14 @@ button.tag.map-colored:focus-visible { outline: 2px solid var(--accent); outline
 .update-history-current { padding: 0 6px; border-radius: var(--radius-sm); background: var(--ok-bg, var(--surface-2)); color: var(--ok); font-size: 11px; font-weight: 600; }
 .update-history-date { margin-left: auto; color: var(--text-faint); font-size: 12px; font-weight: 400; }
 .update-history-item ul { margin: 0; padding: 0 12px 10px 28px; font-size: 13px; line-height: 1.6; color: var(--text-dim); }
+/* 지도 서랍 맨 위 스토리 칸: 퀘스트(상인 색)와 다른 보라 선으로 구분 */
+.drawer-section-title { border-top: 0; }
+.drawer-story-title { color: #c9b8f2; }
+.drawer-story { --trader: #b39ddb; }
+.drawer-story-place { margin: 6px 0 2px; font-size: 12px; font-weight: 600; color: var(--text); }
+.drawer-story-steps label { display: flex; gap: 6px; align-items: flex-start; cursor: pointer; }
+.drawer-story-steps input { margin: 2px 0 0; accent-color: #b39ddb; flex: none; }
+.drawer-story-tip { margin: 2px 0 0 4px; font-size: 12px; color: var(--text-dim); }
+.drawer-story-tip summary { cursor: pointer; color: var(--text-faint); }
+.drawer-story-tip summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.drawer-story-tip p { margin: 4px 0 2px; line-height: 1.5; }
