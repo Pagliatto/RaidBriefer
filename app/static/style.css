@@ -675,7 +675,12 @@ main { padding-right: 70px; }
 .settings-item + .settings-item { border-top: 1px solid var(--border); }
 .settings-item h3 { margin: 0 0 4px; font-size: 15px; }
 .settings-help { margin: 0 0 12px; font-size: 13px; color: var(--text-dim); }
-.settings-help code { font-size: 12px; background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
+/* 안내 문장 속 폴더·파일 이름(Logs, EscapeFromTarkov.exe): 고정폭 글꼴은 Windows 에서 작고 깨져 보여서
+   본문과 같은 글꼴로, 굵게 + 옅은 상자 (2026-11-21 사용자: Logs 글씨 깨짐). 설정·처음 설정 모두 */
+code {
+  font-family: inherit; font-size: .95em; font-weight: 600; color: var(--text);
+  background: var(--surface-2); padding: 0 5px; border-radius: 4px; border: 1px solid var(--border);
+}
 .settings input[type="text"] {
   width: 100%; padding: 8px 10px; font: inherit; font-size: 14px;
   background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);
@@ -1303,6 +1308,10 @@ body.map-mode .scroll-buttons { display: none; }
   background: var(--accent-bg); border-color: var(--accent); color: var(--accent);
 }
 .chip { height: 30px; padding: 0 12px; border-radius: var(--radius-pill); display: inline-flex; align-items: center; }
+/* 버튼 글자는 기본 가운데 정렬 (2026-11-21 사용자: 따로 지시가 없으면 가운데가 기본).
+   칸을 꽉 채우는 버튼(밝기 모드·강도 등)도 가운데로. 왼쪽 정렬이 필요한 곳은 개별 규칙에서 따로 지정 */
+:is(.chip, .subtab, .edition-pick button, .setup-ho-levels button, .settings-tabs button,
+    .choice-change, .section-action, .loot-toggle) { justify-content: center; text-align: center; }
 .subtab { border-radius: var(--radius); }
 .edition-pick button { height: 32px; border-radius: var(--radius); }
 .setup-ho-levels button { width: 32px; height: 30px; }

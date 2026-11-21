@@ -104,12 +104,9 @@ function decorateHideoutChange(card, s) {
     saveHideoutChanges();
     updateHideoutDot();
   };
+  // 마우스가 카드에 닿는 순간 바로 지움 (2026-11-21 사용자: 잠깐 스쳐도 슥슥 사라지게)
   card.addEventListener("mouseenter", () => {
-    clearHideoutHover(card);
-    hideoutHoverTimers.set(card, setTimeout(() => {
-      clearHideoutHover(card);
-      if (card.isConnected && !document.hidden && !document.getElementById("tab-hideout").hidden) dismiss();
-    }, 300)); // 훑기만 해도 지워지게 (퀘스트 표시와 같은 규칙, 2026-11-21 사용자: 강조가 안 빠짐)
+    if (card.isConnected && !document.hidden && !document.getElementById("tab-hideout").hidden) dismiss();
   });
   card.addEventListener("mouseleave", () => clearHideoutHover(card));
   card.addEventListener("click", dismiss, true);
