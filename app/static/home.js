@@ -282,7 +282,7 @@ function neededItems() {
   };
   if (state.data) {
     activeQuests().forEach((q) => (q.prep || []).forEach((p) => {  // 숨긴(안 할) 퀘스트는 빼고
-      if (p.kind === "제출" && !state.handed[`${q.id}|${p.text}`]) add(p, { type: "quest", id: q.id, name: q.name });
+      if (p.kind === "제출" && !state.handed[handedKey(q, p)]) add(p, { type: "quest", id: q.id, name: q.name });
     }));
   }
   storyNext().forEach((s) => (s.section ? visiblePrep(s.section) : []).forEach((p) => {

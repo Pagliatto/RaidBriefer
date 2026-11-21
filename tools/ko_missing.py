@@ -45,7 +45,7 @@ def main() -> int:
     for name, key, en, ours in stale:
         print(f"[원문 바뀜] {name} | {key} | 지금: {en} | 번역할 때: {ours.get('en')}")
     print(f"\n번역 없음 {len(missing)}개, 원문 바뀜 {len(stale)}개")
-    return 0
+    return 1 if missing or stale else 0
 
 
 if __name__ == "__main__":

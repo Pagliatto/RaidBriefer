@@ -223,7 +223,8 @@ def main():
     print(f"\n== 문제 {len(problems)}개 ==")
     for p in problems:
         print("  " + p)
+    return 1 if problems else 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

@@ -10,7 +10,7 @@ import json
 import threading
 from pathlib import Path
 
-from app import paths, quest_log
+from app import paths, quest_log, settings
 
 USER_DIR = paths.USER_DIR
 PROGRESS_FILE = USER_DIR / "progress.json"
@@ -30,16 +30,33 @@ def _prestige_mark() -> str:
     return p.strftime("%Y-%m-%d %H:%M:%S") if p else "none"
 
 
+def valid_value(kind: str, value) -> bool:
+    if value is None:
+        return True
+    if kind == "hideout":
+        return type(value) is int and 0 <= value <= 10
+    if kind == "story":
+        return isinstance(value, bool) or (isinstance(value, str) and len(value) <= 100)
+    return isinstance(value, bool)
+
+
+def _valid_saved(data: dict) -> bool:
+    if "prestige" in data and not isinstance(data["prestige"], str):
+        return False
+    return all(kind not in data or (isinstance(data[kind], dict)
+               and all(isinstance(key, str) and value is not None and valid_value(kind, value)
+                       for key, value in data[kind].items())) for kind in KINDS)
+
+
 def _read() -> dict:
-    try:
-        data = json.loads(PROGRESS_FILE.read_text(encoding="utf-8"))
-    except (FileNotFoundError, json.JSONDecodeError, OSError):
-        data = {}
+    data = settings.read_saved(PROGRESS_FILE, _valid_saved)
     # 프레스티지가 바뀌었으면(새 회차) 체크를 비운다.
     # 단, 로그에서 못 찾았을 때("none": 설치 위치가 틀렸거나 로그가 지워짐)는 지우지 않는다.
     mark = _prestige_mark()
-    if mark != "none" and data.get("prestige") != mark:
+    if mark != "none" and data.get("prestige") not in (None, mark):
         data = {"prestige": mark}
+    elif mark != "none":
+        data["prestige"] = mark
     for kind in KINDS:
         data.setdefault(kind, {})
     return data
@@ -80,4 +97,5 @@ def set_checks(kind: str, changes: dict) -> dict:
 def reset_all() -> None:
     """전체 초기화: 사용자가 체크한 모든 기록을 비움 (숨김·제출·스토리·직접 추가·은신처 등)"""
     with _lock:
+        _read()  # 읽을 수 없는 원본은 명시적 초기화에서도 덮지 않는다.
         _write({"prestige": _prestige_mark(), **{kind: {} for kind in KINDS}})

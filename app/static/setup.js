@@ -85,18 +85,21 @@ function openSetup() {
 
 async function finishSetup() {
   try {
-    await setupRequest({ setup_done: true });
     // 2단계까지 확인했으면 '로그가 지워진 것 같아요' 단서들은 확인한 것으로 저장 (다시 안 띄움)
     const gap = setupQuests.data?.log_gap || [];
     if (gap.length) {
-      await fetch("/api/log-gap/ok", {
+      const res = await fetch("/api/log-gap/ok", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids: gap }),
       });
+      if (!res.ok) throw new Error(t("common.saveFailedShort"));
     }
+    const saved = await setupRequest({ setup_done: true });
+    if (!saved.ok) throw new Error(saved.data.error || t("common.saveFailedShort"));
   } catch (error) {
-    // 저장이 안 돼도 화면은 닫음 (다음에 켤 때 다시 뜸)
+    alert(error.message || t("common.saveFailedShort"));
+    return;
   }
   setupUI.root.hidden = true;
   document.body.classList.remove("in-setup");
@@ -117,7 +120,8 @@ setupUI.get("setup-game-dir").addEventListener("keydown", (e) => {
 // 켤 때: 처음 설정을 아직 안 했으면 띄움
 (async () => {
   try {
-    const { data } = await setupRequest(null);
+    const { ok, data } = await setupRequest(null);
+    if (!ok) throw new Error(data.error || t("common.saveFailedShort"));
     if (!data.setup_done) openSetup();
     await loadWhatsNew();
   } catch (error) {
@@ -293,11 +297,12 @@ function renderSetupSearch() {
 
 async function setupSetAdded(questId, value) {
   try {
-    await fetch("/api/check/added", {
+    const res = await fetch("/api/check/added", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ key: questId, value }),
     });
+    if (!res.ok) throw new Error();
     await setupLoadQuests();
     renderSetupQuests();
   } catch (error) {

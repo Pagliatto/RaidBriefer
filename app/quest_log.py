@@ -11,6 +11,8 @@
 
 import json
 import re
+import threading
+from bisect import bisect_right
 from datetime import datetime
 from pathlib import Path
 
@@ -23,32 +25,110 @@ from app import corrections, i18n, settings, tarkov_api
 #   찾지 못하면 None → 남아 있는 로그 전체를 처음부터 읽는다.
 # 로그 파일이 많아서, 이미 읽은 파일은 기억해 두고 새로 생기거나 바뀐 파일만 다시 읽는다.
 PRESTIGE_RE = re.compile(
-    r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}).*Request HTTPS.*https://gw-pve[^/]*/client/prestige/obtain")
-_prestige_cache: dict[Path, tuple[float, list[datetime]]] = {}
+    r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}).*Request HTTPS.*https://gw-pv[ep][^/]*/client/prestige/obtain")
+_prestige_cache = {}
+_mode_cache = {}
+_log_cache_lock = threading.RLock()
+_cache_root = None
+_LOG_TIME = re.compile(r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:\.\d+)?)")
+_MODE_REQUEST = re.compile(r"https://(gw-pv[ep][^/.:]*)\.escapefromtarkov\.com(?::\d+)?(/client/[^\s|?]*)")
+
+
+def line_time(line: str) -> datetime | None:
+    match = _LOG_TIME.match(line)
+    return datetime.fromisoformat(match[1]) if match else None
+
+
+def _prune_log_caches():
+    global _cache_root
+    root = settings.logs_dir()
+    if root != _cache_root:
+        _prestige_cache.clear()
+        _mode_cache.clear()
+        _cache_root = root
+    for path in list(_prestige_cache):
+        if not path.exists():
+            del _prestige_cache[path]
+    for folder in list(_mode_cache):
+        if not folder.is_dir():
+            del _mode_cache[folder]
+
+
+def mode_timeline(folder: Path) -> tuple:
+    """추가 구간만 읽고 모드가 바뀐 시각만 보관한다. 원문 로그는 보관하지 않는다."""
+    from app.map_watch import LogTail
+
+    def requests(lines):
+        events = []
+        for line in lines:
+            if "Request HTTPS" not in line:
+                continue
+            request = _MODE_REQUEST.search(line)
+            when = line_time(line)
+            # 모드 고르기 요청은 항상 PvP 주소로 감 → 판단에서 뺌 (로그에는 끝에 '.' 이 붙어 기록됨: /client/game/mode.)
+            if not request or when is None or request[2].rstrip("/.") == "/client/game/mode":
+                continue
+            events.append((when, request[1].startswith("gw-pve")))
+        return sorted(events, key=lambda event: event[0])
+
+    with _log_cache_lock:
+        if folder not in _mode_cache:
+            _mode_cache[folder] = {"tail": LogTail(folder, backend_only=True), "last": None, "timeline": ([], [])}
+        cache = _mode_cache[folder]
+        tail = cache["tail"]
+        events = requests(tail.new_lines())
+        rebuild = bool(tail.reset_paths) or bool(events and cache["last"] and events[0][0] < cache["last"])
+        if rebuild:
+            # 교체·축소·과거 시각의 추가만 해당 폴더를 재구성한다.
+            tail = cache["tail"] = LogTail(folder, backend_only=True)
+            events = requests(tail.new_lines())
+            cache["timeline"] = ([], [])
+            cache["last"] = None
+        tail.lines_by_file.clear()
+        if events:
+            times, modes = (list(part) for part in cache["timeline"])
+            for when, mode in events:
+                if not modes or modes[-1] != mode:
+                    times.append(when)
+                    modes.append(mode)
+            cache["last"] = events[-1][0]
+            cache["timeline"] = (times, modes)
+        return cache["timeline"]
+
+
+def is_pve(timeline: tuple, when: datetime | None) -> bool:
+    if when is None:
+        return True
+    times, modes = timeline
+    index = bisect_right(times, when) - 1
+    return index < 0 or modes[index]
+
 
 
 def last_prestige() -> datetime | None:
-    found = []
-    for path in settings.logs_dir().glob("log_*/*backend_*.log"):
-        try:
-            mtime = path.stat().st_mtime
-        except OSError:
-            continue
-        cached = _prestige_cache.get(path)
-        if not cached or cached[0] != mtime:
-            times = []
+    with _log_cache_lock:
+        _prune_log_caches()
+        found = []
+        for path in settings.logs_dir().glob("log_*/*backend_*.log"):
             try:
-                with path.open(encoding="utf-8", errors="replace") as fh:
-                    for line in fh:
-                        if "prestige/obtain" in line:
-                            m = PRESTIGE_RE.match(line)
-                            if m:
-                                times.append(datetime.strptime(m[1], "%Y-%m-%d %H:%M:%S"))
+                stat = path.stat()
+                signature = (stat.st_mtime_ns, stat.st_size, stat.st_ino)
             except OSError:
                 continue
-            _prestige_cache[path] = cached = (mtime, times)
-        found.extend(cached[1])
-    return max(found) if found else None
+            cached = _prestige_cache.get(path)
+            if not cached or cached[0] != signature:
+                times = []
+                try:
+                    with path.open(encoding="utf-8", errors="replace") as fh:
+                        for line in fh:
+                            if PRESTIGE_RE.match(line) and (when := line_time(line)):
+                                times.append(when)
+                except OSError:
+                    continue
+                _prestige_cache[path] = cached = (signature, times)
+            timeline = mode_timeline(path.parent)
+            found.extend(when for when in cached[1] if is_pve(timeline, when))
+        return max(found) if found else None
 
 STATUS_NAMES = {10: "진행 중", 11: "실패", 12: "완료"}
 
@@ -136,6 +216,7 @@ def read_quest_events(since: datetime | None = None) -> list[dict]:
         since = last_prestige() or datetime.min
     events = {}
     for log_file in settings.logs_dir().glob("log_*/*push-notifications*.log"):
+        timeline = mode_timeline(log_file.parent)
         for note in _read_notifications(log_file):
             message = note.get("message", {})
             kind = message.get("type")
@@ -147,7 +228,7 @@ def read_quest_events(since: datetime | None = None) -> list[dict]:
             if len(parts) != 2 or parts[1] not in {"description", "successMessageText", "failMessageText"}:
                 continue
             when = datetime.fromtimestamp(message.get("dt", 0))
-            if when < since:
+            if when < since or not is_pve(timeline, when):
                 continue
             quest_id = parts[0]
             if quest_id in REPEATABLE_TEMPLATES:

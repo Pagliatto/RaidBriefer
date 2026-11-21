@@ -188,6 +188,8 @@
     "unseenBuildable": "새로 건설할 수 있는 시설이 있어요"
   },
   "map": {
+    "layerOn": "켜짐",
+    "layerOff": "꺼짐",
     "loadFailed": "지도 정보를 불러오지 못했어요. {error}",
     "noImage": "이 맵은 아직 지도 그림이 없어요. 오른쪽 퀘스트 목록을 봐 주세요.",
     "imageFailed": "지도 그림을 받지 못했어요. 인터넷 연결을 확인해 주세요.",
@@ -332,6 +334,7 @@
     "settings": "설정"
   },
   "server": {
+    "savedDataFailed": "기존 진행·설정 파일을 읽을 수 없어 저장을 중단했어요. 원본을 보존했으니 파일을 복구한 뒤 다시 시도해 주세요.",
     "badRequest": "잘못된 요청이에요.",
     "questsFailed": "퀘스트 정보를 불러오지 못했어요: {error}",
     "catalogFailed": "퀘스트 목록을 불러오지 못했어요: {error}",

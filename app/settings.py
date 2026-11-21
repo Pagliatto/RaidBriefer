@@ -5,6 +5,8 @@
 """
 
 import json
+import hashlib
+import time
 import string
 import threading
 from pathlib import Path
@@ -25,15 +27,56 @@ _lock = threading.Lock()
 _cache: dict | None = None
 
 
+class DataReadError(Exception):
+    def __str__(self):
+        return i18n.t("server.savedDataFailed", lang=i18n.system_lang())
+
+
+_broken_copies = set()
+
+
+def read_saved(path: Path, validate) -> dict:
+    """없는 파일만 새 기록으로 취급한다. 손상 원본은 보존하고 쓰기를 막는다."""
+    try:
+        raw = path.read_bytes()
+    except FileNotFoundError:
+        return {}
+    except OSError as error:
+        raise DataReadError() from error
+    try:
+        data = json.loads(raw.decode("utf-8"))
+        if not isinstance(data, dict) or not validate(data):
+            raise ValueError("saved-schema")
+        return data
+    except (ValueError, UnicodeError) as error:
+        fingerprint = (path, hashlib.sha256(raw).hexdigest())
+        if fingerprint not in _broken_copies:
+            backup = path.with_name(f"{path.stem}.broken-{time.time_ns()}.json")
+            try:
+                with backup.open("xb") as fh:
+                    fh.write(raw)
+                _broken_copies.add(fingerprint)
+            except OSError:
+                pass  # 복사도 실패하면 원본을 그대로 두고 저장을 거절한다.
+        raise DataReadError() from error
+
+
+def _valid_saved(data: dict) -> bool:
+    for key, default in DEFAULTS.items():
+        if key in data and type(data[key]) is not type(default):
+            return False
+    return (data.get("edition", "standard") in EDITIONS
+            and data.get("lang", "") in ("", *i18n.LANGS)
+            and data.get("brightness_mode", "off") in ("off", "raid", "always")
+            and 0 <= data.get("brightness_strength", 35) <= 60)
+
+
 def load() -> dict:
     global _cache
     with _lock:
-        if _cache is None:
-            try:
-                saved = json.loads(SETTINGS_FILE.read_text(encoding="utf-8"))
-            except (FileNotFoundError, json.JSONDecodeError, OSError):
-                saved = {}
-            _cache = {**DEFAULTS, **{k: v for k, v in saved.items() if k in DEFAULTS}}
+        # 저장할 때도 디스크를 다시 확인해 이전 캐시로 손상 파일을 덮지 않는다.
+        saved = read_saved(SETTINGS_FILE, _valid_saved)
+        _cache = {**DEFAULTS, **saved}
         return dict(_cache)
 
 
@@ -59,7 +102,10 @@ def save(changes: dict) -> dict:
         if not isinstance(monitor, str) or (monitor and monitor not in {m["id"] for m in brightness.monitors()}):
             updates.pop("brightness_monitor")
     with _lock:
-        current = {**_cache, **updates}
+        saved = read_saved(SETTINGS_FILE, _valid_saved)
+        current = {**DEFAULTS, **saved, **updates}
+        if not _valid_saved(current):
+            raise ValueError("settings-schema")
         USER_DIR.mkdir(exist_ok=True)
         temp = SETTINGS_FILE.with_suffix(".tmp")
         temp.write_text(json.dumps(current, ensure_ascii=False, indent=2), encoding="utf-8")

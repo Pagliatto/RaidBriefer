@@ -188,6 +188,8 @@
     "unseenBuildable": "New stations can be built"
   },
   "map": {
+    "layerOn": "ON",
+    "layerOff": "OFF",
     "loadFailed": "Couldn't load map data. {error}",
     "noImage": "There's no map image for this map yet. Please use the quest list on the right.",
     "imageFailed": "Couldn't download the map image. Check your internet connection.",
@@ -332,6 +334,7 @@
     "settings": "Settings"
   },
   "server": {
+    "savedDataFailed": "Could not read existing progress or settings. Saving was stopped and the original was preserved. Restore the file and try again.",
     "badRequest": "Invalid request.",
     "questsFailed": "Couldn't load quests: {error}",
     "catalogFailed": "Couldn't load the quest list: {error}",

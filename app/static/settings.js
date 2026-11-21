@@ -43,6 +43,7 @@ async function sendSettings(body) {
 
 // 설정 탭 (일반 / 기록 관리 / 정보): 고른 탭의 칸만 보이게
 function showSettingsTab(name) {
+  if (name === "about") loadUpdate();
   document.querySelectorAll(".settings-tab").forEach((b) => b.classList.toggle("active", b.dataset.stab === name));
   document.querySelectorAll(".settings-item[data-stab]").forEach((s) => { s.hidden = s.dataset.stab !== name; });
 }
@@ -100,11 +101,12 @@ async function renderLangPickers() {
       btn.addEventListener("click", async () => {
         if (code === info.lang) return;
         try {
-          await fetch("/api/settings", {
+          const res = await fetch("/api/settings", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ lang: code }),
           });
+          if (!res.ok) throw new Error();
           location.reload();
         } catch (error) {
           alert(t("common.saveFailedShort"));

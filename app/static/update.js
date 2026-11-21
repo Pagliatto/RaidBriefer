@@ -94,14 +94,35 @@ function drawUpdate() {
   updateUI.later.hidden = busy;
 }
 
-async function loadUpdate() {
-  try {
-    updateUI.info = await (await fetch("/api/update")).json();
-  } catch (e) {
-    return; // 서버가 잠깐 안 될 때는 다음에
-  }
-  updateUI.starting = false;
-  drawUpdate();
+let updatePollPromise = null;
+let updatePollTimer = null;
+let updatePollSequence = 0;
+let updatePollAttempts = 0;
+function loadUpdate() {
+  if (updatePollPromise) return updatePollPromise;
+  clearTimeout(updatePollTimer);
+  const sequence = ++updatePollSequence;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  updatePollPromise = (async () => {
+    try {
+      const res = await fetch("/api/update", { signal: controller.signal });
+      if (!res.ok) return;
+      const info = await res.json();
+      if (sequence !== updatePollSequence || controller.signal.aborted) return;
+      updateUI.info = info;
+      updateUI.starting = false;
+      drawUpdate();
+    } catch (e) { /* 다음 예약에서 다시 확인한다. */ }
+  })().finally(() => {
+    clearTimeout(timeout);
+    updatePollPromise = null;
+    const busy = ["downloading", "installing"].includes(updateUI.info?.status);
+    if (++updatePollAttempts < 240 && (busy || !updateUI.info?.check_finished)) {
+      updatePollTimer = setTimeout(loadUpdate, busy ? 1500 : 3000);
+    }
+  });
+  return updatePollPromise;
 }
 
 updateUI.apply.addEventListener("click", async () => {
@@ -111,6 +132,7 @@ updateUI.apply.addEventListener("click", async () => {
     window.open(s.page, "_blank", "noopener");
     return;
   }
+  updatePollSequence++;
   updateUI.apply.disabled = true;
   updateUI.starting = true;
   drawUpdateDot();
@@ -127,10 +149,8 @@ updateUI.apply.addEventListener("click", async () => {
   }
   drawUpdate();
   // 받는 동안 진행 상태를 계속 보여 줌 (끝나면 프로그램이 닫힘)
-  const timer = setInterval(async () => {
-    await loadUpdate();
-    if (!updateUI.info || updateUI.info.status === "failed") clearInterval(timer);
-  }, 1500);
+  updatePollAttempts = 0;
+  loadUpdate();
 });
 
 updateUI.later.addEventListener("click", () => {
@@ -144,7 +164,7 @@ updateUI.later.addEventListener("click", () => {
 window.addEventListener("game-state", drawUpdate);
 
 // 서버가 깃허브에 묻는 데 몇 초 걸려서, 처음에는 몇 번 다시 확인
-[1500, 5000, 12000].forEach((ms) => setTimeout(loadUpdate, ms));
+setTimeout(loadUpdate, 1500);
 
 // 처음 설정 확인이 끝난 뒤 현재 버전 안내를 읽는다.
 const whatsNewUI = {
@@ -192,8 +212,7 @@ async function tryOpenWhatsNew() {
   // 첫 상단바 응답 전의 기본값(off)으로 레이드 여부를 판단하지 않는다.
   ui.checking = true;
   try {
-    const res = await fetch("/api/state");
-    if (!res.ok || updateInRaid(await res.json()) || updateInRaid()) return;
+    if (!await pollState() || updateInRaid()) return;
     if (document.body.classList.contains("in-setup")) return;
     const settingsDialog = document.getElementById("settings");
     if (ui.requested && settingsDialog.open) closeAnimatedDialog(settingsDialog);

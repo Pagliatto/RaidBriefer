@@ -96,29 +96,46 @@ function drawTopbar() {
   document.documentElement.style.setProperty("--sticky-h", `${topbar.get("sticky-top").offsetHeight + 8}px`);
 }
 
-async function pollState() {
-  try {
-    const res = await fetch("/api/state");
-    if (res.ok) {
-      const next = await res.json();
-      const changed = next.status !== topbar.state.status || next.map_id !== topbar.state.map_id;
-      const questLog = next.quest_rev !== topbar.state.quest_rev; // 퀘스트 알림 로그가 늘어남
-      if (next.status !== "lobby" || next.cancelled) {
-        topbar.endedUntil = 0;
-      } else if (topbar.state.status === "raid") {
-        topbar.endedUntil = Date.now() + TOPBAR_ENDED_MS;
+let statePollPromise = null;
+let statePollTimer = null;
+let statePollSequence = 0;
+function pollState() {
+  if (statePollPromise) return statePollPromise;
+  clearTimeout(statePollTimer);
+  const sequence = ++statePollSequence;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  statePollPromise = (async () => {
+    try {
+      const res = await fetch("/api/state", { signal: controller.signal });
+      if (res.ok) {
+        const next = await res.json();
+        if (sequence !== statePollSequence || controller.signal.aborted) return false;
+        const changed = next.status !== topbar.state.status || next.map_id !== topbar.state.map_id;
+        const questLog = next.quest_rev !== topbar.state.quest_rev; // 퀘스트 알림 로그가 늘어남
+        if (next.status !== "lobby" || next.cancelled) {
+          topbar.endedUntil = 0;
+        } else if (topbar.state.status === "raid") {
+          topbar.endedUntil = Date.now() + TOPBAR_ENDED_MS;
+        }
+        topbar.state = next;
+        if (questLog) window.dispatchEvent(new CustomEvent("quest-log-changed", { detail: next }));
+        // 다른 화면(나중에: 맵에 들어가면 자동 전환)이 쓸 수 있게 알림
+        if (changed) window.dispatchEvent(new CustomEvent("game-state", { detail: next }));
+        return true;
       }
-      topbar.state = next;
-      if (questLog) window.dispatchEvent(new CustomEvent("quest-log-changed", { detail: next }));
-      // 다른 화면(나중에: 맵에 들어가면 자동 전환)이 쓸 수 있게 알림
-      if (changed) window.dispatchEvent(new CustomEvent("game-state", { detail: next }));
+    } catch (error) {
+      // 서버가 잠깐 꺼져 있어도 조용히 다음 번에 다시
     }
-  } catch (error) {
-    // 서버가 잠깐 꺼져 있어도 조용히 다음 번에 다시
-  }
-  drawTopbar();
+    return false;
+  })().finally(() => {
+    clearTimeout(timeout);
+    statePollPromise = null;
+    drawTopbar();
+    statePollTimer = setTimeout(pollState, 2000);
+  });
+  return statePollPromise;
 }
 
 pollState();
-setInterval(pollState, 2000);
 setInterval(drawTopbar, 1000);

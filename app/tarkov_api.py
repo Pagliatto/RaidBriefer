@@ -368,7 +368,9 @@ def _update_all(force: bool) -> str:
     if saved and not force and now - meta["checked_at"] < CHECK_HOURS * 3600:
         return i18n.t("data.usingSaved", time=_time_text(meta["checked_at"]))
 
-    if saved and not force and now < meta["next_try"]:
+    if not force and now < meta["next_try"]:
+        if not saved:
+            raise DataError(i18n.t("data.noData", error=i18n.t("common.unknownError")))
         minutes = int((meta["next_try"] - now) // 60) + 1
         return i18n.t("data.retryLater", minutes=minutes, time=_time_text(meta["checked_at"]))
 

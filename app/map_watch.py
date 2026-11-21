@@ -10,12 +10,13 @@
 """
 
 import re
+import os
 import time
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
-from app import i18n, settings, tarkov_api
+from app import i18n, settings, tarkov_api, quest_log
 
 
 SCENE_RE = re.compile(r"scene preset path:(maps/\S+?\.bundle)")
@@ -101,20 +102,38 @@ def apply_line(state: MapState, line: str, lookup: MapLookup) -> bool:
 class LogTail:
     """로그 파일에 새로 추가된 줄만 읽어 온다 (tail 처럼)."""
 
-    def __init__(self, folder: Path):
+    def __init__(self, folder: Path, backend_only: bool = False):
         self.folder = folder
+        self.backend_only = backend_only
+        self.identities = {}
+        self.reset_paths = set()
+        self.lines_by_file = {}
         self.positions: dict[Path, int] = {}
         self.leftover: dict[Path, str] = {}
 
     def _files(self) -> list[Path]:
-        return sorted(self.folder.glob("*application_*.log")) + sorted(self.folder.glob("*backend_*.log"))
+        return ([] if self.backend_only else sorted(self.folder.glob("*application_*.log"))) + sorted(self.folder.glob("*backend_*.log"))
 
     def new_lines(self) -> list[str]:
         lines = []
-        for path in self._files():
+        files = self._files()
+        self.reset_paths = set(self.positions) - set(files)
+        self.lines_by_file = {}
+        for path in self.reset_paths:
+            self.positions.pop(path, None)
+            self.leftover.pop(path, None)
+            self.identities.pop(path, None)
+        for path in files:
             start = self.positions.get(path, 0)
             try:
                 with path.open("rb") as fh:
+                    stat = os.fstat(fh.fileno())
+                    identity = (stat.st_dev, stat.st_ino, getattr(stat, "st_birthtime_ns", None))
+                    if stat.st_size < start or self.identities.get(path, identity) != identity:
+                        start = 0
+                        self.leftover.pop(path, None)
+                        self.reset_paths.add(path)
+                    self.identities[path] = identity
                     fh.seek(start)
                     chunk = fh.read()
                     self.positions[path] = fh.tell()
@@ -124,9 +143,13 @@ class LogTail:
             parts = text.split("\n")
             if parts and not text.endswith("\n"):
                 self.leftover[path] = parts.pop()  # 아직 덜 써진 마지막 줄은 다음에
-            lines.extend(p.rstrip("\r") for p in parts if p)
+            self.lines_by_file[path] = [p.rstrip("\r") for p in parts if p]
+            lines.extend(self.lines_by_file[path])
         # application, backend 두 파일의 줄을 시간 순서로 섞기
         lines.sort(key=lambda l: l[:23])
+        if not self.backend_only:
+            timeline = quest_log.mode_timeline(self.folder)
+            lines = [line for line in lines if quest_log.is_pve(timeline, quest_log.line_time(line))]
         return lines
 
 
@@ -146,8 +169,8 @@ def watch(interval: float = 1.0, on_change=print) -> None:
     while True:
         time.sleep(interval)
         newest = latest_log_folder()
-        if newest and newest != folder:  # 게임을 다시 켬 → 새 폴더
-            folder, tail, state = newest, LogTail(newest), MapState()
+        if newest != folder:  # 새 폴더나 설치 위치 변경은 빈 상태부터 다시 읽는다.
+            folder, tail, state = newest, LogTail(newest) if newest else None, MapState()
             on_change(state)
         if not tail:
             continue

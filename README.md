@@ -37,7 +37,7 @@ The goal is that you barely have to touch it.
 
 - **When you load into a map, it switches to that map automatically.** After the raid it goes back to Home. It also tracks Transits.
 - **Your quest objectives are numbered on the map**, together with extracts, transits, locked doors, key and Bitcoin spawns, and floors.
-- **New and completed quests show up within 2 seconds.** It reads the game logs to find out.
+- **Checks for quest log changes every 2 seconds. Updates are deferred while loading or in a raid and applied when you return to the lobby.** It reads the game logs to find out.
 - **Home** shows what to prepare before a raid:
   - What to collect (items for quests and the hideout)
   - Where to go (tasks per map)
@@ -112,7 +112,7 @@ The window remembers its size and position and opens there next time.
 
 ## Good to know
 
-- **PvE only.** PvP records are not read.
+- **PvE only.** Quest, raid and prestige events identified as PvP by the session’s backend gameplay requests are ignored. Events before any known gameplay request are kept to avoid losing progress.
 - **Storyline progress is marked manually.** The game logs don't record storyline progress.
 - **Press [+] on a hideout station when you build it.** Building isn't in the logs either.
 - **If the game log folder is deleted** (e.g. when reinstalling the game), the app may miss quests you accepted earlier. A notice appears at the top of Home when that happens.

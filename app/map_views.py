@@ -11,6 +11,7 @@ import json
 import re
 import threading
 import time
+import uuid
 import urllib.request
 from pathlib import Path
 
@@ -94,9 +95,17 @@ def svg_file(name: str) -> Path | None:
     if not path.exists():
         data = _download(SVG_HOST + name)
         SVG_DIR.mkdir(parents=True, exist_ok=True)
-        temp = path.with_suffix(".tmp")
-        temp.write_bytes(data)
-        temp.replace(path)
+        from xml.etree import ElementTree
+
+        root = ElementTree.fromstring(data)
+        if root.tag.rsplit("}", 1)[-1] != "svg":
+            raise ValueError("invalid-svg")
+        temp = path.with_name(f"{path.name}.{uuid.uuid4().hex}.tmp")
+        try:
+            temp.write_bytes(data)
+            temp.replace(path)
+        finally:
+            temp.unlink(missing_ok=True)
     return path
 
 

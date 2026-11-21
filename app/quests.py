@@ -4,6 +4,7 @@
 """
 
 import json
+import hashlib
 import re
 import threading
 import time
@@ -143,7 +144,7 @@ def _item_names(ids, item_tr) -> str:
         return ""
     if len(names) <= 3:
         return " / ".join(names)
-    return i18n.t("server.andMore", first=names[0], second=names[1], n=len(names) - 2)
+    return i18n.t("server.andMore", lang=item_tr.lang, first=names[0], second=names[1], n=len(names) - 2)
 
 
 def _objectives_and_prep(task: dict, task_tr, item_tr, quest_items: dict, overrides: dict, map_names: dict | None = None):
@@ -161,15 +162,21 @@ def _objectives_and_prep(task: dict, task_tr, item_tr, quest_items: dict, overri
     keys = {}  # 정렬한 열쇠 id 묶음 → 원래 순서의 대체 열쇠 목록
     key_maps = {}  # 열쇠 id 묶음 → 필요한 맵 이름들 (None = 맵 정보 없음 → 어느 맵에서나 보여줌)
 
+    prep_text = {}
+    legacy_names = {}
+    legacy_tr = [tarkov_api.Translator("items", lang=lang) for lang in ("ko", "en")]
     item_ids = {}  # (종류, 이름, 인레이드) → 아이템 id들 (지도에 바닥 생성 위치를 찍을 때 씀)
 
     def add(kind, text, count=None, fir=False, ids=None):
         if text:
-            k = (kind, text, fir)
+            identity = tuple(sorted(_flat(ids))) if kind == "제출" and ids else text
+            k = (kind, identity, fir)
+            prep_text[k] = text
             prep[k] = prep.get(k, 0) + (count or 1)
             if ids:
                 item_ids.setdefault(k, [])
                 item_ids[k] += [i for i in _flat(ids) if i not in item_ids[k]]
+                legacy_names.setdefault(k, set()).update(_item_names(ids, tr) for tr in legacy_tr)
 
     def map_display_names(map_ids):
         names = []
@@ -243,11 +250,18 @@ def _objectives_and_prep(task: dict, task_tr, item_tr, quest_items: dict, overri
                "keys": members, "any_of": len(members) > 1, "maps": key_maps[group] or [],
                "count": None, "fir": False}
               for group, members in keys.items()]
-    for (kind, text, fir), total in sorted(prep.items(), key=lambda x: order[x[0][0]]):
+    for k, total in sorted(prep.items(), key=lambda x: order[x[0][0]]):
+        kind, _, fir = k
+        text = prep_text[k]
         entry = {"kind": kind, "text": text, "count": total if total > 1 else None, "fir": fir}
-        if (kind, text, fir) in item_ids:
-            entry["ids"] = item_ids[(kind, text, fir)]
+        if k in item_ids:
+            entry["ids"] = item_ids[k]
             if kind == "제출":
+                identity = ",".join(sorted(entry["ids"]))
+                if len(identity) > 200:
+                    identity = hashlib.sha256(identity.encode("utf-8")).hexdigest()
+                entry["hand_id"] = "item:" + identity + (":fir" if fir else ":any")
+                entry["legacy_texts"] = sorted(legacy_names[k] | {text})
                 key_items = [info for item_id in entry["ids"]
                              if tarkov_api.is_key(item_id) and (info := key_info(item_id))]
                 if key_items:
@@ -525,6 +539,12 @@ def build() -> dict:
         if details.get("prep") is not None:
             entry["prep"] = [{"count": None, "fir": False, **p, "text": (p.get("text_en") if english else None) or p["text"]}
                              for p in details["prep"]]
+        # 직접 보완한 준비물은 문구가 아닌 고정 항목 위치로 구분한다.
+        for index, prep in enumerate(entry["prep"]):
+            if prep["kind"] == "제출" and "hand_id" not in prep:
+                prep["hand_id"] = "manual:" + str(index)
+                original = (details.get("prep") or [])[index]
+                prep["legacy_texts"] = list(dict.fromkeys(filter(None, [original.get("text"), original.get("text_en")])))
         # raid는 기존 사용자 확인값 우선 규칙을 유지한다.
         if "raid" in m:
             entry["raid"] = m["raid"]
@@ -545,7 +565,7 @@ def build() -> dict:
         "data_message": message,
         "needs_translation": needs,
         # 가장 최근 프레스티지 (없으면 None → 화면에 "전체 로그 기준")
-        "prestige_since": (lambda p: p.strftime("%Y-%m-%d %H:%M") if p else None)(quest_log.last_prestige()),
+        "prestige_since": (lambda p: p.strftime("%Y-%m-%d %H:%M:%S") if p else None)(quest_log.last_prestige()),
         # 시작 기록 없이 끝난 퀘스트 id들 → 화면에 '로그가 지워진 것 같아요' 안내
         "log_gap": log_gap,
         "in_progress": groups["진행 중"],

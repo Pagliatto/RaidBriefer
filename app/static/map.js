@@ -153,22 +153,27 @@ function traderColor(key) {
 }
 
 // ---------- 맵 목록 ----------
+let mapListRetry = 1000;
 async function loadMapList() {
   try {
     const res = await fetch("/api/maps");
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "");
     mapUI.maps = data;
+    mapListRetry = 1000;
     registerMapColors(data);
     document.dispatchEvent(new Event("maps-changed"));
   } catch (error) {
     document.getElementById("map-view").replaceChildren(el("p", "empty", t("map.loadFailed", { error: error.message })));
+    setTimeout(loadMapList, mapListRetry);
+    mapListRetry = Math.min(mapListRetry * 2, 60000);
     return;
   }
   let saved = null;
   try { saved = localStorage.getItem(MAP_KEY_STORAGE); } catch (e) { /* 저장소를 못 쓰는 창 */ }
   mapUI.current = mapUI.maps.find((m) => m.key === saved) || mapUI.maps[0];
   fillMapSelect();
+  if (currentTab() === "map") drawMap();
   drawBtrTrackerLink();  // 처음 켤 때 마지막 맵이 등대·삼림·시내면 바로 보이게 (전에는 맵을 바꿔야 나왔음)
   // 페이지를 열었을 때 이미 레이드 중이면 바로 그 맵으로
   if (typeof topbar !== "undefined") onGameState(topbar.state);
@@ -214,7 +219,11 @@ function mapQuests(name) {
 }
 
 // ---------- 지도 그리기 ----------
+let mapGeneration = 0;
 async function drawMap() {
+  const generation = ++mapGeneration;
+  lootRevision++;
+  lootController?.abort();
   const m = mapUI.current;
   const box = document.getElementById("map-view");
   if (mapUI.leaflet) {
@@ -287,7 +296,11 @@ async function drawMap() {
     svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
     L.svgOverlay(svg, tdBounds(view.svg_bounds || view.bounds), { className: "map-svg" }).addTo(leaf);
     try {
-      const text = await (await fetch(view.svg)).text();
+      const res = await fetch(view.svg);
+      if (!res.ok) throw new Error();
+      const text = await res.text();
+      const parsed = new DOMParser().parseFromString(text, "image/svg+xml");
+      if (parsed.documentElement.localName !== "svg" || parsed.querySelector("parsererror")) throw new Error();
       if (mapUI.leaflet !== leaf) return; // 그사이 다른 맵으로 바뀜
       svg.innerHTML = text;
       const inner = svg.querySelector("svg");
@@ -301,6 +314,7 @@ async function drawMap() {
         });
       }
     } catch (error) {
+      if (generation !== mapGeneration) return;
       box.append(el("p", "map-error", t("map.imageFailed")));
     }
   } else if (view.tiles) {
@@ -313,6 +327,7 @@ async function drawMap() {
     }).addTo(leaf);
   }
 
+  if (generation !== mapGeneration) return;
   drawPins();
   drawFeatures(leaf, m);
   drawFloorControl(box, view);
@@ -381,7 +396,7 @@ function drawPins() {
   });
   findClusters();
   applyFloor();
-  drawLoot();
+  scheduleMapRefresh();
 }
 
 // ---------- 먹을 것 (지도 위쪽 줄에 아이콘 + 바닥 생성 위치가 있으면 지도에 ◆) ----------
@@ -465,8 +480,13 @@ function updateLootToggle() {
 }
 
 // 바닥 생성 위치가 데이터에 있는 아이템만 지도에 ◆ (귀중품 위주. 상자에서 나오는 건 위치 데이터가 없음)
+let lootRevision = 0;
+let lootController = null;
 async function drawLoot() {
-  if (mapUI.lootLayer) mapUI.lootLayer.remove();
+  const revision = ++lootRevision;
+  lootController?.abort();
+  const controller = lootController = new AbortController();
+  if (mapUI.groups?.loot) mapUI.groups.loot.clearLayers();
   if (mapUI.floorItems) mapUI.floorItems = mapUI.floorItems.filter((x) => !x.lootPin);
   mapUI.lootLayer = null;
   mapUI.lootSpots = {};
@@ -477,10 +497,10 @@ async function drawLoot() {
   if (!leaf || !m || !ids.length) return markLootChips();
   let spots = {};
   try {
-    const res = await fetch(`/api/loot/${encodeURIComponent(m.key)}?ids=${ids.join(",")}`);
+    const res = await fetch(`/api/loot/${encodeURIComponent(m.key)}?ids=${ids.join(",")}`, { signal: controller.signal });
     if (res.ok) spots = await res.json();
   } catch (error) { /* 위치를 못 받아도 목록은 그대로 */ }
-  if (mapUI.leaflet !== leaf) return; // 그사이 다른 맵으로 바뀜
+  if (mapUI.leaflet !== leaf || revision !== lootRevision) return;
   const layers = [];
   items.forEach((item) => {
     const points = (item.ids || []).flatMap((id) => spots[id] || []);
@@ -818,10 +838,16 @@ window.addEventListener("resize", () => {
 });
 
 // 은신처에서 '모았음'·건설 완료하면 먹을 것도 다시
-document.addEventListener("hideout-changed", () => {
-  renderLootBar();
-  if (mapUI.leaflet) drawLoot();
-});
+let mapRefreshTimer = null;
+function scheduleMapRefresh() {
+  clearTimeout(mapRefreshTimer);
+  mapRefreshTimer = setTimeout(() => {
+    renderLootBar();
+    if (mapUI.leaflet) drawLoot();
+  }, 0);
+}
+document.addEventListener("hideout-changed", scheduleMapRefresh);
+document.addEventListener("story-changed", scheduleMapRefresh);
 
 // 퀘스트가 바뀌면(자동 갱신·숨기기) 서랍과 핀을 다시
 document.addEventListener("quests-changed", () => {
@@ -913,7 +939,7 @@ function renderLayerDrawer() {
     const count = layerCount(key);
     const name = el("span", "layer-name", info.label);
     if (count !== null) name.append(el("small", "layer-count", ` ${count}`));
-    btn.append(mark, name, el("span", "layer-state", on ? "ON" : "OFF"));
+    btn.append(mark, name, el("span", "layer-state", on ? t("map.layerOn") : t("map.layerOff")));
     btn.addEventListener("click", () => setLayer(key, !layerOn(key)));
     list.append(btn);
   });

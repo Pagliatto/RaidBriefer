@@ -225,7 +225,7 @@
       </div>
       <details class="setup-manual" id="setup-manual">
         <summary>{{ t('setup.otherPlace') }}</summary>
-        <input type="text" id="setup-game-dir" spellcheck="false" autocomplete="off"
+        <input type="text" id="setup-game-dir" aria-label="{{ t('setup.step1') }}" spellcheck="false" autocomplete="off"
                placeholder="{{ t('setup.dirPlaceholder') }}">
         <div class="settings-actions">
           <button type="button" id="setup-check">{{ t('setup.checkHere') }}</button>
@@ -258,7 +258,7 @@
 
         <h3 class="setup-h3">{{ t('setup.addTitle') }}</h3>
         <p class="settings-help">{{ t('setup.addHelp')|safe }}</p>
-        <input type="search" class="setup-search" id="setup-search" placeholder="{{ t('setup.searchPlaceholder') }}" autocomplete="off">
+        <input type="search" class="setup-search" id="setup-search" aria-label="{{ t('setup.searchPlaceholder') }}" placeholder="{{ t('setup.searchPlaceholder') }}" autocomplete="off">
         <div class="map-filter setup-traders" id="setup-traders"></div>
         <ul class="setup-results" id="setup-results"></ul>
       </div>
@@ -319,7 +319,7 @@
     <section class="settings-item" data-stab="general">
       <h3>{{ t('settings.dirTitle') }}</h3>
       <p class="settings-help">{{ t('settings.dirHelp')|safe }}</p>
-      <input type="text" id="settings-game-dir" spellcheck="false" autocomplete="off">
+      <input type="text" id="settings-game-dir" aria-label="{{ t('settings.dirTitle') }}" spellcheck="false" autocomplete="off">
       <div class="settings-actions">
         <button type="button" id="settings-save" class="primary">{{ t('settings.save') }}</button>
         <button type="button" id="settings-find">{{ t('settings.find') }}</button>

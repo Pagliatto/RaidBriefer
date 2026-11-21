@@ -32,7 +32,7 @@ HELPER = paths.BUNDLE_DIR / "app" / "update_helper.cmd"
 
 _lock = threading.Lock()
 _state = {"current": VERSION, "latest": None, "available": False, "page": f"https://github.com/{REPO}/releases/latest",
-          "can_apply": bool(getattr(sys, "frozen", False)), "status": "idle", "error": None, "check_error": None}
+          "can_apply": bool(getattr(sys, "frozen", False)), "status": "idle", "error": None, "check_error": None, "check_finished": False}
 _asset = None
 _on_exit = None  # 프로그램 창을 닫는 함수 (window.py 가 넣어 줌)
 
@@ -86,17 +86,35 @@ def _check_with_retry() -> None:
     for wait in (0, 30, 60, 120):
         time.sleep(wait)
         if check().get("latest"):
-            return
+            break
+    _set(check_finished=True)
 
 
-def cleanup() -> None:
-    """지난 업데이트의 흔적 정리 (작업 폴더 지우기, 실패 표시 읽기). 여러 번 불러도 됨"""
+def cleanup(started: bool = False) -> None:
+    """새 버전 API 기동 또는 검증된 복구 뒤에만 백업을 정리한다."""
+    if _state["status"] in ("downloading", "installing"):
+        return
     failed = paths.USER_DIR / "update_failed.txt"
-    if failed.exists():  # 도우미가 실패해서 예전 버전으로 되돌린 경우
+    if failed.exists():
         _set(status="failed", error="install")
-        failed.unlink(missing_ok=True)
-    if WORK_DIR.exists() and _state["status"] not in ("downloading", "installing"):
+    if not WORK_DIR.exists() or _state["status"] in ("downloading", "installing"):
+        return
+    def marker(name):
+        try:
+            return (WORK_DIR / name).read_text(encoding="utf-8").strip()
+        except OSError:
+            return ""
+
+    verified = marker("rollback.ok") == "verified"
+    try:
+        installed = marker("installed.ok") == "installed"
+        target = (WORK_DIR / "target_version.txt").read_text(encoding="utf-8").strip()
+        verified = verified or (started and installed and target == VERSION and not failed.exists())
+    except OSError:
+        pass
+    if verified:
         shutil.rmtree(WORK_DIR, ignore_errors=True)
+        failed.unlink(missing_ok=True)
 
 
 def check_in_background() -> None:
@@ -114,15 +132,22 @@ def apply() -> dict:
         raise RuntimeError("새 버전이 없어요.")  # i18n-ok: 개발용
     if st["status"] in ("downloading", "installing"):
         return st
+    if (WORK_DIR / "old").exists():
+        raise RuntimeError("backup-recovery-required")  # i18n-ok: 복구 진단 코드
     _set(status="downloading", error=None)
     threading.Thread(target=_run, name="update", daemon=True).start()
     return state()
 
 
 def _run() -> None:
+    helper_started = False
     try:
+        if (WORK_DIR / "old").exists():
+            raise RuntimeError("backup-recovery-required")
         shutil.rmtree(WORK_DIR, ignore_errors=True)
         WORK_DIR.mkdir(parents=True)
+        (paths.USER_DIR / "update_failed.txt").unlink(missing_ok=True)
+        (WORK_DIR / "target_version.txt").write_text(str(_state["latest"]), encoding="utf-8")
         zip_path = WORK_DIR / "update.zip"
         # 1) 받기
         sha = hashlib.sha256()
@@ -157,6 +182,7 @@ def _run() -> None:
             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0) | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0),
             close_fds=True,
         )
+        helper_started = True
         # 5) 프로그램 닫기 → 도우미가 파일을 바꾸고 다시 켬
         if _on_exit:
             _on_exit()
@@ -164,4 +190,5 @@ def _run() -> None:
             os._exit(0)
     except Exception as error:
         _set(status="failed", error=str(error))
-        shutil.rmtree(WORK_DIR, ignore_errors=True)
+        if not helper_started and not (WORK_DIR / "old").exists() and not (WORK_DIR / "installed.ok").exists():
+            shutil.rmtree(WORK_DIR, ignore_errors=True)

@@ -501,6 +501,7 @@ async function loadStoryData() {
     const data = await dataRes.json();
     if (!dataRes.ok) throw new Error(data.error || t("common.unknownError"));
     story.data = data;
+    if (!posRes.ok) throw new Error((await posRes.json()).error || t("common.unknownError"));
     if (posRes.ok) {
       // 예전 방식(단계id: true) 기록은 무시
       const pos = await posRes.json();
@@ -509,9 +510,11 @@ async function loadStoryData() {
     notice.hidden = true;
     if (posRes.ok) await migrateStory();
     renderStory();
+    return true;
   } catch (err) {
     notice.textContent = t("story.loadFailed", { error: err.message });
     notice.hidden = false;
+    return false;
   }
 }
 

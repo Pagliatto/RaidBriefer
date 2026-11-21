@@ -26,9 +26,23 @@ _cache = {"at": 0.0, "data": None, "rev": None}
 CACHE_SECONDS = 60
 
 
+@app.before_request
+def require_json_object():
+    if request.method == "POST" and not isinstance(request.get_json(silent=True), dict):
+        return jsonify({"error": i18n.t("server.badRequest", lang=i18n.system_lang())}), 400
+
+
+@app.errorhandler(settings.DataReadError)
+def saved_data_error(error):
+    return jsonify({"error": str(error)}), 503
+
+
 @app.route("/")
 def home():
-    lang = i18n.current_lang()
+    try:
+        lang = i18n.current_lang()
+    except settings.DataReadError:
+        lang = i18n.system_lang()
     return render_template("index.html", lang=lang, i18n=i18n.bundle(lang), t=lambda key, **v: i18n.t(key, lang, **v))
 
 
@@ -49,6 +63,8 @@ def api_quests():
             _cache["data"] = quests.build()
             _cache["at"] = time.time()
             _cache["rev"] = rev
+        except settings.DataReadError:
+            raise
         except Exception as error:  # 화면에 오류 안내를 보여주기 위해
             return jsonify({"error": i18n.t("server.questsFailed", error=error)}), 500
     return jsonify(_cache["data"])
@@ -59,6 +75,8 @@ def api_quest_catalog():
     """처음 설정 2단계: 직접 고를 수 있는 전체 퀘스트 목록"""
     try:
         return jsonify(quests.catalog())
+    except settings.DataReadError:
+        raise
     except Exception as error:
         return jsonify({"error": i18n.t("server.catalogFailed", error=error)}), 500
 
@@ -84,6 +102,8 @@ def api_maps():
         for m in map_views.map_list():
             result.append({**m, "view": map_views.view_for(m["key"])})
         return jsonify(result)
+    except settings.DataReadError:
+        raise
     except Exception as error:
         return jsonify({"error": i18n.t("server.mapsFailed", error=error)}), 500
 
@@ -95,6 +115,8 @@ def api_map_features(map_key):
         return jsonify({"error": i18n.t("server.badRequest")}), 400
     try:
         return jsonify(map_views.features(map_key))
+    except settings.DataReadError:
+        raise
     except Exception as error:
         return jsonify({"error": i18n.t("server.featuresFailed", error=error)}), 500
 
@@ -107,6 +129,8 @@ def api_loot(map_key):
         return jsonify({"error": i18n.t("server.badRequest")}), 400
     try:
         return jsonify(map_views.loose_spots(map_key, ids))
+    except settings.DataReadError:
+        raise
     except Exception as error:
         return jsonify({"error": i18n.t("server.lootFailed", error=error)}), 500
 
@@ -128,6 +152,8 @@ def api_hideout():
     """은신처: 시설마다 지금 레벨 + 다음 레벨 재료·조건, 다음 레벨 재료 합계"""
     try:
         return jsonify(hideout.build())
+    except settings.DataReadError:
+        raise
     except Exception as error:
         return jsonify({"error": i18n.t("server.hideoutFailed", error=error)}), 500
 
@@ -138,8 +164,8 @@ def api_reset():
     body = request.get_json(silent=True) or {}
     if body.get("confirm") is not True:  # 실수로 지우지 않게 확인 값이 있어야 함
         return jsonify({"error": i18n.t("server.badRequest")}), 400
-    progress.reset_all()
     game_dir = settings.load()["game_dir"]
+    progress.reset_all()
     settings.save({**settings.DEFAULTS, "game_dir": game_dir})
     _cache["data"] = None
     return jsonify({"ok": True})
@@ -168,6 +194,7 @@ def api_state():
     state = game_state.get()
     state["data_updating"] = tarkov_api.is_updating()
     state["quest_rev"] = quest_log.log_rev()  # 바뀌면 화면이 퀘스트를 새로 불러옴
+    updater.cleanup(started=True)
     return jsonify(state)
 
 
@@ -255,7 +282,7 @@ def api_settings_set():
         saved = settings.save({"hideout_all": body["hideout_all"]})
         return jsonify({**saved, "check": settings.check_game_dir(saved["game_dir"])})
     if "lang" in body:  # 화면·게임 데이터 언어 → 화면은 새로고침해서 반영
-        if body["lang"] not in i18n.LANGS:
+        if not isinstance(body["lang"], str) or body["lang"] not in i18n.LANGS:
             return jsonify({"error": i18n.t("server.badRequest")}), 400
         saved = settings.save({"lang": body["lang"]})
         _cache["data"] = None  # 퀘스트 이름·목표를 새 언어로 다시 계산
@@ -295,6 +322,8 @@ def api_settings_set():
 def api_story():
     try:
         return jsonify(story.build())
+    except settings.DataReadError:
+        raise
     except Exception as error:
         return jsonify({"error": i18n.t("server.storyFailed", error=error)}), 500
 
@@ -315,7 +344,7 @@ def api_check_set(kind):
         return jsonify({"error": i18n.t("server.badRequest")}), 400
     if "changes" in body:
         changes = body["changes"]
-        if kind != "story" or not isinstance(changes, dict) or not 1 <= len(changes) <= 500:
+        if kind not in ("story", "handed") or not isinstance(changes, dict) or not 1 <= len(changes) <= 5000:
             return jsonify({"error": i18n.t("server.badRequest")}), 400
     else:
         key = body.get("key")
@@ -324,11 +353,15 @@ def api_check_set(kind):
         changes = {key: body.get("value")}
     # 하나라도 잘못된 값이면 쓰기 전에 전체 요청을 거절한다.
     for key, value in changes.items():
-        ok_value = (value is None or isinstance(value, bool)
-                    or (isinstance(value, str) and len(value) <= 100)
-                    or (isinstance(value, int) and 0 <= value <= 10))  # 은신처 레벨
+        ok_value = progress.valid_value(kind, value)
         if not isinstance(key, str) or not key or len(key) > 300 or not ok_value:
             return jsonify({"error": i18n.t("server.badRequest")}), 400
+    if kind == "hideout":
+        stations = tarkov_api.load("hideout")
+        for key, value in changes.items():
+            station = stations.get(key)
+            if station is None or type(value) is not int or value not in {0, *(lv["level"] for lv in station.get("levels", []))}:
+                return jsonify({"error": i18n.t("server.badRequest")}), 400
     result = progress.set_checks(kind, changes)
     if kind == "added":  # 직접 추가한 퀘스트는 퀘스트 목록 자체가 바뀌므로 다시 계산
         _cache["data"] = None

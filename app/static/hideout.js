@@ -114,10 +114,13 @@ document.addEventListener("tab-shown", () => { resetHideoutHover(); observeHideo
 document.addEventListener("visibilitychange", () => { resetHideoutHover(); observeHideoutChanges(); });
 window.addEventListener("blur", resetHideoutHover);
 
+let hideoutLoadRevision = 0;
 async function loadHideout() {
+  const revision = ++hideoutLoadRevision;
   try {
     const res = await fetch("/api/hideout");
     const data = await res.json();
+    if (revision !== hideoutLoadRevision) return false;
     if (!res.ok) throw new Error(data.error || "");
     trackHideoutChanges(data);
     hideout.data = data;
@@ -126,6 +129,7 @@ async function loadHideout() {
     document.dispatchEvent(new Event("hideout-changed"));
     return true;
   } catch (error) {
+    if (revision !== hideoutLoadRevision) return false;
     document.getElementById("ho-summary").replaceChildren(el("p", "notice", t("hideout.loadFailed", { error: error.message })));
     return false;
   }
@@ -287,15 +291,18 @@ function renderHideout() {
   input.type = "checkbox";
   input.checked = !!d.include_locked;
   input.addEventListener("change", async () => {
+    input.disabled = true;
     try {
-      await fetch("/api/settings", {
+      const res = await fetch("/api/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ hideout_all: input.checked }),
       });
+      if (!res.ok) throw new Error();
     } catch (error) {
+      input.checked = !!d.include_locked;
       alert(t("common.saveFailedShort"));
-    }
+    } finally { input.disabled = false; }
     await loadHideout();
   });
   const label = el("span", "", t("hideout.switchLabel"));
@@ -393,11 +400,12 @@ function renderEditionPicker(box) {
     btn.addEventListener("click", async () => {
       if (key === current) return;
       try {
-        await fetch("/api/settings", {
+        const res = await fetch("/api/settings", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ edition: key }),
         });
+        if (!res.ok) throw new Error();
       } catch (error) {
         alert(t("common.saveFailedShort"));
       }

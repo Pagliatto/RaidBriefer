@@ -35,13 +35,18 @@ def _on_change(s: map_watch.MapState) -> None:
 
 
 def _run() -> None:
-    try:
-        tarkov_api.update_all()
-        for m in tarkov_api.load("maps")["maps"].values():
-            _raid_minutes[m["id"]] = m.get("raidDuration")
-        map_watch.watch(interval=1.0, on_change=_on_change)
-    except Exception as error:  # 일꾼이 죽어도 서버는 계속 돌게
-        print(f"게임 상태 확인을 멈췄어요: {error}")  # i18n-ok: 개발용 콘솔
+    delay = 1
+    while True:
+        try:
+            tarkov_api.update_all()
+            for m in tarkov_api.load("maps")["maps"].values():
+                _raid_minutes[m["id"]] = m.get("raidDuration")
+            delay = 1
+            map_watch.watch(interval=1.0, on_change=_on_change)
+        except Exception as error:
+            print(f"게임 상태 확인을 다시 시도해요: {error}")  # i18n-ok: 개발용 콘솔
+        time.sleep(delay)
+        delay = min(delay * 2, 60)
 
 
 def is_game_running() -> bool:

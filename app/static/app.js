@@ -600,7 +600,7 @@ function renderQuest(q) {
       if (p.count) text += ` ×${p.count}`;
 
       if (isGive) {
-        const key = `${q.id}|${p.text}`;
+        const key = handedKey(q, p);
         const done = !!state.handed[key];
         chip.type = "button";
         chip.classList.toggle("done", done);
@@ -671,6 +671,49 @@ function render() {
 }
 
 let questLoadRevision = 0;
+let progressMark;
+let checksLoaded = false;
+let checkQueue = Promise.resolve();
+function queueChecks(task) {
+  const result = checkQueue.then(task);
+  checkQueue = result.catch(() => {});
+  return result;
+}
+function handedKey(q, p) { return q.id + "|" + p.hand_id; }
+async function migrateHanded(data) {
+  const changes = {};
+  for (const kind of ["in_progress", "completed", "failed"]) {
+    for (const q of data[kind]) for (const p of q.prep || []) {
+      if (p.kind !== "제출" || !p.hand_id) continue;
+      const key = handedKey(q, p);
+      for (const text of p.legacy_texts || []) {
+        const old = q.id + "|" + text;
+        if (!Object.hasOwn(state.handed, old)) continue;
+        if (state.handed[old]) changes[key] = true;
+        changes[old] = null;
+      }
+    }
+  }
+  if (!Object.keys(changes).length) return;
+  const res = await fetch("/api/check/handed", {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ changes }),
+  });
+  if (!res.ok) throw new Error(t("quest.saveCheckFailed"));
+  state.handed = await res.json();
+}
+async function reloadProgress() {
+  await loadHanded();
+  // 각 화면의 저장 대기열 뒤에서 다시 읽어 예전 응답이 새 회차를 덮지 않게 한다.
+  if (typeof loadStory === "function" && !await loadStory()) throw new Error(t("story.saveFailed"));
+  if (typeof loadHideout === "function" && !await loadHideout()) throw new Error(t("common.saveFailedShort"));
+  const added = await fetch("/api/check/added");
+  if (!added.ok) throw new Error(t("common.saveFailedShort"));
+  await added.json();
+  if (typeof setupQuests !== "undefined" && setupQuests.data) {
+    await setupLoadQuests();
+    renderSetupQuests();
+  }
+}
 async function load() {
   const revision = ++questLoadRevision;
   const notice = document.getElementById("notice");
@@ -682,6 +725,13 @@ async function load() {
     if (!Object.keys(QUEST_CHANGE_LABEL).every((key) => Array.isArray(body[key]))) {
       throw new Error(t("common.unknownError"));
     }
+    if (!checksLoaded) await loadHanded();
+    const mark = body.prestige_since || "none";
+    if (progressMark !== undefined && mark !== progressMark) await reloadProgress();
+    if (revision !== questLoadRevision) return;
+    await queueChecks(() => migrateHanded(body));
+    if (revision !== questLoadRevision) return;
+    progressMark = mark;
     trackQuestChanges(body);
     state.data = body;
     notice.hidden = true;
@@ -698,71 +748,51 @@ async function load() {
 }
 
 // 설정에서 게임 설치 위치를 바꾸면 퀘스트·체크·스토리를 새 로그 기준으로 다시 불러옴
-window.addEventListener("settings-changed", () => {
-  load();
-  loadHanded();
-  if (typeof loadStory === "function") loadStory();
+window.addEventListener("settings-changed", async () => {
+  try { await reloadProgress(); await load(); }
+  catch (error) { showCheckError("common.saveFailedShort"); }
 });
 
-// ---------- 제출 체크 · 숨긴 퀘스트 불러오기 ----------
-async function loadHanded() {
-  try {
+function showCheckError(key) {
+  const notice = document.getElementById("notice");
+  notice.textContent = t(key);
+  notice.hidden = false;
+}
+
+// 불러오기와 저장도 같은 대기열을 사용한다.
+function loadHanded() {
+  return queueChecks(async () => {
     const [handed, hidden] = await Promise.all([fetch("/api/check/handed"), fetch("/api/check/hidden")]);
-    if (handed.ok) state.handed = await handed.json();
-    if (hidden.ok) state.hidden = await hidden.json();
-  } catch (err) {
-    // 못 불러오면 체크 없이 보여줌
-  }
+    if (!handed.ok || !hidden.ok) throw new Error(t("quest.saveCheckFailed"));
+    state.handed = await handed.json();
+    state.hidden = await hidden.json();
+    checksLoaded = true;
+  });
 }
 
-// 안 할 퀘스트 숨기기 / 다시 보기
-async function toggleHidden(questId, hide) {
-  const before = state.hidden;
-  state.hidden = { ...state.hidden };
-  if (hide) state.hidden[questId] = true; else delete state.hidden[questId];
-  render();
-  notifyChanged("quests-changed");
-  try {
-    const res = await fetch("/api/check/hidden", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ key: questId, value: hide || null }),
-    });
-    if (!res.ok) throw new Error();
-    state.hidden = await res.json();
-  } catch (err) {
-    state.hidden = before;
-    const notice = document.getElementById("notice");
-    notice.textContent = t("quest.saveHideFailed");
-    notice.hidden = false;
-  }
-  render();
-  notifyChanged("quests-changed");
+function saveCheck(kind, key, value) {
+  return queueChecks(async () => {
+    const before = state[kind][key];
+    if (value) state[kind][key] = true; else delete state[kind][key];
+    render();
+    notifyChanged("quests-changed");
+    try {
+      const res = await fetch("/api/check/" + kind, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key, value }),
+      });
+      if (!res.ok) throw new Error();
+      state[kind] = await res.json();
+    } catch (error) {
+      if (before === undefined) delete state[kind][key]; else state[kind][key] = before;
+      showCheckError(kind === "hidden" ? "quest.saveHideFailed" : "quest.saveCheckFailed");
+    }
+    render();
+    notifyChanged("quests-changed");
+  });
 }
-
-async function toggleHanded(key, done) {
-  const before = state.handed;
-  // 먼저 화면부터 바꾸고(빠르게 보이게), 저장에 실패하면 되돌림
-  state.handed = { ...state.handed };
-  if (done) state.handed[key] = true; else delete state.handed[key];
-  render();
-  try {
-    const res = await fetch("/api/check/handed", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ key, value: done }),
-    });
-    if (!res.ok) throw new Error();
-    state.handed = await res.json();
-  } catch (err) {
-    state.handed = before;
-    const notice = document.getElementById("notice");
-    notice.textContent = t("quest.saveCheckFailed");
-    notice.hidden = false;
-  }
-  render();
-  notifyChanged("quests-changed");  // 홈의 "모아야 할 것"도 같이 바뀌게
-}
+function toggleHidden(key, value) { return saveCheck("hidden", key, value); }
+function toggleHanded(key, value) { return saveCheck("handed", key, value); }
 
 // ---------- 맨 위로 / 맨 아래로 ----------
 document.getElementById("to-top").addEventListener("click", () => {
@@ -772,7 +802,7 @@ document.getElementById("to-bottom").addEventListener("click", () => {
   window.scrollTo({ top: document.documentElement.scrollHeight, behavior: reducedMotion() ? "instant" : "smooth" });
 });
 
-loadHanded().then(load);
+loadHanded().then(load).catch(() => { showCheckError("quest.saveCheckFailed"); load(); });
 
 // 퀘스트 받기·완료는 로그가 늘어나는 즉시 반영 (상단바가 2초마다 확인 → quest-log-changed)
 // 레이드 중(로딩 포함)에는 다시 계산하지 않고, 로비로 돌아오면 그때 한 번
