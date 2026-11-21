@@ -191,7 +191,8 @@
     "groupLocked": "Locked",
     "doneHide": "Hide maxed stations ({n}) ▴",
     "doneShow": "Show maxed stations ({n}) ▾",
-    "unseenBuildable": "New stations can be built"
+    "unseenBuildable": "New stations can be built",
+    "newBadge": "New"
   },
   "map": {
     "layerOn": "ON",

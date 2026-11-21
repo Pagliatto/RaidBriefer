@@ -29,10 +29,12 @@ function saveHideoutChanges() {
     localStorage.setItem(HIDEOUT_CHANGES_KEY, JSON.stringify(hideoutChanges));
   } catch (e) { /* Keep this session working when storage is unavailable. */ }
 }
-function trackHideoutChanges(data) {
+// notify=false: 내가 직접 바꾼 결과(레벨·확보·에디션·스위치)는 '새로 건설가능' 알림을 만들지 않고 기준만 갱신
+// (2026-11-21 사용자: 은신처 탭 점이 안 없어짐 — 내 조작마다 새 알림이 생겼음)
+function trackHideoutChanges(data, notify) {
   const next = Object.create(null);
   data.stations.filter((s) => s.next && s.buildable).forEach((s) => { next[s.id] = s.next.level; });
-  if (hideoutBaseline) {
+  if (hideoutBaseline && notify) {
     Object.entries(next).forEach(([id, level]) => {
       if (hideoutBaseline[id] !== level) hideoutChanges[id] = { level, flashed: false };
     });
@@ -98,6 +100,7 @@ function decorateHideoutChange(card, s) {
     delete hideoutChanges[s.id];
     card.removeAttribute("tabindex");
     card.removeAttribute("title");
+    card.querySelector(".ho-new-badge")?.classList.add("seen");
     saveHideoutChanges();
     updateHideoutDot();
   };
@@ -116,11 +119,10 @@ function decorateHideoutChange(card, s) {
 let hideoutTabOpen = false;
 document.addEventListener("tab-shown", (e) => {
   resetHideoutHover();
+  // 은신처 탭을 한 번 열어 봤으면 남은 '새로 가능' 표시와 탭 점을 모두 확인한 것으로 침 (2026-11-21 사용자)
   if (hideoutTabOpen && e.detail !== "hideout") {
     let seen = false;
-    Object.keys(hideoutChanges).forEach((id) => {
-      if (hideoutChanges[id].flashed) { delete hideoutChanges[id]; seen = true; }
-    });
+    Object.keys(hideoutChanges).forEach((id) => { delete hideoutChanges[id]; seen = true; });
     if (seen) {
       saveHideoutChanges();
       updateHideoutDot();
@@ -136,14 +138,14 @@ document.addEventListener("visibilitychange", () => { resetHideoutHover(); obser
 window.addEventListener("blur", resetHideoutHover);
 
 let hideoutLoadRevision = 0;
-async function loadHideout() {
+async function loadHideout(notify = false) {
   const revision = ++hideoutLoadRevision;
   try {
     const res = await fetch("/api/hideout");
     const data = await res.json();
     if (revision !== hideoutLoadRevision) return false;
     if (!res.ok) throw new Error(data.error || "");
-    trackHideoutChanges(data);
+    trackHideoutChanges(data, notify);
     hideout.data = data;
     renderHideout();
     // 지도 '먹을 것'·홈 '뭘 모아 올까?' 가 은신처 재료를 같이 쓰게 알림 (4단계에서 연결)
@@ -241,7 +243,10 @@ function hoCard(s) {
     head.append(img);
   }
   const title = el("div", "ho-title");
-  title.append(el("b", "", s.name));
+  const name = el("b", "", s.name);
+  // 새로 건설가능해진 시설: 퀘스트의 '새 퀘스트'처럼 눈에 보이는 배지 (마우스 올리거나 탭을 나가면 사라짐)
+  if (hideoutChanges[s.id]) name.append(el("span", "quest-change-badge ho-new-badge", t("hideout.newBadge")));
+  title.append(name);
   // 레벨 점: ●●○ (지금 레벨 / 최고 레벨)
   const dots = el("span", "ho-dots");
   for (let i = 1; i <= s.max_level; i++) dots.append(el("i", i <= s.level ? "on" : ""));
@@ -443,5 +448,8 @@ document.addEventListener("hideout-changed", () => {
 });
 
 // 프레스티지·처음 설정 등으로 바뀌면 다시
-window.addEventListener("settings-changed", loadHideout);
-loadHideout();
+window.addEventListener("settings-changed", () => loadHideout());
+// 퀘스트가 바뀌면(레이드 뒤 완료 등) 은신처 조건도 다시 확인하고, 저절로 풀린 시설은 알림
+document.addEventListener("quests-changed", () => { if (hideout.data) loadHideout(true); });
+// 알림은 켤 때와 퀘스트가 바뀌었을 때만 (퀘스트를 끝내 조건이 풀린 경우)
+loadHideout(true);

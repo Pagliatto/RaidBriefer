@@ -2141,3 +2141,4 @@ button.tag.map-colored:focus-visible { outline: 2px solid var(--accent); outline
 @media (prefers-reduced-motion: reduce) {
   .settings.window-opening::backdrop { animation: none; }
 }
+.ho-new-badge { --change-color: var(--ok); }  /* 은신처 '새로 가능' 배지: 건설가능 초록 */

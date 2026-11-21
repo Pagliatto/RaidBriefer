@@ -191,7 +191,8 @@
     "groupLocked": "조건미충족",
     "doneHide": "최대레벨 시설 접기 ({n}) ▴",
     "doneShow": "최대레벨 시설 보기 ({n}) ▾",
-    "unseenBuildable": "새로 건설할 수 있는 시설이 있어요"
+    "unseenBuildable": "새로 건설할 수 있는 시설이 있어요",
+    "newBadge": "새로 가능"
   },
   "map": {
     "layerOn": "켜짐",
