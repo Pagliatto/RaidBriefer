@@ -45,8 +45,9 @@ def build() -> dict:
     names = tarkov_api.Translator("hideout")
     items = tarkov_api.Translator("items")
     traders = {t["id"]: tarkov_api.Translator("traders")(t["name"]) for t in tarkov_api.load("traders").values()}
-    saved_levels = progress.get("hideout")
-    got = progress.get("hideout_got")
+    saved = progress.get_many(("hideout", "hideout_got"))
+    saved_levels = saved["hideout"]
+    got = saved["hideout_got"]
 
     def item_name(item_id: str) -> str:
         name = items(f"{item_id} Name")

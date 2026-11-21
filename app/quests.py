@@ -8,6 +8,7 @@ import hashlib
 import re
 import threading
 import time
+from datetime import datetime
 from pathlib import Path
 
 from app import i18n, paths, progress, quest_log, tarkov_api
@@ -427,13 +428,15 @@ def build() -> dict:
     overrides = _load_overrides()
 
     groups = {"진행 중": [], "완료": [], "실패": []}
-    events = quest_log.read_quest_events()
+    prestige = quest_log.last_prestige()
+    events = quest_log.read_quest_events(since=prestige or datetime.min)
+    saved = progress.get_many(("added", "gap_ok"), prestige=prestige)
     status = quest_log.status_from_events(events)
     # 로그 일부가 지워졌다는 단서 (직접 추가했거나 이미 확인한 것은 뺌)
-    known_ok = set(progress.get("added")) | set(progress.get("gap_ok"))
+    known_ok = set(saved["added"]) | set(saved["gap_ok"])
     log_gap = sorted(quest_log.missing_starts(events) - known_ok)
     # 처음 설정에서 직접 추가한 '진행 중' 퀘스트 (로그에 기록이 생기면 로그가 이김)
-    added = [q for q in progress.get("added") if q not in status]
+    added = [q for q in saved["added"] if q not in status]
     for quest_id in added:
         status[quest_id] = {"status": "진행 중", "time": None}
     # 로그에 없지만 선행 퀘스트라서 끝낸 게 확실한 것 → 완료로 추가 ("자동 추정" 표시)
@@ -565,7 +568,7 @@ def build() -> dict:
         "data_message": message,
         "needs_translation": needs,
         # 가장 최근 프레스티지 (없으면 None → 화면에 "전체 로그 기준")
-        "prestige_since": (lambda p: p.strftime("%Y-%m-%d %H:%M:%S") if p else None)(quest_log.last_prestige()),
+        "prestige_since": prestige.strftime("%Y-%m-%d %H:%M:%S") if prestige else None,
         # 시작 기록 없이 끝난 퀘스트 id들 → 화면에 '로그가 지워진 것 같아요' 안내
         "log_gap": log_gap,
         "in_progress": groups["진행 중"],

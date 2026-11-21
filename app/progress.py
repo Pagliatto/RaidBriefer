@@ -21,12 +21,14 @@ KINDS = ("handed", "story", "hidden", "added", "gap_ok", "hideout", "hideout_got
 # gap_ok: '로그가 지워진 것 같아요' 안내를 확인한 퀘스트 {"퀘스트id": true} (다시 안 띄움)
 # added : 처음 설정에서 직접 추가한 '진행 중' 퀘스트 {"퀘스트id": true} (로그가 지워졌을 때 메우기)
 
+_AUTO_PRESTIGE = object()
+
 _lock = threading.Lock()  # 동시에 두 곳에서 저장해도 파일이 안 깨지게
 
 
-def _prestige_mark() -> str:
+def _prestige_mark(prestige=_AUTO_PRESTIGE) -> str:
     # 가장 최근 프레스티지 시각이 바뀌면(새 회차) 체크 기록을 비운다. 기록이 없으면 "none".
-    p = quest_log.last_prestige()
+    p = quest_log.last_prestige() if prestige is _AUTO_PRESTIGE else prestige
     return p.strftime("%Y-%m-%d %H:%M:%S") if p else "none"
 
 
@@ -48,11 +50,11 @@ def _valid_saved(data: dict) -> bool:
                        for key, value in data[kind].items())) for kind in KINDS)
 
 
-def _read() -> dict:
+def _read(prestige=_AUTO_PRESTIGE) -> dict:
     data = settings.read_saved(PROGRESS_FILE, _valid_saved)
     # 프레스티지가 바뀌었으면(새 회차) 체크를 비운다.
     # 단, 로그에서 못 찾았을 때("none": 설치 위치가 틀렸거나 로그가 지워짐)는 지우지 않는다.
-    mark = _prestige_mark()
+    mark = _prestige_mark(prestige)
     if mark != "none" and data.get("prestige") not in (None, mark):
         data = {"prestige": mark}
     elif mark != "none":
@@ -69,10 +71,16 @@ def _write(data: dict) -> None:
     temp.replace(PROGRESS_FILE)
 
 
+def get_many(kinds, *, prestige=_AUTO_PRESTIGE) -> dict:
+    """한 번 읽은 진행 기록과 프레스티지 기준을 여러 종류가 함께 쓴다."""
+    with _lock:
+        data = _read(prestige)
+        return {kind: data[kind] for kind in kinds}
+
+
 def get(kind: str) -> dict:
     """체크 목록 하나 (kind = handed 또는 story)"""
-    with _lock:
-        return _read()[kind]
+    return get_many((kind,))[kind]
 
 
 def set_check(kind: str, key: str, value) -> dict:

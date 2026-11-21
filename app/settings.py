@@ -5,6 +5,7 @@
 """
 
 import json
+import os
 import hashlib
 import time
 import string
@@ -124,7 +125,11 @@ def check_game_dir(game_dir: str) -> dict:
     logs = Path(game_dir) / "Logs"
     if not logs.is_dir():
         return {"ok": False, "message": i18n.t("server.noLogsFolder")}
-    count = sum(1 for f in logs.glob("log_*") if f.is_dir())
+    try:
+        with os.scandir(logs) as entries:
+            count = sum(1 for entry in entries if entry.name.lower().startswith("log_") and entry.is_dir())
+    except OSError:
+        count = 0
     if not count:
         return {"ok": False, "message": i18n.t("server.noLogs")}
     return {"ok": True, "message": i18n.t("server.logsFound", n=count)}
