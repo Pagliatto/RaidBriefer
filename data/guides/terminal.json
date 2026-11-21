@@ -622,10 +622,12 @@
     "armory_room": {
       "x": 190.5,
       "y": -59.0,
-      "z": -244.5,
+      "z": -240.8,
       "kind": "lock",
       "label_ko": "무기고 문 (Armory key 필요)",
-      "label_en": "Armory door (needs Armory key)"
+      "label_en": "Armory door (needs Armory key)",
+      "from": "game",
+      "checked": "2026-11-22"
     },
     "ms_weapon_box": {
       "x": 270.5,
@@ -644,12 +646,14 @@
       "label_en": "D3: Black Division keycard scanner"
     },
     "metal_gate": {
-      "x": 120,
+      "x": 113.8,
       "y": -59.0,
-      "z": 6.1,
+      "z": 9,
       "kind": "door",
       "label_ko": "연료 저장소 철문",
-      "label_en": "Fuel depot metal gate"
+      "label_en": "Fuel depot metal gate",
+      "from": "game",
+      "checked": "2026-11-22"
     },
     "sz1_1": {
       "x": 188.8,
@@ -820,13 +824,15 @@
       "candidate": true
     },
     "panel_10": {
-      "x": 179.1,
+      "x": 180.7,
       "y": -59.0,
-      "z": 253.7,
+      "z": 255.2,
       "kind": "panel",
       "label_ko": "배전반 후보 10 · 펌프장 문 바로 밖 벽",
       "label_en": "Panel candidate 10: wall just outside the pumping station door",
-      "candidate": true
+      "candidate": true,
+      "from": "game",
+      "checked": "2026-11-22"
     },
     "pumping_station": {
       "x": 153.5,
@@ -837,12 +843,14 @@
       "label_en": "Pumping station: building containing drain controls and the Pier door key safe"
     },
     "pumping_station_entrance": {
-      "x": 134.1,
+      "x": 177.3,
       "y": -59.0,
-      "z": 260,
+      "z": 259.5,
       "kind": "door",
       "label_ko": "펌프장 입구",
-      "label_en": "Pumping station entrance"
+      "label_en": "Pumping station entrance",
+      "from": "game",
+      "checked": "2026-11-22"
     },
     "pier_door": {
       "x": -258.76,

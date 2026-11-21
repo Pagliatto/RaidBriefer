@@ -924,9 +924,9 @@
       "zones": [
         {
           "spawn_location": "Zone2ScavPort29",
-          "x": -38.1,
+          "x": -38.9,
           "y": -59,
-          "z": 198.9,
+          "z": 210.4,
           "radius": 13,
           "bosses": [
             "bossGluhar",
@@ -934,7 +934,9 @@
             "bossBully",
             "bossSanitar",
             "bossTagilla"
-          ]
+          ],
+          "from": "game",
+          "checked": "2026-11-22"
         }
       ]
     }
@@ -943,9 +945,9 @@
     "_note": "User in-game knowledge takes priority over dev only when from is game. Positions are from Claude's guide measurements or the stated dev references; all y = -59. Non-game positions only fill missing dev positions. Groups must still exist by exact dev spawn-location name. merge_into adds counts at the target position without a separate marker.",
     "terminal": {
       "Zone1BD1HangarBD11": {
-        "x": 270.5,
+        "x": 274.1,
         "y": -59,
-        "z": -257,
+        "z": -241.1,
         "count": [
           4,
           4
@@ -953,31 +955,31 @@
         "inside": true,
         "note": "4 inside the Seaport terminal / MS building; 8 outside remain in HangarAmbush11. Position: MS weapon box measured by Claude.",
         "from": "game",
-        "checked": "2026-11-21"
+        "checked": "2026-11-22"
       },
       "Zone1BDGateAmbush13": {
-        "x": 68.96,
+        "x": 50.2,
         "y": -59,
-        "z": -156.34,
+        "z": -154.3,
         "count": [
           2,
           2
         ],
         "note": "2 in front of the D3 locked door; position matches the Black Division keycard lock.",
         "from": "game",
-        "checked": "2026-11-21"
+        "checked": "2026-11-22"
       },
       "Zone1BD1PortAmbush1": {
-        "x": 15.21,
+        "x": 36.6,
         "y": -59,
-        "z": -340.7,
+        "z": -340.1,
         "count": [
           2,
           2
         ],
         "note": "2 at the starting port, confirmed in game. Dev entries appear to be alternatives, not a total of 5. Position: existing dev group center.",
         "from": "game",
-        "checked": "2026-11-21"
+        "checked": "2026-11-22"
       },
       "Zone2BDWarehouse18": {
         "x": 194.7,
@@ -1005,9 +1007,9 @@
         "checked": "2026-11-21"
       },
       "Zone2BDColumns23": {
-        "x": 132.4,
+        "x": 127.4,
         "y": -59,
-        "z": 213.1,
+        "z": 139.6,
         "count": [
           2,
           2
@@ -1015,19 +1017,67 @@
         "estimated": true,
         "note": "2 opposite the key side at the pump station. Estimated position: center of friendly Zone2VSRFColumns22 with the same Columns zone name.",
         "from": "game",
-        "checked": "2026-11-21"
+        "checked": "2026-11-22"
       },
       "Zone2BDPort32": {
-        "x": -360,
+        "x": -324.2,
         "y": -59,
-        "z": 300,
+        "z": 205.3,
         "count": [
           3,
           3
         ],
         "note": "3 on the last pier toward the boat extract; moved from the dev pier-corner center.",
         "from": "game",
-        "checked": "2026-11-21"
+        "checked": "2026-11-22"
+      },
+      "Zone2BDPort28": {
+        "count": [
+          3,
+          3
+        ],
+        "note": "position set in editor",
+        "y": -60.21,
+        "x": -25.5,
+        "z": 209.1,
+        "from": "game",
+        "checked": "2026-11-22"
+      },
+      "Zone2BDPort30": {
+        "count": [
+          4,
+          4
+        ],
+        "note": "position set in editor",
+        "y": -60.42,
+        "x": -102.3,
+        "z": 357.6,
+        "from": "game",
+        "checked": "2026-11-22"
+      },
+      "Zone2BDPort31": {
+        "count": [
+          4,
+          4
+        ],
+        "note": "position set in editor",
+        "y": -60.39,
+        "x": -191.8,
+        "z": 271.9,
+        "from": "game",
+        "checked": "2026-11-22"
+      },
+      "Zone1BD1HangarAmbush11": {
+        "count": [
+          8,
+          8
+        ],
+        "note": "position set in editor",
+        "y": -60.26,
+        "x": 255.1,
+        "z": -179.7,
+        "from": "game",
+        "checked": "2026-11-22"
       }
     }
   }
