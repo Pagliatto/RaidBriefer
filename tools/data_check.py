@@ -1,5 +1,8 @@
-"""기존 저장본과 게임 로그로 보완 데이터의 검토 목록을 출력한다. 다운로드·저장 없음."""
+"""보완 데이터와 가이드를 검사한다. --guides-only는 캐시·로그 없이 검사. 다운로드·저장 없음."""
 
+import json
+import math
+import re
 import sys
 from collections import Counter
 from datetime import datetime
@@ -8,11 +11,178 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from app import corrections, quest_log, quests, settings, tarkov_api
+
+def check_guides() -> int:
+    """가이드만 읽어 검사한다. 캐시·게임 로그·사용자 설정은 필요하지 않다."""
+    folder = ROOT / "data" / "guides"
+    if not folder.exists():
+        return 0
+    problems = []
+    try:
+        files = sorted(folder.glob("*.json"))
+    except OSError as error:
+        print(f"\n가이드 데이터\n  data/guides: {error}")
+        return 1
+    if not files:
+        return 0
+
+    def invalid_constant(value):
+        raise ValueError(f"JSON에서 허용하지 않는 값: {value}")
+
+    def read_json(path):
+        try:
+            return json.loads(path.read_text(encoding="utf-8"), parse_constant=invalid_constant)
+        except (OSError, ValueError) as error:
+            problems.append(f"{path.relative_to(ROOT)}: JSON 읽기 실패 ({error})")
+            return None
+
+    story_ids = set()
+    for path in sorted((ROOT / "data" / "story").glob("*.json")):
+        story = read_json(path)
+        if not isinstance(story, dict) or not isinstance(story.get("sections"), list):
+            problems.append(f"{path.relative_to(ROOT)}: sections 목록 없음")
+            continue
+        for section in story["sections"]:
+            if not isinstance(section, dict):
+                continue
+            steps = section.get("steps", [])
+            if isinstance(steps, list):
+                story_ids.update(step["id"] for step in steps
+                                 if isinstance(step, dict) and isinstance(step.get("id"), str))
+
+    hangul = re.compile(r"[\u1100-\u11ff\u3130-\u318f\ua960-\ua97f\uac00-\ud7ff\uffa0-\uffdc]")
+    kinds = {"key_spawn", "panel", "toolset", "explosive", "door", "building", "extract", "start"}
+    certainties = {"wiki", "user", "unconfirmed"}
+
+    for path in files:
+        prefix = str(path.relative_to(ROOT))
+
+        def problem(where, message):
+            problems.append(f"{prefix}/{where}: {message}")
+
+        def text_pair(value, where, keys=("ko", "en")):
+            if not isinstance(value, dict):
+                problem(where, "객체가 아님")
+                return
+            for key in keys:
+                text = value.get(key)
+                if not isinstance(text, str) or not text.strip():
+                    problem(f"{where}/{key}", "비어 있지 않은 문자열 필요")
+                elif key == keys[1] and hangul.search(text):
+                    problem(f"{where}/{key}", "영어에 한글 포함")
+
+        guide = read_json(path)
+        if not isinstance(guide, dict):
+            problem("root", "객체가 아님")
+            continue
+        required = {"map": str, "checked": str, "sources": dict, "prep": list,
+                    "steps": list, "points": dict, "warnings": list}
+        for key, kind in required.items():
+            if key not in guide or not isinstance(guide[key], kind):
+                problem(key, f"필수 필드 또는 형식 오류 ({kind.__name__})")
+        if not isinstance(guide.get("map"), str) or not guide["map"].strip():
+            problem("map", "비어 있지 않은 맵 이름 필요")
+        checked = guide.get("checked")
+        try:
+            if not isinstance(checked, str) or not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", checked):
+                raise ValueError
+            datetime.strptime(checked, "%Y-%m-%d")
+        except ValueError:
+            problem("checked", "실제 날짜 YYYY-MM-DD 필요")
+
+        source_entries = guide.get("sources")
+        source_entries = source_entries if isinstance(source_entries, dict) else {}
+        for source_id, entry in source_entries.items():
+            if not source_id.strip() or not isinstance(entry, dict):
+                problem(f"sources/{source_id}", "출처 id 또는 객체 오류")
+                continue
+            for field in ("from", "link", "section"):
+                if not isinstance(entry.get(field), str) or not entry[field].strip():
+                    problem(f"sources/{source_id}/{field}", "비어 있지 않은 문자열 필요")
+
+        def reference(value, where, required=False):
+            if required or "source" in value:
+                source_id = value.get("source")
+                if not isinstance(source_id, str) or source_id not in source_entries:
+                    problem(f"{where}/source", "sources에 없는 출처 id")
+            if required or "certainty" in value:
+                certainty = value.get("certainty")
+                if not isinstance(certainty, str) or certainty not in certainties:
+                    problem(f"{where}/certainty", "wiki/user/unconfirmed 중 하나 필요")
+
+        def warnings_list(value, where):
+            if not isinstance(value, list):
+                problem(where, "경고 목록 필요")
+                return
+            for index, warning in enumerate(value):
+                location = f"{where}/{index}"
+                text_pair(warning, location)
+                if isinstance(warning, dict):
+                    reference(warning, location)
+
+        point_entries = guide.get("points")
+        point_entries = point_entries if isinstance(point_entries, dict) else {}
+        for point_id, point in point_entries.items():
+            where = f"points/{point_id}"
+            text_pair(point, where, ("label_ko", "label_en"))
+            if not point_id.strip():
+                problem(where, "빈 위치 id")
+            if not isinstance(point, dict):
+                continue
+            for axis in ("x", "y", "z"):
+                number = point.get(axis)
+                if type(number) not in (int, float) or (isinstance(number, float) and not math.isfinite(number)):
+                    problem(f"{where}/{axis}", "유한한 숫자 좌표 필요")
+            kind = point.get("kind")
+            if not isinstance(kind, str) or kind not in kinds:
+                problem(f"{where}/kind", "알 수 없는 위치 종류")
+            if "candidate" in point and not isinstance(point["candidate"], bool):
+                problem(f"{where}/candidate", "true/false 필요")
+            reference(point, where)
+
+        row_ids = set()
+        for section in ("prep", "steps"):
+            rows = guide.get(section)
+            if not isinstance(rows, list):
+                continue
+            for index, row in enumerate(rows):
+                where = f"{section}/{index}"
+                text_pair(row, where)
+                if not isinstance(row, dict):
+                    continue
+                row_id = row.get("id")
+                if not isinstance(row_id, str) or not row_id.strip() or row_id in row_ids:
+                    problem(f"{where}/id", "단계 id 누락 또는 중복")
+                else:
+                    row_ids.add(row_id)
+                reference(row, where, required=True)
+                if section == "steps" or "story_step" in row:
+                    story_id = row.get("story_step")
+                    if "story_step" not in row or (story_id is not None and
+                            (not isinstance(story_id, str) or story_id not in story_ids)):
+                        problem(f"{where}/story_step", "기존 스토리 단계 id 또는 null 필요")
+                if section == "steps" or "points" in row:
+                    refs = row.get("points")
+                    if not isinstance(refs, list):
+                        problem(f"{where}/points", "위치 id 목록 필요")
+                    else:
+                        for ref in refs:
+                            if not isinstance(ref, str) or ref not in point_entries:
+                                problem(f"{where}/points", f"없는 위치 id: {ref!r}")
+                if section == "steps" or "warnings" in row:
+                    warnings_list(row.get("warnings"), f"{where}/warnings")
+        warnings_list(guide.get("warnings"), "warnings")
+
+    print(f"\n가이드 데이터: {len(files)}개 파일, 문제 {len(problems)}개")
+    for problem in problems:
+        print(f"  {problem}")
+    return len(problems)
 
 
 def sources(quest_id, tasks, manual, maps, names):
     """화면과 같은 필드별 우선순위로 이름·맵의 출처를 센다."""
+    from app import tarkov_api
+
     entry = manual.get(quest_id, {})
     task = tasks.get(quest_id) or tasks.get(entry.get("same_as"))
     game = entry.get("from") == "game"
@@ -39,6 +209,13 @@ def sources(quest_id, tasks, manual, maps, names):
 
 
 def main() -> int:
+    guide_problems = check_guides()
+    # 가이드 검사는 게임 설치·캐시·외부 패키지 없이도 별도로 실행할 수 있다.
+    if "--guides-only" in sys.argv[1:]:
+        return int(bool(guide_problems))
+
+    from app import corrections, quest_log, quests, settings, tarkov_api
+
     try:
         data = corrections.load()
         if not all(isinstance(data.get(key), dict) for key in ("quests", "btr_stops")):
@@ -126,7 +303,7 @@ def main() -> int:
                 if flags:
                     warnings.append(f"  {section}/{key}: {', '.join(flags)}")
         print("\n".join(warnings) or "  없음")
-        return 0  # 검토할 항목은 오류가 아니다.
+        return int(bool(guide_problems))  # 기존 검토 항목은 오류가 아니다.
     except (OSError, ValueError, KeyError, TypeError, AttributeError, tarkov_api.DataError) as error:
         print(f"파일/캐시를 읽지 못했습니다: {error}")
         return 1

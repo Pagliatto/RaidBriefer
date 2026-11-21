@@ -895,7 +895,7 @@
     }
   },
   "extracts": {
-    "_note": "Extracts missing on tarkov.dev, listed in the extraction table of the official wiki map page. name = in-game exit id (matches quest exitName), name_en = name shown on the map. Used only while tarkov.dev has no extract with the same name or name_en on that map. Lighthouse V-Ex position was read from the Jindouz Lighthouse map V2.6.1 on the wiki (Jindouz_Lighthouse_Map_V1.png, 2026-11-21) and aligned to tarkov.dev with 4 nearby reference points (Northern Checkpoint, Industrial Zone Gates, transits to Reserve and Woods; error 1-3 m).",
+    "_note": "Extracts missing on tarkov.dev, listed in the extraction table of the official wiki map page. name = in-game exit id (matches quest exitName), name_en = name shown on the map. Used only while tarkov.dev has no extract with the same name or name_en on that map. Lighthouse V-Ex position was read from the Jindouz Lighthouse map V2.6.1 on the wiki (Jindouz_Lighthouse_Map_V1.png, 2026-11-21) and aligned to tarkov.dev with 4 nearby reference points (Northern Checkpoint, Industrial Zone Gates, transits to Reserve and Woods; error 1-3 m). Terminal positions were read from the RE3MR wiki map and aligned to tarkov.dev using 9 fuel tank centers (error about 1-3 m).",
     "lighthouse": {
       "source": "wiki",
       "link": "https://escapefromtarkov.fandom.com/wiki/Lighthouse",
@@ -903,6 +903,15 @@
       "extracts": [
         {"name": "V-Ex_light", "name_en": "Road to Military Base V-Ex", "faction": "pmc", "x": -346.0, "y": 15.0, "z": -803.0,
          "note": "Single-use, 5000 RUB per player (depends on Scav karma), max 5 players"}
+      ]
+    },
+    "terminal": {
+      "source": "wiki",
+      "link": "https://escapefromtarkov.fandom.com/wiki/Terminal",
+      "checked": "2026-11-21",
+      "extracts": [
+        {"name": "Zubr Boat", "name_en": "Zubr Boat", "faction": "pmc", "x": -300.4, "y": -59.0, "z": 71.7,
+         "note": "Single-use; seats depend on players who entered: 1-3 players: 3 seats; 4 players: 3-4 seats (random); 5 players: 4-5 seats (random). Players who brought Secure container Alpha-1 with TerraGroup evidence must carry it. Opening the Pier door starts a 3-minute extraction timer for everyone; reach the boat before it ends."}
       ]
     }
   }
