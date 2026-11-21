@@ -67,5 +67,20 @@
       "Your saved records are better protected, and several bugs are fixed, including the missing BTR tracker link",
       "Changes from skipped versions are collected here, and Settings → About shows the full update history"
     ]
+  },
+  "1.0.10": {
+    "date": "2026-11-21",
+    "ko": [
+      "지도: 오른쪽 목록 맨 위에 지금 맵에서 할 스토리 단계가 나오고, 거기서 바로 체크할 수 있어요",
+      "지도: 트랜짓에 마우스를 올리면 갈 맵 이름이 보이고, 목록 맨 아래에서 트랜짓으로 갈 수 있는 맵과 그 맵의 퀘스트 수를 볼 수 있어요",
+      "스토리: '엔딩 분기' 화면에서 The Ticket 엔딩 갈림길, 지금 내 위치, 다음 갈림길까지 남은 단계를 볼 수 있어요",
+      "스토리: 구간마다 칸이 나뉘고 진행 표시(3/9, ✓ 완료)가 붙어 했는지 한눈에 보여요"
+    ],
+    "en": [
+      "Map: story steps for the current map appear at the top of the list, and you can check them off right there",
+      "Map: hover a transit to see where it leads; the bottom of the list shows maps reachable by transit with their quest counts",
+      "Story: the new 'Ending paths' view shows The Ticket's forks, where you are now, and how many steps remain until the next fork",
+      "Story: each section is its own card with a progress label (3/9, ✓ Done), so you can see at a glance what is finished"
+    ]
   }
 }
