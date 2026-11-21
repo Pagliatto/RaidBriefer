@@ -244,11 +244,7 @@ function renderHomeStory(list) {
       next.textContent = t("home.storyDone");
     }
     row.append(next);
-    row.addEventListener("click", () => {
-      story.open.add(s.ch.id);
-      renderStory();
-      goTab("story");
-    });
+    row.addEventListener("click", () => openStoryChapter(s.ch.id));
     box.append(row);
   });
   if (notStarted > 0) {

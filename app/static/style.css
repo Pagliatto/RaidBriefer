@@ -2282,3 +2282,5 @@ button.tag.map-colored:focus-visible { outline: 2px solid var(--accent); outline
 .chapter-body .finished-group .story-section { background: var(--bg); border-color: rgba(155, 200, 138, .45); }
 .finished-group .story-section .story-section-head h3 { color: var(--ok); }
 .finished-group .story-section .story-tip, .finished-group .story-section label, .finished-group .story-section li { color: var(--text-dim); }
+/* 흐름도 상세 버튼·막힘 안내도 줄바꿈 허용 (Codex 41 #3) */
+.story-flow .flow-action, .story-flow .flow-redirect { white-space: normal; }

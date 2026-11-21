@@ -657,8 +657,19 @@ function numberedObjectives() {
 function renderDrawer() {
   const m = mapUI.current;
   const list = document.getElementById("drawer-list");
+  // 다시 그려도 펼친 위치 설명·선택한 목표·스크롤은 그대로 (Codex 41 #4)
+  const openTips = new Set([...list.querySelectorAll("details[data-key][open]")].map((d) => d.dataset.key));
+  const scroller = list.parentElement;
+  const scrollTop = scroller ? scroller.scrollTop : 0;
   list.replaceChildren();
   if (!m) return;
+  const restore = () => {
+    list.querySelectorAll("details[data-key]").forEach((d) => { if (openTips.has(d.dataset.key)) d.open = true; });
+    if (mapUI.focusedPin != null) {
+      list.querySelectorAll(".has-pin").forEach((g) => g.classList.toggle("focused", g.dataset.pin === String(mapUI.focusedPin)));
+    }
+    if (scroller) scroller.scrollTop = scrollTop;
+  };
   const numbers = new Map(numberedObjectives().map((x) => [x.objective, x.n]));
   const here = mapQuests(m.name);
   const anywhere = anywhereQuests(activeQuests()).filter((q) => !here.includes(q));
@@ -706,6 +717,7 @@ function renderDrawer() {
     anywhere.forEach(addQuest);
   }
   renderDrawerTransits(list);
+  restore();
 }
 
 // 트랜짓 도착 맵 → 맵 목록의 맵 (변형 맵은 이름 앞부분으로: '연구소 (Dark)' → 연구소)
@@ -748,8 +760,23 @@ function focusTransit(items) {
   if (items[0].floor !== mapUI.floor) setFloor(items[0].floor);
   collapseAll();
   const bounds = L.latLngBounds(items.map((x) => x.marker.getLatLng()));
+  afterMove(leaf, () => items[0].marker.openTooltip());
   fitArea(leaf, bounds, { maxZoom: 3, padding: 80, animate: true });
-  leaf.once("moveend", () => items[0].marker.openTooltip());
+}
+
+// 지도 이동이 끝나면 한 번 실행. 이동 전에 등록하고(움직임 줄이기 = 즉시 이동),
+// 이미 그 자리라 이동이 없어도 잠시 뒤 실행 (Codex 41 #5)
+function afterMove(leaf, fn) {
+  let done = false;
+  const run = () => {
+    if (done) return;
+    done = true;
+    leaf.off("moveend", run);
+    clearTimeout(timer);
+    if (mapUI.leaflet === leaf) fn();
+  };
+  leaf.on("moveend", run);
+  const timer = setTimeout(run, reducedMotion() ? 50 : 1200);
 }
 
 // 지도 서랍 맨 위 '스토리' 칸: 지금 맵에서 할 스토리 단계 (홈과 같은 규칙: 진행 중 구간 + 다음 구간)
@@ -767,13 +794,7 @@ function renderDrawerStories(list, m) {
     name.type = "button";
     name.title = t("map.storyOpenHint");
     name.append(el("span", "", s.ch.name), el("span", "drawer-more", "›"));
-    name.addEventListener("click", () => {
-      story.open.add(s.ch.id);
-      if (typeof renderStory === "function") renderStory();
-      goTab("story");
-      const card = [...document.querySelectorAll(".chapter")].find((c) => c.dataset.chapterId === s.ch.id);
-      if (card) setTimeout(() => card.scrollIntoView({ block: "start" }), 30);
-    });
+    name.addEventListener("click", () => openStoryChapter(s.ch.id));
     const heading = el("div", "drawer-quest-heading");
     heading.append(name);
     li.append(heading);
@@ -801,6 +822,7 @@ function renderDrawerStories(list, m) {
       li.append(goals);
       if (sec.tip) {
         const more = el("details", "drawer-story-tip");
+        more.dataset.key = `${s.ch.id}/${sec.title}`;
         more.append(el("summary", "", t("map.storyWhere")), el("p", "", sec.tip));
         li.append(more);
       }
@@ -818,13 +840,13 @@ function focusPin(n) {
   if (first && first.floor !== mapUI.floor) setFloor(first.floor); // 그 목표가 있는 층으로
   if (!layerOn("quests")) setLayer("quests", true);
   collapseAll(); // 펼쳐진 위치가 아니라 원래 위치로 이동
-  fitArea(mapUI.leaflet, group.getBounds(), { maxZoom: 4, padding: 60, animate: true });
   // 이동이 끝났는데도 다른 핀과 겹쳐 있으면 펼쳐서 보여줌
-  mapUI.leaflet.once("moveend", () => {
+  afterMove(mapUI.leaflet, () => {
     const item = (mapUI.pinMarkers || []).find((x) => x.n === n);
     if (item && item.cluster) openCluster(item.cluster);
     if (item) item.marker.openTooltip();
   });
+  fitArea(mapUI.leaflet, group.getBounds(), { maxZoom: 4, padding: 60, animate: true });
   highlightDrawer(n);
 }
 
@@ -835,6 +857,7 @@ function showInDrawer(n) {
 }
 
 function highlightDrawer(n, flash = false) {
+  mapUI.focusedPin = n;
   document.querySelectorAll("#drawer-list .has-pin").forEach((g) => g.classList.toggle("focused", g.dataset.pin === String(n)));
   const target = document.querySelector(`#drawer-list .has-pin[data-pin="${n}"]`);
   if (!target) return;
@@ -936,7 +959,11 @@ document.getElementById("drawer-toggle").addEventListener("click", () => setDraw
 document.addEventListener("tab-shown", (e) => {
   if (e.detail !== "map") return;
   if (mapUI.dirty || !mapUI.leaflet) drawMap();
-  else setTimeout(() => mapUI.leaflet && fitFull(mapUI.leaflet, false), 0);
+  else {
+    if (mapUI.drawerDirty) renderDrawer(); // 다른 탭에서 스토리가 바뀜 → 서랍만 다시
+    setTimeout(() => mapUI.leaflet && fitFull(mapUI.leaflet, false), 0);
+  }
+  mapUI.drawerDirty = false;
 });
 
 // 필요템 줄 수가 바뀌거나 사라져도 남은 지도 크기에 맞춘다.
@@ -965,7 +992,12 @@ function scheduleMapRefresh() {
   }, 0);
 }
 document.addEventListener("hideout-changed", scheduleMapRefresh);
-document.addEventListener("story-changed", scheduleMapRefresh);
+document.addEventListener("story-changed", () => {
+  scheduleMapRefresh();
+  // 서랍 맨 위 스토리 칸: 체크 성공(다음 구간)·실패(되돌림) 모두 바로 반영 (Codex 41 #1)
+  if (currentTab() === "map" && mapUI.current) renderDrawer();
+  else if (mapUI.current) mapUI.drawerDirty = true;
+});
 
 // 퀘스트가 바뀌면(자동 갱신·숨기기) 서랍과 핀을 다시
 document.addEventListener("quests-changed", () => {

@@ -640,6 +640,17 @@ function flowToggle(key, label, className, set) {
   return btn;
 }
 
+// 다른 탭(지도·홈)에서 챕터 열기: 항상 '챕터 진행' 화면으로, 뒤로 가기 한 번에 출발 화면으로 (Codex 41 #2)
+function openStoryChapter(chapterId) {
+  story.open.add(chapterId);
+  setStoryView("progress");
+  renderStory();
+  goTab("story");
+  history.replaceState({ ...(history.state || {}), storyView: "progress" }, "");
+  const card = [...document.querySelectorAll(".chapter")].find((c) => c.dataset.chapterId === chapterId);
+  if (card) setTimeout(() => card.scrollIntoView({ block: "start" }), 30);
+}
+
 function jumpStorySection(ch, index) {
   story.open.add(ch.id);
   goStoryView("progress"); // 뒤로 가기로 흐름도의 원래 자리로 돌아옴
