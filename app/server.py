@@ -122,6 +122,21 @@ def api_map_features(map_key):
         return jsonify({"error": i18n.t("server.featuresFailed", error=error)}), 500
 
 
+@app.route("/api/guide/<map_key>")
+def api_guide(map_key):
+    """지도 공략: 준비·진행 순서·경고·위치 (읽기 전용)."""
+    from app import guides
+
+    if len(map_key) > 60:
+        return jsonify({"error": i18n.t("server.badRequest")}), 400
+    try:
+        return jsonify(guides.load(map_key))
+    except settings.DataReadError:
+        raise
+    except Exception as error:
+        return jsonify({"error": i18n.t("server.featuresFailed", error=error)}), 500
+
+
 @app.route("/api/loot/<map_key>")
 def api_loot(map_key):
     """먹을 아이템이 이 맵 바닥에 생기는 위치. ?ids=아이템id,아이템id"""
