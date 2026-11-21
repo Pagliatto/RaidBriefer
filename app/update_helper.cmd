@@ -39,8 +39,9 @@ robocopy "%NEW%" "%DEST%" /E /XD user_data cache _update /NFL /NDL /NJH /NJS /NP
 if errorlevel 8 goto restore
 if not exist "%DEST%\RaidBriefer.exe" goto restore
 if not exist "%DEST%\_internal" goto restore
+rem echo 는 errorlevel 을 바꾸지 않아 robocopy 의 성공 값(1)이 남아 있음 → 표식 파일이 실제로 생겼는지로 판단
 > "%WORK%installed.ok" echo installed
-if errorlevel 1 goto restore
+if not exist "%WORK%installed.ok" goto restore
 goto done
 
 :restore
@@ -69,7 +70,7 @@ set "REASON=rollback-incomplete"
 if not exist "%DEST%\RaidBriefer.exe" goto rollback_failed
 if not exist "%DEST%\_internal" goto rollback_failed
 > "%WORK%rollback.ok" echo verified
-if errorlevel 1 goto rollback_failed
+if not exist "%WORK%rollback.ok" goto rollback_failed
 set "REASON=install-failed-rollback-verified"
 
 :fail_old

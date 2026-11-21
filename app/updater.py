@@ -101,17 +101,35 @@ def _cleanup_work(started: bool) -> bool:
     """작업 잠금을 가진 일꾼만 호출한다. 실패 표식과 미확인 백업은 보존한다."""
     global _cleanup_verified
     failed = paths.USER_DIR / "update_failed.txt"
-    if failed.exists():
-        _set(status="failed", error="install")
-        return False
-    if not WORK_DIR.exists():
-        return True
 
     def marker(name):
         try:
             return (WORK_DIR / name).read_text(encoding="utf-8").strip()
         except OSError:
             return ""
+
+    if failed.exists():
+        try:
+            reason = failed.read_text(encoding="utf-8", errors="replace").strip()
+        except OSError:
+            reason = ""
+        target = marker("target_version.txt")
+        # 실패 뒤 사용자가 새 버전을 직접 설치함 (지금 버전 ≥ 업데이트하려던 버전) → 실패 표시가 남을 이유 없음
+        manual = bool(started and target and _ver(VERSION) >= _ver(target))
+        # 원래 버전으로 되돌린 것이 확인됨 → 프로그램은 온전. 이번 실행에서만 알리고 다음에는 다시 시도할 수 있게
+        rolled_back = bool(started and reason == "install-failed-rollback-verified"
+                           and marker("rollback.ok") == "verified")
+        if not manual:
+            _set(status="failed", error="install")
+        if not (manual or rolled_back):
+            return False  # 되돌리기가 확인되지 않은 백업은 그대로 보존
+        if WORK_DIR.exists():
+            shutil.rmtree(WORK_DIR)
+        failed.unlink(missing_ok=True)
+        _cleanup_verified = True
+        return True
+    if not WORK_DIR.exists():
+        return True
 
     markers = ("target_version.txt", "installed.ok", "rollback.ok")
     # v1.0.8 도우미는 표식을 쓰지 않고 old/new/도우미를 남긴다.
