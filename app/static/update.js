@@ -173,6 +173,7 @@ const whatsNewUI = {
   info: null,
   pending: false,
   requested: false,
+  currentOnly: false,
   checking: false,
   seen: null,
   unsaved: null,
@@ -207,7 +208,7 @@ async function loadWhatsNew() {
 
 async function tryOpenWhatsNew() {
   const ui = whatsNewUI;
-  if (!ui.info?.notes || (!ui.pending && !ui.requested) || ui.checking || ui.dialog.open) return;
+  if (!ui.info || (!ui.pending && !ui.requested) || ui.checking || ui.dialog.open) return;
   if (document.body.classList.contains("in-setup")) return;
   // 첫 상단바 응답 전의 기본값(off)으로 레이드 여부를 판단하지 않는다.
   ui.checking = true;
@@ -217,19 +218,35 @@ async function tryOpenWhatsNew() {
     const settingsDialog = document.getElementById("settings");
     if (ui.requested && settingsDialog.open) closeAnimatedDialog(settingsDialog);
     if (document.querySelector("dialog[open]") || !document.getElementById("brightness-popup").hidden) return;
-    const notes = ui.info.notes;
-    const languages = [document.documentElement.lang, "en", "ko"];
-    const lines = languages.map((lang) => notes[lang]).find((list) => Array.isArray(list) && list.length) || [];
-    if (!lines.length) return;
+    const versions = (ui.currentOnly ? [ui.info.notes] : ui.info.versions || [])
+      .filter((notes) => notes && Array.isArray(notes.lines) && notes.lines.length);
+    if (!versions.length) return;
     document.getElementById("whats-new-title").textContent = t("whatsNew.title", { version: ui.info.version });
-    document.getElementById("whats-new-list").replaceChildren(...lines.map((line) => {
-      const row = el("li");
-      const dot = el("i", "whats-new-dot");
-      dot.setAttribute("aria-hidden", "true");
-      row.append(dot, el("span", "", line));
-      return row;
-    }));
-    document.getElementById("whats-new-action").hidden = notes.action !== "brightness";
+    const makeList = (lines) => {
+      const list = el("ul", "whats-new-list");
+      list.append(...lines.map((line) => {
+        const row = el("li");
+        const dot = el("i", "whats-new-dot");
+        dot.setAttribute("aria-hidden", "true");
+        row.append(dot, el("span", "", line));
+        return row;
+      }));
+      return list;
+    };
+    const content = document.getElementById("whats-new-list");
+    content.replaceChildren(makeList(versions[0].lines));
+    if (versions.length > 1) {
+      const earlier = el("details", "whats-new-earlier");
+      earlier.append(el("summary", "", t("whatsNew.earlier", { n: versions.length - 1 })));
+      for (const notes of versions.slice(1)) {
+        earlier.append(el("h3", "", "v" + notes.version), makeList(notes.lines));
+      }
+      content.append(earlier);
+    }
+    content.scrollTop = 0;
+    // 같은 동작이 여러 버전에 있어도 버튼은 한 번만 보여 준다.
+    const actions = new Set(versions.map((notes) => notes.action));
+    document.getElementById("whats-new-action").hidden = !actions.has("brightness");
     ui.dialog.returnValue = "";
     openAnimatedDialog(ui.dialog);
     document.getElementById("whats-new-ok").focus();
@@ -238,6 +255,7 @@ async function tryOpenWhatsNew() {
 }
 
 whatsNewUI.link.addEventListener("click", () => {
+  whatsNewUI.currentOnly = true;
   whatsNewUI.requested = true;
   tryOpenWhatsNew();
 });
@@ -249,6 +267,7 @@ whatsNewUI.dialog.addEventListener("window-closed", (event) => {
   if (event.detail === "deferred") return;
   ui.pending = false;
   ui.requested = false;
+  ui.currentOnly = false;
   ui.seen = ui.info.version;
   ui.unsaved = ui.info.version;
   saveWhatsNewSeen();

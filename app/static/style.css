@@ -1928,7 +1928,12 @@ button.home-map, button.home-story-row, button.choice-option, button.prep-item, 
 .whats-new .settings-head { gap: 8px; }
 .whats-new .settings-head h2 { min-width: 0; overflow-wrap: anywhere; }
 .whats-new .settings-close { flex-shrink: 0; }
+.whats-new-content { max-height: min(55vh, 560px); overflow-y: auto; overflow-wrap: anywhere; }
 .whats-new-list { margin: 0; padding: 0; list-style: none; line-height: 1.6; overflow-wrap: anywhere; }
+.whats-new-earlier { margin-top: 16px; border-top: 1px solid var(--border); padding-top: 12px; }
+.whats-new-earlier summary { cursor: pointer; color: var(--text-dim); font-size: 13px; }
+.whats-new-earlier summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.whats-new .whats-new-earlier h3 { margin: 16px 0 8px; font-size: 13px; color: var(--text-dim); }
 .whats-new-list li + li { margin-top: 8px; }
 .whats-new .settings-actions { justify-content: flex-end; flex-wrap: wrap; }
 .whats-new-link { margin-left: 8px; padding: 0; border: 0; background: none; color: var(--accent); font: inherit; text-decoration: underline; }

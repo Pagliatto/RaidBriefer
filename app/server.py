@@ -230,30 +230,48 @@ def api_brightness_restore():
     return jsonify(brightness.restore())
 
 
-def _release_notes() -> dict | None:
-    """현재 버전의 읽을 수 있는 안내만 사용한다. 없거나 깨지면 안내를 생략한다."""
+def _release_notes() -> list[dict]:
+    """실행 버전까지의 읽을 수 있는 안내를 새 버전부터 모은다."""
     try:
         data = json.loads((paths.DATA_DIR / "release_notes.json").read_text(encoding="utf-8"))
-        notes = data.get(VERSION) if isinstance(data, dict) else None
-        if not isinstance(notes, dict):
-            return None
-        result = {lang: [line for line in lines if isinstance(line, str) and line.strip()]
-                  for lang, lines in notes.items() if lang in ("ko", "en") and isinstance(lines, list)}
-        if not any(result.values()):
-            return None
-        if notes.get("action") == "brightness":
-            result["action"] = "brightness"
-        return result
+        if not isinstance(data, dict):
+            return []
+        languages = (i18n.current_lang(), "en", "ko")
+        result = []
+        for version, notes in data.items():
+            if not all(part.isdecimal() for part in version.split(".")):
+                continue
+            if updater._ver(version) > updater._ver(VERSION) or not isinstance(notes, dict):
+                continue
+            lines = []
+            for lang in languages:
+                values = notes.get(lang)
+                if isinstance(values, list):
+                    lines = [line for line in values if isinstance(line, str) and line.strip()]
+                    if lines:
+                        break
+            if not lines:
+                continue
+            entry = {"version": version, "lines": lines}
+            if notes.get("action") == "brightness":
+                entry["action"] = "brightness"
+            result.append(entry)
+        return sorted(result, key=lambda entry: updater._ver(entry["version"]), reverse=True)
     except (OSError, ValueError):
-        return None
+        return []
 
 
 @app.route("/api/whats-new")
 def api_whats_new():
     current = settings.load()
-    notes = _release_notes()
-    show = bool(current["setup_done"] and current["last_seen_version"] != VERSION and notes)
-    return jsonify({"version": VERSION, "show": show, "notes": notes})
+    available = _release_notes()
+    # 설정에서 다시 열 때는 읽음 기록과 관계없이 현재 버전만 보여 준다.
+    notes = next((entry for entry in available if entry["version"] == VERSION), None)
+    last_seen = current["last_seen_version"]
+    versions = ([entry for entry in available if updater._ver(entry["version"]) > updater._ver(last_seen)]
+                if last_seen else available[:3])
+    show = bool(current["setup_done"] and versions)
+    return jsonify({"version": VERSION, "show": show, "versions": versions, "notes": notes})
 
 
 @app.route("/api/whats-new/seen", methods=["POST"])

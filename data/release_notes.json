@@ -1,4 +1,20 @@
 {
+  "1.0.6": {
+    "ko": [
+      "지도: 표시를 색 네모 + 아이콘으로 바꿨어요 (탈출구·트랜짓·BTR 정류장·잠긴 문·열쇠스폰·비트코인스폰). 이름은 지도를 가리지 않게 마우스를 올릴 때만 보여요",
+      "지도: 잠긴 문·열쇠스폰에 마우스를 올리면 열쇠와 위키 링크가 나와요",
+      "지도: 타르코프 시내·삼림·등대에 BTR 정류장이 나오고, BTR 트래커 사이트로 바로 갈 수 있어요",
+      "홈: 고른 맵의 보스 등장 확률, 지금 있는 맵 표시, 은신처 건설가능·새 버전 알림 점이 생겼어요",
+      "차지하는 용량이 크게 줄었어요"
+    ],
+    "en": [
+      "Map: markers are now colored squares with icons (extracts, transits, BTR stops, locked doors, key and Bitcoin spawns). Names show on hover so they don't cover the map",
+      "Map: hover a locked door or key spawn to see the key with a wiki link",
+      "Map: BTR stops on Streets of Tarkov, Woods and Lighthouse, plus a link to a BTR tracker site",
+      "Home: boss spawn chances for the selected map, a live mark on the map you're in, and small dots when a hideout station becomes buildable or an update is available",
+      "Uses much less disk space"
+    ]
+  },
   "1.0.7": {
     "ko": [
       "게임 밝기: 위쪽 줄의 밝기 아이콘(모니터 모양)에서 레이드 중에만 게임을 밝게 할 수 있어요 (테두리 없는 창 모드). 이제 지도 탭에서도 창이 가려지지 않아요",
