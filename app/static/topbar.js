@@ -109,7 +109,8 @@ const logReadingNotice = (() => {
   function render() {
     clearTimeout(closeTimer);
     closeTimer = null;
-    if (raidTransition) {
+    // 처음 설정 중에는 덮지 않는다: 설정 2단계 안에서 진행률을 보여 줌 (setup.js, 2026-11-21 사용자)
+    if (raidTransition || document.body.classList.contains("in-setup")) {
       cancelWindowMotion(box);
       box.hidden = true;
       return;
@@ -146,7 +147,13 @@ const logReadingNotice = (() => {
     raidTransition = event.detail;
     render();
   });
-  return { update(next) { progress = next || null; render(); } };
+  return {
+    update(next) {
+      progress = next || null;
+      render();
+      window.dispatchEvent(new CustomEvent("log-reading", { detail: progress }));
+    },
+  };
 })();
 
 let statePollPromise = null;

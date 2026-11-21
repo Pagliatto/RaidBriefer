@@ -310,15 +310,29 @@ async function setupSetAdded(questId, value) {
   }
 }
 
+// 2단계에서 퀘스트를 기다리는 동안 게임 기록 읽기 진행률을 그 자리에 보여 준다 (설정 화면을 덮지 않음)
+let setupQuestsLoading = false;
+function showSetupReading(progress) {
+  if (!setupQuestsLoading) return;
+  const box = setupUI.get("setup-ask-count");
+  box.textContent = progress && progress.total > 0
+    ? t("logReading.title") + " · " + t("logReading.folders", { done: progress.done, total: progress.total })
+    : t("common.loading");
+}
+window.addEventListener("log-reading", (event) => showSetupReading(event.detail));
+
 async function openSetupQuests() {
   showSetupPage(2);
   showSetupFix(false);
-  setupUI.get("setup-ask-count").textContent = t("common.loading");
+  setupQuestsLoading = true;
+  showSetupReading(null);
   setupUI.get("setup-trader-counts").replaceChildren();
   try {
     await setupLoadQuests();
+    setupQuestsLoading = false;
     renderSetupQuests();
   } catch (error) {
+    setupQuestsLoading = false;
     setupUI.get("setup-ask-count").textContent = t("setup.loadQuestsFailed", { error: error.message });
   }
 }
