@@ -222,6 +222,13 @@
     "newBadge": "New"
   },
   "map": {
+    "guideTitle": "Guide",
+    "guidePrep": "Entry preparation",
+    "guideLayer": "Guide",
+    "guideCandidate": "Candidate",
+    "guideEntry": "View Terminal entry preparation",
+    "guideSource": "Source: official wiki · Checked {checked}",
+    "guideFocus": "Show step locations on the map · Click again to clear highlight",
     "layerOn": "ON",
     "layerOff": "OFF",
     "loadFailed": "Couldn't load map data. {error}",

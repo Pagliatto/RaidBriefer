@@ -10,6 +10,7 @@ const mapUI = {
   pins: {},          // 번호 → 지도 위 표시들 (서랍에서 누르면 이동)
   drawerOpen: true,
   autoMapId: null,   // 자동 전환으로 연 레이드 맵 id
+  guideRaid: null,   // 이번 레이드의 공략 서랍 자동 열기 상태
   lobbyTimer: null,  // 로비로 돌아갈 때 잠깐 기다리는 타이머 (트랜짓 대비)
   dirty: true,       // 퀘스트가 바뀌어서 다시 그려야 함
 };
@@ -201,6 +202,7 @@ function fillMapSelect() {
 function chooseMap(key, remember = true) {
   const next = mapUI.maps.find((m) => m.key === key);
   if (!next) return;
+  if (mapUI.guideRaid) mapUI.guideRaid.pending = false; // 직접 고른 맵은 서랍을 강제로 열지 않음
   mapUI.current = next;
   if (remember) {
     try { localStorage.setItem(MAP_KEY_STORAGE, key); } catch (e) { /* 무시 */ }
@@ -242,11 +244,16 @@ async function drawMap() {
   L.DomEvent.off(box);
   box.replaceChildren();
   mapUI.pins = {};
+  mapUI.groups = {};
+  mapUI.floorItems = [];
+  mapUI.guideMarkers = {};
+  mapUI.extractMarkers = [];
   mapUI.transits = []; // 이 맵의 트랜짓 표시 (서랍 '트랜짓으로 갈 수 있는 맵'이 씀)
   mapUI.dirty = false;
   document.getElementById("map-auto").hidden = !(mapUI.autoMapId && m && m.ids.includes(mapUI.autoMapId));
   if (!m) return;
 
+  loadMapGuide(m); // 지도 그림과 독립적으로 표시, 같은 맵 재표시에는 다시 요청하지 않음
   const view = m.view;
   renderDrawer(); // 지도가 없어도 퀘스트 목록은 보여줌
   if (!view) {
@@ -287,6 +294,7 @@ async function drawMap() {
     if (layerOn(k)) mapUI.groups[k].addTo(leaf);
   });
   leaf.setView([0, 0], 0, { animate: false });
+  drawGuidePins();
   // 확대·축소하면 겹침이 달라지니 다시 계산
   leaf.on("zoomstart", collapseAll);
   leaf.on("zoomend", findClusters);
@@ -653,10 +661,221 @@ function numberedObjectives() {
   return result;
 }
 
+// ---------- 맵별 공략 (별도 진행 저장 없이 기존 스토리 기록 사용) ----------
+const mapGuide = { key: null, data: null, prep: null, controller: null, revision: 0, focused: null };
+const GUIDE_ICONS = { key_spawn: "key", panel: "layers", toolset: "settings", explosive: "triangle-alert",
+  door: "lock", building: "package", start: "door-open" };
+
+function currentGuide() {
+  return mapGuide.key === mapUI.current?.key && mapGuide.data?.steps?.length ? mapGuide.data : null;
+}
+
+function guideText(item, prefix = "") {
+  const lang = document.documentElement.lang === "en" ? "en" : "ko";
+  return item?.[prefix + lang] || item?.[prefix + "ko"] || item?.[prefix + "en"] || "";
+}
+
+async function loadMapGuide(m) {
+  if (mapGuide.key === m.key) return;
+  mapGuide.controller?.abort();
+  const controller = new AbortController();
+  const revision = ++mapGuide.revision;
+  Object.assign(mapGuide, { key: m.key, data: null, prep: null, focused: null, controller });
+  renderLayerDrawer();
+  async function read(key) {
+    try {
+      const res = await fetch('/api/guide/' + encodeURIComponent(key), { signal: controller.signal });
+      if (!res.ok) return null;
+      const data = await res.json();
+      return Array.isArray(data?.steps) && data.steps.length ? data : null;
+    } catch (error) { return null; } // 안내를 못 받아도 기존 지도/스토리는 유지
+  }
+  const [data, prep] = await Promise.all([read(m.key), m.key === "shoreline" ? read("terminal") : null]);
+  if (revision !== mapGuide.revision || mapUI.current?.key !== m.key) return;
+  Object.assign(mapGuide, { data, prep, controller: null });
+  drawGuidePins();
+  renderDrawer();
+  maybeOpenGuideDrawer();
+}
+
+function guidePrepDetails(data, title, key) {
+  const details = el("details", "guide-prep");
+  details.dataset.key = key;
+  details.append(el("summary", "", title));
+  const items = el("ul", "guide-notes");
+  (data.prep || []).forEach((item) => {
+    const row = el("li", "", guideText(item));
+    appendGuideWarnings(row, item.warnings);
+    items.append(row);
+  });
+  details.append(items);
+  return details;
+}
+
+function appendGuideWarnings(parent, warnings) {
+  if (!warnings?.length) return;
+  const list = el("ul", "guide-warnings");
+  warnings.forEach((warning) => list.append(el("li", "", guideText(warning))));
+  parent.append(list);
+}
+
+function renderDrawerGuide(list, m) {
+  const data = currentGuide();
+  if (!data) {
+    // 입장 시점/장비는 로그로 알 수 없음: The Ticket 진행 중이면 준비 안내를 제공한다.
+    const ch = typeof story !== "undefined" && story.data?.chapters.find((ch) => ch.id === "the-ticket");
+    if (m.key !== "shoreline" || !mapGuide.prep?.steps?.length || !ch || !isChapterStarted(ch) || isChapterDone(ch.id)) return 0;
+    const row = el("li", "drawer-guide");
+    row.append(guidePrepDetails(mapGuide.prep, t("map.guideEntry"), "guide/shoreline/prep"));
+    list.append(row);
+    return 1;
+  }
+  list.append(el("li", "drawer-divider drawer-section-title guide-title", t("map.guideTitle")));
+  const section = el("li", "drawer-guide");
+  section.append(guidePrepDetails(data, t("map.guidePrep"), "guide/" + m.key + "/prep"));
+  const steps = el("ol", "guide-steps");
+  data.steps.forEach((step, index) => {
+    const row = el("li", "guide-step");
+    row.dataset.guideStep = step.id;
+    const head = el("div", "guide-step-head");
+    head.append(el("span", "guide-number", String(index + 1)));
+    if (step.story_step) {
+      const box = document.createElement("input");
+      box.type = "checkbox";
+      box.disabled = typeof story === "undefined" || !story.data || story.migrating;
+      box.checked = !box.disabled && isStepDone({ id: step.story_step });
+      row.classList.toggle("done", box.checked);
+      box.title = t(box.checked ? "story.stepUndo" : "story.stepDone");
+      box.setAttribute("aria-label", box.title + ": " + guideText(step));
+      box.dataset.guideControl = step.id + "/check";
+      box.addEventListener("change", () => saveStoryChanges({ [step.story_step + "!"]: box.checked ? "done" : null }));
+      head.append(box);
+    }
+    const hasPoints = (step.points || []).some((id) => data.points?.[id]);
+    const text = el("button", "guide-step-text", guideText(step));
+    text.type = "button";
+    if (hasPoints) text.title = t("map.guideFocus");
+    text.dataset.guideControl = step.id + "/focus";
+    text.setAttribute("aria-pressed", String(mapGuide.focused === step.id));
+    text.addEventListener("click", () => focusGuideStep(step.id));
+    head.append(text);
+    row.append(head);
+    appendGuideWarnings(row, step.warnings);
+    row.classList.toggle("focused", mapGuide.focused === step.id);
+    steps.append(row);
+  });
+  section.append(steps);
+  appendGuideWarnings(section, data.warnings);
+  const source = Object.values(data.sources || {}).find((item) => /^https?:\/\//i.test(item.link || ""));
+  const credit = el("p", "guide-credit");
+  const link = el(source ? "a" : "span", "", t("map.guideSource", { checked: data.checked || "" }));
+  if (source) { link.href = source.link; link.target = "_blank"; link.rel = "noopener noreferrer"; }
+  credit.append(link);
+  section.append(credit);
+  list.append(section);
+  return 1;
+}
+
+function drawGuidePins() {
+  mapUI.groups?.guide?.clearLayers();
+  mapUI.guideMarkers = {};
+  mapUI.floorItems = (mapUI.floorItems || []).filter((item) => !item.guide);
+  const data = currentGuide();
+  if (data && mapUI.leaflet && mapUI.groups?.guide) {
+    Object.entries(data.points || {}).forEach(([id, point]) => {
+      if (point.kind === "extract" || !GUIDE_ICONS[point.kind] || !Array.isArray(point.pos)) return;
+      const icon = markerIcon("guide-" + point.kind, GUIDE_ICONS[point.kind], 20);
+      if (point.candidate) icon.options.className += " guide-candidate";
+      const label = guideText(point, "label_") + (point.candidate ? " · " + t("map.guideCandidate") : "");
+      const marker = L.marker(gamePos(point.pos), { icon, title: label, alt: label });
+      marker.bindTooltip(escapeHtml(label), { direction: "top", offset: [0, -10] });
+      const floor = floorOf(point.pos);
+      marker.on("click", () => { goToFloorOf(floor); showGuidePoint(id); });
+      marker.addTo(mapUI.groups.guide);
+      mapUI.guideMarkers[id] = marker;
+      mapUI.floorItems.push({ layer: marker, floor, guide: true });
+    });
+    applyFloor();
+    highlightGuideStep();
+  }
+  renderLayerDrawer();
+}
+
+// 탈출구는 기존 표시를 재사용한다. 이름이 맞지 않아도 단계의 좌표 이동은 가능하다.
+function guideExtractIds(name) {
+  return Object.entries(currentGuide()?.points || {}).filter(([, point]) => point.kind === "extract"
+    && [point.label_en, point.label_ko].some((label) => label?.split(/[·:]/)[0].trim() === name)).map(([id]) => id);
+}
+
+function highlightGuideStep() {
+  const step = currentGuide()?.steps.find((step) => step.id === mapGuide.focused);
+  const ids = new Set(step?.points || []);
+  const mark = (marker, selected) => {
+    marker.getElement()?.classList.toggle("guide-highlight", selected);
+    marker.setZIndexOffset(selected ? 800 : 0);
+  };
+  Object.entries(mapUI.guideMarkers || {}).forEach(([id, marker]) => mark(marker, ids.has(id)));
+  (mapUI.extractMarkers || []).forEach(({ marker, name }) => mark(marker, guideExtractIds(name).some((id) => ids.has(id))));
+  document.querySelectorAll("#drawer-list [data-guide-step]").forEach((row) => {
+    const selected = row.dataset.guideStep === mapGuide.focused;
+    row.classList.toggle("focused", selected);
+    row.querySelector("button")?.setAttribute("aria-pressed", String(selected));
+  });
+}
+
+function focusGuideStep(id) {
+  const data = currentGuide();
+  const step = data?.steps.find((step) => step.id === id);
+  if (!step) return;
+  mapGuide.focused = mapGuide.focused === id ? null : id;
+  const points = (step.points || []).map((key) => data.points?.[key]).filter(Boolean);
+  const leaf = mapUI.leaflet;
+  if (mapGuide.focused && leaf && points.length) {
+    if (!layerOn("guide")) setLayer("guide", true);
+    (mapUI.extractMarkers || []).forEach(({ name, group }) => {
+      if (guideExtractIds(name).some((key) => step.points.includes(key)) && !layerOn(group)) setLayer(group, true);
+    });
+    goToFloorOf(floorOf(points[0].pos));
+    collapseAll();
+    fitArea(leaf, L.latLngBounds(points.map((point) => gamePos(point.pos))), { maxZoom: Math.min(4, leaf.getMaxZoom()), padding: 40, animate: true });
+  }
+  highlightGuideStep();
+}
+
+function showGuidePoint(id) {
+  const step = currentGuide()?.steps.find((step) => (step.points || []).includes(id));
+  if (!step) return;
+  if (!mapUI.drawerOpen) setDrawer(true);
+  mapGuide.focused = step.id;
+  highlightGuideStep();
+  const row = [...document.querySelectorAll("#drawer-list [data-guide-step]")].find((row) => row.dataset.guideStep === step.id);
+  row?.scrollIntoView({ block: "center", behavior: reducedMotion() ? "instant" : "smooth" });
+}
+
+function updateGuideRaid(s, inRaid) {
+  if (!inRaid) { mapUI.guideRaid = null; return; }
+  const previous = mapUI.guideRaid;
+  // loading → raid의 since 변경은 같은 판. 같은 상태의 새 since는 놓친 로비 뒤 새 판.
+  if (!previous || previous.mapId !== s.map_id || (previous.status === s.status && previous.since !== s.since)
+      || (previous.status === "raid" && s.status === "loading")) {
+    mapUI.guideRaid = { mapId: s.map_id, status: s.status, since: s.since, opened: false, pending: true };
+  } else Object.assign(previous, { status: s.status, since: s.since });
+}
+
+function maybeOpenGuideDrawer() {
+  const raid = mapUI.guideRaid;
+  if (!raid?.pending || raid.opened || mapUI.current?.key !== "terminal" || !currentGuide()
+      || mapUI.autoMapId !== raid.mapId || !mapUI.current.ids.includes(raid.mapId)) return;
+  raid.opened = true;
+  raid.pending = false;
+  if (!mapUI.drawerOpen) setDrawer(true);
+}
+
 // ---------- 오른쪽 서랍 ----------
 function renderDrawer() {
   const m = mapUI.current;
   const list = document.getElementById("drawer-list");
+  const guideFocus = list.contains(document.activeElement) ? document.activeElement.dataset.guideControl : null;
   // 다시 그려도 펼친 위치 설명·선택한 목표·스크롤은 그대로 (Codex 41 #4)
   const openTips = new Set([...list.querySelectorAll("details[data-key][open]")].map((d) => d.dataset.key));
   const scroller = list.parentElement;
@@ -668,6 +887,7 @@ function renderDrawer() {
     if (mapUI.focusedPin != null) {
       list.querySelectorAll(".has-pin").forEach((g) => g.classList.toggle("focused", g.dataset.pin === String(mapUI.focusedPin)));
     }
+    if (guideFocus) [...list.querySelectorAll("[data-guide-control]")].find((node) => node.dataset.guideControl === guideFocus)?.focus({ preventScroll: true });
     if (scroller) scroller.scrollTop = scrollTop;
   };
   const numbers = new Map(numberedObjectives().map((x) => [x.objective, x.n]));
@@ -708,8 +928,9 @@ function renderDrawer() {
   };
 
   // 스토리: 목록 맨 위에 구분해서 (2026-11-21 사용자: 지도 한 화면에서 스토리도)
+  const guideCount = renderDrawerGuide(list, m);
   const storyCount = renderDrawerStories(list, m);
-  if (storyCount) list.append(el("li", "drawer-divider drawer-section-title", t("map.drawerQuests")));
+  if (guideCount || storyCount) list.append(el("li", "drawer-divider drawer-section-title", t("map.drawerQuests")));
   if (!here.length && !anywhere.length) list.append(el("li", "empty", t("map.noQuests")));
   here.forEach(addQuest);
   if (anywhere.length) {
@@ -783,8 +1004,9 @@ function afterMove(leaf, fn) {
 // 체크는 여기서 바로(스토리 탭과 같은 기록), 위치 설명은 펼쳐서, 사진만 스토리 탭으로
 function renderDrawerStories(list, m) {
   if (typeof storyNext !== "function" || typeof story === "undefined" || !story.data) return 0;
+  const covered = new Set((currentGuide()?.steps || []).map((step) => step.story_step).filter(Boolean));
   const chapters = storyNext()
-    .map((s) => ({ s, entries: s.mapSteps.filter((entry) => entry.maps.includes(m.name)) }))
+    .map((s) => ({ s, entries: s.mapSteps.filter((entry) => entry.maps.includes(m.name) && !covered.has(entry.step.id)) }))
     .filter((c) => c.entries.length);
   if (!chapters.length) return 0;
   list.append(el("li", "drawer-divider drawer-section-title drawer-story-title", t("map.drawerStory")));
@@ -872,6 +1094,10 @@ function highlightDrawer(n, flash = false) {
 }
 
 function setDrawer(open) {
+  if (!open && mapUI.guideRaid?.pending && mapUI.current?.key === "terminal") {
+    mapUI.guideRaid.opened = true; // 응답 대기 중 직접 닫아도 이번 판에는 다시 열지 않음
+    mapUI.guideRaid.pending = false;
+  }
   const changed = mapUI.drawerOpen !== open;
   mapUI.drawerOpen = open;
   document.querySelector(".map-layout").classList.toggle("drawer-closed", !open);
@@ -918,15 +1144,22 @@ async function showTransition(title, text, action) {
 // ---------- 게임 상태가 바뀌면 자동 전환 (topbar.js 의 game-state 알림) ----------
 function onGameState(s) {
   const inRaid = (s.status === "loading" || s.status === "raid") && s.map_id;
+  const previousGuideRaid = mapUI.guideRaid;
+  updateGuideRaid(s, inRaid);
   if (inRaid) {
     clearTimeout(mapUI.lobbyTimer);
     mapUI.lobbyTimer = null;
-    if (mapUI.autoMapId === s.map_id && currentTab() === "map") return; // 이미 그 맵
+    if (mapUI.autoMapId === s.map_id && currentTab() === "map" && previousGuideRaid === mapUI.guideRaid) {
+      maybeOpenGuideDrawer();
+      return; // 이미 그 맵
+    }
     const target = mapUI.maps.find((m) => m.ids.includes(s.map_id));
     if (!target) return; // 맵 목록을 아직 못 받음 → 받은 뒤 다시 확인 (loadMapList 끝)
     mapUI.autoMapId = s.map_id;
     showTransition(target.name, t("map.loading"), async () => {
       mapUI.current = target;
+      if (target.key === "terminal" && mapUI.guideRaid && !mapUI.guideRaid.opened) mapUI.guideRaid.pending = true;
+      maybeOpenGuideDrawer();
       document.getElementById("map-select").value = target.key;
       if (currentTab() !== "map") {
         mapUI.dirty = true;
@@ -1021,8 +1254,9 @@ loadMapList();
 
 // ---------- 표시 켜기/끄기 (왼쪽 서랍) ----------
 // 퀘스트·먹을 것·탈출구·트랜짓·열쇠·귀중품. 고른 값은 이 브라우저에 기억 (다음에 켜도 그대로)
-const LAYER_KEYS = ["quests", "loot", "extracts", "scavExtracts", "transits", "btrStops", "keys", "bitcoin", "keySpawns", "valuables"];
+const LAYER_KEYS = ["quests", "loot", "extracts", "scavExtracts", "transits", "btrStops", "keys", "bitcoin", "keySpawns", "valuables", "guide"];
 const LAYER_INFO = {
+  guide: { label: t("map.guideLayer"), mark: "mk:guide-start:book-open", on: true },
   quests: { label: t("map.layerQuests"), mark: "shape:quest", on: true },
   // 필요템 바닥 위치: 맵마다 0~몇 개뿐이라 스위치 없이 항상 표시 (위쪽 줄 아이콘을 누르면 그 자리로, 2026-11-20 사용자)
   loot: { label: t("map.layerLoot"), mark: "mk:loot:package", on: true, always: true },
@@ -1065,6 +1299,7 @@ function setLayer(key, on) {
     if (on) group.addTo(mapUI.leaflet);
     else group.remove();
   }
+  highlightGuideStep(); // 다시 켜면서 Leaflet이 만든 새 아이콘에도 선택 표시 유지
   renderLayerDrawer();
 }
 
@@ -1073,6 +1308,7 @@ function renderLayerDrawer() {
   list.replaceChildren();
   LAYER_KEYS.forEach((key) => {
     const info = LAYER_INFO[key];
+    if (key === "guide" && !currentGuide()) return;
     if (info.always) return;  // 항상 보이는 표시는 서랍에 스위치를 두지 않음
     const on = layerOn(key);
     const btn = el("button", `layer-toggle layer-${key}${on ? " on" : ""}`);
@@ -1144,7 +1380,12 @@ async function drawFeatures(leaf, m) {
   // 탈출구·트랜짓·BTR 정류장: 이름은 마우스를 올릴 때만 (항상 띄우면 지도를 가림, 2026-11-20 사용자)
   data.extracts.forEach((e) => {
     const group = e.faction === "scav" ? "scavExtracts" : "extracts";
-    add(group, e.pos, markerIcon(`extract-${e.faction}`, "door-open", 18), escapeHtml(e.name));
+    const marker = add(group, e.pos, markerIcon(`extract-${e.faction}`, "door-open", 18), escapeHtml(e.name));
+    mapUI.extractMarkers.push({ marker, name: e.name, group });
+    marker.on("click", () => {
+      const ids = guideExtractIds(e.name);
+      if (ids.length) showGuidePoint(ids[0]);
+    });
   });
   // 트랜짓: 마우스를 올리면 도착 맵 이름 (2026-11-21 사용자)
   mapUI.transits = data.transits.map((tr) => {
@@ -1177,6 +1418,7 @@ async function drawFeatures(leaf, m) {
     }
   });
   applyFloor();
+  highlightGuideStep();
   renderLayerDrawer();
 }
 

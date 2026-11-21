@@ -222,6 +222,13 @@
     "newBadge": "새로 가능"
   },
   "map": {
+    "guideTitle": "공략",
+    "guidePrep": "입장 준비",
+    "guideLayer": "공략",
+    "guideCandidate": "후보",
+    "guideEntry": "터미널 입장 준비 보기",
+    "guideSource": "출처: 공식 위키 · 확인 {checked}",
+    "guideFocus": "지도에서 단계 위치 보기 · 다시 누르면 강조 해제",
     "layerOn": "켜짐",
     "layerOff": "꺼짐",
     "loadFailed": "지도 정보를 불러오지 못했어요. {error}",

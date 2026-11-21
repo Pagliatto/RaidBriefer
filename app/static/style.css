@@ -1971,6 +1971,16 @@ button.home-map, button.home-story-row, button.choice-option, button.prep-item, 
 .mk-loot { --mk: #ee9fc0; }
 .mk-valuable { --mk: #e3c25a; }
 .mk-valuable span { border-radius: 3px; }
+/* 공략: 종류별 기호, 후보는 옅은 바탕·점선. 층 투명도는 Leaflet이 따로 적용한다. */
+.mk-guide-key_spawn { --mk: #ff8a70; }
+.mk-guide-panel { --mk: #e3c25a; }
+.mk-guide-toolset { --mk: #72c8ed; }
+.mk-guide-explosive { --mk: #ef919b; }
+.mk-guide-door { --mk: #c8b4f3; }
+.mk-guide-building { --mk: #9dc58a; }
+.mk-guide-start { --mk: #72e4d3; }
+.guide-candidate > span { opacity: 0.72; border: 2px dashed #182126; }
+.guide-highlight > span { opacity: 1; box-shadow: 0 0 0 2px #111, 0 0 0 4px var(--accent); }
 /* 잠긴 문·열쇠 자리 마우스 올림 창 */
 .hover-card .leaflet-popup-content-wrapper { background: var(--surface-2); color: var(--text); border: 1px solid var(--border-strong); border-radius: var(--radius); box-shadow: var(--shadow-popover); }
 .hover-card .leaflet-popup-content { margin: 8px 10px; font-size: 13px; line-height: 1.6; }
@@ -2171,6 +2181,31 @@ button.tag.map-colored:focus-visible { outline: 2px solid var(--accent); outline
 .drawer-story-tip summary { cursor: pointer; color: var(--text-faint); }
 .drawer-story-tip summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .drawer-story-tip p { margin: 4px 0 2px; line-height: 1.5; }
+/* 공략은 지도 서랍 폭 안에서 줄바꿈. 단계는 읽는 목록이라 본문만 왼쪽 정렬. */
+.guide-title { color: var(--accent); }
+.drawer-guide { padding: 10px 12px; min-width: 0; border-left: 3px solid var(--accent); overflow-wrap: anywhere; }
+.guide-prep { font-size: 13px; color: var(--text-dim); }
+.guide-prep summary { padding: 6px 2px; cursor: pointer; color: var(--accent); line-height: 1.5; }
+.guide-prep summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.guide-notes { padding-left: 18px; margin: 8px 0; }
+.guide-notes > li { margin-bottom: 8px; line-height: 1.5; }
+.guide-steps { list-style: none; margin: 8px 0 12px; padding: 0; }
+.guide-step { padding: 8px 4px; border-bottom: 1px solid var(--border); border-radius: var(--radius-sm); }
+.guide-step.focused { background: var(--accent-bg); box-shadow: inset 0 0 0 1px var(--accent); }
+.guide-step-head { display: flex; align-items: flex-start; gap: 6px; min-width: 0; }
+.guide-number { flex: none; min-width: 18px; padding-top: 6px; color: var(--accent); font-size: 12px; text-align: center; font-variant-numeric: tabular-nums; }
+.guide-step-head input { flex: none; margin: 9px 0 0; accent-color: var(--accent); }
+.guide-step-text { flex: 1; min-width: 0; padding: 4px; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text); font: inherit; font-size: 13px; line-height: 1.5; white-space: normal; overflow-wrap: anywhere; text-align: left; cursor: pointer; }
+.guide-step-text:hover { background: var(--surface-2); }
+.guide-step-text:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.guide-step.done .guide-number { color: var(--ok); }
+.guide-warnings { padding-left: 18px; margin: 6px 0 0; font-size: 12px; line-height: 1.5; color: var(--warn); }
+.guide-warnings li + li { margin-top: 6px; }
+.guide-credit { margin: 12px 0 0; font-size: 11px; line-height: 1.5; color: var(--text-faint); }
+.guide-credit a { color: inherit; }
+@media (pointer: coarse), (max-width: 900px) {
+  .guide-step-text, .guide-prep summary { min-height: 40px; }
+}
 
 /* 지도 서랍 맨 아래 '트랜짓으로 갈 수 있는 맵' (2026-11-21) */
 .drawer-transit-title { color: #c08cf0; }
