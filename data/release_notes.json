@@ -82,5 +82,16 @@
       "Story: the new 'Ending paths' view shows The Ticket's forks, where you are now, and how many steps remain until the next fork",
       "Story: each section is its own card with a progress label (3/9, ✓ Done), so you can see at a glance what is finished"
     ]
+  },
+  "1.0.11": {
+    "date": "2026-11-21",
+    "ko": [
+      "자동 업데이트가 설치에 성공하고도 실패로 처리해 옛 버전으로 되돌리던 문제를 고쳤어요",
+      "업데이트 실패 뒤 새 버전을 직접 설치하면 '업데이트하지 못했어요' 안내가 저절로 사라져요"
+    ],
+    "en": [
+      "Fixed auto-update treating a successful install as a failure and rolling back to the old version",
+      "After a failed update, installing the new version yourself now clears the 'Update failed' notice"
+    ]
   }
 }
