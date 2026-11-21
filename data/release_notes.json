@@ -47,5 +47,21 @@
       "Home: Knight, Big Pipe and Birdeye are shown together as the Goons",
       "Fixed an occasional map tab error right after launch"
     ]
+  },
+  "1.0.9": {
+    "ko": [
+      "로그 기록이 많아도 빨라졌어요. 업데이트 후 처음 켤 때 한 번 '게임 기록 읽는 중' 화면이 떠요",
+      "PvP 로 플레이한 기록은 PvE 퀘스트에 섞이지 않아요",
+      "창이 부드럽게 열리고 닫혀요. 홈 맵 카드에 맵 색 점, 스토리에 '현재' 단계 표시가 생겼어요",
+      "기록 파일을 더 안전하게 지키고, BTR 트래커가 안 보이던 문제 등 여러 버그를 고쳤어요",
+      "건너뛴 버전의 바뀐 점도 여기에서 모아 볼 수 있어요"
+    ],
+    "en": [
+      "Faster even with lots of game logs. After updating, a one-time 'Reading game logs' screen appears on first launch",
+      "Records from PvP raids no longer mix into your PvE quests",
+      "Windows open and close smoothly. Map color dots on Home, and a 'Now' mark on the current story step",
+      "Your saved records are better protected, and several bugs are fixed, including the missing BTR tracker link",
+      "Changes from versions you skipped are collected here too"
+    ]
   }
 }
