@@ -27,6 +27,27 @@ def load() -> dict:
             return {}
 
 
+def manual_extracts(map_key: str, dev_extracts: list) -> list[dict]:
+    """tarkov.dev 에 없는 탈출구 (위키 표 기준으로 직접 적은 것). dev 모양 {name, faction, position} 으로.
+    dev 에 같은 이름(게임 id 또는 영어 이름)이 생기면 dev 가 이김 → 빼고 돌려준다."""
+    entry = section("extracts").get(map_key) or {}
+    dev_names = {(e.get("name") or "").strip() for e in dev_extracts or []}
+    result = []
+    for e in entry.get("extracts") or []:
+        if not isinstance(e, dict) or not e.get("name"):
+            continue
+        if e["name"] in dev_names or e.get("name_en") in dev_names:
+            continue
+        try:
+            position = {"x": float(e["x"]), "y": float(e.get("y", 0)), "z": float(e["z"])}
+        except (KeyError, TypeError, ValueError):
+            continue
+        result.append({"name": e["name"], "name_en": e.get("name_en") or e["name"],
+                       "faction": e.get("faction", "shared"), "position": position,
+                       "source": entry.get("source", "manual")})
+    return result
+
+
 def section(name: str) -> dict:
     """설명 키와 잘못된 항목은 앱에서 사용하지 않는다."""
     data = load().get(name)

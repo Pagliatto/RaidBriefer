@@ -220,6 +220,14 @@ def features(map_key: str) -> dict:
                 "faction": e.get("faction", "shared"),
                 "pos": _xzy(e["position"]),
             })
+    # tarkov.dev 에 아직 없는 탈출구 (등대 V-Ex 등, 위키 기준). dev 에 생기면 dev 가 이김
+    for e in corrections.manual_extracts(map_key, m.get("extracts")):
+        result["extracts"].append({
+            "name": e["name_en"],
+            "faction": e["faction"],
+            "pos": _xzy(e["position"]),
+            "source": e["source"],
+        })
     # 트랜짓: 도착 맵(id·이름)도 같이 → 지도에는 도착 맵 이름, 서랍에는 '트랜짓으로 갈 수 있는 맵'
     by_id = {x["id"]: x for x in maps.values()}
     for tr in m.get("transits") or []:

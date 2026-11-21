@@ -11,7 +11,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-from app import i18n, paths, progress, quest_log, tarkov_api
+from app import corrections, i18n, paths, progress, quest_log, tarkov_api
 
 NO_MAP = "@none"        # 계산 중에만 쓰고, 화면에는 아래 둘 중 하나로 바꿔서 보냄
 ALL_MAPS = "@any"      # 맵은 상관없지만 레이드에 들어가야 하는 퀘스트
@@ -288,6 +288,9 @@ def _extract_zones() -> dict:
         for exit in m.get("extracts") or []:
             if exit.get("name"):
                 lookup.setdefault((m["id"], exit["name"]), []).append({**exit, "map": m["id"]})
+        # dev 에 없는 탈출구 (위키 기준 보완, 예: 등대 ' V-Ex_light')
+        for exit in corrections.manual_extracts(m.get("normalizedName", ""), m.get("extracts")):
+            lookup.setdefault((m["id"], exit["name"]), []).append({**exit, "map": m["id"]})
         for transit in m.get("transits") or []:
             description = transit.get("description") or ""
             if description.endswith("_DESC"):
