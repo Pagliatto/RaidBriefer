@@ -21,6 +21,173 @@ const LOBBY_WAIT_MS = 30000;  // 레이드가 끝나고 이만큼 새 맵이 안
 // SVG 지도의 표시 방향만 바꾸는 시계 방향 각도 (90도 단위). dev 원본 좌표는 유지한다.
 const DISPLAY_ROTATION = { terminal: 90 };
 
+// Pending moves belong to data keys, not Leaflet instances: map/layer redraws never lose them.
+const mapEditor = { active: false, pending: new Map(), history: [], bindings: new Map(), saving: false };
+const editIdentity = (key) => JSON.stringify([key.file, key.path]);
+
+async function initializePositionEditor() {
+  if (new URLSearchParams(location.search).get("edit") !== "1") return;
+  try {
+    const response = await fetch("/api/editor", { cache: "no-store" });
+    if (!response.ok || !(await response.json()).enabled) return;
+  } catch (error) { return; }
+  mapEditor.active = true;
+  clearTimeout(mapUI.lobbyTimer);
+  document.body.classList.add("position-edit");
+  const banner = el("div", "position-editor");
+  banner.append(el("strong", "", t("editor.title")));
+  mapEditor.counter = el("span");
+  banner.append(mapEditor.counter);
+  const button = (key, action) => {
+    const node = el("button", "layer-toggle-btn", t(key));
+    node.type = "button";
+    node.addEventListener("click", action);
+    banner.append(node);
+    return node;
+  };
+  mapEditor.undo = button("editor.undo", undoPositionEdit);
+  mapEditor.cancel = button("editor.cancel", () => {
+    if (mapEditor.saving) return;
+    mapEditor.pending.clear();
+    mapEditor.history = [];
+    refreshPositionEdits();
+  });
+  mapEditor.save = button("editor.save", savePositionEdits);
+  mapEditor.status = el("span", "position-editor-status");
+  mapEditor.status.setAttribute("role", "status");
+  banner.append(mapEditor.status);
+  document.getElementById("tab-map").prepend(banner);
+  // 편집 모드는 화면 배치가 바뀌어 지도 칸이 커진다 → 크기가 바뀌면 전체 보기를 다시 맞춘다 (관찰자는 하나만)
+  const mapBox = document.getElementById("map-view");
+  if (mapBox && window.ResizeObserver) {
+    new ResizeObserver(() => { if (mapUI.leaflet) fitFull(mapUI.leaflet, false); }).observe(mapBox);
+  }
+  updatePositionEditor();
+  window.addEventListener("beforeunload", (event) => {
+    if (!mapEditor.pending.size) return;
+    event.preventDefault();
+    event.returnValue = ""; // Browsers supply their own localized confirmation text.
+  });
+  goTab("map");
+}
+
+function updatePositionEditor(message = "") {
+  if (!mapEditor.active) return;
+  mapEditor.counter.textContent = t("editor.changed", { n: mapEditor.pending.size });
+  mapEditor.undo.disabled = mapEditor.saving || !mapEditor.history.length;
+  mapEditor.cancel.disabled = mapEditor.save.disabled = mapEditor.saving || !mapEditor.pending.size;
+  mapEditor.status.textContent = message;
+  document.body.classList.toggle("position-saving", mapEditor.saving);
+}
+
+function refreshPositionEdits(message = "") {
+  mapEditor.bindings.forEach((binding) => binding.refresh());
+  if (mapUI.leaflet) applyFloor();
+  updatePositionEditor(message);
+}
+
+function undoPositionEdit() {
+  if (mapEditor.saving) return;
+  const previous = mapEditor.history.pop();
+  if (!previous) return;
+  if (previous.before) mapEditor.pending.set(previous.id, previous.before);
+  else mapEditor.pending.delete(previous.id);
+  refreshPositionEdits();
+}
+
+function bindPositionEditor(marker, item, label, guide = false) {
+  if (!mapEditor.active || !item.edit) return;
+  const id = editIdentity(item.edit);
+  const binding = { marker, guide, base: item.pos.slice() };
+  const position = () => mapEditor.pending.get(id)?.pos || binding.base;
+  marker.options.draggable = true;
+  marker.options.icon.options.className += " position-editable";
+  marker.unbindTooltip();
+  marker.bindTooltip("", { direction: "top", offset: [0, -12] });
+  const tooltip = (pos) => {
+    const text = label + " · " + t("editor.coordinates", { x: pos[0].toFixed(1), z: pos[1].toFixed(1) });
+    marker.setTooltipContent(escapeHtml(text));
+    if (marker.getElement()) marker.getElement().title = text;
+  };
+  binding.refresh = () => {
+    const pos = position();
+    marker.setLatLng(gamePos(pos));
+    const node = marker.getElement();
+    if (node) {
+      node.classList.add("position-editable");
+      let badge = node.querySelector(".position-moved");
+      if (mapEditor.pending.has(id) && !badge) {
+        badge = el("small", "position-moved", t("editor.moved"));
+        node.append(badge);
+      } else if (!mapEditor.pending.has(id)) badge?.remove();
+    }
+    tooltip(pos);
+    const floorItem = mapUI.floorItems.find((entry) => entry.layer === marker);
+    if (floorItem) floorItem.floor = floorOf(pos);
+    if (mapEditor.saving) marker.dragging?.disable();
+    else marker.dragging?.enable();
+  };
+  mapEditor.bindings.set(id, binding);
+  marker.on("add", binding.refresh);
+  marker.on("click", () => goToFloorOf(floorOf(position())));
+  marker.on("drag", () => {
+    const ll = marker.getLatLng();
+    tooltip([ll.lng, ll.lat]);
+  });
+  marker.on("dragend", () => {
+    if (mapEditor.saving) { binding.refresh(); return; }
+    // Leaflet already used tdCRS.unproject, including Terminal's display rotation.
+    // lng is game x, lat is game z. Applying another inverse rotation would be wrong.
+    const ll = marker.getLatLng();
+    const pos = [Math.round(ll.lng * 10) / 10, Math.round(ll.lat * 10) / 10, binding.base[2]];
+    if (!pos.every(Number.isFinite)) { binding.refresh(); return; }
+    const before = mapEditor.pending.get(id);
+    const old = position();
+    if (pos[0] === old[0] && pos[1] === old[1]) { binding.refresh(); return; }
+    mapEditor.history.push({ id, before });
+    const base = before?.base || binding.base;
+    if (pos[0] === Math.round(base[0] * 10) / 10 && pos[1] === Math.round(base[1] * 10) / 10) mapEditor.pending.delete(id);
+    else mapEditor.pending.set(id, { edit: before?.edit || item.edit, pos, base });
+    refreshPositionEdits();
+  });
+  binding.refresh();
+}
+
+async function savePositionEdits() {
+  if (mapEditor.saving || !mapEditor.pending.size) return;
+  mapEditor.saving = true;
+  refreshPositionEdits(t("editor.saving"));
+  let message = t("editor.saveFailed");
+  let wrote = false;
+  try {
+    const changes = [...mapEditor.pending.values()].map(({ edit, pos }) => ({ edit, x: pos[0], z: pos[1] }));
+    const response = await fetch("/api/editor", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ changes }),
+    });
+    const result = await response.json();
+    const saved = new Set((result.saved || []).map(editIdentity));
+    for (const id of saved) {
+      const moved = mapEditor.pending.get(id);
+      const binding = mapEditor.bindings.get(id);
+      if (binding && moved) binding.base = moved.pos.slice();
+      mapEditor.pending.delete(id);
+    }
+    mapEditor.history = mapEditor.history.filter((entry) => !saved.has(entry.id));
+    wrote = saved.size > 0;
+    message = response.ok && result.ok ? t("editor.saved") : t("editor.saveFailed");
+  } catch (error) { /* Keep every unacknowledged move for retry or undo. */ }
+  finally {
+    mapEditor.saving = false;
+    refreshPositionEdits(message);
+  }
+  if (wrote) {
+    // Get fresh signatures/revisions; never retain old guide coordinates after saving.
+    mapGuide.controller?.abort();
+    mapGuide.key = null;
+    await drawMap();
+  }
+}
+
 // ---------- 좌표 계산 (tarkov.dev src/pages/map/index.jsx 와 같은 방식) ----------
 function tdRotate(latLng, rotation) {
   if (!latLng.lng && !latLng.lat) return L.latLng(0, 0);
@@ -275,6 +442,7 @@ function mapQuests(name) {
 let mapGeneration = 0;
 async function drawMap() {
   const generation = ++mapGeneration;
+  mapEditor.bindings.clear();
   lootRevision++;
   lootController?.abort();
   const m = mapUI.current;
@@ -714,7 +882,8 @@ const GUIDE_ICONS = { key_spawn: "key", panel: "layers", toolset: "settings", ex
   door: "lock", lock: "lock", building: "package", start: "door-open" };
 
 function currentGuide() {
-  return mapGuide.key === mapUI.current?.key && mapGuide.data?.steps?.length ? mapGuide.data : null;
+  return mapGuide.key === mapUI.current?.key && (mapGuide.data?.steps?.length ||
+    (mapEditor.active && Object.keys(mapGuide.data?.points || {}).length)) ? mapGuide.data : null;
 }
 
 function guideText(item, prefix = "") {
@@ -734,7 +903,8 @@ async function loadMapGuide(m) {
       const res = await fetch('/api/guide/' + encodeURIComponent(key), { signal: controller.signal });
       if (!res.ok) return null;
       const data = await res.json();
-      return Array.isArray(data?.steps) && data.steps.length ? data : null;
+      return Array.isArray(data?.steps) && (data.steps.length ||
+        (mapEditor.active && Object.keys(data.points || {}).length)) ? data : null;
     } catch (error) { return null; } // 안내를 못 받아도 기존 지도/스토리는 유지
   }
   const [data, prep] = await Promise.all([read(m.key), m.key === "shoreline" ? read("terminal") : null]);
@@ -824,23 +994,26 @@ function renderDrawerGuide(list, m) {
 }
 
 function drawGuidePins() {
+  for (const [id, binding] of mapEditor.bindings) if (binding.guide) mapEditor.bindings.delete(id);
   mapUI.groups?.guide?.clearLayers();
   mapUI.guideMarkers = {};
   mapUI.floorItems = (mapUI.floorItems || []).filter((item) => !item.guide);
   const data = currentGuide();
   if (data && mapUI.leaflet && mapUI.groups?.guide) {
     Object.entries(data.points || {}).forEach(([id, point]) => {
-      if (point.kind === "extract" || !GUIDE_ICONS[point.kind] || !Array.isArray(point.pos)) return;
-      const icon = markerIcon(point.kind === "lock" ? "lock" : "guide-" + point.kind, GUIDE_ICONS[point.kind], point.kind === "lock" ? 16 : 20);
+      if ((!mapEditor.active && point.kind === "extract") || (!GUIDE_ICONS[point.kind] && point.kind !== "extract") || !Array.isArray(point.pos)) return;
+      const icon = markerIcon(point.kind === "lock" ? "lock" : "guide-" + point.kind, (GUIDE_ICONS[point.kind] || "door-open"), point.kind === "lock" ? 16 : 20);
       if (point.candidate) icon.options.className += " guide-candidate";
       const label = guideText(point, "label_") + (point.candidate ? " · " + t("map.guideCandidate") : "");
       const marker = L.marker(gamePos(point.pos), { icon, title: label, alt: label });
       marker.bindTooltip(escapeHtml(label), { direction: "top", offset: [0, -10] });
       const floor = floorOf(point.pos);
-      marker.on("click", () => { goToFloorOf(floor); showGuidePoint(id); });
+      marker.on("click", () => { if (mapEditor.active) return; goToFloorOf(floor); showGuidePoint(id); });
+      bindPositionEditor(marker, point, label, true);
       marker.addTo(mapUI.groups.guide);
       mapUI.guideMarkers[id] = marker;
       mapUI.floorItems.push({ layer: marker, floor, guide: true });
+      if (mapEditor.active && point.edit) mapEditor.bindings.get(editIdentity(point.edit))?.refresh();
     });
     applyFloor();
     highlightGuideStep();
@@ -1190,6 +1363,7 @@ async function showTransition(title, text, action) {
 
 // ---------- 게임 상태가 바뀌면 자동 전환 (topbar.js 의 game-state 알림) ----------
 function onGameState(s) {
+  if (mapEditor.active) return;
   const inRaid = (s.status === "loading" || s.status === "raid") && s.map_id;
   const previousGuideRaid = mapUI.guideRaid;
   updateGuideRaid(s, inRaid);
@@ -1237,6 +1411,7 @@ document.getElementById("map-select").addEventListener("change", (e) => chooseMa
 document.getElementById("drawer-toggle").addEventListener("click", () => setDrawer(!mapUI.drawerOpen));
 
 document.addEventListener("tab-shown", (e) => {
+  if (mapEditor.active && e.detail !== "map") { showTab("map"); return; }
   if (e.detail !== "map") return;
   if (mapUI.dirty || !mapUI.leaflet) drawMap();
   else {
@@ -1297,7 +1472,7 @@ document.addEventListener("quests-changed", () => {
 
 // 좁은 화면(휴대폰)은 처음에 서랍을 닫아 둠
 if (window.innerWidth < 700) setDrawer(false);
-loadMapList();
+initializePositionEditor().then(loadMapList);
 
 // ---------- 표시 켜기/끄기 (왼쪽 서랍) ----------
 // 퀘스트·먹을 것·탈출구·트랜짓·열쇠·귀중품. 고른 값은 이 브라우저에 기억 (다음에 켜도 그대로)
@@ -1432,8 +1607,10 @@ async function drawFeatures(leaf, m) {
   data.extracts.forEach((e) => {
     const group = e.faction === "scav" ? "scavExtracts" : "extracts";
     const marker = add(group, e.pos, markerIcon(`extract-${e.faction}`, "door-open", 18), escapeHtml(e.name));
+    bindPositionEditor(marker, e, e.name);
     mapUI.extractMarkers.push({ marker, name: e.name, group });
     marker.on("click", () => {
+      if (mapEditor.active) return;
       const ids = guideExtractIds(e.name);
       if (ids.length) showGuidePoint(ids[0]);
     });
@@ -1447,7 +1624,10 @@ async function drawFeatures(leaf, m) {
     return { target, label, marker, floor: floorOf(tr.pos) };
   });
   renderDrawer(); // 서랍 맨 아래 '트랜짓으로 갈 수 있는 맵'
-  (data.btrStops || []).forEach((stop) => add("btrStops", stop.pos, markerIcon("btr", "bus", 18), escapeHtml(stop.name)));
+  (data.btrStops || []).forEach((stop) => {
+    const marker = add("btrStops", stop.pos, markerIcon("btr", "bus", 18), escapeHtml(stop.name));
+    bindPositionEditor(marker, stop, stop.name);
+  });
   drawEnemyFeatures(data, add);
   // 열쇠 문: 마우스를 올리면 필요한 열쇠
   data.locks.forEach((lock) => {
@@ -1486,18 +1666,20 @@ function drawEnemyFeatures(data, add) {
     const labelText = label + (spawn.estimated ? " · " + t("map.enemyEstimated") : "");
     const icon = markerIcon("enemy", "crosshair", 22);
     icon.options.html += `<small class="enemy-count">${escapeHtml(count)}</small>`;
-    add("blackDivision", spawn.pos, icon, escapeHtml(labelText),
+    const marker = add("blackDivision", spawn.pos, icon, escapeHtml(labelText),
       false, { keyboard: true, title: labelText, alt: labelText });
+    bindPositionEditor(marker, spawn, labelText + " · " + spawn.name);
   });
   (Array.isArray(data.bossZones) ? data.bossZones : []).forEach((zone) => {
     if (!zone || !validPos(zone.pos) || !Array.isArray(zone.bosses)) return;
     const names = zone.bosses.filter((name) => typeof name === "string" && name);
     if (!names.length) return;
     // 게임 좌표에서 10m 옆으로 띄운다. 지도 회전 후에도 BD와 같은 방식으로 이동한다.
-    const iconPos = [zone.pos[0] + 10, zone.pos[1], zone.pos[2]];
-    add("bossZones", iconPos, markerIcon("boss", "skull", 22),
+    const iconPos = mapEditor.active && zone.edit ? zone.pos : [zone.pos[0] + 10, zone.pos[1], zone.pos[2]];
+    const marker = add("bossZones", iconPos, markerIcon("boss", "skull", 22),
       "<b>" + escapeHtml(t("map.layerBossZones")) + "</b><br>" + names.map(escapeHtml).join("<br>"),
       false, { keyboard: true, title: names.join(", "), alt: names.join(", ") });
+    bindPositionEditor(marker, zone, names.join(", ") + " · " + zone.name);
   });
 }
 

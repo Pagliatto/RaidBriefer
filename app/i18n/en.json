@@ -470,5 +470,17 @@
     "Health": "Health",
     "Metabolism": "Metabolism",
     "Vitality": "Vitality"
+  },
+  "editor": {
+    "title": "Position editor",
+    "changed": "{n} changed",
+    "undo": "Undo",
+    "cancel": "Cancel all",
+    "save": "Save",
+    "saving": "Saving…",
+    "saved": "Saved.",
+    "saveFailed": "Unsaved moves have been kept. Check for changed or locked files and write permissions. If the files were changed elsewhere, reload and move the markers again.",
+    "moved": "Moved",
+    "coordinates": "x {x} / z {z}"
   }
 }

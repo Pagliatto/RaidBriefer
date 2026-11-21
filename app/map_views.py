@@ -392,4 +392,5 @@ def features(map_key: str) -> dict:
             "items": others[:4],
             "more": max(0, len(others) - 4),
         })
-    return result
+    from app import editor
+    return editor.feature_keys(map_key, result)

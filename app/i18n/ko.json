@@ -470,5 +470,17 @@
     "Health": "건강",
     "Metabolism": "신진대사",
     "Vitality": "활력"
+  },
+  "editor": {
+    "title": "위치 편집 모드",
+    "changed": "바뀐 것 {n}개",
+    "undo": "되돌리기",
+    "cancel": "모두 취소",
+    "save": "저장",
+    "saving": "저장 중…",
+    "saved": "저장했습니다.",
+    "saveFailed": "저장하지 못한 변경을 유지했습니다. 파일 변경·잠금·쓰기 권한을 확인하세요. 다른 곳에서 파일을 바꿨다면 새로고침 후 다시 옮겨 주세요.",
+    "moved": "이동함",
+    "coordinates": "x {x} / z {z}"
   }
 }

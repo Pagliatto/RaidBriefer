@@ -195,5 +195,8 @@ def load(map_key: str) -> dict:
         return _empty(map_key)  # 경로 구분자·드라이브·상위 폴더 접근 차단
     guide = _read(map_key)
     # guide 캐시와 별개로 최신 로컬 dev 저장본을 확인한다. 원본 캐시는 바꾸지 않는다.
+    from app import editor
+    if editor.enabled():
+        return editor.guide_keys(guide)
     _dev_positions(guide)
     return guide

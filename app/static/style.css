@@ -2330,3 +2330,36 @@ button.tag.map-colored:focus-visible { outline: 2px solid var(--accent); outline
 .finished-group .story-section .story-tip, .finished-group .story-section label, .finished-group .story-section li { color: var(--text-dim); }
 /* 흐름도 상세 버튼·막힘 안내도 줄바꿈 허용 (Codex 41 #3) */
 .story-flow .flow-action, .story-flow .flow-redirect { white-space: normal; }
+/* Source-only position editor. Floor opacity remains independent of editability. */
+body.position-edit #tab-map:not([hidden]) {
+  position: fixed; inset: 0; z-index: 1500; height: 100dvh;
+  padding: 10px; box-sizing: border-box; background: var(--bg); min-width: 0;
+}
+body.position-edit .map-drawer,
+body.position-edit #drawer-toggle,
+body.position-edit #loot-bar,
+body.position-edit #map-auto,
+body.position-edit #btr-tracker-link { display: none !important; }
+body.position-edit .map-bar { flex-wrap: wrap; }
+body.position-edit .map-bar select { max-width: 100%; min-width: 0; }
+.position-editor {
+  display: flex; flex: none; flex-wrap: wrap; align-items: center; gap: 8px;
+  padding: 8px 10px; margin-bottom: 8px; border: 1px dashed var(--accent);
+  border-radius: var(--radius); background: var(--surface-2); color: var(--text);
+}
+.position-editor strong { color: var(--accent); }
+.position-editor button { text-align: center; justify-content: center; min-height: 36px; }
+.position-editor button:disabled { cursor: default; opacity: 0.5; }
+.position-editor-status { flex-basis: 100%; overflow-wrap: anywhere; font-size: 13px; }
+.position-editor-status:empty { display: none; }
+body.position-edit .leaflet-marker-icon:not(.position-editable) { filter: grayscale(1); }
+body.position-edit .leaflet-marker-icon.position-editable {
+  filter: none; outline: 2px dashed #f1cf53; outline-offset: 3px; cursor: move;
+}
+body.position-saving #map-view { pointer-events: none; }
+.position-moved {
+  position: absolute; top: calc(100% + 5px); left: 50%; transform: translateX(-50%);
+  padding: 1px 4px; border-radius: 3px; background: #f1cf53; color: #171710;
+  font-size: 10px; line-height: 1.3; white-space: nowrap; pointer-events: none;
+}
+.mk-guide-extract { background: var(--ok); }

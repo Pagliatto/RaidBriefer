@@ -29,6 +29,16 @@ CACHE_SECONDS = 60
 
 @app.before_request
 def require_json_object():
+    if request.path == "/api/editor":
+        from app import editor
+        if not editor.enabled():
+            abort(404)
+        if request.remote_addr not in ("127.0.0.1", "::1") or request.host.split(":")[0] not in ("127.0.0.1", "localhost"):
+            abort(403)
+        if request.headers.get("Origin") not in (None, request.host_url.rstrip("/")):
+            abort(403)
+        if request.content_length and request.content_length > 1024 * 1024:
+            abort(413)
     if request.method == "POST" and not isinstance(request.get_json(silent=True), dict):
         return jsonify({"error": i18n.t("server.badRequest", lang=i18n.system_lang())}), 400
 
@@ -135,6 +145,23 @@ def api_guide(map_key):
         raise
     except Exception as error:
         return jsonify({"error": i18n.t("server.featuresFailed", error=error)}), 500
+
+
+@app.route("/api/editor", methods=["GET", "POST"])
+def api_editor():
+    from app import editor
+
+    if request.method == "GET":
+        response = jsonify({"enabled": True, "session": editor.session_id()})
+        response.headers["Cache-Control"] = "no-store"
+        return response
+    try:
+        result = editor.save(request.get_json()["changes"])
+        if not result["ok"]:
+            result["error"] = i18n.t("editor.saveFailed")
+        return jsonify(result), 200 if result["ok"] else 409
+    except (KeyError, TypeError, ValueError, OSError, RecursionError):
+        return jsonify({"ok": False, "saved": [], "error": i18n.t("editor.saveFailed")}), 409
 
 
 @app.route("/api/loot/<map_key>")
