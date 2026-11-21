@@ -1493,5 +1493,104 @@
       "reward": "엔딩 4종: 구원자 / 채무자 / 생존자 / 타락",
       "reward_en": "4 endings: Savior / Debtor / Survivor / Fallen"
     }
-  ]
+  ],
+  "endings": [
+    {
+      "id": "savior",
+      "name": "구원자",
+      "name_en": "Savior",
+      "when": {
+        "evidence": "savior",
+        "quest:67460662d0fbbc74ca0f7229": false
+      },
+      "route": "제안 수락 → 증거 수집 동의 → 주요 증거 8개 전달 → 펜스의 과제 → 터미널",
+      "route_en": "Accept the offer → agree to collect evidence → hand over 8 pieces of major evidence → Fence’s tasks → Terminal",
+      "limits": [
+        "⛔ Choose Your Friends Wisely 완료 시 불가 (BTR 운전수 평판 0.4 목표 실패)",
+        "펜스 평판 4.0 이상 계속 유지",
+        "증거 확인 뒤에는 부가 증거 전달 불가",
+        "터미널에 Alpha-1 컨테이너(증거) 필요"
+      ],
+      "limits_en": [
+        "⛔ Unavailable after completing Choose Your Friends Wisely (the 0.4 BTR Driver reputation objective fails)",
+        "Keep Fence reputation at 4.0 or higher",
+        "Additional evidence cannot be handed over after evidence confirmation",
+        "Bring the Alpha-1 container (evidence) to Terminal"
+      ],
+      "achievement": "Savior",
+      "rewards": "전용 군번줄·완장·은신처 꾸미기, EXP 320,000, 달러 (PvE 40,000)",
+      "rewards_en": "Exclusive dogtag, armband and hideout decorations; 320,000 EXP; dollars (40,000 in PvE)"
+    },
+    {
+      "id": "debtor",
+      "name": "채무자",
+      "name_en": "Debtor",
+      "when": {
+        "evidence": "debtor"
+      },
+      "route": "제안 수락 → 증거 수집 동의 → 주요 증거 2개 이하 → 등대지기의 과제 → 터미널",
+      "route_en": "Accept the offer → agree to collect evidence → hand over no more than 2 pieces of major evidence → Lightkeeper’s tasks → Terminal",
+      "limits": [
+        "주요 증거를 3개 이상 전달하면 이 길 불가"
+      ],
+      "limits_en": [
+        "This route is unavailable after handing over 3 or more pieces of major evidence"
+      ],
+      "achievement": "Debtor",
+      "rewards": "전용 군번줄·완장·은신처 꾸미기, EXP 224,000, 유로 (PvE 30,000)",
+      "rewards_en": "Exclusive dogtag, armband and hideout decorations; 224,000 EXP; euros (30,000 in PvE)"
+    },
+    {
+      "id": "fallen",
+      "name": "타락",
+      "name_en": "Fallen",
+      "when": {
+        "evidence": "fallen"
+      },
+      "route": "제안 수락 → 증거 수집 거절 → 프라퍼의 과제 → 터미널",
+      "route_en": "Accept the offer → refuse to collect evidence → Prapor’s tasks → Terminal",
+      "limits": [
+        "케이스를 가진 경우 프라퍼 과제 먼저 (전자제품 50·보안 컨테이너·수리 키트 40)",
+        "달러 100만 전달"
+      ],
+      "limits_en": [
+        "If you kept the case, complete Prapor’s tasks first (50 electronics, a secure container and 40 repair kits)",
+        "Hand over 1,000,000 dollars"
+      ],
+      "achievement": "Fallen",
+      "rewards": "전용 군번줄·완장·은신처 꾸미기, EXP 272,000, 루블 (PvE 300만)",
+      "rewards_en": "Exclusive dogtag, armband and hideout decorations; 272,000 EXP; Roubles (3,000,000 in PvE)"
+    },
+    {
+      "id": "survivor",
+      "name": "생존자",
+      "name_en": "Survivor",
+      "when_any": [
+        {
+          "kerman": "refuse"
+        },
+        {
+          "evidence": "savior",
+          "quest:67460662d0fbbc74ca0f7229": true
+        }
+      ],
+      "route": "제안 거절 → 프라퍼에게 돈과 과제 → 터미널",
+      "route_en": "Reject the offer → pay Prapor and complete his tasks → Terminal",
+      "limits": [
+        "루블 3억 (케이스를 줬으면) / 5억 (가졌으면)",
+        "케이스를 가졌으면 프라퍼 과제를 72시간 안에 완료 (못 하면 Kappa 컨테이너 전달)",
+        "터미널에서는 인터폰 호출 버튼 사용"
+      ],
+      "limits_en": [
+        "300,000,000 Roubles if you gave away the case; 500,000,000 if you kept it",
+        "If you kept the case, complete Prapor’s tasks within 72 hours (otherwise hand over a Kappa container)",
+        "Use the intercom call button at Terminal"
+      ],
+      "achievement": "Survivor",
+      "rewards": "전용 군번줄·완장·은신처 꾸미기, EXP 192,000",
+      "rewards_en": "Exclusive dogtag, armband and hideout decorations; 192,000 EXP"
+    }
+  ],
+  "endings_note": "주요 증거 외 부가 증거 36개를 모두 내면 업적 Little Triumphs (구원자·채무자 길, 선택)",
+  "endings_note_en": "Hand over all 36 pieces of additional evidence, beyond the major evidence, for the Little Triumphs achievement (optional on the Savior and Debtor routes)."
 }

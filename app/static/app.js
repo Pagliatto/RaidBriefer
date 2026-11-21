@@ -228,7 +228,8 @@ function currentTab() {
 
 // 지금 화면의 스크롤 위치를 지금 기록에 적어 둠 (돌아왔을 때 그 자리로)
 function rememberScroll() {
-  history.replaceState({ ...(history.state || {}), tab: currentTab(), scroll: window.scrollY }, "");
+  const extra = currentTab() === "story" && typeof storyFlow !== "undefined" ? { storyView: storyFlow.view } : {};
+  history.replaceState({ ...(history.state || {}), tab: currentTab(), scroll: window.scrollY, ...extra }, "");
 }
 
 // 다른 화면으로 이동 (기록을 하나 남김)
@@ -242,6 +243,8 @@ function goTab(name) {
 window.addEventListener("popstate", (e) => {
   const s = e.state || { tab: "home", scroll: 0 };
   showTab(s.tab || "home");
+  // 스토리 탭 안의 화면(챕터 진행·엔딩 분기)도 그때 것으로
+  if (s.storyView && typeof setStoryView === "function") setStoryView(s.storyView);
   setTimeout(() => window.scrollTo(0, s.scroll || 0), 30);
 });
 

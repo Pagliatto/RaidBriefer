@@ -2180,3 +2180,105 @@ button.tag.map-colored:focus-visible { outline: 2px solid var(--accent); outline
 .drawer-transit-name { flex: 1; min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .drawer-transit-count { flex: none; padding: 1px 7px; border-radius: 9px; font-size: 12px; font-weight: 600; color: #e6dcff; background: rgba(192, 140, 240, .26); }
 .drawer-transit-none { flex: none; font-size: 12px; color: var(--text-faint); }
+
+/* 엔딩 흐름도: 네 갈래까지 같은 줄, 완료·다른 길은 접어 현재 길에 폭을 준다. */
+#tab-story .story-subtabs { gap: 4px; margin-bottom: 12px; border-bottom: 1px solid var(--border); justify-content: center; }
+.story-subtab { min-height: 36px; padding: 6px 12px; border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: transparent; color: var(--text-dim); font-size: 14px; text-align: center; }
+.story-subtab:hover { color: var(--text); }
+.story-subtab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.story-flow { --flow-accent: #b39ddb; position: relative; min-width: 0; text-align: center; }
+.story-flow h2 { margin: 8px 0; font-size: 18px; }
+.flow-banner { margin: 8px 0 12px; padding: 10px; color: var(--flow-accent); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); text-align: center; }
+.flow-case, .flow-note { margin: 8px 0 12px; color: var(--text-dim); font-size: 12px; text-align: center; }
+.flow-case { padding: 6px; border: 1px solid var(--border); border-radius: var(--radius); }
+.flow-lane { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.flow-lane > *, .story-flow > .flow-node-wrap { position: relative; min-width: 0; }
+.flow-lane > * + *::before, .story-flow > .flow-node-wrap::before { content: ""; position: absolute; width: 2px; height: 14px; top: -14px; left: calc(50% - 1px); background: var(--border); pointer-events: none; }
+.flow-node { position: relative; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px 8px; width: 100%; min-width: 0; min-height: 42px; padding: 7px 8px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text); text-align: center; font-size: 13px; }
+.flow-node:hover, .flow-action:hover { background: var(--surface-2); }
+.flow-label, .flow-tip.clamped { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; text-overflow: ellipsis; }
+.flow-label { min-width: 0; max-width: 100%; overflow-wrap: anywhere; line-height: 1.4; }
+.flow-tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px 6px; max-width: 100%; }
+.flow-tag { font-size: 11px; color: var(--text-dim); }
+.flow-node.future { color: var(--text-faint); border-style: dashed; }
+.flow-node.done { color: var(--text-faint); background: var(--surface-2); }
+.flow-node.current, .flow-node.selected { border-color: var(--flow-accent); color: var(--flow-accent); }
+.flow-node.current .flow-tag { color: var(--flow-accent); }
+.flow-node.fork { color: var(--warn); border-color: var(--warn); }
+.flow-node.fork .flow-tag { color: var(--warn); }
+.flow-node.blocked, .flow-redirect { color: var(--bad); border-color: var(--bad); }
+.flow-progress { position: absolute; bottom: 0; left: 8px; right: 8px; height: 2px; overflow: hidden; background: var(--border); }
+.flow-progress > span { display: block; height: 100%; background: var(--flow-accent); }
+.flow-columns { display: grid; gap: 8px; align-items: stretch; padding-top: 8px; }
+.flow-columns::after { content: ""; position: absolute; top: 0; left: 12%; right: 12%; height: 2px; background: var(--border); }
+.flow-branch { position: relative; min-width: 0; padding: 5px 3px 12px; border: 1px dashed var(--border); border-radius: var(--radius); }
+.flow-branch.selected { border-style: solid; border-color: var(--flow-accent); }
+.flow-branch.other { opacity: .65; }
+.flow-branch-label { margin: 0 0 10px; font-size: 12px; text-align: center; color: var(--text-dim); }
+.flow-branch.selected > .flow-branch-label { color: var(--flow-accent); }
+.flow-alternatives { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px; }
+.flow-chip, .flow-more, .flow-action, .flow-redirect { max-width: 100%; padding: 5px 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-2); text-align: center; font-size: 12px; overflow-wrap: anywhere; }
+.flow-chip { color: var(--text-faint); border-style: dashed; }
+.flow-more { display: block; margin: 4px auto 8px; color: var(--text-dim); }
+.flow-detail { padding: 8px; border: 1px solid var(--border); border-top: 0; border-radius: 0 0 var(--radius); background: var(--surface); font-size: 12px; text-align: left; }
+.flow-detail p { margin: 0 0 8px; }
+.flow-action { display: block; margin: 8px auto 0; color: var(--flow-accent); }
+.flow-redirect { border: 1px dashed var(--bad); }
+.story-flow > .flow-node-wrap { margin-top: 20px; }
+.flow-links { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.flow-links path { fill: none; stroke: var(--bad); stroke-width: 1; stroke-dasharray: 4 4; }
+@media (max-width: 860px) {
+  .flow-columns { gap: 4px; }
+  .flow-branch { padding-right: 1px; padding-left: 1px; }
+  .flow-node { padding-right: 4px; padding-left: 4px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .story-flow *, .story-subtabs * { animation: none !important; transition: none !important; }
+}
+
+.flow-finished { margin-bottom: 14px; }
+.flow-chip { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; text-overflow: ellipsis; }
+
+/* 엔딩 흐름도 간격·칸 구분 (2026-11-21 사용자: 다닥다닥 붙어 칸 구별이 안 감) */
+.flow-lane { gap: 24px; }
+.flow-lane > * + *::before, .story-flow > .flow-node-wrap::before { top: -24px; height: 24px; background: var(--border-strong); }
+.flow-node { min-height: 48px; padding: 10px 14px; border-color: var(--border-strong); background: var(--surface-2); }
+.flow-node.done { background: var(--surface); border-color: var(--border); }
+.flow-node.future { background: transparent; border-color: var(--border-strong); }
+.flow-node.current { background: rgba(179, 157, 219, .12); border-width: 2px; }
+.flow-node.fork { background: rgba(226, 189, 114, .1); border-width: 2px; font-weight: 600; }
+.flow-node.ending { min-height: 52px; border-width: 2px; font-size: 14px; font-weight: 700; }
+.flow-node.ending.selected { background: rgba(179, 157, 219, .14); }
+.flow-columns { gap: 16px; padding-top: 18px; }
+.flow-columns::after { background: var(--border-strong); }
+.flow-branch { padding: 12px 10px 16px; background: rgba(0, 0, 0, .14); border-color: var(--border-strong); }
+.flow-branch.selected { background: rgba(179, 157, 219, .05); }
+.flow-branch-label { margin: 0 auto 14px; padding: 3px 10px; width: fit-content; max-width: 100%; border-radius: 10px; background: var(--surface-2); font-size: 12px; font-weight: 600; }
+.flow-banner { margin: 10px 0 18px; padding: 12px; font-size: 15px; font-weight: 600; }
+.flow-case { margin: 0 0 22px; }
+.flow-finished { margin-bottom: 22px; }
+.story-flow > .flow-node-wrap { margin-top: 28px; }
+.flow-detail { padding: 10px 12px; border-color: var(--border-strong); }
+@media (max-width: 860px) {
+  .flow-columns { gap: 10px; }
+  .flow-branch { padding: 10px 6px 14px; }
+  .flow-node { padding: 9px 8px; }
+}
+/* 공통 버튼의 한 줄 규칙(nowrap)을 흐름도 칸에서는 풀어 두 줄까지 보이게 */
+.story-flow .flow-node, .story-flow .flow-chip { white-space: normal; }
+.story-flow .flow-label { display: -webkit-box; }
+
+/* 스토리 챕터 안 구간 구분 (2026-11-21 사용자: 단계별 구분이 안 되고, 완료 구간을 펼치면 했는지 헷갈림)
+   구간마다 카드 + 제목 옆 진행 표시. 완료 구간은 초록 테두리·흐린 글씨로 펼쳐도 구별 */
+.chapter-body .story-section { margin: 12px 0; padding: 12px 14px; border: 1px solid var(--border-strong); border-radius: var(--radius); background: var(--surface); }
+.chapter-body .story-section:last-child { border-bottom: 1px solid var(--border-strong); }
+.chapter-body .story-section.current { margin: 14px 0; padding: 12px 14px 14px; border: 2px solid var(--accent); background: var(--accent-bg); }
+.section-progress { flex: none; padding: 1px 8px; border-radius: 10px; font-size: 12px; font-weight: 600; color: var(--text-dim); background: var(--surface-2); border: 1px solid var(--border); text-align: center; }
+.section-progress.started { color: var(--accent); border-color: var(--accent); }
+.section-progress.finished { color: var(--ok); border-color: var(--ok); background: var(--ok-bg); }
+.finished-group { padding: 10px 12px; border: 1px solid rgba(155, 200, 138, .35); }
+.finished-group > summary { font-weight: 600; text-align: center; }
+.finished-group[open] > summary { margin-bottom: 4px; }
+.chapter-body .finished-group .story-section { background: var(--bg); border-color: rgba(155, 200, 138, .45); }
+.finished-group .story-section .story-section-head h3 { color: var(--ok); }
+.finished-group .story-section .story-tip, .finished-group .story-section label, .finished-group .story-section li { color: var(--text-dim); }

@@ -179,7 +179,12 @@
     <!-- 스토리 탭 -->
     <section id="tab-story" class="panel" hidden>
       <p class="notice" id="story-notice" hidden></p>
-      <div id="story-list">
+      <div class="subtabs story-subtabs" role="tablist" aria-label="{{ t('tabs.story') }}">
+        <button type="button" id="story-progress-tab" class="story-subtab active" role="tab" aria-selected="true" aria-controls="story-list" data-story-view="progress">{{ t('story.flow.progressTab') }}</button>
+        <button type="button" id="story-endings-tab" class="story-subtab" role="tab" aria-selected="false" aria-controls="story-endings" data-story-view="endings" tabindex="-1">{{ t('story.flow.endingsTab') }}</button>
+      </div>
+      <div id="story-endings" role="tabpanel" aria-labelledby="story-endings-tab" hidden></div>
+      <div id="story-list" role="tabpanel" aria-labelledby="story-progress-tab">
         <p class="empty">{{ t('common.loading') }}</p>
       </div>
       <p class="credit" id="story-credit"></p>

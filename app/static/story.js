@@ -254,6 +254,14 @@ function sectionHead(item, extraClass) {
   const { sec } = item;
   const head = el("div", "story-section-head" + (extraClass ? " " + extraClass : ""));
   head.append(el("h3", "", sec.title));
+  // 구간 진행 표시: 다 했으면 '✓ 완료', 아니면 '3/9' (2026-11-21 사용자: 했나 안 했나 구별이 안 감)
+  const required = item.steps.filter(isRequiredStep);
+  if (required.length) {
+    const done = required.filter(isStepDone).length;
+    const finished = done === required.length;
+    head.append(el("span", "section-progress" + (finished ? " finished" : done ? " started" : ""),
+      finished ? t("story.sectionComplete") : `${done}/${required.length}`));
+  }
   appendStoryMapTags(head, sec);
   // 오른쪽 위 버튼 두 개: 하나라도 안 했으면 '전체 체크', 하나라도 했으면 '전체 해제' (둘 다 보일 수 있음)
   // 태그와 헷갈리지 않게 아이콘 + 네모 버튼. "해당될 때만" 단계는 건드리지 않음
@@ -281,6 +289,7 @@ function sectionHead(item, extraClass) {
 function renderChoice(ch, item, isCurrent) {
   const { choice, picked } = item;
   const box = el("div", "story-choice" + (picked ? " picked" : "") + (isCurrent ? " current" : ""));
+  box.dataset.storySection = ch.sections.findIndex((sec) => sec.choice === choice);
   if (isCurrent) box.append(el("p", "current-label", t("story.choiceNow")));
   box.append(el("h3", "", choice.title));
   if (!picked) {
@@ -376,6 +385,7 @@ function renderChapter(ch) {
     group.append(el("summary", "", t("story.finished", { n: finishedSecs.length, names: "" })));
     finishedSecs.forEach((it) => {
       const box = el("div", "story-section");
+      box.dataset.storySection = ch.sections.indexOf(it.sec);
       box.append(sectionHead(it), sectionBody(it));
       group.append(box);
     });
@@ -390,6 +400,7 @@ function renderChapter(ch) {
       body.append(renderNotice(it));
     } else if (!isSectionDone(it)) {
       const box = el("div", "story-section" + (it === current ? " current" : ""));
+      box.dataset.storySection = ch.sections.indexOf(it.sec);
       if (it === current) box.append(el("p", "current-label", t("story.currentLabel")));
       box.append(sectionHead(it), sectionBody(it, it === current));
       body.append(box);
@@ -517,6 +528,337 @@ async function loadStoryData() {
     return false;
   }
 }
+
+// ---------- 엔딩 흐름도 (기존 조건·단계만 읽고 진행 기록은 변경하지 않음) ----------
+const storyFlow = { view: "progress", open: null, expanded: new Set(), tips: new Set() };
+try {
+  if (localStorage.getItem("raidbriefer.story.view") === "endings") storyFlow.view = "endings";
+} catch (_) { /* 저장소를 막은 뷰어에서도 기본 화면으로 계속 사용 */ }
+
+function setStoryView(view) {
+  storyFlow.view = view === "endings" ? "endings" : "progress";
+  document.getElementById("story-list").hidden = storyFlow.view !== "progress";
+  document.getElementById("story-endings").hidden = storyFlow.view !== "endings";
+  document.querySelectorAll("[data-story-view]").forEach((btn) => {
+    const selected = btn.dataset.storyView === storyFlow.view;
+    btn.classList.toggle("active", selected);
+    btn.setAttribute("aria-selected", String(selected));
+    btn.tabIndex = selected ? 0 : -1;
+  });
+  try { localStorage.setItem("raidbriefer.story.view", storyFlow.view); } catch (_) { /* 저장 실패는 진행에 영향 없음 */ }
+}
+
+// 챕터 진행 ↔ 엔딩 분기 이동도 뒤로 가기 기록에 남김 (2026-11-21 사용자: 마우스 뒤로 버튼이 엉뚱한 곳으로 감)
+function goStoryView(view) {
+  if (storyFlow.view === view) return;
+  rememberScroll();
+  setStoryView(view);
+  window.scrollTo(0, 0);
+  history.pushState({ tab: "story", storyView: storyFlow.view, scroll: 0 }, "");
+}
+
+document.querySelectorAll("[data-story-view]").forEach((btn, index, buttons) => {
+  btn.addEventListener("click", () => goStoryView(btn.dataset.storyView));
+  btn.addEventListener("keydown", (event) => {
+    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+    event.preventDefault();
+    const next = event.key === "Home" ? 0 : event.key === "End" ? buttons.length - 1
+      : (index + (event.key === "ArrowLeft" ? -1 : 1) + buttons.length) % buttons.length;
+    buttons[next].click();
+    buttons[next].focus();
+  });
+});
+setStoryView(storyFlow.view);
+
+function storyFlowModel(ch) {
+  const visible = visibleItems(ch);
+  const active = Object.fromEntries(visible.items.filter((it) => it.type === "choice" && it.picked)
+    .map((it) => [it.choice.id, it.picked]));
+  const required = visible.steps.filter(isRequiredStep);
+  const ending = !visible.pending && ch.endings.find((e) => itemVisible(active, e));
+  const current = visible.items.find((it) => it.type === "section" && !isSectionDone(it));
+  const last = ch.sections[ch.sections.length - 1];
+  const common = last && !last.choice && !last.when && !last.when_any ? last : null;
+  const done = required.filter(isStepDone).length;
+  const currentIndex = current ? ch.sections.indexOf(current.sec) : Infinity;
+  const finished = new Set(visible.items.filter((it) => it.type === "section" && it.sec !== common
+    && ch.sections.indexOf(it.sec) < currentIndex && isSectionDone(it)).map((it) => it.sec));
+  // 이전 챕터가 없거나 오래된 기록이면 완료로 추측하지 않는다.
+  const caseChapter = story.data.chapters.find((c) => c.id === "falling-skies");
+  const notStarted = !isChapterStarted(ch) && !isChapterDone(caseChapter?.id);
+  const banner = notStarted ? t("story.flow.notStarted", { requirement: ch.requirement || "" })
+    : visible.pending ? t("story.flow.nextFork", { n: required.length - done, title: visible.pending.title })
+    : t(current ? "story.flow.towardEnding" : "story.flow.endingDone", {
+      ending: ending?.name || t("story.flow.undecided"), done, total: required.length,
+    });
+  // 각 후보 경로도 원본 구간 순서와 같은 조건 판정으로 구성한다.
+  function walk(start, picks, path) {
+    const nodes = [];
+    let notice = null;
+    for (let i = start; i < ch.sections.length; i++) {
+      const sec = ch.sections[i];
+      if (sec === common || !itemVisible(picks, sec)) continue;
+      if (sec.choice) {
+        const branches = sec.choice.options.map((option) => ({ option,
+          tree: walk(i + 1, { ...picks, [sec.choice.id]: option.id }, path + "/" + option.id),
+        }));
+        nodes.push({ type: "fork", sec, index: i, branches });
+        return { nodes, picks, path };
+      }
+      if (sec.notice) { notice = sec; break; }
+      const steps = (sec.steps || []).filter((st) => itemVisible(picks, st) && isRequiredStep(st));
+      if (!(sec.steps || []).some((st) => itemVisible(picks, st))) continue;
+      nodes.push({ type: "section", sec, index: i, steps });
+    }
+    const end = ch.endings.find((e) => itemVisible(picks, e));
+    // 차단 안내가 있는 길은 기존 조건의 목적지로 연결하고 해당 구간은 목적지 열에서 한 번만 표시한다.
+    const blocked = notice && ch.endings.find((e) => e.when && Object.entries(e.when)
+      .some(([key, value]) => !key.includes(":") && !key.includes("@") && picks[key] === value));
+    return { nodes, picks, path, ending: blocked || end, redirect: blocked && end, notice };
+  }
+  return { ch, visible, active, required, ending, current, common, finished, banner, tree: walk(0, {}, ch.id) };
+}
+
+function flowButton(text, className, action) {
+  const btn = el("button", className, text);
+  btn.type = "button";
+  btn.title = text;
+  btn.addEventListener("click", action);
+  return btn;
+}
+
+function flowToggle(key, label, className, set) {
+  const btn = flowButton(label, className, () => {
+    if (set.has(key)) {
+      set.delete(key);
+      if (key.endsWith("/branch") && storyFlow.open?.startsWith(key.slice(0, -7) + "/")) storyFlow.open = null;
+    } else set.add(key);
+    renderStoryEndings();
+  });
+  btn.dataset.flowKey = key;
+  btn.setAttribute("aria-expanded", String(set.has(key)));
+  return btn;
+}
+
+function jumpStorySection(ch, index) {
+  story.open.add(ch.id);
+  goStoryView("progress"); // 뒤로 가기로 흐름도의 원래 자리로 돌아옴
+  renderStory();
+  const card = [...document.querySelectorAll(".chapter")].find((node) => node.dataset.chapterId === ch.id);
+  if (!card) return;
+  // 아직 선택 전인 미래 구간이면 그 구간을 여는 갈림길로 안내한다. 선택은 자동으로 바꾸지 않는다.
+  const target = card.querySelector('[data-story-section="' + index + '"]')
+    || card.querySelector(".story-choice:not(.picked)") || card;
+  for (let parent = target.parentElement; parent && parent !== card; parent = parent.parentElement) {
+    if (parent.tagName === "DETAILS") parent.open = true;
+  }
+  target.scrollIntoView({ block: "center", behavior: "auto" });
+  target.tabIndex = -1;
+  target.focus({ preventScroll: true });
+  playActionEffect(target);
+}
+
+function flowNode(model, key, title, className, tags, detail) {
+  const wrapper = el("div", "flow-node-wrap");
+  const btn = flowButton("", "flow-node " + className, () => {
+    storyFlow.open = storyFlow.open === key ? null : key;
+    renderStoryEndings();
+  });
+  btn.title = title;
+  btn.dataset.flowKey = key;
+  btn.setAttribute("aria-expanded", String(storyFlow.open === key));
+  btn.append(el("span", "flow-label", title));
+  if (tags.length) {
+    const row = el("span", "flow-tags");
+    tags.forEach((tag) => row.append(el("span", "flow-tag", tag)));
+    btn.append(row);
+  }
+  wrapper.append(btn);
+  if (storyFlow.open === key) {
+    const body = el("div", "flow-detail");
+    detail(body);
+    wrapper.append(body);
+  }
+  return wrapper;
+}
+
+function flowSection(model, node, path, onPath, common = false) {
+  const { ch, current } = model;
+  const { sec, index, steps } = node;
+  const count = steps.filter(isStepDone).length;
+  const done = onPath && count === steps.length;
+  const now = onPath && current?.sec === sec;
+  const key = path + "/section/" + index;
+  const title = common ? t("story.flow.common", { title: sec.title }) : sec.title;
+  const tags = [count + "/" + steps.length];
+  if (now) tags.push(t("story.flow.here"));
+  if (common) tags.push(t("story.flow.terminalTime"));
+  const wrapper = flowNode(model, key, (done ? "✓ " : now ? "● " : "○ ") + title,
+    done ? "done" : now ? "current" : "future", tags, (body) => {
+      if (sec.tip) {
+        const tip = el("p", "flow-tip" + (storyFlow.tips.has(key) ? "" : " clamped"), sec.tip);
+        body.append(tip, flowToggle(key, t(storyFlow.tips.has(key) ? "story.flow.less" : "story.flow.more"), "flow-more", storyFlow.tips));
+      }
+      body.append(flowButton(t("story.flow.viewProgress"), "flow-action", () => jumpStorySection(ch, index)));
+    });
+  if (now) {
+    const bar = el("span", "flow-progress");
+    const fill = el("span");
+    fill.style.width = (steps.length ? count / steps.length * 100 : 0) + "%";
+    bar.append(fill);
+    wrapper.firstElementChild.append(bar);
+  }
+  return wrapper;
+}
+
+function flowEnding(model, ending, path, blocked = false) {
+  const box = flowNode(model, path + "/ending/" + ending.id, (blocked ? "⛔ " : "") + ending.name,
+    "ending" + (blocked ? " blocked" : model.ending?.id === ending.id ? " selected" : ""),
+    [t("story.flow.achievement")], (body) => {
+      [["route", ending.route], ["achievement", ending.achievement], ["limits", ending.limits.join(" · ")],
+        ["rewards", ending.rewards]].forEach(([label, text]) => {
+        const line = el("p");
+        line.append(el("b", "", t(`story.flow.${label}`) + ": "), document.createTextNode(text));
+        body.append(line);
+      });
+    });
+  if (!blocked) box.dataset.endingId = ending.id;
+  return box;
+}
+
+function flowTree(model, tree, onPath) {
+  const lane = el("div", "flow-lane");
+  const groupKey = model.ch.id + "/finished";
+  tree.nodes.forEach((node) => {
+    if (onPath && model.finished.has(node.sec) && !storyFlow.expanded.has(groupKey)
+      && storyFlow.open !== tree.path + "/section/" + node.index) return;
+    if (node.type === "section") {
+      lane.append(flowSection(model, node, tree.path, onPath));
+      return;
+    }
+    const choice = node.sec.choice;
+    lane.append(flowNode(model, tree.path + "/fork/" + choice.id, choice.title, "fork",
+      [t("story.flow.irreversible")], (body) => {
+        if (choice.question) body.append(el("p", "", choice.question));
+        choice.options.forEach((option) => {
+          const line = el("p");
+          line.append(el("b", "", option.label + ": "), document.createTextNode(option.desc || ""));
+          body.append(line);
+        });
+        body.append(flowButton(t("story.flow.pickProgress"), "flow-action", () => jumpStorySection(model.ch, node.index)));
+      }));
+    const columns = el("div", "flow-columns");
+    const weights = [];
+    node.branches.forEach(({ option, tree: branch }) => {
+      const picked = onPath && model.active[choice.id];
+      // 차단되어 옮겨 간 목적지 열은 실제 선택과 달라도 펼쳐서 현재 구간을 보여 준다.
+      const redirected = branch.ending && model.ending?.id === branch.ending.id && !branch.redirect;
+      const selected = !!(picked === option.id || redirected);
+      const other = !!picked && !selected;
+      // 고르지 않은 길도 엔딩 분기 중 하나라 접지 않고 항상 펼쳐 둔다 (2026-11-21 사용자). 흐리게만 표시
+      const column = el("div", "flow-branch" + (selected ? " selected" : other ? " other" : " future"));
+      const label = el("div", "flow-branch-label flow-label", option.label);
+      label.title = option.label;
+      column.append(label);
+      column.append(flowTree(model, branch, onPath && selected));
+      columns.append(column);
+      weights.push(flowBranchWidth(model, branch, onPath && selected));
+    });
+    columns.style.gridTemplateColumns = weights.map((weight) => "minmax(0, " + weight + "fr)").join(" ");
+    lane.append(columns);
+  });
+  if (tree.ending) lane.append(flowEnding(model, tree.ending, tree.path, !!tree.redirect));
+  if (tree.redirect) {
+    const target = tree.redirect;
+    const link = flowButton(t("story.flow.blocked", { from: tree.ending.name, to: target.name }), "flow-redirect", () => {
+      // 접힌 다른 길도 목적지를 찾아 펼친다. 진행 선택은 그대로 둔다.
+      function expand(branch) {
+        if (branch.ending?.id === target.id && !branch.redirect) { storyFlow.expanded.add(branch.path + "/branch"); return true; }
+        return branch.nodes.filter((n) => n.type === "fork").some((n) => n.branches.some((b) => {
+          if (!expand(b.tree)) return false;
+          storyFlow.expanded.add(b.tree.path + "/branch"); return true;
+        }));
+      }
+      expand(model.tree);
+      renderStoryEndings();
+      const chart = [...document.querySelectorAll(".story-flow")].find((n) => n.dataset.chapterId === model.ch.id);
+      const dest = [...chart.querySelectorAll("[data-ending-id]")].find((n) => n.dataset.endingId === target.id);
+      dest?.scrollIntoView({ block: "center", behavior: "auto" });
+      dest?.querySelector("button")?.focus({ preventScroll: true });
+    });
+    link.dataset.redirectTo = target.id;
+    lane.append(link);
+  }
+  return lane;
+}
+
+function flowBranchWidth(model, tree, onPath) {
+  const fork = tree.nodes.find((n) => n.type === "fork");
+  if (!fork) return 1;
+  const picked = onPath && model.active[fork.sec.choice.id];
+  return fork.branches.reduce((width, b) => {
+    const selected = picked === b.option.id || (b.tree.ending && model.ending?.id === b.tree.ending.id && !b.tree.redirect);
+    return width + flowBranchWidth(model, b.tree, onPath && !!selected);
+  }, 0) || 1;
+}
+
+function renderStoryEndings() {
+  const host = document.getElementById("story-endings");
+  if (!story.data || !host) return;
+  const focusKey = host.contains(document.activeElement) ? document.activeElement.dataset.flowKey : null;
+  host.replaceChildren();
+  story.data.chapters.filter((ch) => Array.isArray(ch.endings) && ch.endings.length).forEach((ch) => {
+    const model = storyFlowModel(ch);
+    const chart = el("article", "story-flow");
+    chart.dataset.chapterId = ch.id;
+    chart.append(el("h2", "", ch.name));
+    const banner = el("p", "flow-banner", model.banner);
+    banner.setAttribute("role", "status");
+    chart.append(banner);
+    const caseChoice = story.data.chapters.find((c) => c.id === "falling-skies")?.sections.find((s) => s.choice?.id === "case")?.choice;
+    const caseLabel = caseChoice?.options.find((o) => o.id === story.pos["falling-skies@case"])?.label;
+    chart.append(el("p", "flow-case", t("story.flow.case", { label: caseLabel || t("story.flow.unknown") })));
+    if (model.finished.size) chart.append(flowToggle(ch.id + "/finished",
+      t("story.flow.finished", { n: model.finished.size }), "flow-node flow-finished done", storyFlow.expanded));
+    chart.append(flowTree(model, model.tree, true));
+    if (model.common) {
+      const steps = model.common.steps.filter((st) => itemVisible(model.active, st) && isRequiredStep(st));
+      chart.append(flowSection(model, { sec: model.common, index: ch.sections.indexOf(model.common), steps }, ch.id + "/common", !model.visible.pending, true));
+    }
+    if (ch.endings_note) chart.append(el("p", "flow-note", ch.endings_note));
+    host.append(chart);
+  });
+  if (!host.childElementCount) host.append(el("p", "empty", t("story.flow.empty")));
+  if (focusKey) [...host.querySelectorAll("[data-flow-key]")].find((n) => n.dataset.flowKey === focusKey)?.focus({ preventScroll: true });
+  drawFlowRedirects();
+}
+
+// 열 높이가 달라도 실제 목적지까지 이어지는 선. 관찰자 하나만 사용하여 오래 켜도 누적되지 않게 한다.
+function drawFlowRedirects() {
+  document.querySelectorAll(".story-flow").forEach((chart) => {
+    chart.querySelector(".flow-links")?.remove();
+    if (!chart.getClientRects().length) return;
+    const rect = chart.getBoundingClientRect();
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.classList.add("flow-links");
+    svg.setAttribute("aria-hidden", "true");
+    chart.querySelectorAll("[data-redirect-to]").forEach((source) => {
+      const target = [...chart.querySelectorAll("[data-ending-id]")].find((n) => n.dataset.endingId === source.dataset.redirectTo);
+      if (!target) return;
+      const a = source.getBoundingClientRect(), b = target.getBoundingClientRect();
+      const line = document.createElementNS(svg.namespaceURI, "path");
+      const x = a.left + a.width / 2 - rect.left, y = a.bottom - rect.top;
+      const tx = b.left + b.width / 2 - rect.left, ty = b.bottom - rect.top;
+      const bottom = Math.max(y, ty) + 8;
+      line.setAttribute("d", "M " + x + " " + y + " V " + bottom + " H " + tx + " V " + ty);
+      svg.append(line);
+    });
+    chart.append(svg);
+  });
+}
+const flowResizeObserver = new ResizeObserver(drawFlowRedirects);
+flowResizeObserver.observe(document.getElementById("story-endings"));
+document.addEventListener("story-changed", renderStoryEndings);
 
 loadStory();
 // 퀘스트 정보(로그)가 들어오거나 바뀌면 "퀘스트 완료" 조건을 다시 계산

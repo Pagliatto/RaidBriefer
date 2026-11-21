@@ -146,6 +146,54 @@ def main():
                     check_when(ch, w, name + " (when_any)", all_chapters, quest_ids)
             for o in s.get("choice", {}).get("options", []):
                 check_when(ch, o.get("blocked_when"), f"선택지 {o['id']} 막힘 조건", all_chapters, quest_ids)
+        # 엔딩의 번역 짝·고유 id·조건을 구간과 같은 규칙으로 검사한다.
+        endings = ch.get("endings", [])
+        if not isinstance(endings, list):
+            report(cid, "endings 는 배열이어야 함")
+            endings = []
+        ending_ids = set()
+        for ending in endings:
+            if not isinstance(ending, dict):
+                report(cid, "엔딩은 객체여야 함")
+                continue
+            eid = ending.get("id")
+            if not isinstance(eid, str) or not eid.strip():
+                report(cid, "엔딩 id가 없거나 문자열이 아님")
+            elif eid in ending_ids:
+                report(cid, f"엔딩 id 중복: {eid}")
+            else:
+                ending_ids.add(eid)
+            for key in ("name", "name_en", "route", "route_en", "achievement", "rewards", "rewards_en"):
+                if not isinstance(ending.get(key), str) or not ending[key].strip():
+                    report(cid, f"엔딩 {eid}: {key} 문자열 없음")
+            for key in ("limits", "limits_en"):
+                value = ending.get(key)
+                if not isinstance(value, list) or not value or not all(isinstance(v, str) and v.strip() for v in value):
+                    report(cid, f"엔딩 {eid}: {key} 문장 배열 없음")
+            if isinstance(ending.get("limits"), list) and isinstance(ending.get("limits_en"), list):
+                if len(ending["limits"]) != len(ending["limits_en"]):
+                    report(cid, f"엔딩 {eid}: limits 번역 개수 다름")
+            if not ending.get("when") and not ending.get("when_any"):
+                report(cid, f"엔딩 {eid}: 조건 없음")
+            conditions = []
+            if "when" in ending:
+                conditions.append(ending["when"])
+            if "when_any" in ending:
+                if not isinstance(ending["when_any"], list) or not ending["when_any"]:
+                    report(cid, f"엔딩 {eid}: when_any 는 비어 있지 않은 배열이어야 함")
+                else:
+                    conditions.extend(ending["when_any"])
+            for condition in conditions:
+                if not isinstance(condition, dict) or not condition:
+                    report(cid, f"엔딩 {eid}: 조건은 비어 있지 않은 객체여야 함")
+                else:
+                    check_when(ch, condition, f"엔딩 {eid}", all_chapters, quest_ids)
+
+        if endings:
+            for key in ("endings_note", "endings_note_en"):
+                if not isinstance(ch.get(key), str) or not ch[key].strip():
+                    report(cid, f"{key} 문자열 없음")
+
         steps = [st for s in ch["sections"] for st in s.get("steps", [])]
         all_ids.update(st["id"] for st in steps)
 
