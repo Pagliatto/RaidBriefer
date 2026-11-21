@@ -260,8 +260,11 @@ def _run_locked() -> None:
         helper = WORK_DIR / "update_helper.cmd"
         shutil.copy(HELPER, helper)
         _set(status="installing")
+        # cmd /c 는 따옴표가 여럿이면 맨 앞·맨 뒤 따옴표를 지워서, 경로에 띄어쓰기가 있으면 도우미가 아예 안 켜짐
+        # (2026-11-21 실제 exe 시험에서 발견) → /s + 전체를 한 번 더 따옴표로 감싸 그대로 전달
+        command = '""{}" {} "{}" "{}" "{}""'.format(helper, os.getpid(), new_root, paths.HOME_DIR, WORK_DIR / "old")
         subprocess.Popen(
-            ["cmd.exe", "/c", str(helper), str(os.getpid()), str(new_root), str(paths.HOME_DIR), str(WORK_DIR / "old")],
+            f"cmd.exe /d /s /c {command}",
             cwd=str(paths.HOME_DIR),  # 작업 폴더(_update)는 곧 지워지므로 프로그램 폴더에서 실행
             # 검은 창 없이, 프로그램이 꺼져도 계속 돌게
             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0) | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0),
