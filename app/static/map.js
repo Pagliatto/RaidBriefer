@@ -760,6 +760,7 @@ async function showTransition(title, text, action) {
   document.getElementById("transition-map").textContent = title;
   document.getElementById("transition-text").textContent = text;
   box.hidden = false;
+  window.dispatchEvent(new CustomEvent("raid-transition", { detail: true }));
   animateOpen(box, "notice", 200);
   const started = Date.now();
   try {
@@ -768,7 +769,10 @@ async function showTransition(title, text, action) {
     if (revision === transitionRevision) {
       const wait = Math.max(0, TRANSITION_MS - (Date.now() - started));
       transitionTimer = setTimeout(() => {
-        if (revision === transitionRevision) animateClose(box, () => { box.hidden = true; }, "notice");
+        if (revision === transitionRevision) animateClose(box, () => {
+          box.hidden = true;
+          window.dispatchEvent(new CustomEvent("raid-transition", { detail: false }));
+        }, "notice");
       }, wait);
     }
   }

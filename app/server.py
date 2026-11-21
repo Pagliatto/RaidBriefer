@@ -193,7 +193,8 @@ def api_state():
     """지금 게임 상태 (상단바·화면 자동 전환용). 화면이 2초마다 물어봄"""
     state = game_state.get()
     state["data_updating"] = tarkov_api.is_updating()
-    state["quest_rev"] = quest_log.log_rev()  # 바뀌면 화면이 퀘스트를 새로 불러옴
+    state["quest_rev"] = quest_log.poll_log_rev()  # 디스크 조회는 별도 스레드에서만
+    state["log_reading"] = quest_log.log_reading()
     updater.cleanup(started=True)
     return jsonify(state)
 

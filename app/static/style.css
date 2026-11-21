@@ -914,6 +914,13 @@ body.map-mode .scroll-buttons { display: none; }
 .transition-text { margin-top: 4px; font-size: 16px; color: var(--text-dim); }
 .transition-bar { width: 220px; height: 3px; margin: 18px auto 0; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
 .transition-bar i { display: block; height: 100%; width: 40%; background: var(--accent); animation: slide 2.4s ease-in-out infinite; }
+/* 상단바 높이는 배율·줄바꿈에 맞춰 관찰하며, 기존 안내의 색·막대·창 효과를 재사용한다. */
+.log-reading { top: var(--log-reading-top, var(--sticky-h, 120px)); z-index: 1999; padding: 24px; }
+.log-reading .transition-box { width: min(560px, 100%); min-width: 0; }
+.log-reading .transition-map { font-size: clamp(24px, 4.2vw, 40px); }
+.log-reading-count { margin-top: 14px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.log-reading .transition-bar { max-width: 100%; }
+.log-reading .transition-bar i.determinate { width: 100%; animation: none; transform-origin: left; }
 @keyframes slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(250%); } }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 

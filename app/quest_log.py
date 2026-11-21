@@ -17,6 +17,7 @@ import tempfile
 import threading
 import time
 from bisect import bisect_right
+from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
 
@@ -34,10 +35,64 @@ _folder_cache = {}
 _log_cache_lock = threading.RLock()
 _cache_root = None
 _index_state = None
+_reading_lock = threading.Lock()
+_reading_progress = {"active": False, "done": 0, "total": 0, "started": 0.0}
+_revision_poll_lock = threading.Lock()
+_revision_snapshot = ""
 _LOG_TIME = re.compile(r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:\.\d+)?)")
 _MODE_REQUEST = re.compile(r"https://(gw-pv[ep][^/.:]*)\.escapefromtarkov\.com(?::\d+)?(/client/[^\s|?]*)")
 SEALED_AFTER_NS = 3600 * 10**9
 REVALIDATE_SECONDS = 600  # 종료 폴더의 외부 수정은 요청을 막지 않고 10분마다 확인한다.
+
+
+@contextmanager
+def _reading():
+    # 색인 잠금과 분리한다. 진행률 잠금 안에서는 파일 접근이나 대기를 하지 않는다.
+    with _reading_lock:
+        owner = not _reading_progress["active"]
+        if owner:
+            _reading_progress.update(active=True, done=0, total=0, started=time.monotonic())
+    try:
+        yield
+    finally:
+        if owner:
+            with _reading_lock:
+                _reading_progress["active"] = False
+
+
+def log_reading():
+    """스캔을 기다리지 않는 작은 복사본. 경과 시간은 PC 시계 변경에 영향받지 않는다."""
+    with _reading_lock:
+        if not _reading_progress["active"]:
+            return None
+        return {"done": _reading_progress["done"], "total": _reading_progress["total"],
+                "elapsed_ms": (time.monotonic() - _reading_progress["started"]) * 1000}
+
+
+def _advance_log_reading():
+    with _reading_lock:
+        _reading_progress["done"] += 1
+
+
+def poll_log_rev():
+    """상태 요청에서는 디스크를 읽거나 색인 잠금을 기다리지 않고 마지막 값을 반환한다."""
+    def refresh():
+        global _revision_snapshot
+        try:
+            _revision_snapshot = log_rev()
+        except (OSError, settings.DataReadError):
+            # 일시적인 설정·폴더 접근 실패에는 마지막 확인값을 보존한다.
+            pass
+        finally:
+            _revision_poll_lock.release()
+
+    # 긴 첫 읽기 중에도 대기 스레드는 하나만 유지한다.
+    if _revision_poll_lock.acquire(blocking=False):
+        try:
+            threading.Thread(target=refresh, name="log-revision", daemon=True).start()
+        except RuntimeError:
+            _revision_poll_lock.release()
+    return _revision_snapshot
 
 
 class _FolderCache:
@@ -233,6 +288,7 @@ def _index_worker(state):
         _revalidate_sealed(state)
 
 
+@_reading()
 def _log_folders():
     """루트 수정 시각이 같으면 활성 폴더만 반환한다. 호출자는 전역 잠금을 잡는다."""
     global _cache_root, _index_state
@@ -486,8 +542,11 @@ def _sealed_data(cache):
     }
 
 
+@_reading()
 def _refresh_index():
     state = _log_folders()
+    with _reading_lock:
+        _reading_progress["total"] = len(state.active)
     for folder, cache in list(state.active.items()):
         with cache.lock:
             try:
@@ -511,6 +570,8 @@ def _refresh_index():
             except OSError:
                 # 잠긴 파일은 저장·봉인하지 않고 다음 요청에서 다시 확인한다.
                 continue
+            finally:
+                _advance_log_reading()
     if state.dirty:
         _rebuild_aggregate(state)
     if state.save_needed:

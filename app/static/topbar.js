@@ -96,6 +96,57 @@ function drawTopbar() {
   document.documentElement.style.setProperty("--sticky-h", `${topbar.get("sticky-top").offsetHeight + 8}px`);
 }
 
+// 첫 기록 읽기 안내: 서버가 확인한 경과 시간만 사용해 끝난 작업이 뒤늦게 뜨지 않게 한다.
+const logReadingNotice = (() => {
+  const box = document.getElementById("log-reading");
+  const count = document.getElementById("log-reading-count");
+  const fill = document.getElementById("log-reading-fill");
+  let progress = null;
+  let raidTransition = false;
+  let shownAt = 0;
+  let closeTimer = null;
+
+  function render() {
+    clearTimeout(closeTimer);
+    closeTimer = null;
+    if (raidTransition) {
+      cancelWindowMotion(box);
+      box.hidden = true;
+      return;
+    }
+    if (progress) {
+      count.textContent = t("logReading.folders", { done: progress.done, total: progress.total });
+      fill.classList.toggle("determinate", progress.total > 0);
+      fill.style.transform = progress.total > 0
+        ? "scaleX(" + Math.max(0, Math.min(1, progress.done / progress.total)) + ")" : "";
+      if (isWindowClosing(box)) cancelWindowMotion(box);
+      // 700ms 이하는 표시하지 않고, 다음 서버 응답에서 여전히 읽는 중인지 확인한다.
+      if (box.hidden && progress.elapsed_ms > 700) {
+        shownAt = performance.now();
+        box.hidden = false;
+        animateOpen(box, "notice", 200);
+      }
+    } else if (!box.hidden) {
+      const wait = Math.max(0, 600 - (performance.now() - shownAt));
+      closeTimer = setTimeout(() => {
+        closeTimer = null;
+        if (!progress && !raidTransition) animateClose(box, () => { box.hidden = true; }, "notice");
+      }, wait);
+    }
+  }
+
+  // 설정·상태·탭을 계속 사용할 수 있도록 실제 고정 영역의 높이를 따른다.
+  const sticky = document.getElementById("sticky-top");
+  const resize = () => box.style.setProperty("--log-reading-top", sticky.getBoundingClientRect().bottom + "px");
+  new ResizeObserver(resize).observe(sticky);
+  resize();
+  window.addEventListener("raid-transition", (event) => {
+    raidTransition = event.detail;
+    render();
+  });
+  return { update(next) { progress = next || null; render(); } };
+})();
+
 let statePollPromise = null;
 let statePollTimer = null;
 let statePollSequence = 0;
@@ -119,6 +170,7 @@ function pollState() {
           topbar.endedUntil = Date.now() + TOPBAR_ENDED_MS;
         }
         topbar.state = next;
+        logReadingNotice.update(next.log_reading);
         if (questLog) window.dispatchEvent(new CustomEvent("quest-log-changed", { detail: next }));
         // 다른 화면(나중에: 맵에 들어가면 자동 전환)이 쓸 수 있게 알림
         if (changed) window.dispatchEvent(new CustomEvent("game-state", { detail: next }));
@@ -132,7 +184,7 @@ function pollState() {
     clearTimeout(timeout);
     statePollPromise = null;
     drawTopbar();
-    statePollTimer = setTimeout(pollState, 2000);
+    statePollTimer = setTimeout(pollState, topbar.state.log_reading ? 250 : 2000);
   });
   return statePollPromise;
 }

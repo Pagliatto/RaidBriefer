@@ -200,6 +200,16 @@
     </div>
   </div>
 
+  <!-- 기록 읽기는 상단바 아래만 가리고 맵 전환 안내에 우선권을 준다. -->
+  <div class="transition log-reading" id="log-reading" hidden>
+    <div class="transition-box" role="status" aria-live="polite" aria-atomic="true">
+      <div class="transition-map">{{ t('logReading.title') }}</div>
+      <div class="transition-text">{{ t('logReading.text') }}</div>
+      <div class="log-reading-count" id="log-reading-count"></div>
+      <div class="transition-bar" aria-hidden="true"><i id="log-reading-fill"></i></div>
+    </div>
+  </div>
+
   <!-- 처음 설정: 프로그램을 처음 켤 때만 뜸 (⚙ 설정에서 다시 열 수 있음) -->
   <section class="setup" id="setup" hidden>
     <h1 class="setup-title">{{ t('setup.title') }}</h1>

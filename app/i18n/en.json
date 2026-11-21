@@ -6,6 +6,11 @@
     "toBottom": "Go to bottom",
     "saveFailedShort": "Couldn't save. Make sure the program is running."
   },
+  "logReading": {
+    "title": "Reading game logs",
+    "text": "This only happens once. Organizing your past play records",
+    "folders": "{done} / {total} folders"
+  },
   "home": {
     "gapTitle": "Some game logs seem to be missing.",
     "gapBody": "{count} quests finished without a start record.<br>\n            Quests you took earlier may be missing from the list, so please check your active quests.",
