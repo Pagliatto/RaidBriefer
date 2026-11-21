@@ -220,10 +220,15 @@ def features(map_key: str) -> dict:
                 "faction": e.get("faction", "shared"),
                 "pos": _xzy(e["position"]),
             })
+    # 트랜짓: 도착 맵(id·이름)도 같이 → 지도에는 도착 맵 이름, 서랍에는 '트랜짓으로 갈 수 있는 맵'
+    by_id = {x["id"]: x for x in maps.values()}
     for tr in m.get("transits") or []:
         if tr.get("position"):
+            target = by_id.get(tr.get("map") or "")
             result["transits"].append({
                 "name": en.get(tr.get("description"), tr.get("description")),
+                "to": tr.get("map") or "",
+                "to_name": map_names(target["name"]) if target and target.get("name") else "",
                 "pos": _xzy(tr["position"]),
             })
     for lock in m.get("locks") or []:

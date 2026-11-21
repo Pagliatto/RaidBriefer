@@ -140,6 +140,13 @@ function markerIcon(kind, icon, size) {
   return L.divIcon({ className: `feature mk mk-${kind}`, html: `<span>${iconSvg(icon, glyph, 2.4)}</span>`, iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
 }
 
+// 목록 안의 작은 지도 기호 (표시 서랍 기호와 같은 모양)
+function markerSymbol(kind, icon) {
+  const mark = el("span", "layer-mark");
+  mark.innerHTML = `<span class="mk mk-${kind} mk-legend"><span>${iconSvg(icon, 11, 2.4)}</span></span>`;
+  return mark;
+}
+
 // 상인 색 (CSS .trader-○○ 의 --trader 값)
 const traderColorCache = {};
 function traderColor(key) {
@@ -235,6 +242,7 @@ async function drawMap() {
   L.DomEvent.off(box);
   box.replaceChildren();
   mapUI.pins = {};
+  mapUI.transits = []; // 이 맵의 트랜짓 표시 (서랍 '트랜짓으로 갈 수 있는 맵'이 씀)
   mapUI.dirty = false;
   document.getElementById("map-auto").hidden = !(mapUI.autoMapId && m && m.ids.includes(mapUI.autoMapId));
   if (!m) return;
@@ -697,6 +705,51 @@ function renderDrawer() {
     list.append(el("li", "drawer-divider", `${mapLabel(ALL_MAPS)} (${anywhere.length})`));
     anywhere.forEach(addQuest);
   }
+  renderDrawerTransits(list);
+}
+
+// 트랜짓 도착 맵 → 맵 목록의 맵 (변형 맵은 이름 앞부분으로: '연구소 (Dark)' → 연구소)
+function transitTarget(tr) {
+  const maps = mapUI.maps || [];
+  return maps.find((x) => x.ids.includes(tr.to))
+    || (tr.to_name ? maps.find((x) => tr.to_name.startsWith(x.name + " ")) : null) || null;
+}
+
+// 서랍 맨 아래: 트랜짓으로 갈 수 있는 맵 + 그 맵에서 할 퀘스트 수. 누르면 지도에서 그 트랜짓으로
+function renderDrawerTransits(list) {
+  const groups = new Map();
+  (mapUI.transits || []).forEach((tr) => {
+    const id = tr.label;
+    if (!groups.has(id)) groups.set(id, { label: tr.label, target: tr.target, items: [] });
+    groups.get(id).items.push(tr);
+  });
+  if (!groups.size) return;
+  list.append(el("li", "drawer-divider drawer-transit-title", t("map.drawerTransits")));
+  const rows = [...groups.values()].map((g) => ({ ...g, count: g.target ? mapQuests(g.target.name).length : 0 }));
+  rows.sort((a, b) => b.count - a.count); // 할 일이 많은 맵부터
+  rows.forEach((g) => {
+    const li = el("li", "drawer-transit");
+    const button = el("button", "drawer-transit-row");
+    button.type = "button";
+    button.title = t("map.transitFocusHint");
+    button.append(markerSymbol("transit", "arrow-left-right"), el("span", "drawer-transit-name", g.label),
+      g.count ? el("span", "drawer-transit-count", t("map.transitQuests", { n: g.count }))
+        : el("span", "drawer-transit-none", t("map.transitNothing")));
+    button.addEventListener("click", () => focusTransit(g.items));
+    li.append(button);
+    list.append(li);
+  });
+}
+
+function focusTransit(items) {
+  const leaf = mapUI.leaflet;
+  if (!leaf || !items.length) return;
+  if (!layerOn("transits")) setLayer("transits", true);
+  if (items[0].floor !== mapUI.floor) setFloor(items[0].floor);
+  collapseAll();
+  const bounds = L.latLngBounds(items.map((x) => x.marker.getLatLng()));
+  fitArea(leaf, bounds, { maxZoom: 3, padding: 80, animate: true });
+  leaf.once("moveend", () => items[0].marker.openTooltip());
 }
 
 // 지도 서랍 맨 위 '스토리' 칸: 지금 맵에서 할 스토리 단계 (홈과 같은 규칙: 진행 중 구간 + 다음 구간)
@@ -1053,6 +1106,7 @@ async function drawFeatures(leaf, m) {
     marker.on("click", () => goToFloorOf(floor)); // 누르면 그 표시가 있는 층으로
     marker.addTo(mapUI.groups[groupKey]);
     mapUI.floorItems.push({ layer: marker, floor });
+    return marker;
   };
 
   // 탈출구·트랜짓·BTR 정류장: 이름은 마우스를 올릴 때만 (항상 띄우면 지도를 가림, 2026-11-20 사용자)
@@ -1060,7 +1114,15 @@ async function drawFeatures(leaf, m) {
     const group = e.faction === "scav" ? "scavExtracts" : "extracts";
     add(group, e.pos, markerIcon(`extract-${e.faction}`, "door-open", 18), escapeHtml(e.name));
   });
-  data.transits.forEach((tr) => add("transits", tr.pos, markerIcon("transit", "arrow-left-right", 18), escapeHtml(tr.name)));
+  // 트랜짓: 마우스를 올리면 도착 맵 이름 (2026-11-21 사용자)
+  mapUI.transits = data.transits.map((tr) => {
+    const target = transitTarget(tr);
+    const label = tr.to_name || (target ? target.name : tr.name); // 변형 맵은 정확한 이름 (연구소 (Dark) 등)
+    const marker = add("transits", tr.pos, markerIcon("transit", "arrow-left-right", 18),
+      escapeHtml(t("map.transitTo", { map: label })));
+    return { target, label, marker, floor: floorOf(tr.pos) };
+  });
+  renderDrawer(); // 서랍 맨 아래 '트랜짓으로 갈 수 있는 맵'
   (data.btrStops || []).forEach((stop) => add("btrStops", stop.pos, markerIcon("btr", "bus", 18), escapeHtml(stop.name)));
   // 열쇠 문: 마우스를 올리면 필요한 열쇠
   data.locks.forEach((lock) => {
