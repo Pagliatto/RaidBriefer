@@ -14,10 +14,11 @@ belong to Battlestate Games Limited.
 |---|---|
 | 소스 코드 (`app/`, `tools/`, 배치 파일) | **MIT** — `LICENSE` 참고 |
 | 스토리 데이터 (`data/story/`) | **CC BY-NC-SA 3.0** — 공식 위키 내용을 번역·요약한 2차 저작물 (아래 참고) |
-| tarkov.dev 에 없는 퀘스트 (`data/corrections.json`) | **CC BY-NC-SA 3.0** — 공식 위키의 퀘스트 목표를 옮기고 번역한 것 (항목마다 위키 주소) |
+| Terminal 공략 (`data/guides/`) | **CC BY-NC-SA 3.0** — 공식 위키 내용을 번역·요약한 2차 저작물 (스토리 데이터와 같은 조건) |
+| 퀘스트·지도 보정 (`data/corrections.json`) | **CC BY-NC-SA 3.0** (위키 기반 내용) — 퀘스트 목표의 번역과 탈출구·BTR 정류장·보스 구역·적 등장 위치. 위치는 공식 위키의 RE3MR / Jindouz 지도에서 읽거나 게임에서 직접 확인한 값 (항목별 출처 기록) |
 | 로고·아이콘 (`docs/logo/`, `app/static/icons/`) | MIT (이 프로젝트에서 만든 것) |
 
-**비상업 조건**: 스토리 데이터와 지도 그림이 "비상업(NC)" 조건이라, RaidBriefer 를 유료로 팔거나 광고를 붙여 배포하면 안 됩니다.
+**비상업 조건**: 위키 기반 스토리·공략·보정 데이터와 지도 그림이 "비상업(NC)" 조건이라, RaidBriefer 를 유료로 팔거나 광고를 붙여 배포하면 안 됩니다.
 
 ## 사용하는 외부 자료
 
@@ -34,6 +35,13 @@ belong to Battlestate Games Limited.
 - **Escape from Tarkov Wiki (Fandom)** — https://escapefromtarkov.fandom.com/wiki/Story_chapters
   - 위키 라이선스 **CC BY-NC-SA** (위키에 직접 확인, 2026-11-18). 이 프로젝트의 `data/story/` 는 위키 내용을 한국어로 번역·요약한 것이라 같은 조건 **CC BY-NC-SA 3.0** 으로 배포합니다.
   - 프로그램 스토리 탭 아래에 출처를 표시합니다.
+
+### 공략·지도 보정의 출처
+- **Terminal 공략** — https://escapefromtarkov.fandom.com/wiki/The_Ticket
+  - `data/guides/` 는 공식 위키의 입장 준비·진행 순서를 번역·요약한 것으로, 스토리 데이터와 같은 **CC BY-NC-SA 3.0** 으로 배포합니다.
+- **지도 위치 보정** — 공식 위키의 RE3MR / Jindouz 지도 또는 게임에서 직접 확인한 자료
+  - `data/corrections.json` 에 탈출구·BTR 정류장·보스 구역·적 등장 위치와 출처를 기록합니다. 위키 지도에서 읽은 위치를 프로그램 지도에 맞추거나, 게임에서 직접 확인해 보완했습니다.
+  - https://escapefromtarkov.fandom.com/wiki/Terminal · https://escapefromtarkov.fandom.com/wiki/Lighthouse · https://escapefromtarkov.fandom.com/wiki/BTR_Driver
 
 ### 프로그램에 포함되거나 불러오는 라이브러리·글꼴·아이콘
 | 이름 | 쓰는 곳 | 라이선스 |

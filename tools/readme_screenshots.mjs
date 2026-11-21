@@ -29,13 +29,24 @@ const shots = [
   ["quests", "goTab('quest')", 1500],
   ["home", "goTab('home')", 1500],
   ["hideout", "goTab('hideout')", 1500],
-  ["map", "goTab('map'); setTimeout(()=>{ const s=document.getElementById('map-select'); s.value='customs'; s.dispatchEvent(new Event('change')); }, 1500)", 9000],
+  ["map", "goTab('map'); setTimeout(()=>{ const s=document.getElementById('map-select'); s.value='terminal'; s.dispatchEvent(new Event('change')); setTimeout(()=>{ if (mapUI.leaflet) fitFull(mapUI.leaflet, true); }, 5000); }, 1500)", 9000],
 ];
 for (const [name, code, ms] of shots) {
   await js(code); await sleep(ms);
+  // '바뀐 점' 창 등 열린 대화 상자는 사진에서 빼기
+  await js("document.querySelectorAll('dialog[open]').forEach((d) => d.close())"); await sleep(300);
   const r = await send("Page.captureScreenshot", { format: "png" });
   writeFileSync(`${outDir}/${name}.png`, Buffer.from(r.result.data, "base64"));
   console.log("saved", name);
 }
-ws.close(); proc.kill();
+ws.close();
+// msedge.exe 는 실제 브라우저를 띄우고 먼저 끝나므로 proc.kill() 로는 안 꺼짐 → 브라우저에 직접 닫기 요청
+try {
+  const { webSocketDebuggerUrl } = await (await fetch(`http://127.0.0.1:${port}/json/version`)).json();
+  const bws = new WebSocket(webSocketDebuggerUrl);
+  await new Promise((r) => (bws.onopen = r));
+  bws.send(JSON.stringify({ id: 1, method: "Browser.close" }));
+  await sleep(1500);
+} catch {}
+proc.kill();
 process.exit(0);

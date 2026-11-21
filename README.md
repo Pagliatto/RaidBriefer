@@ -24,7 +24,7 @@
 ## Screenshots
 
 <p align="center">
-  <img src="docs/screenshots/en/map.png" alt="Map screen: numbered quest objectives on the map, quest list on the right" width="480">
+  <img src="docs/screenshots/en/map.png" alt="Map screen: quest objectives and guide markers on the map, quests and Terminal guide in the list on the right" width="480">
 </p>
 
 | Home | Quests | Hideout | Storyline |
@@ -36,17 +36,27 @@
 The goal is that you barely have to touch it.
 
 - **When you load into a map, it switches to that map automatically.** After the raid it goes back to Home. It also tracks Transits.
-- **Your quest objectives are numbered on the map**, together with extracts, transits, locked doors, key and Bitcoin spawns, and floors.
-- **Checks for quest log changes every 2 seconds. Updates are deferred while loading or in a raid and applied when you return to the lobby.** It reads the game logs to find out.
+- **Your quest objectives are numbered on the map**, together with extracts, transits, locked doors, key and Bitcoin spawns, and floors. Other markers use colored icons, with names on hover.
+- **Map list**: check off story steps for the current map; hover a transit for its destination, or see reachable maps and their quest counts at the bottom of the list.
+- **Map tools**: hover locked doors and key spawns for key details and wiki links; the needed-items row can be collapsed.
+- **BTR**: stops on Streets of Tarkov, Woods and Lighthouse, plus a link to a BTR tracker.
+- **Missing extracts** added from the wiki: Lighthouse's Road to Military Base V-Ex and Terminal's Zubr Boat.
+- **Terminal guide**: entry preparation and steps in the map list; click a step to see its places on the map.
+- **Terminal markers**: key, electrical panel, toolset and explosive spots, Black Division spawns with head counts, the boss location and Zubr Boat; the map matches common guide maps, with north on the right.
+- **Checks for quest log changes every 2 seconds.** Updates wait until you return to the lobby; change marks can be cleared by hovering, using Mark all seen, or leaving the Quests tab after viewing them.
+- **Quests**: open the wiki beside a quest name, or click a colored map tag to filter the list.
 - **Home** shows what to prepare before a raid:
   - What to collect (items for quests and the hideout)
-  - Where to go (tasks per map)
+  - Where to go (tasks per map, current map marked)
   - What to bring (keys, weapons, gear)
-- **Hideout**: items and requirements for each station's next level. Check off collected items to remove them from the collection list.
-- **Storyline (main quests)**: mark chapters and steps as complete yourself. Decisions that change the ending are explained.
+  - Boss spawn chances for the selected map (Knight, Big Pipe and Birdeye grouped as the Goons)
+- **Hideout**: items and requirements for each station's next level, with a badge for newly buildable stations. Check off collected items to remove them from the collection list.
+- **Storyline (main quests)**: check steps individually or check/uncheck a whole section; section cards show progress and mark the current step.
+- **Ending paths**: The Ticket flowchart shows ending choices, your current position and the steps left until the next fork.
 - **Prestige** is detected automatically and progress starts fresh.
 - **English and Korean.** It follows your Windows language at first; change it in ⚙ Settings.
-- **Tells you when a new version is out** and updates with one click. Your records are kept.
+- **Game brightness**: the monitor icon in the top bar lets you brighten the game during raids in borderless window mode.
+- **Tells you when a new version is out** and updates with one click. Your records are kept; a What's new popup includes skipped versions, and Settings → About has the full update history.
 
 ## Is it safe?
 
@@ -54,6 +64,7 @@ RaidBriefer only uses:
 
 1. **Public data from tarkov.dev**: quests, maps, items, hideout (plus the latest version number of this repository, to check for updates)
    - For quests not on tarkov.dev yet: quest names, maps and the event list from the public [SPT](https://github.com/SP-Tushonka/server-csharp) data files on GitHub (only the data files are downloaded; no mod is used)
+   - Bundled storyline, Terminal guide and quest corrections use official wiki summaries. Some positions missing from tarkov.dev (extracts, BTR stops, Terminal guide pins and Black Division spawns) come from official wiki maps or in-game checks.
 2. The game's **log files** — **read only**. That's how it knows which map you're on and which quests you accepted or completed.
 3. Whether the game is running — it only checks the **process name** (`EscapeFromTarkov.exe`), like Task Manager.
 
@@ -116,7 +127,8 @@ The window remembers its size and position and opens there next time.
 - **Storyline progress is marked manually.** The game logs don't record storyline progress.
 - **Press [+] on a hideout station when you build it.** Building isn't in the logs either.
 - **If the game log folder is deleted** (e.g. when reinstalling the game), the app may miss quests you accepted earlier. A notice appears at the top of Home when that happens.
-- Boss spawns and raid survival/death aren't in the logs, so they aren't shown.
+- **Random Terminal guide spawns are shown as candidates**, not guaranteed locations. Black Division head counts come from tarkov.dev plus in-game checks.
+- Boss chances and known locations are guides; the logs don't tell whether a boss is present in your raid or whether you survived or died.
 
 ## Files
 
@@ -125,7 +137,7 @@ If you only want to use the program, the [download](#install) zip is all you nee
 | File / folder | Purpose |
 |---|---|
 | `app/` | Program code: server (Python), screens (HTML/CSS/JS), log reading, program window, translations (`app/i18n/`) |
-| `data/` | Data shipped with the program: storyline chapters (`story/`), translation fixes, manually added quests |
+| `data/` | Data shipped with the program: storyline chapters (`story/`), Terminal guide (`guides/`), translation fixes, quest and map corrections |
 | `docs/` | Logo and screenshots for the README |
 | `tools/` | Developer tools: build the exe, take README screenshots, check storyline and translation data |
 | `.github/ISSUE_TEMPLATE/` | GitHub forms for bug reports and feature requests |
@@ -152,11 +164,12 @@ For errors, these help a lot:
 ## License and credits
 
 - Source code: **MIT** ([LICENSE](LICENSE))
-- Storyline data (`data/story/`) and quests not on tarkov.dev yet (`data/corrections.json`): summarized and translated from the official wiki — **CC BY-NC-SA 3.0**
+- Storyline data (`data/story/`) and Terminal guide (`data/guides/`): summarized and translated from the official wiki — **CC BY-NC-SA 3.0**
+- Quest and map corrections (`data/corrections.json`): wiki-derived content under **CC BY-NC-SA 3.0**; includes extract, BTR stop, boss zone and enemy spawn positions read from RE3MR / Jindouz maps on the official wiki or checked in game.
 - Map images: tarkov.dev SVG Maps — **CC BY-NC-SA 4.0**
 - Data: [tarkov.dev](https://tarkov.dev) (The Hideout); quest names/maps missing there: [SPT](https://github.com/SP-Tushonka/server-csharp) data files
 
-Because the storyline data and map images are **non-commercial**, RaidBriefer may only be distributed **free and non-commercially**.
+Because the wiki-derived storyline, guide and correction data and map images are **non-commercial**, RaidBriefer may only be distributed **free and non-commercially**.
 Full credits and licenses are in [NOTICE.md](NOTICE.md).
 
 "Escape from Tarkov", in-game names and item images are the property of Battlestate Games Limited.
