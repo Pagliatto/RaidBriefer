@@ -824,9 +824,9 @@
       "candidate": true
     },
     "panel_10": {
-      "x": 180.7,
+      "x": 180.9,
       "y": -59.0,
-      "z": 255.2,
+      "z": 253.6,
       "kind": "panel",
       "label_ko": "배전반 후보 10 · 펌프장 문 바로 밖 벽",
       "label_en": "Panel candidate 10: wall just outside the pumping station door",
@@ -843,9 +843,9 @@
       "label_en": "Pumping station: building containing drain controls and the Pier door key safe"
     },
     "pumping_station_entrance": {
-      "x": 177.3,
+      "x": 176.2,
       "y": -59.0,
-      "z": 259.5,
+      "z": 260.1,
       "kind": "door",
       "label_ko": "펌프장 입구",
       "label_en": "Pumping station entrance",

@@ -901,8 +901,10 @@
       "link": "https://escapefromtarkov.fandom.com/wiki/Lighthouse",
       "checked": "2026-11-21",
       "extracts": [
-        {"name": "V-Ex_light", "name_en": "Road to Military Base V-Ex", "faction": "pmc", "x": -346.0, "y": 15.0, "z": -803.0,
-         "note": "Single-use, 5000 RUB per player (depends on Scav karma), max 5 players"}
+        {"name": "V-Ex_light", "name_en": "Road to Military Base V-Ex", "faction": "pmc", "x": -326.6, "y": 15.0, "z": -780.4,
+         "note": "Single-use, 5000 RUB per player (depends on Scav karma), max 5 players",
+          "from": "game",
+          "checked": "2026-11-22"}
       ]
     },
     "terminal": {
@@ -924,9 +926,9 @@
       "zones": [
         {
           "spawn_location": "Zone2ScavPort29",
-          "x": -38.9,
+          "x": -46.7,
           "y": -59,
-          "z": 210.4,
+          "z": 206.4,
           "radius": 13,
           "bosses": [
             "bossGluhar",
@@ -958,9 +960,9 @@
         "checked": "2026-11-22"
       },
       "Zone1BDGateAmbush13": {
-        "x": 50.2,
+        "x": 46.7,
         "y": -59,
-        "z": -154.3,
+        "z": -154.2,
         "count": [
           2,
           2
@@ -1007,9 +1009,9 @@
         "checked": "2026-11-21"
       },
       "Zone2BDColumns23": {
-        "x": 127.4,
+        "x": 132.2,
         "y": -59,
-        "z": 139.6,
+        "z": 138.7,
         "count": [
           2,
           2
@@ -1038,8 +1040,8 @@
         ],
         "note": "position set in editor",
         "y": -60.21,
-        "x": -25.5,
-        "z": 209.1,
+        "x": -14,
+        "z": 212.3,
         "from": "game",
         "checked": "2026-11-22"
       },
