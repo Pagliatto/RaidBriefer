@@ -13,6 +13,7 @@ import json
 import os
 import re
 import threading
+import time
 from bisect import bisect_right
 from datetime import datetime
 from pathlib import Path
@@ -56,10 +57,14 @@ def _folder_cache_for(folder):
         return _folder_cache[folder]
 
 
-# 게임은 가장 최근에 만든 로그 폴더 하나에만 쓴다. 나머지(끝난 세션) 폴더는 폴더 자체가
-# 그대로면 파일 목록·정보를 다시 확인하지 않는다 (폴더 552개 × 파일마다 정보 조회가 느렸음).
+# 끝난 세션 폴더는 다시 바뀌지 않는다. 그런 폴더는 폴더 자체가 그대로면 파일 목록·정보를
+# 다시 확인하지 않는다 (폴더 수백 개 × 파일마다 정보 조회가 느렸음).
+# '끝난 폴더' 조건 (어느 PC에서나 안전하게, 셋 다 맞아야 함):
+#   1) 가장 최근에 만든 폴더가 아님  2) 폴더 안 로그 파일이 1시간 넘게 안 바뀜 (게임 중이면 몇 분마다 기록됨)
+#   3) 폴더 수정 시각이 지난번 확인 때와 같음 (파일이 생기거나 지워지지 않음)
 _newest_folder = None
 _files_memo = {}  # 폴더 → (폴더 수정 시각, _folder_files 결과)
+SEALED_AFTER_NS = 3600 * 10**9
 
 
 def _log_folders():
@@ -112,8 +117,10 @@ def _folder_files(folder):
             return memo[1]
     result = _scan_folder_files(folder)
     if sealed and folder_time is not None:
-        with _log_cache_lock:
-            _files_memo[folder] = (folder_time, result)
+        last_write = max((sig[0] for _, sig in result[0] + result[1]), default=0)
+        if time.time_ns() - last_write > SEALED_AFTER_NS:
+            with _log_cache_lock:
+                _files_memo[folder] = (folder_time, result)
     return result
 
 
