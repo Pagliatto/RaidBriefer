@@ -354,7 +354,12 @@ def _log_folders():
             saved = _read_index(root)
             state.save_needed = not saved
             # 두 번째 시작에도 파일 크기·mtime을 확인하여 폴더 mtime이 안 바뀐 덮어쓰기를 잡는다.
-            for folder, cache in list(state.active.items()):
+            # 이 확인도 읽는 중 안내에 개수가 나오게 진행 숫자를 올린다 (전에는 0 / 0 으로 멈춰 보였음)
+            to_check = list(state.active.items())
+            with _reading_lock:
+                _reading_progress.update(done=0, total=len(to_check))
+            for folder, cache in to_check:
+                _advance_log_reading()
                 entry = saved.get(os.path.basename(folder))
                 if entry is None or folder == newest:
                     continue
@@ -568,7 +573,7 @@ def _sealed_data(cache):
 def _refresh_index():
     state = _log_folders()
     with _reading_lock:
-        _reading_progress["total"] = len(state.active)
+        _reading_progress.update(done=0, total=len(state.active))
     for folder, cache in list(state.active.items()):
         with cache.lock:
             try:

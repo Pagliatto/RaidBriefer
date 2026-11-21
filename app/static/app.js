@@ -119,6 +119,8 @@ const questChangeObserver = new IntersectionObserver((entries) => {
     if (!change || change.flashed) return;
     change.flashed = true;
     card.classList.add("quest-change-flash");
+    // 애니메이션이 멈춰도 반짝임이 남지 않게 2.6초 뒤 무조건 지움
+    setTimeout(() => card.classList.remove("quest-change-flash"), 2600);
     questChangeObserver.unobserve(card);
     changed = true;
   });
@@ -390,7 +392,9 @@ function bindAnimatedDialog(dialog) {
 
 function playActionEffect(node, className = "polish-emphasis") {
   if (!node || document.hidden || !node.getClientRects().length || reducedMotion()) return;
+  let timer;
   const clear = () => {
+    clearTimeout(timer);
     node.classList.remove(className);
     node.removeEventListener("animationend", clear);
     node.removeEventListener("animationcancel", clear);
@@ -398,6 +402,9 @@ function playActionEffect(node, className = "polish-emphasis") {
   node.addEventListener("animationend", clear);
   node.addEventListener("animationcancel", clear);
   node.classList.add(className);
+  // 창이 가려지거나 바쁘면 애니메이션이 멈춰 끝 신호가 안 올 수 있음 → 1초 뒤엔 무조건 지움
+  // (2026-11-21 사용자: 은신처 강조가 빠지지 않음)
+  timer = setTimeout(clear, 1000);
 }
 
 function renderMapFilter(items) {

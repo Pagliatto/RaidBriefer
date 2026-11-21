@@ -115,7 +115,9 @@ const logReadingNotice = (() => {
       return;
     }
     if (progress) {
-      count.textContent = t("logReading.folders", { done: progress.done, total: progress.total });
+      // 전체 개수를 아직 모르면 "0 / 0" 대신 숫자를 숨기고 움직이는 막대만 보여 준다
+      count.hidden = !(progress.total > 0);
+      if (progress.total > 0) count.textContent = t("logReading.folders", { done: progress.done, total: progress.total });
       fill.classList.toggle("determinate", progress.total > 0);
       fill.style.transform = progress.total > 0
         ? "scaleX(" + Math.max(0, Math.min(1, progress.done / progress.total)) + ")" : "";

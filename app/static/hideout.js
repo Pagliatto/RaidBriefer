@@ -72,6 +72,8 @@ const hideoutChangeObserver = new IntersectionObserver((entries) => {
     if (!change || change.flashed) return;
     change.flashed = true;
     card.classList.add("hideout-change-flash");
+    // 애니메이션이 멈춰도 반짝임이 남지 않게 2.6초 뒤 무조건 지움
+    setTimeout(() => card.classList.remove("hideout-change-flash"), 2600);
     hideoutChangeObserver.unobserve(card);
     changed = true;
   });
@@ -104,13 +106,32 @@ function decorateHideoutChange(card, s) {
     hideoutHoverTimers.set(card, setTimeout(() => {
       clearHideoutHover(card);
       if (card.isConnected && !document.hidden && !document.getElementById("tab-hideout").hidden) dismiss();
-    }, 1000));
+    }, 300)); // 훑기만 해도 지워지게 (퀘스트 표시와 같은 규칙, 2026-11-21 사용자: 강조가 안 빠짐)
   });
   card.addEventListener("mouseleave", () => clearHideoutHover(card));
   card.addEventListener("click", dismiss, true);
   card.addEventListener("focusin", dismiss);
 }
-document.addEventListener("tab-shown", () => { resetHideoutHover(); observeHideoutChanges(); });
+// 은신처 탭을 떠나면, 화면에 한 번 보였던(반짝인) 건설가능 표시는 확인한 것으로 침 (퀘스트 탭과 같은 규칙)
+let hideoutTabOpen = false;
+document.addEventListener("tab-shown", (e) => {
+  resetHideoutHover();
+  if (hideoutTabOpen && e.detail !== "hideout") {
+    let seen = false;
+    Object.keys(hideoutChanges).forEach((id) => {
+      if (hideoutChanges[id].flashed) { delete hideoutChanges[id]; seen = true; }
+    });
+    if (seen) {
+      saveHideoutChanges();
+      updateHideoutDot();
+      document.querySelectorAll("#ho-list .ho-card[data-station-id]").forEach((card) => {
+        if (!hideoutChanges[card.dataset.stationId]) { card.removeAttribute("tabindex"); card.removeAttribute("title"); }
+      });
+    }
+  }
+  hideoutTabOpen = e.detail === "hideout";
+  observeHideoutChanges();
+});
 document.addEventListener("visibilitychange", () => { resetHideoutHover(); observeHideoutChanges(); });
 window.addEventListener("blur", resetHideoutHover);
 
