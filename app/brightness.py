@@ -410,14 +410,30 @@ def _apply(device, strength):
     _applied[device] = ramp
 
 
+_last_config = None
+
+
 def _tick():
-    global _last_settings, _last_decision, _temporary, _last_check, _overridden, _error
+    global _last_settings, _last_decision, _temporary, _last_check, _overridden, _error, _last_config
     if not _ready or _stop.is_set():
         return
-    config = settings.load()
-    signature = tuple(config[key] for key in ("brightness_mode", "brightness_strength", "brightness_monitor"))
     now = time.monotonic()
-    if signature != _last_settings or (_temporary and now >= _temporary[2]):
+    if _temporary and now >= _temporary[2]:
+        # 설정 파일이 잠겨도 임시 효과의 원상 복원은 먼저 실행한다.
+        _temporary = None
+        _last_decision = None
+        if not _restore_devices(_dirty):
+            return False
+    read_ok = True
+    try:
+        config = settings.load()
+        _last_config = dict(config)
+    except (settings.DataReadError, OSError):
+        read_ok = False
+        config = _last_config or settings.DEFAULTS
+        _record_error(RuntimeError("server.brightnessStorage"))
+    signature = tuple(config[key] for key in ("brightness_mode", "brightness_strength", "brightness_monitor"))
+    if signature != _last_settings:
         _temporary = None
     _last_settings = signature
     mode, strength, _ = signature
@@ -448,17 +464,20 @@ def _tick():
         for device, ramp in _applied.items():
             if _ramp(device) != ramp:
                 _overridden = True
+    return read_ok
 
 
 def _run():
     while not _stop.is_set():
         _wake.clear()
         with _lock:
+            tick_ok = False
             try:
-                _tick()
+                tick_ok = _tick()
             except Exception as error:
                 _record_error(error)
-            delay = min(1, max(0, _temporary[2] - time.monotonic())) if _temporary else 1
+            # 읽기/복원 실패에는 지난 임시 만료 시각 때문에 무대기 반복하지 않는다.
+            delay = min(1, max(0.01, _temporary[2] - time.monotonic())) if tick_ok and _temporary else 1
         _wake.wait(delay)
 
 

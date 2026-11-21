@@ -8,7 +8,7 @@
   },
   "logReading": {
     "title": "Reading game logs",
-    "text": "This only happens once. Organizing your past play records",
+    "text": "This can take a while on first start or after your logs change",
     "folders": "{done} / {total} folders"
   },
   "home": {
@@ -120,6 +120,7 @@
     "retryLater": "Retrying shortly.",
     "saveHideFailed": "Couldn't save your visibility setting. Make sure the program is running.",
     "saveCheckFailed": "Couldn't save your selection. Make sure the program is running.",
+    "migrationFailed": "Couldn't save your existing hand-in checks in the new format. Your checks are kept; we'll retry on the next refresh.",
     "anyMap": "Any map",
     "unknownMap": "Map unknown",
     "outOfRaid": "Outside a raid",

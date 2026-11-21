@@ -8,6 +8,7 @@
 
 import json
 import threading
+from datetime import datetime
 from pathlib import Path
 
 from app import paths, quest_log, settings
@@ -52,13 +53,23 @@ def _valid_saved(data: dict) -> bool:
 
 def _read(prestige=_AUTO_PRESTIGE) -> dict:
     data = settings.read_saved(PROGRESS_FILE, _valid_saved)
-    # 프레스티지가 바뀌었으면(새 회차) 체크를 비운다.
-    # 단, 로그에서 못 찾았을 때("none": 설치 위치가 틀렸거나 로그가 지워짐)는 지우지 않는다.
-    mark = _prestige_mark(prestige)
-    if mark != "none" and data.get("prestige") not in (None, mark):
-        data = {"prestige": mark}
-    elif mark != "none":
-        data["prestige"] = mark
+    # 완전한 조회에서 확인한 더 최근 PvE 프레스티지만 자동 초기화한다.
+    # 호출자가 넘긴 기준도 재확인하여 오래된 응답이나 불완전 조회로 저장값을 바꾸지 않는다.
+    confirmed, complete = quest_log.prestige_status()
+    current = confirmed if prestige is _AUTO_PRESTIGE else prestige
+    mark = _prestige_mark(current)
+    previous = data.get("prestige")
+    if complete and current == confirmed and mark != "none":
+        if previous is None:
+            data["prestige"] = mark  # 기준이 없던 구버전 기록은 그대로 인계한다.
+        else:
+            try:
+                old = datetime.min if previous == "none" else datetime.fromisoformat(previous)
+                newer = old.tzinfo is None and datetime.fromisoformat(mark) > old
+            except (ValueError, TypeError):
+                newer = False  # 해석할 수 없는 옛 기준도 사용자 기록과 함께 보존한다.
+            if newer:
+                data = {"prestige": mark}
     for kind in KINDS:
         data.setdefault(kind, {})
     return data

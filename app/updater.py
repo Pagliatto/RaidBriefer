@@ -17,6 +17,7 @@ import shutil
 import subprocess
 import sys
 import threading
+import time
 import zipfile
 
 import requests
@@ -31,6 +32,12 @@ WORK_DIR = paths.HOME_DIR / "_update"  # 받은 파일·예전 파일 백업 (�
 HELPER = paths.BUNDLE_DIR / "app" / "update_helper.cmd"
 
 _lock = threading.Lock()
+_work_lock = threading.Lock()  # 정리와 새 다운로드의 작업 폴더 사용을 직렬화한다.
+_cleanup_running = False
+_cleanup_done = False
+_cleanup_verified = False
+_cleanup_retry_at = 0.0
+_started_ok = False
 _state = {"current": VERSION, "latest": None, "available": False, "page": f"https://github.com/{REPO}/releases/latest",
           "can_apply": bool(getattr(sys, "frozen", False)), "status": "idle", "error": None, "check_error": None, "check_finished": False}
 _asset = None
@@ -90,31 +97,75 @@ def _check_with_retry() -> None:
     _set(check_finished=True)
 
 
-def cleanup(started: bool = False) -> None:
-    """새 버전 API 기동 또는 검증된 복구 뒤에만 백업을 정리한다."""
-    if _state["status"] in ("downloading", "installing"):
-        return
+def _cleanup_work(started: bool) -> bool:
+    """작업 잠금을 가진 일꾼만 호출한다. 실패 표식과 미확인 백업은 보존한다."""
+    global _cleanup_verified
     failed = paths.USER_DIR / "update_failed.txt"
     if failed.exists():
         _set(status="failed", error="install")
-    if not WORK_DIR.exists() or _state["status"] in ("downloading", "installing"):
-        return
+        return False
+    if not WORK_DIR.exists():
+        return True
+
     def marker(name):
         try:
             return (WORK_DIR / name).read_text(encoding="utf-8").strip()
         except OSError:
             return ""
 
-    verified = marker("rollback.ok") == "verified"
+    markers = ("target_version.txt", "installed.ok", "rollback.ok")
+    # v1.0.8 도우미는 표식을 쓰지 않고 old/new/도우미를 남긴다.
+    legacy = (not any((WORK_DIR / name).exists() for name in markers)
+              and (WORK_DIR / "old").is_dir()
+              and (WORK_DIR / "new" / "RaidBriefer" / "RaidBriefer.exe").is_file()
+              and (WORK_DIR / "new" / "RaidBriefer" / "_internal").is_dir()
+              and (WORK_DIR / "update_helper.cmd").is_file())
+    verified = (_cleanup_verified or marker("rollback.ok") == "verified"
+                or started and (legacy or marker("installed.ok") == "installed"
+                                and marker("target_version.txt") == VERSION))
+    if not verified or failed.exists():
+        return False
+    _cleanup_verified = True  # 일부 삭제 뒤 표식이 사라져도 같은 실행에서는 재시도한다.
+    shutil.rmtree(WORK_DIR)
+    return True
+
+
+def _cleanup_background() -> None:
+    global _cleanup_running, _cleanup_done, _cleanup_retry_at
+    done = False
     try:
-        installed = marker("installed.ok") == "installed"
-        target = (WORK_DIR / "target_version.txt").read_text(encoding="utf-8").strip()
-        verified = verified or (started and installed and target == VERSION and not failed.exists())
+        with _work_lock:
+            with _lock:
+                busy = _state["status"] in ("downloading", "installing")
+                started = _started_ok
+            if not busy:
+                done = _cleanup_work(started)
     except OSError:
-        pass
-    if verified:
-        shutil.rmtree(WORK_DIR, ignore_errors=True)
-        failed.unlink(missing_ok=True)
+        pass  # 도우미 종료 지연·백신 잠금은 다음 상태 조회에서 재시도한다.
+    finally:
+        with _lock:
+            _cleanup_done = done
+            _cleanup_running = False
+            _cleanup_retry_at = time.monotonic() + 5
+
+
+def cleanup(started: bool = False) -> None:
+    """API에서는 성공 기동만 기록하고 단일 일꾼에 정리를 맡긴다. 디스크 접근 없음."""
+    global _started_ok, _cleanup_running, _cleanup_retry_at
+    with _lock:
+        if started and not _started_ok:
+            _started_ok = True
+            _cleanup_retry_at = 0.0
+        if (_cleanup_running or _cleanup_done or time.monotonic() < _cleanup_retry_at
+                or _state["status"] in ("downloading", "installing")):
+            return
+        _cleanup_running = True
+    try:
+        threading.Thread(target=_cleanup_background, name="update-cleanup", daemon=True).start()
+    except RuntimeError:
+        with _lock:
+            _cleanup_running = False
+            _cleanup_retry_at = time.monotonic() + 5
 
 
 def check_in_background() -> None:
@@ -125,6 +176,7 @@ def check_in_background() -> None:
 
 def apply() -> dict:
     """[지금 업데이트]: 뒤에서 받고 확인한 뒤 도우미를 켜고 프로그램을 닫음"""
+    global _started_ok, _cleanup_done
     st = state()
     if not st["can_apply"]:
         raise RuntimeError("소스로 실행 중이라 직접 바꿀 수 없어요.")  # i18n-ok: 개발용
@@ -132,19 +184,34 @@ def apply() -> dict:
         raise RuntimeError("새 버전이 없어요.")  # i18n-ok: 개발용
     if st["status"] in ("downloading", "installing"):
         return st
-    if (WORK_DIR / "old").exists():
-        raise RuntimeError("backup-recovery-required")  # i18n-ok: 복구 진단 코드
-    _set(status="downloading", error=None)
+    with _lock:
+        if _state["status"] in ("downloading", "installing"):
+            return dict(_state)
+        # 이 API까지 정상 실행된 경우도 성공 기동으로 취급한다.
+        _started_ok = True
+        _cleanup_done = False
+        _state.update(status="downloading", error=None)
     threading.Thread(target=_run, name="update", daemon=True).start()
     return state()
 
 
 def _run() -> None:
+    with _work_lock:
+        _run_locked()
+
+
+def _run_locked() -> None:
+    global _cleanup_verified
     helper_started = False
     try:
+        # 상태 조회보다 먼저 업데이트를 눌러도 구버전 잔여물을 같은 규칙으로 정리한다.
+        _cleanup_work(_started_ok)
+        if (paths.USER_DIR / "update_failed.txt").exists():
+            raise RuntimeError("backup-recovery-required")
         if (WORK_DIR / "old").exists():
             raise RuntimeError("backup-recovery-required")
         shutil.rmtree(WORK_DIR, ignore_errors=True)
+        _cleanup_verified = False
         WORK_DIR.mkdir(parents=True)
         (paths.USER_DIR / "update_failed.txt").unlink(missing_ok=True)
         (WORK_DIR / "target_version.txt").write_text(str(_state["latest"]), encoding="utf-8")
@@ -190,5 +257,6 @@ def _run() -> None:
             os._exit(0)
     except Exception as error:
         _set(status="failed", error=str(error))
-        if not helper_started and not (WORK_DIR / "old").exists() and not (WORK_DIR / "installed.ok").exists():
+        if (not helper_started and not (paths.USER_DIR / "update_failed.txt").exists()
+                and not (WORK_DIR / "old").exists() and not (WORK_DIR / "installed.ok").exists()):
             shutil.rmtree(WORK_DIR, ignore_errors=True)

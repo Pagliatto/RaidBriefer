@@ -106,7 +106,9 @@ class LogTail:
         self.folder = folder
         self.backend_only = backend_only
         self.identities = {}
+        self.file_stats = {}
         self.reset_paths = set()
+        self.read_errors = set()
         self.lines_by_file = {}
         self.positions: dict[Path, int] = {}
         self.leftover: dict[Path, str] = {}
@@ -117,19 +119,24 @@ class LogTail:
     def new_lines(self) -> list[str]:
         lines = []
         files = self._files()
+        self.read_errors = set()
         self.reset_paths = set(self.positions) - set(files)
         self.lines_by_file = {}
         for path in self.reset_paths:
             self.positions.pop(path, None)
             self.leftover.pop(path, None)
             self.identities.pop(path, None)
+            self.file_stats.pop(path, None)
         for path in files:
             start = self.positions.get(path, 0)
             try:
                 with path.open("rb") as fh:
                     stat = os.fstat(fh.fileno())
                     identity = (stat.st_dev, stat.st_ino, getattr(stat, "st_birthtime_ns", None))
-                    if stat.st_size < start or self.identities.get(path, identity) != identity:
+                    previous = self.file_stats.get(path)
+                    if (stat.st_size < start or self.identities.get(path, identity) != identity
+                            or previous is not None and previous[0] == stat.st_size
+                            and previous[1] != stat.st_mtime_ns):
                         start = 0
                         self.leftover.pop(path, None)
                         self.reset_paths.add(path)
@@ -137,7 +144,9 @@ class LogTail:
                     fh.seek(start)
                     chunk = fh.read()
                     self.positions[path] = fh.tell()
+                    self.file_stats[path] = (self.positions[path], stat.st_mtime_ns)
             except OSError:
+                self.read_errors.add(path)
                 continue  # 게임이 파일을 쓰는 중이면 다음에 다시
             text = self.leftover.pop(path, "") + chunk.decode("utf-8", errors="replace")
             parts = text.split("\n")

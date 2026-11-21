@@ -11,6 +11,7 @@
 
 import heapq
 import json
+import math
 import os
 import re
 import tempfile
@@ -30,7 +31,7 @@ from app import corrections, i18n, paths, settings, tarkov_api
 #   찾지 못하면 None → 남아 있는 로그 전체를 처음부터 읽는다.
 # 로그 파일이 많아서, 이미 읽은 파일은 기억해 두고 새로 생기거나 바뀐 파일만 다시 읽는다.
 PRESTIGE_RE = re.compile(
-    r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}).*Request HTTPS.*https://gw-pv[ep][^/]*/client/prestige/obtain")
+    r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}).*Request HTTPS.*https://gw-pve[^/]*/client/prestige/obtain")
 _folder_cache = {}
 _log_cache_lock = threading.RLock()
 _cache_root = None
@@ -105,6 +106,7 @@ class _FolderCache:
         self.prestige = None
         self.prestige_times = []
         self.notifications = {}
+        self.bad_blocks = 0
         self.events = []
         self.signature = None
         self.complete = False
@@ -114,6 +116,8 @@ class _FolderCache:
 class _IndexState:
     def __init__(self, root):
         self.root = root
+        self.timezone = _timezone_key()
+        self.root_complete = False
         self.root_time = None
         self.folders = {}
         self.active = {}
@@ -186,7 +190,8 @@ def _read_index(root):
 
 def _timezone_key():
     # 알림 시각은 로컬 시각이므로 시간대가 달라지면 다시 해석한다.
-    return [list(time.tzname), time.timezone, time.daylight, os.environ.get("TZ")]
+    return [list(time.tzname), time.timezone, time.altzone, time.daylight,
+            time.localtime().tm_isdst, os.environ.get("TZ")]
 
 
 def _restore_folder(cache, saved, signature, backend_signature):
@@ -214,11 +219,15 @@ def _restore_folder(cache, saved, signature, backend_signature):
                 return False
             events.append((message_id, {"quest_id": quest_id, "type": kind, "time": when,
                                         "trader_id": trader}, mode))
+        bad_blocks = saved.get("bad_blocks", 0)
+        if type(bad_blocks) is not int or bad_blocks < 0:
+            return False
         cache.mode = {"tail": None, "last": times[-1] if times else None, "timeline": (times, modes)}
         cache.mode_signature = backend_signature
         cache.prestige_signature = backend_signature
         cache.prestige = max(prestige, default=None)
         cache.prestige_times = prestige
+        cache.bad_blocks = bad_blocks
         cache.events = events
         cache.signature = signature
         cache.complete = True
@@ -233,7 +242,7 @@ def _save_index(state):
     temporary = None
     try:
         paths.CACHE_DIR.mkdir(parents=True, exist_ok=True)
-        data = {"v": 1, "root": state.root, "timezone": _timezone_key(),
+        data = {"v": 1, "root": state.root, "timezone": state.timezone,
                 "folders": {os.path.basename(folder): cache.saved for folder, cache in state.sealed.items()}}
         with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=paths.CACHE_DIR,
                                          prefix="log_index-", suffix=".tmp", delete=False) as stream:
@@ -275,7 +284,8 @@ def _revalidate_sealed(state):
         except FileNotFoundError:
             current = None
         except OSError:
-            # 잠금·권한 오류만으로 이전 결과를 지우지 않는다.
+            # 이전 결과는 보존하되 다음 조회를 불완전으로 표시하고 다시 읽는다.
+            changed.append((folder, cache))
             continue
         if current != signature:
             changed.append((folder, cache))
@@ -293,7 +303,8 @@ def _log_folders():
     """루트 수정 시각이 같으면 활성 폴더만 반환한다. 호출자는 전역 잠금을 잡는다."""
     global _cache_root, _index_state
     root = os.path.normpath(os.fspath(settings.logs_dir()))
-    if _index_state is None or root != _cache_root:
+    if (_index_state is None or root != _cache_root
+            or _index_state.timezone != _timezone_key()):
         if _index_state is not None:
             _index_state.stop.set()
         _folder_cache.clear()
@@ -303,8 +314,9 @@ def _log_folders():
     try:
         root_time = os.stat(root).st_mtime_ns
     except OSError:
-        root_time = None
-    if state.root_time != root_time or state.worker is None:
+        state.root_complete = False
+        return state
+    if state.root_time != root_time or state.worker is None or not state.root_complete:
         folders, newest, newest_time = {}, None, None
         try:
             with os.scandir(root) as entries:
@@ -318,7 +330,9 @@ def _log_folders():
             folders, newest = {}, None
         except OSError:
             # 일시적인 읽기 실패는 이미 확인한 결과를 버리지 않고 다음 호출에 재시도한다.
+            state.root_complete = False
             return state
+        state.root_complete = True
         state.save_needed = state.worker is not None
         state.root_time = root_time
         state.folders = folders
@@ -373,7 +387,10 @@ def _log_folders():
 
 def line_time(line: str) -> datetime | None:
     match = _LOG_TIME.match(line)
-    return datetime.fromisoformat(match[1]) if match else None
+    try:
+        return datetime.fromisoformat(match[1]) if match else None
+    except ValueError:
+        return None
 
 
 def mode_timeline(folder: Path, *, _signature=None, _cache=None) -> tuple:
@@ -424,7 +441,7 @@ def mode_timeline(folder: Path, *, _signature=None, _cache=None) -> tuple:
             cache["last"] = events[-1][0]
             cache["timeline"] = (times, modes)
         # 읽기에 실패한 파일은 서명을 확정하지 않아 다음 호출에서 다시 시도한다.
-        folder_cache.mode_signature = (_signature if all(
+        folder_cache.mode_signature = (_signature if not tail.read_errors and all(
             tail.positions.get(Path(path)) == signature[1] for path, signature in _signature) else None)
         return cache["timeline"]
 
@@ -452,7 +469,7 @@ def _prime_backend(cache, backend, signature):
                     when = line_time(line)
                     if when is None:
                         continue
-                    if PRESTIGE_RE.match(line):
+                    if line.endswith("\n") and PRESTIGE_RE.match(line):
                         prestige.append(when)
                     request = _MODE_REQUEST.search(line)
                     # LogTail과 같이 아직 끝나지 않은 마지막 줄은 모드 판단에서 제외한다.
@@ -498,7 +515,7 @@ def _refresh_folder(folder, cache, files, signature):
                 try:
                     with open(path, encoding="utf-8", errors="replace") as stream:
                         parsed = [when for line in stream
-                                  if PRESTIGE_RE.match(line) and (when := line_time(line))]
+                                  if line.endswith("\n") and PRESTIGE_RE.match(line) and (when := line_time(line))]
                 except OSError:
                     complete = False
                     continue
@@ -507,6 +524,10 @@ def _refresh_folder(folder, cache, files, signature):
         cache.prestige = max(times, default=None)
         cache.prestige_times = times
         cache.prestige_signature = backend_signature if complete else None
+    if not complete:
+        # backend에서 확정하지 못했을 때만 이전 프레스티지를 보존한다.
+        cache.prestige, cache.prestige_times = old_prestige, old_times
+        cache.prestige_signature = None
     present = {path for path, _ in notifications}
     for path in list(cache.notifications):
         if path not in present:
@@ -523,10 +544,10 @@ def _refresh_folder(folder, cache, files, signature):
                 events.append((message_id, event, is_pve(timeline, event["time"])))
     if not complete:
         # 읽기 실패는 삭제가 아니다. 마지막으로 확인한 결과를 유지하고 다시 시도한다.
-        cache.prestige, cache.prestige_times = old_prestige, old_times
-        cache.prestige_signature = None
         cache.complete = False
         return
+    cache.bad_blocks = sum(parsed["bad_blocks"] + parsed["last_bad"]
+                           for parsed in cache.notifications.values())
     cache.events = events
     cache.signature = signature
     cache.complete = complete
@@ -535,6 +556,7 @@ def _refresh_folder(folder, cache, files, signature):
 def _sealed_data(cache):
     return {
         "signature": cache.signature,
+        "bad_blocks": cache.bad_blocks,
         "prestige": [when.isoformat() for when in cache.prestige_times],
         "events": [[message_id, event["quest_id"], event["type"], event["time"].isoformat(),
                     event["trader_id"], mode] for message_id, event, mode in cache.events],
@@ -569,6 +591,7 @@ def _refresh_index():
                     state.save_needed = True
             except OSError:
                 # 잠긴 파일은 저장·봉인하지 않고 다음 요청에서 다시 확인한다.
+                cache.complete = False
                 continue
             finally:
                 _advance_log_reading()
@@ -580,14 +603,20 @@ def _refresh_index():
     return state
 
 
-def last_prestige() -> datetime | None:
-    """봉인된 결과 하나와 활성 폴더만 합쳐 가장 최근 프레스티지를 돌려준다."""
+def prestige_status() -> tuple[datetime | None, bool]:
+    """프레스티지와 같은 조회의 완전성을 함께 반환한다. 불완전한 결과는 초기화에 쓰지 않는다."""
     with _log_cache_lock:
         state = _refresh_index()
         found = [cache.prestige for cache in state.active.values() if cache.prestige is not None]
         if state.sealed_prestige is not None:
             found.append(state.sealed_prestige)
-        return max(found, default=None)
+        complete = state.root_complete and all(cache.complete for cache in state.active.values())
+        return max(found, default=None), complete
+
+
+def last_prestige() -> datetime | None:
+    """알림 읽기가 실패해도 backend에서 확인한 프레스티지는 보존한다."""
+    return prestige_status()[0]
 
 STATUS_NAMES = {10: "진행 중", 11: "실패", 12: "완료"}
 
@@ -635,11 +664,27 @@ LINE_START = re.compile(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}")
 
 
 def _quest_event(note):
-    message = note.get("message", {})
+    if not isinstance(note, dict) or not isinstance(note.get("message"), dict):
+        raise ValueError("notification-shape")
+    message = note["message"]
     kind = message.get("type")
+    if type(kind) is not int:
+        raise ValueError("notification-type")
     if kind not in STATUS_NAMES:
         return None
-    parts = message.get("templateId", "").split(" ")
+    stamp = message.get("dt")
+    template = message.get("templateId")
+    # Unix 시각 1970~3000년: PC 현재 날짜와 무관하게 손상된 값만 배제한다.
+    if (type(stamp) not in (int, float) or not 0 <= stamp < 32503680000
+            or not math.isfinite(stamp) or not isinstance(template, str)
+            or message.get("_id") is not None and not isinstance(message["_id"], str)
+            or note.get("dialogId") is not None and not isinstance(note["dialogId"], str)):
+        raise ValueError("notification-fields")
+    try:
+        when = datetime.fromtimestamp(stamp)
+    except (ValueError, OverflowError, OSError) as error:
+        raise ValueError("notification-time") from error
+    parts = template.split(" ")
     # 기존과 같은 일반 퀘스트만 보관한다. 모드·프레스티지 필터는 조회할 때 적용한다.
     if len(parts) != 2 or parts[1] not in {"description", "successMessageText", "failMessageText"}:
         return None
@@ -648,7 +693,7 @@ def _quest_event(note):
     return (message.get("_id"), {
         "quest_id": parts[0],
         "type": kind,
-        "time": datetime.fromtimestamp(message.get("dt", 0)),
+        "time": when,
         "trader_id": note.get("dialogId"),
     })
 
@@ -664,16 +709,21 @@ def _read_notifications(log_file: str | Path, files: dict, signature):
         # 같은 크기의 덮어쓰기도 초기화한다. 축소는 미완성 블록 앞의 offset과도 별개다.
         if (cached is None or cached["identity"] != identity or stat.st_size < cached["size"]
                 or (stat.st_size == cached["size"] and stat.st_mtime_ns != cached["mtime"])):
-            cached = {"events": [], "offset": 0}
+            cached = {"events": [], "offset": 0, "bad_blocks": 0}
         fh.seek(cached["offset"])
         block, block_start, last = [], None, None
         new_events = []
         offset = cached["offset"]
 
-        def parsed_block():
+        def parsed_block(final=False):
             try:
                 return _quest_event(json.loads("\n".join(block)))
-            except json.JSONDecodeError:
+            except (ValueError, RecursionError):
+                # 마지막 블록은 다음 추가 읽기에서 다시 검사하므로 중복 집계하지 않는다.
+                if final:
+                    cached["last_bad"] = 1
+                else:
+                    cached["bad_blocks"] += 1
                 return None
 
         position = offset
@@ -697,8 +747,9 @@ def _read_notifications(log_file: str | Path, files: dict, signature):
                 if line_start != block_start:
                     block.append(line)
                 offset = block_start
+        cached["last_bad"] = 0
         if block_start is not None:
-            last = parsed_block()
+            last = parsed_block(final=True)
             offset = block_start
         cached["events"].extend(new_events)
         cached.update(identity=identity, size=max(stat.st_size, position), mtime=stat.st_mtime_ns,

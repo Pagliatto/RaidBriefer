@@ -680,6 +680,30 @@ function queueChecks(task) {
   return result;
 }
 function handedKey(q, p) { return q.id + "|" + p.hand_id; }
+function handedLegacyKeys(key, data = state.data) {
+  const keys = new Set();
+  for (const kind of ["in_progress", "completed", "failed"]) {
+    for (const q of data?.[kind] || []) for (const p of q.prep || []) {
+      if (p.kind !== "제출" || !p.hand_id || handedKey(q, p) !== key) continue;
+      for (const text of p.legacy_texts || []) {
+        const old = q.id + "|" + text;
+        if (old !== key && Object.hasOwn(state.handed, old)) keys.add(old);
+      }
+    }
+  }
+  return [...keys];
+}
+function applyHandedAliases(data) {
+  // 저장 이전에 실패해도 홈·퀘스트가 같은 제출 상태를 읽도록 메모리에 별칭을 만든다.
+  for (const kind of ["in_progress", "completed", "failed"]) {
+    for (const q of data[kind]) for (const p of q.prep || []) {
+      if (p.kind !== "제출" || !p.hand_id) continue;
+      if ((p.legacy_texts || []).some(text => state.handed[q.id + "|" + text])) {
+        state.handed[handedKey(q, p)] = true;
+      }
+    }
+  }
+}
 async function migrateHanded(data) {
   const changes = {};
   for (const kind of ["in_progress", "completed", "failed"]) {
@@ -688,7 +712,7 @@ async function migrateHanded(data) {
       const key = handedKey(q, p);
       for (const text of p.legacy_texts || []) {
         const old = q.id + "|" + text;
-        if (!Object.hasOwn(state.handed, old)) continue;
+        if (old === key || !Object.hasOwn(state.handed, old)) continue;
         if (state.handed[old]) changes[key] = true;
         changes[old] = null;
       }
@@ -729,14 +753,22 @@ async function load() {
     const mark = body.prestige_since || "none";
     if (progressMark !== undefined && mark !== progressMark) await reloadProgress();
     if (revision !== questLoadRevision) return;
-    await queueChecks(() => migrateHanded(body));
-    if (revision !== questLoadRevision) return;
+    applyHandedAliases(body);
     progressMark = mark;
     trackQuestChanges(body);
     state.data = body;
     notice.hidden = true;
     render();
     notifyChanged("quests-changed");
+    try {
+      await queueChecks(() => revision === questLoadRevision ? migrateHanded(body) : undefined);
+      if (revision !== questLoadRevision) return;
+      render();
+      notifyChanged("quests-changed");
+    } catch (error) {
+      // 목록은 유지하고 다음 불러오기에서 다시 이전한다. 옛 키는 성공 전까지 보존한다.
+      if (revision === questLoadRevision) showCheckError("quest.migrationFailed");
+    }
   } catch (err) {
     if (revision !== questLoadRevision) return;
     notice.textContent = t("quest.loadFailed", { error: err.message });
@@ -772,19 +804,25 @@ function loadHanded() {
 
 function saveCheck(kind, key, value) {
   return queueChecks(async () => {
-    const before = state[kind][key];
-    if (value) state[kind][key] = true; else delete state[kind][key];
+    const before = { ...state[kind] };
+    const changes = { [key]: value };
+    if (kind === "handed") {
+      for (const old of handedLegacyKeys(key)) changes[old] = null;
+    }
+    for (const [changedKey, checked] of Object.entries(changes)) {
+      if (checked) state[kind][changedKey] = true; else delete state[kind][changedKey];
+    }
     render();
     notifyChanged("quests-changed");
     try {
       const res = await fetch("/api/check/" + kind, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key, value }),
+        body: JSON.stringify(kind === "handed" ? { changes } : { key, value }),
       });
       if (!res.ok) throw new Error();
       state[kind] = await res.json();
     } catch (error) {
-      if (before === undefined) delete state[kind][key]; else state[kind][key] = before;
+      state[kind] = before;
       showCheckError(kind === "hidden" ? "quest.saveHideFailed" : "quest.saveCheckFailed");
     }
     render();
