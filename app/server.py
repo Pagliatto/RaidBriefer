@@ -6,6 +6,7 @@
 
 import atexit
 import json
+import re
 import time
 from pathlib import Path
 
@@ -253,6 +254,9 @@ def _release_notes() -> list[dict]:
             if not lines:
                 continue
             entry = {"version": version, "lines": lines}
+            date = notes.get("date")
+            if isinstance(date, str) and re.fullmatch(r"\d{4}-\d{2}-\d{2}", date):
+                entry["date"] = date
             if notes.get("action") == "brightness":
                 entry["action"] = "brightness"
             result.append(entry)
@@ -271,7 +275,8 @@ def api_whats_new():
     versions = ([entry for entry in available if updater._ver(entry["version"]) > updater._ver(last_seen)]
                 if last_seen else available[:3])
     show = bool(current["setup_done"] and versions)
-    return jsonify({"version": VERSION, "show": show, "versions": versions, "notes": notes})
+    # history: 설정 정보 탭의 '업데이트 기록' (지금 버전까지 전부, 새 버전부터)
+    return jsonify({"version": VERSION, "show": show, "versions": versions, "notes": notes, "history": available})
 
 
 @app.route("/api/whats-new/seen", methods=["POST"])

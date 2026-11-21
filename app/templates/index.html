@@ -372,10 +372,16 @@
 
     <section class="settings-item" data-stab="about" hidden>
       <h3>{{ t('update.settingsTitle') }}</h3>
-      <p class="settings-help"><b id="update-current"></b>
-        <button type="button" class="whats-new-link" id="whats-new-open" hidden>{{ t('whatsNew.link') }}</button><br>
+      <p class="settings-help"><b id="update-current"></b><br>
         <span id="update-status"></span><br>
         {{ t('update.settingsPrivacy') }}</p>
+    </section>
+
+    <section class="settings-item" data-stab="about" hidden>
+      <h3>{{ t('settings.historyTitle') }}</h3>
+      <p class="settings-help">{{ t('settings.historyHelp') }}</p>
+      <div class="update-history" id="update-history"></div>
+      <a class="settings-link update-history-more" href="https://github.com/Pagliatto/RaidBriefer/releases" target="_blank" rel="noopener">{{ t('settings.historyGithub') }}</a>
     </section>
 
     <section class="settings-item" data-stab="about" hidden>

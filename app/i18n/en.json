@@ -315,6 +315,10 @@
     "setupTitle": "First-time setup",
     "setupHelp": "If you reinstalled the game or the quests don't match the game, open the first-time setup again.<br>\n        <b>Your selections are kept</b>; only the game folder, quests and hideout levels are checked again.",
     "setupAgain": "Run first-time setup again",
+    "historyTitle": "Update history",
+    "historyHelp": "What changed in each version. Click to expand.",
+    "historyCurrent": "Current",
+    "historyGithub": "Older versions on GitHub",
     "reportTitle": "Report a problem · Suggest a feature",
     "reportHelp": "Please leave bugs and ideas in GitHub Issues.<br>\n        ⚠ Don't upload game log files. They contain your login information.",
     "reportOpen": "Open issue page",
@@ -406,8 +410,7 @@
     "title": "What's new in v{version}",
     "earlier": "Changes in earlier versions ({n})",
     "ok": "OK",
-    "brightness": "Open brightness settings",
-    "link": "What's new in this version"
+    "brightness": "Open brightness settings"
   },
   "skills": {
     "HideoutManagement": "Hideout Management",

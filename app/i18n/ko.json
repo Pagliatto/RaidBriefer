@@ -315,6 +315,10 @@
     "setupTitle": "처음 설정",
     "setupHelp": "게임을 다시 설치했거나 퀘스트가 게임과 다를 때, 처음 설정 화면을 다시 열어서 맞춰요.<br>\n        <b>체크한 기록은 그대로 두고</b> 설치 위치·퀘스트·은신처 레벨만 다시 확인해요.",
     "setupAgain": "처음 설정 다시 하기",
+    "historyTitle": "업데이트 기록",
+    "historyHelp": "버전마다 바뀐 점이에요. 누르면 펼쳐져요.",
+    "historyCurrent": "지금 버전",
+    "historyGithub": "이전 버전 기록은 GitHub 에서 보기",
     "reportTitle": "문제 신고·기능 제안",
     "reportHelp": "버그나 바라는 점은 깃허브 Issues 에 남겨 주세요.<br>\n        ⚠ 게임 로그 파일은 올리지 마세요. 로그 안에 로그인 정보가 들어 있어요.",
     "reportOpen": "문제 신고 열기",
@@ -406,8 +410,7 @@
     "title": "v{version}에서 바뀐 점",
     "earlier": "이전 버전에서 바뀐 점 ({n}개 버전)",
     "ok": "확인",
-    "brightness": "밝기 설정 열기",
-    "link": "이번 버전 바뀐 점"
+    "brightness": "밝기 설정 열기"
   },
   "skills": {
     "HideoutManagement": "은신처 관리",

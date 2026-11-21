@@ -169,7 +169,6 @@ setTimeout(loadUpdate, 1500);
 // 처음 설정 확인이 끝난 뒤 현재 버전 안내를 읽는다.
 const whatsNewUI = {
   dialog: document.getElementById("whats-new"),
-  link: document.getElementById("whats-new-open"),
   info: null,
   pending: false,
   requested: false,
@@ -200,7 +199,7 @@ async function loadWhatsNew() {
     if (!res.ok) return;
     const info = await res.json();
     whatsNewUI.info = info;
-    whatsNewUI.link.hidden = !info.notes;
+    renderUpdateHistory(info.history || []);
     whatsNewUI.pending = !!(info.show && whatsNewUI.seen !== info.version);
     tryOpenWhatsNew();
   } catch (e) { /* 다음 설정 확인 때 다시 읽는다. */ }
@@ -254,11 +253,26 @@ async function tryOpenWhatsNew() {
   finally { ui.checking = false; }
 }
 
-whatsNewUI.link.addEventListener("click", () => {
-  whatsNewUI.currentOnly = true;
-  whatsNewUI.requested = true;
-  tryOpenWhatsNew();
-});
+// 설정 → 정보 탭의 '업데이트 기록': 지금 버전은 펼치고 나머지는 접음 (2026-11-21 사용자)
+function renderUpdateHistory(history) {
+  const box = document.getElementById("update-history");
+  if (!box) return;
+  box.replaceChildren();
+  history.forEach((entry, index) => {
+    if (!entry || !Array.isArray(entry.lines) || !entry.lines.length) return;
+    const item = el("details", "update-history-item");
+    item.open = index === 0;
+    const summary = el("summary");
+    const name = el("span", "update-history-version", "v" + entry.version);
+    if (entry.version === whatsNewUI.info?.version) name.append(el("span", "update-history-current", t("settings.historyCurrent")));
+    summary.append(name);
+    if (entry.date) summary.append(el("span", "update-history-date", entry.date));
+    const list = el("ul");
+    entry.lines.forEach((line) => list.append(el("li", "", line)));
+    item.append(summary, list);
+    box.append(item);
+  });
+}
 document.getElementById("whats-new-ok").addEventListener("click", () => closeAnimatedDialog(whatsNewUI.dialog));
 document.getElementById("whats-new-action").addEventListener("click", () => closeAnimatedDialog(whatsNewUI.dialog, "brightness"));
 bindAnimatedDialog(whatsNewUI.dialog);
