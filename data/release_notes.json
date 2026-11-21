@@ -95,5 +95,20 @@
       "Fixed updates not restarting the program when the install folder path contains spaces",
       "After a failed update, installing the new version yourself now clears the 'Update failed' notice"
     ]
+  },
+  "1.0.12": {
+    "date": "2026-11-22",
+    "ko": [
+      "터미널: 지도 오른쪽 목록에 입장 준비와 진행 순서 공략이 나오고, 단계를 누르면 지도에서 그 장소를 보여 줘요",
+      "터미널: 열쇠·배전반·공구·폭약 자리, 블랙 디비전 등장 위치와 인원, 보스 위치, Zubr Boat 탈출구가 지도에 표시돼요",
+      "터미널 지도를 다른 공략 지도와 같은 방향(북쪽이 오른쪽)으로 돌려서 보여 줘요",
+      "등대: 군 기지행 차량 탈출구(Road to Military Base V-Ex)가 지도와 퀘스트 탈출 목표에 표시돼요"
+    ],
+    "en": [
+      "Terminal: the map list shows a guide with entry preparation and step-by-step tasks; click a step to see its places on the map",
+      "Terminal: the map shows key, electrical panel, toolset and explosive spots, Black Division spawns with head counts, the boss location and the Zubr Boat extract",
+      "The Terminal map is rotated to match common guide maps (north on the right)",
+      "Lighthouse: the Road to Military Base V-Ex extract now appears on the map and for quest extract objectives"
+    ]
   }
 }
