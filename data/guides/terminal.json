@@ -623,9 +623,9 @@
       "x": 190.5,
       "y": -59.0,
       "z": -244.5,
-      "kind": "building",
-      "label_ko": "무기고 · 장비·Alpha-1 회수",
-      "label_en": "Armory: gear and Alpha-1 recovery"
+      "kind": "lock",
+      "label_ko": "무기고 문 (Armory key 필요)",
+      "label_en": "Armory door (needs Armory key)"
     },
     "ms_weapon_box": {
       "x": 270.5,

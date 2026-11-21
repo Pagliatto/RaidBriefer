@@ -222,6 +222,13 @@
     "newBadge": "새로 가능"
   },
   "map": {
+    "layerBlackDivision": "블랙 디비전",
+    "layerBossZones": "보스 구역",
+    "blackDivisionCount": "블랙 디비전 {n}명",
+    "blackDivisionInside": "블랙 디비전 건물 안 {n}명",
+    "enemyEstimated": "위치 추정",
+    "blackDivisionUnknown": "블랙 디비전 · 인원 미확인",
+    "enemySpots": "등장 가능 지점 {n}곳",
     "guideTitle": "공략",
     "guidePrep": "입장 준비",
     "guideLayer": "공략",

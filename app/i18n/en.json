@@ -222,6 +222,13 @@
     "newBadge": "New"
   },
   "map": {
+    "layerBlackDivision": "Black Division",
+    "layerBossZones": "Boss zones",
+    "blackDivisionCount": "Black Division: {n} troops",
+    "blackDivisionInside": "Black Division: {n} troops inside",
+    "enemyEstimated": "Estimated position",
+    "blackDivisionUnknown": "Black Division · count unknown",
+    "enemySpots": "Possible spawn positions: {n}",
     "guideTitle": "Guide",
     "guidePrep": "Entry preparation",
     "guideLayer": "Guide",

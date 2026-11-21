@@ -8,6 +8,7 @@
 """
 
 import json
+import math
 import re
 import threading
 import time
@@ -183,6 +184,130 @@ def _manual_btr_stops() -> dict:
     return corrections.section("btr_stops")
 
 
+def _rows(value) -> list:
+    return value if isinstance(value, list) else []
+
+
+def _spawn_positions(value) -> list[tuple]:
+    """손상·누락 좌표는 제외하고, 중복 후보 위치는 한 번만 센다."""
+    result = []
+    seen = set()
+    for p in _rows(value):
+        if not isinstance(p, dict) or not all(
+                type(p.get(axis)) in (int, float) and math.isfinite(p[axis])
+                for axis in ("x", "y", "z")):
+            continue
+        pos = (p["x"], p["z"], p["y"])
+        if pos not in seen:
+            seen.add(pos)
+            result.append(pos)
+    return result
+
+
+def _spawn_center(positions: list) -> list:
+    return [round(sum(p[i] for p in positions) / len(positions), 2) for i in range(3)]
+
+
+def _enemy_features(map_key: str, bosses, translate) -> dict:
+    """BD 인원은 위치 이름별 합계. Terminal 보스는 확률 없이 위치만 반환."""
+    bd = {}
+    dev_zones = {}
+    terminal_bosses = {"bossGluhar", "bossKilla", "bossBully", "bossSanitar", "bossTagilla"}
+    for entry in _rows(bosses):
+        if not isinstance(entry, dict):
+            continue
+        mob = entry.get("mob")
+        if mob != "blackDivision" and not (map_key == "terminal" and isinstance(mob, str) and mob in terminal_bosses):
+            continue  # vsRF / vsRFSniper 등은 표시하지 않음
+        low = high = 1
+        count_known = isinstance(entry.get("escorts"), list)
+        for escort in _rows(entry.get("escorts")):
+            amounts = _rows(escort.get("amount")) if isinstance(escort, dict) else []
+            counts = [a["count"] for a in amounts if isinstance(a, dict)
+                      and type(a.get("count")) is int and a["count"] >= 0]
+            if not counts or len(counts) != len(amounts):
+                count_known = False
+                continue
+            low += min(counts)
+            high += max(counts)
+        # 같은 항목에 같은 위치 이름이 반복되어도 인원은 한 번만 더한다.
+        locations = {}
+        for location in _rows(entry.get("spawnLocations")):
+            if not isinstance(location, dict):
+                continue
+            name = location.get("name")
+            if not isinstance(name, str) or not name:
+                continue
+            locations.setdefault(name, {}).update(dict.fromkeys(_spawn_positions(location.get("positions"))))
+        for name, positions in locations.items():
+            if mob == "blackDivision":
+                group = bd.setdefault(name, {"positions": {}, "low": 0, "high": 0, "known": True})
+                group["positions"].update(positions)
+                group["low"] += low
+                group["high"] += high
+                group["known"] &= count_known
+            else:
+                group = dev_zones.setdefault(name, {"positions": {}, "bosses": []})
+                group["positions"].update(positions)
+                if mob not in group["bosses"]:
+                    group["bosses"].append(mob)
+    overrides = corrections.manual_enemy_spawns(map_key)
+    applied = {}
+    for name, override in overrides.items():
+        group = bd.get(name)
+        if group is None:
+            continue  # dev에 없는 이름은 추가하지 않는다
+        # 게임 확인값만 나중에 추가된 dev 좌표보다 우선한다. 나머지는 좌표 누락 때만 쓴다.
+        if group["positions"] and override["from"] != "game":
+            continue
+        group.update(positions={tuple(_xzy(override)): None}, low=override["count"][0],
+                     high=override["count"][1], known=True, source=override["from"],
+                     inside=override.get("inside", False), estimated=override.get("estimated", False))
+        applied[name] = override
+    for name, override in applied.items():
+        target_name = override.get("merge_into")
+        if not target_name or target_name not in bd:
+            continue  # 병합 대상이 없어져도 원래 구역을 유지한다
+        group, target = bd[name], bd[target_name]
+        if not target["positions"]:
+            continue
+        target["low"] += group["low"]
+        target["high"] += group["high"]
+        target["known"] &= group["known"]
+        target["estimated"] = target.get("estimated", False) or group.get("estimated", False)
+        del bd[name]  # 위치는 병합 대상 그대로 두고 인원만 더한다
+    result = {"blackDivision": [], "bossZones": []}
+    for name, group in bd.items():
+        positions = list(group["positions"])
+        if not positions:
+            continue
+        result["blackDivision"].append({
+            "name": name, "pos": _spawn_center(positions), "spots": len(positions),
+            "count": [group["low"], group["high"]] if group["known"] else None,
+            **{key: group[key] for key in ("source", "inside", "estimated") if key in group},
+        })
+    for name, group in dev_zones.items():
+        positions = list(group["positions"])
+        if not positions:
+            continue
+        center = _spawn_center(positions)
+        # dev 좌표 전체를 감싸는 반경 (한 지점이면 원 대신 핀만 표시).
+        radius = max(math.hypot(p[0] - center[0], p[1] - center[1]) for p in positions)
+        result["bossZones"].append({"name": name, "pos": center, "radius": round(radius, 2),
+                                    "bosses": [translate(mob) for mob in group["bosses"]]})
+    for zone in corrections.manual_boss_zones(map_key):
+        # 같은 등장 구역에 dev 좌표가 하나라도 있으면 그 구역의 보완 좌표를 쓰지 않는다.
+        if dev_zones.get(zone["spawn_location"], {}).get("positions"):
+            continue
+        remaining = [mob for mob in zone["bosses"] if mob in terminal_bosses]
+        if map_key != "terminal" or not remaining:
+            continue
+        result["bossZones"].append({"name": zone["spawn_location"], "pos": _xzy(zone),
+                                    "radius": zone["radius"], "bosses": [translate(mob) for mob in remaining],
+                                    "source": zone["source"]})
+    return result
+
+
 def features(map_key: str) -> dict:
     """지도에 같이 표시할 것들 (tarkov.dev maps).
     - extracts : 탈출구 (영어 이름, pmc/scav/shared)
@@ -193,7 +318,8 @@ def features(map_key: str) -> dict:
     maps = tarkov_api.load("maps")["maps"]
     m = next((x for x in maps.values() if x["normalizedName"] == map_key), None)
     if not m:
-        return {"extracts": [], "transits": [], "locks": [], "loot": [], "btrStops": []}
+        return {"extracts": [], "transits": [], "locks": [], "loot": [], "btrStops": [],
+                "blackDivision": [], "bossZones": []}
     en = tarkov_api.load("maps_en")
     items = tarkov_api.Translator("items")
     map_names = tarkov_api.Translator("maps")
@@ -203,6 +329,7 @@ def features(map_key: str) -> dict:
         return "" if name.endswith(" Name") else name
 
     result = {"extracts": [], "transits": [], "locks": [], "loot": [], "btrStops": []}
+    result.update(_enemy_features(map_key, m.get("bosses"), map_names))
     for stop in m.get("btrStops") or []:
         result["btrStops"].append({
             "name": map_names(stop.get("name") or ""),

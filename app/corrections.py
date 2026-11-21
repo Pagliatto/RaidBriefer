@@ -1,6 +1,9 @@
 """게임 사실 보완 파일을 한 곳에서 읽는다 (없거나 깨지면 빈 값)."""
 
 import json
+import math
+import re
+from datetime import date
 import threading
 
 from app import paths
@@ -55,3 +58,58 @@ def section(name: str) -> dict:
         return {}
     return {key: value for key, value in data.items()
             if not key.startswith("_") and isinstance(value, dict)}
+
+
+def manual_boss_zones(map_key: str) -> list[dict]:
+    """출처·위치 이름을 보존한 보스 구역. 잘못된 항목만 건너뛴다."""
+    entry = section("boss_zones").get(map_key, {})
+    zones = entry.get("zones")
+    result = []
+    for zone in zones if isinstance(zones, list) else []:
+        if not isinstance(zone, dict):
+            continue
+        if not all(type(zone.get(k)) in (int, float) and math.isfinite(zone[k])
+                   for k in ("x", "y", "z", "radius")) or zone["radius"] <= 0:
+            continue
+        name = zone.get("spawn_location")
+        bosses = zone.get("bosses")
+        if not isinstance(name, str) or not name or not isinstance(bosses, list):
+            continue
+        bosses = list(dict.fromkeys(b for b in bosses if isinstance(b, str) and b))
+        if bosses:
+            result.append({**zone, "bosses": bosses, "source": entry.get("source", "manual")})
+    return result
+
+
+def manual_enemy_spawns(map_key: str) -> dict:
+    """BD 위치 이름별 보정. 출처·좌표·인원 형식이 깨진 항목만 제외한다."""
+    entries = section("enemy_spawns").get(map_key, {})
+    result = {}
+    for name, entry in entries.items():
+        if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*", name) or not isinstance(entry, dict):
+            continue
+        if entry.get("from") not in ("game", "wiki"):
+            continue
+        try:
+            checked = entry.get("checked")
+            if not isinstance(checked, str) or date.fromisoformat(checked).isoformat() != checked:
+                continue
+        except ValueError:
+            continue
+        if not all(type(entry.get(k)) in (int, float) and math.isfinite(entry[k]) for k in ("x", "y", "z")):
+            continue
+        counts = entry.get("count")
+        if not isinstance(counts, list) or len(counts) != 2 or not all(type(n) is int and n >= 1 for n in counts) or counts[0] > counts[1]:
+            continue
+        if not isinstance(entry.get("note"), str) or not entry["note"].strip():
+            continue
+        target = entry.get("merge_into")
+        if target is not None and (not isinstance(target, str) or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*", target) or target == name):
+            continue
+        if any(flag in entry and type(entry[flag]) is not bool for flag in ("inside", "estimated")):
+            continue
+        result[name] = {**entry, "count": list(counts)}
+    # 다단계·순환 병합은 허용하지 않는다. 잘못된 보정 때문에 dev 구역을 잃지 않게 한다.
+    return {name: entry for name, entry in result.items()
+            if not entry.get("merge_into") or (entry["merge_into"] in result
+                                               and not result[entry["merge_into"]].get("merge_into"))}

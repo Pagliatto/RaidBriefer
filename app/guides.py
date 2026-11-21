@@ -11,7 +11,7 @@ from app.map_views import _xzy
 
 GUIDES_DIR = paths.DATA_DIR / "guides"
 _MAP_KEY = re.compile(r"[a-z0-9][a-z0-9_-]{0,59}")
-_KINDS = {"key_spawn", "panel", "toolset", "explosive", "door", "building", "extract", "start"}
+_KINDS = {"key_spawn", "panel", "toolset", "explosive", "door", "building", "extract", "start", "lock"}
 _lock = threading.Lock()
 _cached: dict = {}
 

@@ -914,5 +914,121 @@
          "note": "Single-use; seats depend on players who entered: 1-3 players: 3 seats; 4 players: 3-4 seats (random); 5 players: 4-5 seats (random). Players who brought Secure container Alpha-1 with TerraGroup evidence must carry it. Opening the Pier door starts a 3-minute extraction timer for everyone; reach the boat before it ends."}
       ]
     }
+  },
+  "boss_zones": {
+    "_note": "Boss zones measured from the official wiki map. Used only while tarkov.dev has no valid positions at the same spawn_location; dev positions win. Terminal: Terminal_Bosses_Map.jpg in the RE3MR frame aligned using 9 fuel tank centers (request 45); center and approximate 13 m radius measured by Claude.",
+    "terminal": {
+      "source": "wiki",
+      "link": "https://escapefromtarkov.fandom.com/wiki/Terminal",
+      "checked": "2026-11-21",
+      "zones": [
+        {
+          "spawn_location": "Zone2ScavPort29",
+          "x": -38.1,
+          "y": -59,
+          "z": 198.9,
+          "radius": 13,
+          "bosses": [
+            "bossGluhar",
+            "bossKilla",
+            "bossBully",
+            "bossSanitar",
+            "bossTagilla"
+          ]
+        }
+      ]
+    }
+  },
+  "enemy_spawns": {
+    "_note": "User in-game knowledge takes priority over dev only when from is game. Positions are from Claude's guide measurements or the stated dev references; all y = -59. Non-game positions only fill missing dev positions. Groups must still exist by exact dev spawn-location name. merge_into adds counts at the target position without a separate marker.",
+    "terminal": {
+      "Zone1BD1HangarBD11": {
+        "x": 270.5,
+        "y": -59,
+        "z": -257,
+        "count": [
+          4,
+          4
+        ],
+        "inside": true,
+        "note": "4 inside the Seaport terminal / MS building; 8 outside remain in HangarAmbush11. Position: MS weapon box measured by Claude.",
+        "from": "game",
+        "checked": "2026-11-21"
+      },
+      "Zone1BDGateAmbush13": {
+        "x": 68.96,
+        "y": -59,
+        "z": -156.34,
+        "count": [
+          2,
+          2
+        ],
+        "note": "2 in front of the D3 locked door; position matches the Black Division keycard lock.",
+        "from": "game",
+        "checked": "2026-11-21"
+      },
+      "Zone1BD1PortAmbush1": {
+        "x": 15.21,
+        "y": -59,
+        "z": -340.7,
+        "count": [
+          2,
+          2
+        ],
+        "note": "2 at the starting port, confirmed in game. Dev entries appear to be alternatives, not a total of 5. Position: existing dev group center.",
+        "from": "game",
+        "checked": "2026-11-21"
+      },
+      "Zone2BDWarehouse18": {
+        "x": 194.7,
+        "y": -59,
+        "z": 0.4,
+        "count": [
+          2,
+          2
+        ],
+        "note": "SZ-1 area: about 4 total after adding Warehouse19. Keep the Warehouse18 position.",
+        "from": "game",
+        "checked": "2026-11-21"
+      },
+      "Zone2BDWarehouse19": {
+        "x": 194.7,
+        "y": -59,
+        "z": 0.4,
+        "count": [
+          2,
+          2
+        ],
+        "merge_into": "Zone2BDWarehouse18",
+        "note": "Add these 2 to Warehouse18 at its position; one marker for the SZ-1 area.",
+        "from": "game",
+        "checked": "2026-11-21"
+      },
+      "Zone2BDColumns23": {
+        "x": 132.4,
+        "y": -59,
+        "z": 213.1,
+        "count": [
+          2,
+          2
+        ],
+        "estimated": true,
+        "note": "2 opposite the key side at the pump station. Estimated position: center of friendly Zone2VSRFColumns22 with the same Columns zone name.",
+        "from": "game",
+        "checked": "2026-11-21"
+      },
+      "Zone2BDPort32": {
+        "x": -360,
+        "y": -59,
+        "z": 300,
+        "count": [
+          3,
+          3
+        ],
+        "note": "3 on the last pier toward the boat extract; moved from the dev pier-corner center.",
+        "from": "game",
+        "checked": "2026-11-21"
+      }
+    }
   }
 }

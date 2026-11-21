@@ -18,6 +18,9 @@ const MAP_KEY_STORAGE = "tarkovhelper.map";
 const TRANSITION_MS = 1600;   // 전환 안내를 최소한 보여주는 시간
 const LOBBY_WAIT_MS = 30000;  // 레이드가 끝나고 이만큼 새 맵이 안 나오면 로비로 (트랜짓은 실제 로그에서 16~18초, 넉넉하게)
 
+// SVG 지도의 표시 방향만 바꾸는 시계 방향 각도 (90도 단위). dev 원본 좌표는 유지한다.
+const DISPLAY_ROTATION = { terminal: 90 };
+
 // ---------- 좌표 계산 (tarkov.dev src/pages/map/index.jsx 와 같은 방식) ----------
 function tdRotate(latLng, rotation) {
   if (!latLng.lng && !latLng.lat) return L.latLng(0, 0);
@@ -29,16 +32,51 @@ function tdRotate(latLng, rotation) {
   return L.latLng(x * sin + y * cos, x * cos - y * sin);
 }
 
-function tdCRS(view) {
+function rotateDisplayPoint(point, degrees) {
+  const rad = degrees * Math.PI / 180;
+  const cos = Math.round(Math.cos(rad));
+  const sin = Math.round(Math.sin(rad));
+  return L.point(point.x * cos - point.y * sin, point.x * sin + point.y * cos);
+}
+
+function tdCRS(view, displayRotation = 0) {
   const tf = view.transform || [1, 0, -1, 0];
   const rotation = Number(view.rotation) || 0;
-  return L.extend({}, L.CRS.Simple, {
+  const crs = L.extend({}, L.CRS.Simple, {
     transformation: new L.Transformation(tf[0], tf[1], tf[2] * -1, tf[3]),
     projection: L.extend({}, L.Projection.LonLat, {
       project: (latLng) => L.Projection.LonLat.project(tdRotate(latLng, rotation)),
       unproject: (point) => tdRotate(L.Projection.LonLat.unproject(point), rotation * -1),
     }),
   });
+  if (!displayRotation) return crs; // 다른 맵은 기존 CRS 그대로
+  // dev 회전·비율·이동을 적용한 화면 좌표를 회전한다. 역변환도 같아서 클릭·fitArea가 맞는다.
+  const { projection, transformation } = crs;
+  crs.projection = L.extend({}, projection, {
+    project: (ll) => rotateDisplayPoint(transformation.transform(projection.project(ll)), displayRotation),
+    unproject: (p) => projection.unproject(transformation.untransform(rotateDisplayPoint(p, -displayRotation))),
+  });
+  crs.transformation = new L.Transformation(1, 0, 1, 0);
+  return crs;
+}
+
+function rotateMapSvg(svg, inner, degrees) {
+  if (!degrees) return;
+  const [x, y, w, h] = inner.getAttribute("viewBox").trim().split(/[\s,]+/).map(Number);
+  if (![x, y, w, h].every(Number.isFinite) || w <= 0 || h <= 0) throw new Error("invalid-viewbox");
+  const corners = [[x, y], [x + w, y], [x, y + h], [x + w, y + h]]
+    .map(([px, py]) => rotateDisplayPoint(L.point(px, py), degrees));
+  const xs = corners.map((p) => p.x), ys = corners.map((p) => p.y);
+  svg.setAttribute("viewBox", [Math.min(...xs), Math.min(...ys), Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)].join(" "));
+  // 내부 SVG의 크기를 고정한 뒤 층·나침반을 포함한 전체 그림을 함께 돌린다.
+  inner.setAttribute("x", x);
+  inner.setAttribute("y", y);
+  inner.setAttribute("width", w);
+  inner.setAttribute("height", h);
+  const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  group.setAttribute("transform", "rotate(" + degrees + ")");
+  group.append(inner);
+  svg.replaceChildren(group);
 }
 
 function tdBounds(b) {
@@ -136,15 +174,21 @@ function keyWithWiki(name, wiki) {
 
 // 지도 표시 공통 모양: 색 네모 + 아이콘 (2026-11-20 사용자). 퀘스트 목표만 번호 동그라미로 따로
 // kind: 색 (CSS .mk-<kind>), icon: icons.js 이름, size: 한 변 px
+// 지도 전용 해골 그림. 공통 아이콘 파일을 바꾸지 않고 같은 선 그림 규격을 사용한다.
+function mapIconSvg(name, size, stroke = 2.4) {
+  if (name !== "skull") return iconSvg(name, size, stroke);
+  return `<svg class="icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${stroke}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 19H6v-4a8 8 0 1 1 12 0v4h-2v3H8z"/><circle cx="9" cy="11" r="1"/><circle cx="15" cy="11" r="1"/><path d="m11 16 1-2 1 2M12 19v3"/></svg>`;
+}
+
 function markerIcon(kind, icon, size) {
   const glyph = Math.round(size * 0.68);
-  return L.divIcon({ className: `feature mk mk-${kind}`, html: `<span>${iconSvg(icon, glyph, 2.4)}</span>`, iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
+  return L.divIcon({ className: `feature mk mk-${kind}`, html: `<span>${mapIconSvg(icon, glyph, 2.4)}</span>`, iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
 }
 
 // 목록 안의 작은 지도 기호 (표시 서랍 기호와 같은 모양)
 function markerSymbol(kind, icon) {
   const mark = el("span", "layer-mark");
-  mark.innerHTML = `<span class="mk mk-${kind} mk-legend"><span>${iconSvg(icon, 11, 2.4)}</span></span>`;
+  mark.innerHTML = `<span class="mk mk-${kind} mk-legend"><span>${mapIconSvg(icon, 11, 2.4)}</span></span>`;
   return mark;
 }
 
@@ -250,6 +294,7 @@ async function drawMap() {
   mapUI.extractMarkers = [];
   mapUI.transits = []; // 이 맵의 트랜짓 표시 (서랍 '트랜짓으로 갈 수 있는 맵'이 씀)
   mapUI.dirty = false;
+  renderLayerDrawer(); // 그림이 없거나 요청에 실패해도 이전 맵의 적 레이어를 지움
   document.getElementById("map-auto").hidden = !(mapUI.autoMapId && m && m.ids.includes(mapUI.autoMapId));
   if (!m) return;
 
@@ -263,8 +308,9 @@ async function drawMap() {
 
   // 최대 확대 = 지도 데이터의 maxZoom (세관 5). 더 확대하면 SVG 가 수만 px 로 커져 건물 없는 맨바닥처럼 보임
   const maxZoom = Number(view.max_zoom) || 5;
+  const displayRotation = view.svg ? (DISPLAY_ROTATION[m.key] || 0) : 0;
   const leaf = L.map(box, {
-    crs: tdCRS(view),
+    crs: tdCRS(view, displayRotation),
     zoomSnap: 0.1,
     zoomAnimation: !reducedMotion(),
     fadeAnimation: !reducedMotion(),
@@ -328,6 +374,7 @@ async function drawMap() {
           else g.style.display = "none";
           mapUI.svgGroups[g.id] = g;
         });
+        rotateMapSvg(svg, inner, displayRotation);
       }
     } catch (error) {
       if (generation !== mapGeneration) return;
@@ -664,7 +711,7 @@ function numberedObjectives() {
 // ---------- 맵별 공략 (별도 진행 저장 없이 기존 스토리 기록 사용) ----------
 const mapGuide = { key: null, data: null, prep: null, controller: null, revision: 0, focused: null };
 const GUIDE_ICONS = { key_spawn: "key", panel: "layers", toolset: "settings", explosive: "triangle-alert",
-  door: "lock", building: "package", start: "door-open" };
+  door: "lock", lock: "lock", building: "package", start: "door-open" };
 
 function currentGuide() {
   return mapGuide.key === mapUI.current?.key && mapGuide.data?.steps?.length ? mapGuide.data : null;
@@ -784,7 +831,7 @@ function drawGuidePins() {
   if (data && mapUI.leaflet && mapUI.groups?.guide) {
     Object.entries(data.points || {}).forEach(([id, point]) => {
       if (point.kind === "extract" || !GUIDE_ICONS[point.kind] || !Array.isArray(point.pos)) return;
-      const icon = markerIcon("guide-" + point.kind, GUIDE_ICONS[point.kind], 20);
+      const icon = markerIcon(point.kind === "lock" ? "lock" : "guide-" + point.kind, GUIDE_ICONS[point.kind], point.kind === "lock" ? 16 : 20);
       if (point.candidate) icon.options.className += " guide-candidate";
       const label = guideText(point, "label_") + (point.candidate ? " · " + t("map.guideCandidate") : "");
       const marker = L.marker(gamePos(point.pos), { icon, title: label, alt: label });
@@ -1254,8 +1301,10 @@ loadMapList();
 
 // ---------- 표시 켜기/끄기 (왼쪽 서랍) ----------
 // 퀘스트·먹을 것·탈출구·트랜짓·열쇠·귀중품. 고른 값은 이 브라우저에 기억 (다음에 켜도 그대로)
-const LAYER_KEYS = ["quests", "loot", "extracts", "scavExtracts", "transits", "btrStops", "keys", "bitcoin", "keySpawns", "valuables", "guide"];
+const LAYER_KEYS = ["quests", "loot", "extracts", "scavExtracts", "transits", "btrStops", "keys", "bitcoin", "keySpawns", "valuables", "guide", "blackDivision", "bossZones"];
 const LAYER_INFO = {
+  blackDivision: { label: t("map.layerBlackDivision"), mark: "mk:enemy:crosshair", on: true },
+  bossZones: { label: t("map.layerBossZones"), mark: "mk:boss:skull", on: true },
   guide: { label: t("map.guideLayer"), mark: "mk:guide-start:book-open", on: true },
   quests: { label: t("map.layerQuests"), mark: "shape:quest", on: true },
   // 필요템 바닥 위치: 맵마다 0~몇 개뿐이라 스위치 없이 항상 표시 (위쪽 줄 아이콘을 누르면 그 자리로, 2026-11-20 사용자)
@@ -1309,6 +1358,7 @@ function renderLayerDrawer() {
   LAYER_KEYS.forEach((key) => {
     const info = LAYER_INFO[key];
     if (key === "guide" && !currentGuide()) return;
+    if ((key === "blackDivision" || key === "bossZones") && !layerCount(key)) return;
     if (info.always) return;  // 항상 보이는 표시는 서랍에 스위치를 두지 않음
     const on = layerOn(key);
     const btn = el("button", `layer-toggle layer-${key}${on ? " on" : ""}`);
@@ -1318,7 +1368,7 @@ function renderLayerDrawer() {
     const mark = el("span", "layer-mark");
     if (info.mark.startsWith("mk:")) {
       const [, kind, icon] = info.mark.split(":");
-      mark.innerHTML = `<span class="mk mk-${kind} mk-legend"><span>${iconSvg(icon, 11, 2.4)}</span></span>`;
+      mark.innerHTML = `<span class="mk mk-${kind} mk-legend"><span>${mapIconSvg(icon, 11, 2.4)}</span></span>`;
     } else if (info.mark.startsWith("icon:")) mark.innerHTML = iconSvg(info.mark.slice(5), 14);
     else mark.append(el("i", `legend legend-${info.mark.slice(6)}`));
     // 이 맵에 몇 개 있는지 (0이면 지도에 안 보이는 이유를 알 수 있게)
@@ -1334,6 +1384,7 @@ function renderLayerDrawer() {
 // 표시 묶음마다 이 맵에 있는 개수 (지도를 아직 안 그렸으면 null)
 function layerCount(key) {
   if (!mapUI.groups || !mapUI.leaflet) return null;
+  if (key === "bossZones") return mapUI.groups.bossZones?.getLayers().filter((layer) => layer instanceof L.Marker).length || 0;
   if (key === "quests") return (mapUI.pinMarkers || []).length;
   if (key === "loot") return mapUI.lootLayer ? mapUI.lootLayer.getLayers().length : 0;
   return mapUI.groups[key] ? mapUI.groups[key].getLayers().length : 0;
@@ -1364,8 +1415,8 @@ async function drawFeatures(leaf, m) {
   }
   if (mapUI.leaflet !== leaf) return; // 그사이 다른 맵으로 바뀜
   // card: true 면 링크가 든 '마우스 올림 창' (창 위로 옮겨도 안 사라짐), 아니면 보통 설명
-  const add = (groupKey, p, icon, tooltip, card = false) => {
-    const marker = L.marker(gamePos(p), { icon, keyboard: false });
+  const add = (groupKey, p, icon, tooltip, card = false, options = {}) => {
+    const marker = L.marker(gamePos(p), { icon, keyboard: false, ...options });
     if (tooltip && card) {
       marker.on("mouseover", () => openHoverCard(marker, tooltip));
       marker.on("mouseout", closeHoverCardSoon);
@@ -1397,6 +1448,7 @@ async function drawFeatures(leaf, m) {
   });
   renderDrawer(); // 서랍 맨 아래 '트랜짓으로 갈 수 있는 맵'
   (data.btrStops || []).forEach((stop) => add("btrStops", stop.pos, markerIcon("btr", "bus", 18), escapeHtml(stop.name)));
+  drawEnemyFeatures(data, add);
   // 열쇠 문: 마우스를 올리면 필요한 열쇠
   data.locks.forEach((lock) => {
     const where = lock.type === "trunk" ? t("map.lockTrunk") : "";
@@ -1420,6 +1472,33 @@ async function drawFeatures(leaf, m) {
   applyFloor();
   highlightGuideStep();
   renderLayerDrawer();
+}
+
+// 적 표시도 다른 핀과 같은 CRS·층 처리를 사용한다.
+function drawEnemyFeatures(data, add) {
+  const validPos = (pos) => Array.isArray(pos) && pos.length === 3 && pos.every(Number.isFinite);
+  (Array.isArray(data.blackDivision) ? data.blackDivision : []).forEach((spawn) => {
+    if (!spawn || !validPos(spawn.pos)) return;
+    const known = Array.isArray(spawn.count) && spawn.count.length === 2 &&
+      spawn.count.every((n) => Number.isInteger(n) && n >= 1) && spawn.count[0] <= spawn.count[1];
+    const count = known ? (spawn.count[0] === spawn.count[1] ? String(spawn.count[0]) : spawn.count.join("–")) : "?";
+    const label = known ? t(spawn.inside ? "map.blackDivisionInside" : "map.blackDivisionCount", { n: count }) : t("map.blackDivisionUnknown");
+    const labelText = label + (spawn.estimated ? " · " + t("map.enemyEstimated") : "");
+    const icon = markerIcon("enemy", "crosshair", 22);
+    icon.options.html += `<small class="enemy-count">${escapeHtml(count)}</small>`;
+    add("blackDivision", spawn.pos, icon, escapeHtml(labelText),
+      false, { keyboard: true, title: labelText, alt: labelText });
+  });
+  (Array.isArray(data.bossZones) ? data.bossZones : []).forEach((zone) => {
+    if (!zone || !validPos(zone.pos) || !Array.isArray(zone.bosses)) return;
+    const names = zone.bosses.filter((name) => typeof name === "string" && name);
+    if (!names.length) return;
+    // 게임 좌표에서 10m 옆으로 띄운다. 지도 회전 후에도 BD와 같은 방식으로 이동한다.
+    const iconPos = [zone.pos[0] + 10, zone.pos[1], zone.pos[2]];
+    add("bossZones", iconPos, markerIcon("boss", "skull", 22),
+      "<b>" + escapeHtml(t("map.layerBossZones")) + "</b><br>" + names.map(escapeHtml).join("<br>"),
+      false, { keyboard: true, title: names.join(", "), alt: names.join(", ") });
+  });
 }
 
 // ---------- 층 ----------
