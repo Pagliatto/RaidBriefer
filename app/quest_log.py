@@ -298,7 +298,6 @@ def _index_worker(state):
         _revalidate_sealed(state)
 
 
-@_reading()
 def _log_folders():
     """루트 수정 시각이 같으면 활성 폴더만 반환한다. 호출자는 전역 잠금을 잡는다."""
     global _cache_root, _index_state
@@ -355,22 +354,25 @@ def _log_folders():
             state.save_needed = not saved
             # 두 번째 시작에도 파일 크기·mtime을 확인하여 폴더 mtime이 안 바뀐 덮어쓰기를 잡는다.
             # 이 확인도 읽는 중 안내에 개수가 나오게 진행 숫자를 올린다 (전에는 0 / 0 으로 멈춰 보였음)
-            to_check = list(state.active.items())
-            with _reading_lock:
-                _reading_progress.update(done=0, total=len(to_check))
-            for folder, cache in to_check:
-                _advance_log_reading()
-                entry = saved.get(os.path.basename(folder))
-                if entry is None or folder == newest:
-                    continue
-                try:
-                    files = _scan_folder_files(folder)
-                    signature = _disk_signature(os.stat(folder).st_mtime_ns, files)
-                    old_enough = time.time_ns() - max((sig[0] for group in files for _, sig in group), default=0) > SEALED_AFTER_NS
-                    if old_enough and _restore_folder(cache, entry, signature, _file_signature(files[0])):
-                        state.sealed[folder] = state.active.pop(folder)
-                except OSError:
-                    continue
+            # '읽는 중' 표시는 이 실제 확인 단계에서만 켠다. 상태 확인(log_rev)이 2초마다 부르는
+            # 짧은 목록 확인까지 켜면 안내 화면이 닫히지 않는다 (2026-11-21 시험: 2분 넘게 0/0)
+            with _reading():
+                to_check = list(state.active.items())
+                with _reading_lock:
+                    _reading_progress.update(done=0, total=len(to_check))
+                for folder, cache in to_check:
+                    _advance_log_reading()
+                    entry = saved.get(os.path.basename(folder))
+                    if entry is None or folder == newest:
+                        continue
+                    try:
+                        files = _scan_folder_files(folder)
+                        signature = _disk_signature(os.stat(folder).st_mtime_ns, files)
+                        old_enough = time.time_ns() - max((sig[0] for group in files for _, sig in group), default=0) > SEALED_AFTER_NS
+                        if old_enough and _restore_folder(cache, entry, signature, _file_signature(files[0])):
+                            state.sealed[folder] = state.active.pop(folder)
+                    except OSError:
+                        continue
             state.save_needed = state.save_needed or set(saved) != {os.path.basename(folder) for folder in state.sealed}
             state.worker = threading.Thread(target=_index_worker, args=(state,), daemon=True)
             state.worker.start()
