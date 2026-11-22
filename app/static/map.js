@@ -23,7 +23,148 @@ const DISPLAY_ROTATION = { terminal: 90 };
 
 // Pending moves belong to data keys, not Leaflet instances: map/layer redraws never lose them.
 const mapEditor = { active: false, pending: new Map(), history: [], bindings: new Map(), saving: false };
-const editIdentity = (key) => JSON.stringify([key.file, key.path]);
+const editIdentity = (key) => JSON.stringify([key.file, key.path, key.seed?.add || null]);
+
+function cancelMarkerDraft() {
+  const wasPlacing = mapEditor.placing || mapEditor.form;
+  mapEditor.placing = false;
+  mapEditor.draft?.remove();
+  mapEditor.form?.remove();
+  mapEditor.draft = mapEditor.form = null;
+  if (wasPlacing && mapEditor.status) updatePositionEditor();
+}
+
+function refreshNewMarkers() {
+  if (!mapEditor.active || !mapUI.leaflet) return;
+  mapEditor.newLayer?.clearLayers();
+  for (const [id, binding] of mapEditor.bindings) {
+    if (binding.draft) {
+      mapUI.floorItems = mapUI.floorItems.filter((entry) => entry.layer !== binding.marker);
+      mapEditor.bindings.delete(id);
+    }
+  }
+  if (!mapEditor.newLayer || mapEditor.newLeaf !== mapUI.leaflet) {
+    mapEditor.newLeaf = mapUI.leaflet;
+    mapEditor.newLayer = L.layerGroup().addTo(mapUI.leaflet);
+  }
+  for (const [id, pending] of mapEditor.pending) {
+    if (!pending.fields || pending.map !== mapUI.current?.key) continue;
+    const kind = pending.edit.seed.add;
+    const pin = pending.fields.kind;
+    const icons = { bd: ["enemy", "crosshair"], boss: ["boss", "skull"], extract: [`extract-${pending.fields.faction}`, "door-open"], btr: ["btr", "bus"], guide: [pin === "lock" ? "lock" : "guide-" + pin, GUIDE_ICONS[pin] || "door-open"] };
+    const marker = L.marker(gamePos(pending.pos), { icon: markerIcon(...icons[kind], 22) });
+    bindPositionEditor(marker, { edit: pending.edit, pos: pending.pos, draftId: id }, pending.label);
+    mapEditor.bindings.get(id).draft = true;
+    marker.addTo(mapEditor.newLayer);
+    mapUI.floorItems.push({ layer: marker, floor: floorOf(pending.pos) });
+  }
+}
+
+// 편집 폼 글자: 이름표를 문자열로 이어 붙이지 않고 그대로 적어 둔다 (글자 사전 검사가 찾을 수 있게)
+const EDITOR_TEXT = {
+  kind: () => t("editor.kind"), count: () => t("editor.count"), bosses: () => t("editor.bosses"),
+  name: () => t("editor.name"), nameEn: () => t("editor.nameEn"), nameKo: () => t("editor.nameKo"),
+  faction: () => t("editor.faction"), pinKind: () => t("editor.pinKind"), candidate: () => t("editor.candidate"),
+  steps: () => t("editor.steps"), note: () => t("editor.note"),
+  kind_bd: () => t("editor.kind_bd"), kind_boss: () => t("editor.kind_boss"), kind_extract: () => t("editor.kind_extract"),
+  kind_btr: () => t("editor.kind_btr"), kind_guide: () => t("editor.kind_guide"),
+  faction_pmc: () => t("editor.faction_pmc"), faction_scav: () => t("editor.faction_scav"), faction_shared: () => t("editor.faction_shared"),
+  pin_key_spawn: () => t("editor.pin_key_spawn"), pin_panel: () => t("editor.pin_panel"), pin_toolset: () => t("editor.pin_toolset"),
+  pin_explosive: () => t("editor.pin_explosive"), pin_door: () => t("editor.pin_door"), pin_lock: () => t("editor.pin_lock"),
+  pin_building: () => t("editor.pin_building"), pin_start: () => t("editor.pin_start"),
+};
+const editorText = (key) => (EDITOR_TEXT[key] ? EDITOR_TEXT[key]() : key);
+
+function openMarkerForm(latlng) {
+  const options = mapEditor.options;
+  const map = mapUI.current.key;
+  cancelMarkerDraft();
+  mapEditor.draft = L.marker(latlng, { icon: markerIcon("lock", "crosshair", 22) }).addTo(mapUI.leaflet);
+  const form = el("form", "position-add-form");
+  mapEditor.form = form;
+  const field = (parent, key, input) => {
+    const label = el("label", "", editorText(key));
+    label.append(input);
+    parent.append(label);
+    return input;
+  };
+  const select = (values, multiple = false) => {
+    const input = el("select");
+    input.multiple = multiple;
+    for (const [value, label] of values) {
+      const option = el("option", "", label);
+      option.value = value;
+      input.append(option);
+    }
+    return input;
+  };
+  const kind = field(form, "kind", select(Object.keys(options).map((key) => [key, editorText("kind_" + key)])));
+  const details = el("div", "position-add-fields");
+  form.append(details);
+  let inputs;
+  const render = () => {
+    details.replaceChildren();
+    inputs = {};
+    const input = (name, key, type = "text", required = true) => {
+      const node = el("input");
+      node.type = type;
+      node.required = required;
+      node.maxLength = 1000;
+      inputs[name] = field(details, key, node);
+      return node;
+    };
+    const choice = (name, key, values, multiple = false) => {
+      inputs[name] = field(details, key, select(values, multiple));
+    };
+    if (kind.value === "bd") {
+      const count = input("count", "count", "number");
+      count.min = 1; count.max = 20; count.step = 1; count.value = 1;
+    } else if (kind.value === "boss") {
+      choice("bosses", "bosses", options.boss.seed.bosses.map((id) => [id, id]), true);
+      inputs.bosses.required = true;
+    } else if (kind.value === "extract" || kind.value === "btr") {
+      input("name", kind.value === "extract" ? "nameEn" : "name");
+      if (kind.value === "extract") choice("faction", "faction", ["pmc", "scav", "shared"].map((id) => [id, editorText("faction_" + id)]));
+    } else {
+      choice("kind", "pinKind", ["key_spawn", "panel", "toolset", "explosive", "door", "lock", "building", "start"].map((id) => [id, editorText("pin_" + id)]));
+      input("label_ko", "nameKo"); input("label_en", "nameEn");
+      input("candidate", "candidate", "checkbox", false);
+      choice("steps", "steps", options.guide.seed.steps.map((s) => [s.id, s.ko + " / " + s.en]), true);
+    }
+    input("note", "note", "text", false);
+  };
+  kind.addEventListener("change", render);
+  render();
+  const actions = el("div", "position-add-actions");
+  const submit = el("button", "layer-toggle-btn", t("editor.add"));
+  submit.type = "submit";
+  const cancel = el("button", "layer-toggle-btn", t("editor.dismiss"));
+  cancel.type = "button";
+  cancel.addEventListener("click", cancelMarkerDraft);
+  actions.append(submit, cancel); form.append(actions);
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (mapEditor.saving || mapUI.current?.key !== map || !form.reportValidity()) return;
+    const fields = {};
+    for (const [name, input] of Object.entries(inputs)) {
+      fields[name] = input.multiple ? [...input.selectedOptions].map((o) => o.value) :
+        input.type === "checkbox" ? input.checked : input.type === "number" ? Number(input.value) : input.value.trim();
+    }
+    const edit = options[kind.value];
+    const near = (mapEditor.heights || []).reduce((best, p) =>
+      !best || Math.hypot(p[0] - latlng.lng, p[1] - latlng.lat) < Math.hypot(best[0] - latlng.lng, best[1] - latlng.lat) ? p : best, null);
+    const pos = [Math.round(latlng.lng * 10) / 10, Math.round(latlng.lat * 10) / 10, near?.[2] || 0];
+    mapEditor.serial = (mapEditor.serial || 0) + 1;
+    const id = "draft:" + mapEditor.serial;
+    const label = fields.name || fields.label_ko || editorText("kind_" + kind.value);
+    mapEditor.pending.set(id, { edit, fields, pos, base: pos.slice(), map, label });
+    mapEditor.history.push({ id });
+    cancelMarkerDraft();
+    refreshPositionEdits();
+  });
+  document.getElementById("tab-map").append(form);
+  kind.focus();
+}
 
 async function initializePositionEditor() {
   if (new URLSearchParams(location.search).get("edit") !== "1") return;
@@ -46,10 +187,18 @@ async function initializePositionEditor() {
     return node;
   };
   mapEditor.undo = button("editor.undo", undoPositionEdit);
+  mapEditor.add = button("editor.addMarker", () => {
+    if (mapEditor.saving || !mapEditor.options) return;
+    cancelMarkerDraft();
+    mapEditor.placing = true;
+    updatePositionEditor(t("editor.clickMap"));
+  });
+  window.addEventListener("keydown", (event) => { if (event.key === "Escape") cancelMarkerDraft(); });
   mapEditor.cancel = button("editor.cancel", () => {
     if (mapEditor.saving) return;
     mapEditor.pending.clear();
     mapEditor.history = [];
+    cancelMarkerDraft();
     refreshPositionEdits();
   });
   mapEditor.save = button("editor.save", savePositionEdits);
@@ -57,6 +206,13 @@ async function initializePositionEditor() {
   mapEditor.status.setAttribute("role", "status");
   banner.append(mapEditor.status);
   document.getElementById("tab-map").prepend(banner);
+  // 편집 모드에서는 '바뀐 점' 같은 안내 창을 띄우지 않는다 (편집을 가림). 본 것으로 기록하지 않고 닫기만 → 평소 실행 때 다시 나옴
+  const whatsNew = document.getElementById("whats-new");
+  if (whatsNew) {
+    const closeNotice = () => { if (whatsNew.open) whatsNew.close(); };
+    closeNotice();
+    new MutationObserver(closeNotice).observe(whatsNew, { attributes: true, attributeFilter: ["open"] });
+  }
   // 편집 모드는 화면 배치가 바뀌어 지도 칸이 커진다 → 크기가 바뀌면 전체 보기를 다시 맞춘다 (관찰자는 하나만)
   const mapBox = document.getElementById("map-view");
   if (mapBox && window.ResizeObserver) {
@@ -77,10 +233,12 @@ function updatePositionEditor(message = "") {
   mapEditor.undo.disabled = mapEditor.saving || !mapEditor.history.length;
   mapEditor.cancel.disabled = mapEditor.save.disabled = mapEditor.saving || !mapEditor.pending.size;
   mapEditor.status.textContent = message;
+  mapEditor.add.disabled = mapEditor.saving || !mapEditor.options;
   document.body.classList.toggle("position-saving", mapEditor.saving);
 }
 
 function refreshPositionEdits(message = "") {
+  refreshNewMarkers();
   mapEditor.bindings.forEach((binding) => binding.refresh());
   if (mapUI.leaflet) applyFloor();
   updatePositionEditor(message);
@@ -97,9 +255,26 @@ function undoPositionEdit() {
 
 function bindPositionEditor(marker, item, label, guide = false) {
   if (!mapEditor.active || !item.edit) return;
-  const id = editIdentity(item.edit);
+  const id = item.draftId || editIdentity(item.edit);
   const binding = { marker, guide, base: item.pos.slice() };
   const position = () => mapEditor.pending.get(id)?.pos || binding.base;
+  if (item.draftId || item.edit.seed?.created) {
+    const content = el("div");
+    content.append(el("div", "", label));
+    const remove = el("button", "layer-toggle-btn", t("editor.delete"));
+    remove.type = "button";
+    remove.addEventListener("click", () => {
+      if (mapEditor.saving) return;
+      const before = mapEditor.pending.get(id);
+      mapEditor.history.push({ id, before });
+      if (item.draftId) mapEditor.pending.delete(id);
+      else mapEditor.pending.set(id, { edit: before?.edit || item.edit, pos: position().slice(), delete: true });
+      marker.closePopup();
+      refreshPositionEdits();
+    });
+    content.append(remove);
+    marker.bindPopup(content);
+  }
   marker.options.draggable = true;
   marker.options.icon.options.className += " position-editable";
   marker.unbindTooltip();
@@ -115,16 +290,18 @@ function bindPositionEditor(marker, item, label, guide = false) {
     const node = marker.getElement();
     if (node) {
       node.classList.add("position-editable");
+      node.classList.toggle("position-deleted", !!mapEditor.pending.get(id)?.delete);
       let badge = node.querySelector(".position-moved");
-      if (mapEditor.pending.has(id) && !badge) {
-        badge = el("small", "position-moved", t("editor.moved"));
+      const fresh = item.draftId || item.edit.seed?.created;
+      if ((mapEditor.pending.has(id) || fresh) && !badge) {
+        badge = el("small", "position-moved", t(fresh ? "editor.new" : "editor.moved"));
         node.append(badge);
-      } else if (!mapEditor.pending.has(id)) badge?.remove();
+      } else if (!mapEditor.pending.has(id) && !fresh) badge?.remove();
     }
     tooltip(pos);
     const floorItem = mapUI.floorItems.find((entry) => entry.layer === marker);
     if (floorItem) floorItem.floor = floorOf(pos);
-    if (mapEditor.saving) marker.dragging?.disable();
+    if (mapEditor.saving || mapEditor.pending.get(id)?.delete) marker.dragging?.disable();
     else marker.dragging?.enable();
   };
   mapEditor.bindings.set(id, binding);
@@ -146,8 +323,8 @@ function bindPositionEditor(marker, item, label, guide = false) {
     if (pos[0] === old[0] && pos[1] === old[1]) { binding.refresh(); return; }
     mapEditor.history.push({ id, before });
     const base = before?.base || binding.base;
-    if (pos[0] === Math.round(base[0] * 10) / 10 && pos[1] === Math.round(base[1] * 10) / 10) mapEditor.pending.delete(id);
-    else mapEditor.pending.set(id, { edit: before?.edit || item.edit, pos, base });
+    if (!before?.fields && pos[0] === Math.round(base[0] * 10) / 10 && pos[1] === Math.round(base[1] * 10) / 10) mapEditor.pending.delete(id);
+    else mapEditor.pending.set(id, { ...before, edit: before?.edit || item.edit, pos, base });
     refreshPositionEdits();
   });
   binding.refresh();
@@ -160,19 +337,23 @@ async function savePositionEdits() {
   let message = t("editor.saveFailed");
   let wrote = false;
   try {
-    const changes = [...mapEditor.pending.values()].map(({ edit, pos }) => ({ edit, x: pos[0], z: pos[1] }));
+    const changes = [...mapEditor.pending.values()].map(({ edit, pos, fields, delete: removed }) =>
+      ({ edit, x: pos[0], z: pos[1], ...(fields ? { fields } : {}), ...(removed ? { delete: true } : {}) }));
     const response = await fetch("/api/editor", {
       method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ changes }),
     });
     const result = await response.json();
     const saved = new Set((result.saved || []).map(editIdentity));
-    for (const id of saved) {
+    const acknowledged = new Set();
+    for (const [id, pending] of mapEditor.pending) {
+      if (!saved.has(editIdentity(pending.edit))) continue;
+      acknowledged.add(id);
       const moved = mapEditor.pending.get(id);
       const binding = mapEditor.bindings.get(id);
       if (binding && moved) binding.base = moved.pos.slice();
       mapEditor.pending.delete(id);
     }
-    mapEditor.history = mapEditor.history.filter((entry) => !saved.has(entry.id));
+    mapEditor.history = mapEditor.history.filter((entry) => !acknowledged.has(entry.id));
     wrote = saved.size > 0;
     message = response.ok && result.ok ? t("editor.saved") : t("editor.saveFailed");
   } catch (error) { /* Keep every unacknowledged move for retry or undo. */ }
@@ -442,6 +623,13 @@ function mapQuests(name) {
 let mapGeneration = 0;
 async function drawMap() {
   const generation = ++mapGeneration;
+  if (mapEditor.active) {
+    cancelMarkerDraft();
+    mapEditor.options = null;
+    mapEditor.newLayer?.remove();
+    mapEditor.newLayer = mapEditor.newLeaf = null;
+    updatePositionEditor(mapEditor.status?.textContent || "");
+  }
   mapEditor.bindings.clear();
   lootRevision++;
   lootController?.abort();
@@ -1600,6 +1788,15 @@ async function drawFeatures(leaf, m) {
     return; // 표시물을 못 받아도 지도와 퀘스트는 그대로
   }
   if (mapUI.leaflet !== leaf) return; // 그사이 다른 맵으로 바뀜
+  if (mapEditor.active) {
+    mapEditor.options = data.editorAdd || null;
+    mapEditor.heights = data.editorHeights || [];
+    leaf.on("click", (event) => {
+      if (mapEditor.placing && !mapEditor.saving && mapEditor.options) openMarkerForm(event.latlng);
+    });
+    refreshNewMarkers();
+    updatePositionEditor(mapEditor.status?.textContent || "");
+  }
   // card: true 면 링크가 든 '마우스 올림 창' (창 위로 옮겨도 안 사라짐), 아니면 보통 설명
   const add = (groupKey, p, icon, tooltip, card = false, options = {}) => {
     const marker = L.marker(gamePos(p), { icon, keyboard: false, ...options });

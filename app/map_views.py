@@ -322,6 +322,8 @@ def _enemy_features(map_key: str, bosses, translate) -> dict:
     applied = {}
     for name, override in overrides.items():
         group = bd.get(name)
+        if group is None and override.get("manual") is True:
+            group = bd.setdefault(name, {"positions": {}})
         if group is None:
             continue  # dev에 없는 이름은 추가하지 않는다
         # 게임 확인값만 나중에 추가된 dev 좌표보다 우선한다. 나머지는 좌표 누락 때만 쓴다.
@@ -366,8 +368,10 @@ def _enemy_features(map_key: str, bosses, translate) -> dict:
         # 같은 등장 구역에 dev 좌표가 하나라도 있으면 그 구역의 보완 좌표를 쓰지 않는다.
         if dev_zones.get(zone["spawn_location"], {}).get("positions"):
             continue
-        remaining = [mob for mob in zone["bosses"] if mob in terminal_bosses]
-        if map_key != "terminal" or not remaining:
+        manual = zone["spawn_location"].startswith("manual_")
+        valid_bosses = {b.get("mob") for b in _rows(bosses) if isinstance(b, dict)} if manual else terminal_bosses
+        remaining = [mob for mob in zone["bosses"] if mob in valid_bosses]
+        if (map_key != "terminal" and not manual) or not remaining:
             continue
         result["bossZones"].append({"name": zone["spawn_location"], "pos": _xzy(zone),
                                     "radius": zone["radius"], "bosses": [translate(mob) for mob in remaining],
@@ -407,6 +411,11 @@ def features(map_key: str) -> dict:
         manual = _manual_btr_stops().get(map_key) or {}
         for stop in manual.get("stops") or []:
             result["btrStops"].append({"name": stop["name"], "pos": _xzy(stop), "source": manual.get("source", "manual")})
+    known_stops = {stop["name"] for stop in result["btrStops"]}
+    for stop in corrections.section("btr_stops").get(map_key, {}).get("stops", []):
+        if stop.get("from") == "game" and stop.get("name") not in known_stops:
+            result["btrStops"].append({"name": stop["name"], "pos": _xzy(stop), "source": "game"})
+            known_stops.add(stop["name"])
     for e in m.get("extracts") or []:
         if e.get("position"):
             result["extracts"].append({

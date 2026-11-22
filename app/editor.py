@@ -20,6 +20,15 @@ _enabled = False
 _secret = secrets.token_bytes(32)
 _lock = threading.Lock()
 _MAP = re.compile(r"[a-z0-9][a-z0-9_-]{0,59}")
+_created = set()
+_add_context = {}
+_DELETE = object()
+_KINDS = {"key_spawn", "panel", "toolset", "explosive", "door", "lock", "building", "start"}
+
+
+def _identity(file, route, entry):
+    name = route[-1] if isinstance(route[-1], str) else entry.get("spawn_location", entry.get("name"))
+    return (file, tuple(route[:-1]), name)
 
 
 def enable():
@@ -114,10 +123,10 @@ def _attach(item, file, route, snapshot, seed=None):
     raw, data = snapshot
     entry = _entry(data, route)
     if entry is not None:
-        if not isinstance(entry, dict) or not all(_number(entry.get(k)) for k in ("x", "y", "z")):
+        if not isinstance(entry, dict) or not all(_number(entry.get(k)) for k in ("x", "z")) or not _number(entry.get("y", 0)):
             return
-        item["pos"] = [entry["x"], entry["z"], entry["y"]]
-        seed = None
+        item["pos"] = [entry["x"], entry["z"], entry.get("y", 0)]
+        seed = {"created": True} if _identity(file, route, entry) in _created else None
     elif seed is None:
         return
     key = {"file": file, "path": route, "revision": hashlib.sha256(raw).hexdigest(), "seed": seed}
@@ -143,6 +152,7 @@ def feature_keys(map_key, result):
     try:
         snapshot = _read(_target("corrections.json", ["enemy_spawns", map_key, "Editor"]))
         data = snapshot[1]
+        result["editorAdd"] = _add_keys(map_key, result, snapshot)
         for group, section, rows, name_field in (
                 ("extracts", "extracts", "extracts", "name_en"),
                 ("btrStops", "btr_stops", "stops", "name"),
@@ -166,6 +176,50 @@ def feature_keys(map_key, result):
     except (OSError, ValueError, RecursionError):
         pass
     return result
+
+
+def _add_keys(map_key, result, snapshot):
+    from app import tarkov_api
+    maps = tarkov_api.load("maps").get("maps", {})
+    base = next((m for m in maps.values() if isinstance(m, dict) and m.get("normalizedName") == map_key), {})
+    bosses = sorted({b["mob"] for b in base.get("bosses") or []
+                     if isinstance(b, dict) and isinstance(b.get("mob"), str)
+                     and (b["mob"].startswith("boss") or b["mob"] == "sectantPriest")
+                     and "infected" not in b["mob"].lower()})
+    heights = [item["pos"] for rows in result.values() if isinstance(rows, list)
+               for item in rows if isinstance(item, dict) and isinstance(item.get("pos"), list)
+               and len(item["pos"]) == 3 and all(_number(n) for n in item["pos"])]
+    guide = None
+    try:
+        guide = _read(_target("guides/" + map_key + ".json", ["points", "_"]))
+        if guide[1].get("map") != map_key or not isinstance(guide[1].get("points"), dict) or not isinstance(guide[1].get("steps"), list):
+            raise ValueError("guide")
+        heights.extend([p["x"], p["z"], p["y"]] for p in guide[1].get("points", {}).values()
+                       if isinstance(p, dict) and all(_number(p.get(k)) for k in ("x", "y", "z")))
+    except (OSError, ValueError):
+        guide = None
+    result_keys = {}
+    result["editorHeights"] = heights
+    for kind in ("bd", "boss", "extract", "btr", "guide"):
+        if kind == "guide" and guide is None:
+            continue
+        file = "guides/" + map_key + ".json" if kind == "guide" else "corrections.json"
+        raw, data = guide if kind == "guide" else snapshot
+        route = ["points", "_"] if kind == "guide" else ["enemy_spawns", map_key, "Editor"]
+        context = hashlib.sha256(json.dumps([map_key, heights], separators=(",", ":")).encode()).hexdigest()
+        _add_context[context] = heights
+        # Keep old tabs usable without unbounded growth in long editing sessions.
+        while len(_add_context) > 128:
+            del _add_context[next(iter(_add_context))]
+        seed = {"add": kind, "map": map_key, "bosses": bosses, "context": context}
+        if kind in ("extract", "btr"):
+            seed["names"] = [item.get("name") for item in result.get("extracts" if kind == "extract" else "btrStops", [])]
+        if kind == "guide":
+            seed["steps"] = [{"id": s["id"], "ko": s.get("ko", ""), "en": s.get("en", "")}
+                             for s in data.get("steps", []) if isinstance(s, dict) and isinstance(s.get("id"), str)]
+        key = {"file": file, "path": route, "revision": hashlib.sha256(raw).hexdigest(), "seed": seed}
+        result_keys[kind] = {**key, "signature": _signature(key)}
+    return result_keys
 
 
 def _patch(raw, updates):
@@ -222,6 +276,15 @@ def _patch(raw, updates):
     patches = []
 
     def dump(value, prefix, multiline):
+        def containers(item):
+            if isinstance(item, dict):
+                if item and all(type(k) is int for k in item):
+                    if list(item) != list(range(len(item))):
+                        raise ValueError("array")
+                    return [containers(v) for v in item.values()]
+                return {k: containers(v) for k, v in item.items()}
+            return item
+        value = containers(value)
         if not multiline:
             return json.dumps(value, ensure_ascii=False, allow_nan=False)
         return json.dumps(value, ensure_ascii=False, allow_nan=False, indent=indent).replace("\n", newline + prefix)
@@ -229,9 +292,14 @@ def _patch(raw, updates):
     def visit(route, changes):
         start, end, children = nodes[route]
         missing = {}
+        deleted = set()
         for key, value in changes.items():
             child = children.get(key)
-            if child is None:
+            if value is _DELETE:
+                if child is None:
+                    raise ValueError("missing")
+                deleted.add(key)
+            elif child is None:
                 missing[key] = value
             elif isinstance(value, dict):
                 if text[child[0]] not in "{[":
@@ -239,18 +307,38 @@ def _patch(raw, updates):
                 visit(route + (key,), value)
             else:
                 patches.append((child[0], child[1], dump(value, "", False)))
+        keys = list(children)
+        # Delete consecutive runs including exactly one adjacent separator.
+        index = 0
+        while index < len(keys):
+            if keys[index] not in deleted:
+                index += 1
+                continue
+            first = index
+            while index + 1 < len(keys) and keys[index + 1] in deleted:
+                index += 1
+            last = index
+            def member_start(k):
+                pos = start + 1 if k == 0 else whitespace(children[keys[k - 1]][1]) + 1
+                return whitespace(pos)
+            if last + 1 < len(keys):
+                left, right = member_start(first), member_start(last + 1)
+            elif first:
+                left, right = children[keys[first - 1]][1], children[keys[last]][1]
+            else:
+                left, right = start + 1, end - 1
+            patches.append((left, right, ""))
+            index += 1
         if missing:
-            if text[start] != "{":
-                raise ValueError("object")
             multiline = "\n" in text[start:end]
             line = text[text.rfind("\n", 0, start) + 1:start]
             parent_indent = re.match(r"[ \t]*", line)[0]
             prefix = parent_indent + indent
             separator = newline + prefix if multiline else " "
-            entries = (json.dumps(key, ensure_ascii=False) + ": " + dump(value, prefix, multiline)
+            entries = ((json.dumps(key, ensure_ascii=False) + ": " if text[start] == "{" else "") + dump(value, prefix, multiline)
                        for key, value in missing.items())
-            pos = next(reversed(children.values()))[1] if children else start + 1
-            added = ("," if children else "") + separator + ("," + separator).join(entries)
+            pos = end - 1 if deleted else next(reversed(children.values()))[1] if children else start + 1
+            added = ("," if len(children) > len(deleted) else "") + separator + ("," + separator).join(entries)
             if not children and multiline:
                 added += newline + parent_indent
             patches.append((pos, pos, added))
@@ -292,6 +380,91 @@ def _invalidate():
         guides._cached.clear()
 
 
+def _add_change(plan, key, change, today):
+    seed, fields = key["seed"], change.get("fields")
+    kind, map_key = seed["add"], seed["map"]
+    if not isinstance(fields, dict):
+        raise ValueError("fields")
+    allowed = {"note"} | {"bd": {"count"}, "boss": {"bosses"}, "extract": {"name", "faction"},
+                          "btr": {"name"}, "guide": {"kind", "label_ko", "label_en", "candidate", "steps"}}[kind]
+    if set(fields) - allowed:
+        raise ValueError("fields")
+    def text(field, required=True):
+        value = fields.get(field, "")
+        if not isinstance(value, str) or len(value) > 1000 or (required and not value.strip()):
+            raise ValueError("text")
+        return value.strip()
+    x, z = round(change["x"], 1), round(change["z"], 1)
+    if seed["context"] not in _add_context:
+        raise ValueError("stale-context")
+    near = min(_add_context[seed["context"]], key=lambda p: (p[0] - x)**2 + (p[1] - z)**2, default=[0, 0, 0])
+    entry = {"x": x, "y": near[2], "z": z, "note": text("note", False), "from": "game", "checked": today}
+    data = plan["data"]
+    if kind == "guide":
+        subtype = fields.get("kind")
+        if not isinstance(subtype, str) or subtype not in _KINDS or type(fields.get("candidate")) is not bool:
+            raise ValueError("kind")
+        entry.update(kind=subtype, label_ko=text("label_ko"), label_en=text("label_en"), candidate=fields["candidate"])
+        if re.search(r"[\uac00-\ud7ff]", entry["label_en"]):
+            raise ValueError("english")
+        container = data["points"]
+        route = ["points"]
+        prefix = subtype + "_"
+    else:
+        section, rows = {"bd": ("enemy_spawns", None), "boss": ("boss_zones", "zones"),
+                         "extract": ("extracts", "extracts"), "btr": ("btr_stops", "stops")}[kind]
+        maps = data.setdefault(section, {})
+        if map_key not in maps:
+            maps[map_key] = {} if rows is None else {"source": "game", "checked": today, rows: []}
+            if rows is not None:
+                plan["updates"].extend([((section, map_key, "source"), "game"), ((section, map_key, "checked"), today)])
+        container = maps[map_key] if rows is None else maps[map_key][rows]
+        route = [section, map_key] + ([rows] if rows else [])
+        prefix = "manual_"
+    used = set(container) if isinstance(container, dict) else {row.get("spawn_location", row.get("name")) for row in container}
+    number = 1
+    while prefix + str(number) in used:
+        number += 1
+    name = prefix + str(number)
+    if kind == "bd":
+        n = fields.get("count")
+        if type(n) is not int or not 1 <= n <= 20:
+            raise ValueError("count")
+        entry.update(count=[n, n], manual=True)
+    elif kind == "boss":
+        bosses = fields.get("bosses")
+        if not isinstance(bosses, list) or not bosses or any(b not in seed["bosses"] for b in bosses):
+            raise ValueError("bosses")
+        entry.update(radius=10, bosses=list(dict.fromkeys(bosses)), spawn_location=name)
+    elif kind in ("extract", "btr"):
+        name = text("name")
+        if name in used or name in seed.get("names", []):
+            raise ValueError("duplicate-name")
+        entry["name"] = name
+        if kind == "extract":
+            if fields.get("faction") not in ("pmc", "scav", "shared"):
+                raise ValueError("faction")
+            if re.search(r"[\u1100-\u11ff\u3130-\u318f\uac00-\ud7ff]", name):
+                raise ValueError("english")
+            entry.update(name_en=name, faction=fields["faction"])
+    route.append(name if isinstance(container, dict) else len(container))
+    if isinstance(container, dict):
+        container[name] = entry
+    else:
+        container.append(entry)
+    plan["updates"].append((tuple(route), entry))
+    plan["created"].append(_identity(key["file"], route, entry))
+    if kind == "guide":
+        selected = fields.get("steps", [])
+        if not isinstance(selected, list) or any(s not in [row["id"] for row in seed["steps"]] for s in selected):
+            raise ValueError("steps")
+        for index, step in enumerate(data.get("steps", [])):
+            if step.get("id") in selected:
+                refs = step.setdefault("points", [])
+                plan["updates"].append((("steps", index, "points", len(refs)), name))
+                refs.append(name)
+
+
 def save(changes):
     """Validate the entire batch first. Report committed files even on partial IO failure."""
     if not enabled():
@@ -303,7 +476,7 @@ def save(changes):
         seen = set()
         today = date.today().isoformat()
         for change in changes:
-            if not isinstance(change, dict) or set(change) != {"edit", "x", "z"}:
+            if not isinstance(change, dict) or set(change) not in ({"edit", "x", "z"}, {"edit", "x", "z", "fields"}, {"edit", "x", "z", "delete"}):
                 raise ValueError("change")
             key = change["edit"]
             if not isinstance(key, dict) or set(key) != {"file", "path", "revision", "seed", "signature"}:
@@ -313,22 +486,43 @@ def save(changes):
                 raise ValueError("signature")
             path = _target(key["file"], key["path"])
             identity = (key["file"], tuple(key["path"]))
-            if identity in seen or not all(_number(change[k]) and abs(change[k]) <= 1000000 for k in ("x", "z")):
+            adding = isinstance(key["seed"], dict) and "add" in key["seed"]
+            if (identity in seen and not adding) or not all(_number(change[k]) and abs(change[k]) <= 1000000 for k in ("x", "z")):
                 raise ValueError("coordinates")
             seen.add(identity)
             if path not in plans:
                 raw, data = _read(path)
-                plans[path] = {"raw": raw, "data": data, "updates": [], "keys": []}
+                plans[path] = {"raw": raw, "data": data, "updates": [], "keys": [], "created": []}
             plan = plans[path]
             if hashlib.sha256(plan["raw"]).hexdigest() != key["revision"]:
                 raise ValueError("stale")
+            if adding:
+                if "delete" in change:
+                    raise ValueError("operation")
+                _add_change(plan, key, change, today)
+                plan["keys"].append(key)
+                continue
+            if "fields" in change:
+                raise ValueError("operation")
             entry = _entry(plan["data"], key["path"])
+            if "delete" in change:
+                if change["delete"] is not True or not isinstance(entry, dict) or key["seed"] != {"created": True} or _identity(key["file"], key["path"], entry) not in _created:
+                    raise ValueError("delete")
+                plan["updates"].append((tuple(key["path"]), _DELETE))
+                if key["file"].startswith("guides/"):
+                    for section in ("prep", "steps"):
+                        for index, step in enumerate(plan["data"].get(section, [])):
+                            for ref_index, ref in enumerate(step.get("points", [])):
+                                if ref == key["path"][-1]:
+                                    plan["updates"].append(((section, index, "points", ref_index), _DELETE))
+                plan["keys"].append(key)
+                continue
             updates = {"x": round(change["x"], 1), "z": round(change["z"], 1), "from": "game", "checked": today}
             if entry is None:
                 if key["file"] != "corrections.json" or key["path"][0] != "enemy_spawns" or not isinstance(key["seed"], dict):
                     raise ValueError("missing")
                 updates = {**key["seed"], **updates}
-            elif not isinstance(entry, dict) or not all(_number(entry.get(k)) for k in ("x", "y", "z")):
+            elif not isinstance(entry, dict) or not all(_number(entry.get(k)) for k in ("x", "z")) or not _number(entry.get("y", 0)):
                 raise ValueError("position")
             # Existing y, count, merge_into, descriptions and file-level metadata stay byte-for-byte intact.
             plan["updates"].extend((tuple(key["path"]) + (field,), value) for field, value in updates.items())
@@ -359,6 +553,7 @@ def save(changes):
                         if path.read_bytes() != plan["raw"]:
                             raise ValueError("stale")
                         os.replace(temp, path)
+                        _created.update(plan["created"])
                         saved.extend(plan["keys"])
                     finally:
                         if temp is not None:

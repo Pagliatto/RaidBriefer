@@ -192,7 +192,7 @@ def check_boss_zones(data) -> int:
         if not isinstance(entry, dict):
             problems.append(f"boss_zones/{map_key}: 객체 필요")
             continue
-        for field in ("source", "link", "checked"):
+        for field in (("source", "checked") if entry.get("source") == "game" else ("source", "link", "checked")):
             if not isinstance(entry.get(field), str) or not entry[field].strip():
                 problems.append(f"boss_zones/{map_key}/{field}: 출처 정보 필요")
         try:
@@ -203,7 +203,7 @@ def check_boss_zones(data) -> int:
         except ValueError:
             problems.append(f"boss_zones/{map_key}/checked: 실제 날짜 YYYY-MM-DD 필요")
         rows = entry.get("zones")
-        if not isinstance(rows, list) or not rows:
+        if not isinstance(rows, list):
             problems.append(f"boss_zones/{map_key}/zones: 비어 있지 않은 목록 필요")
             continue
         for index, zone in enumerate(rows):
@@ -218,7 +218,7 @@ def check_boss_zones(data) -> int:
             if not isinstance(zone.get("spawn_location"), str) or not zone["spawn_location"].strip():
                 problems.append(f"{where}/spawn_location: dev 등장 구역 이름 필요")
             bosses = zone.get("bosses")
-            if not isinstance(bosses, list) or not bosses or any(not isinstance(mob, str) or not mob.startswith("boss") for mob in bosses):
+            if not isinstance(bosses, list) or not bosses or any(not isinstance(mob, str) or not (mob.startswith("boss") or mob == "sectantPriest") for mob in bosses):
                 problems.append(f"{where}/bosses: 보스 mob id 목록 필요")
     print(f"\n보스 구역 보완 데이터: 문제 {len(problems)}개")
     for problem in problems:
@@ -237,7 +237,7 @@ def check_enemy_spawns(data, maps) -> int:
         if map_key.startswith("_"):
             continue
         where_map = f"enemy_spawns/{map_key}"
-        if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", map_key) or not isinstance(groups, dict) or not groups:
+        if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", map_key) or not isinstance(groups, dict):
             problems.append(f"{where_map}: 맵 이름과 비어 있지 않은 객체 필요")
             continue
         dev_maps = [m for m in maps.values() if isinstance(m, dict) and m.get("normalizedName") == map_key]
@@ -255,7 +255,8 @@ def check_enemy_spawns(data, maps) -> int:
             problems.append(f"{where_map}: dev에 없는 맵")
         for name, entry in groups.items():
             where = f"{where_map}/{name}"
-            if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*", name) or name not in dev_names:
+            manual = isinstance(entry, dict) and entry.get("manual") is True and re.fullmatch(r"manual_[1-9][0-9]*", name)
+            if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*", name) or (name not in dev_names and not manual):
                 problems.append(f"{where}: dev Black Division 등장 구역 이름 필요")
             if not isinstance(entry, dict):
                 problems.append(f"{where}: 객체 필요")
@@ -269,7 +270,7 @@ def check_enemy_spawns(data, maps) -> int:
                 problems.append(f"{where}/count: 양의 정수 [최소, 최대] 필요")
             if entry.get("from") not in ("game", "wiki"):
                 problems.append(f"{where}/from: game 또는 wiki 필요")
-            if not isinstance(entry.get("note"), str) or not entry["note"].strip():
+            if not isinstance(entry.get("note"), str) or (not entry["note"].strip() and not manual):
                 problems.append(f"{where}/note: 보정 근거 필요")
             try:
                 checked = entry.get("checked", "")
@@ -278,7 +279,7 @@ def check_enemy_spawns(data, maps) -> int:
                 datetime.strptime(checked, "%Y-%m-%d")
             except ValueError:
                 problems.append(f"{where}/checked: 실제 날짜 YYYY-MM-DD 필요")
-            for flag in ("inside", "estimated"):
+            for flag in ("inside", "estimated", "manual"):
                 if flag in entry and type(entry[flag]) is not bool:
                     problems.append(f"{where}/{flag}: 참/거짓 필요")
             if "merge_into" in entry:

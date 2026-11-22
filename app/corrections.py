@@ -101,12 +101,12 @@ def manual_enemy_spawns(map_key: str) -> dict:
         counts = entry.get("count")
         if not isinstance(counts, list) or len(counts) != 2 or not all(type(n) is int and n >= 1 for n in counts) or counts[0] > counts[1]:
             continue
-        if not isinstance(entry.get("note"), str) or not entry["note"].strip():
+        if not isinstance(entry.get("note"), str) or (not entry["note"].strip() and entry.get("manual") is not True):
             continue
         target = entry.get("merge_into")
         if target is not None and (not isinstance(target, str) or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*", target) or target == name):
             continue
-        if any(flag in entry and type(entry[flag]) is not bool for flag in ("inside", "estimated")):
+        if any(flag in entry and type(entry[flag]) is not bool for flag in ("inside", "estimated", "manual")):
             continue
         result[name] = {**entry, "count": list(counts)}
     # 다단계·순환 병합은 허용하지 않는다. 잘못된 보정 때문에 dev 구역을 잃지 않게 한다.

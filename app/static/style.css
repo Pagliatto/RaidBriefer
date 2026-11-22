@@ -2363,3 +2363,15 @@ body.position-saving #map-view { pointer-events: none; }
   font-size: 10px; line-height: 1.3; white-space: nowrap; pointer-events: none;
 }
 .mk-guide-extract { background: var(--ok); }
+.position-add-form {
+  position: fixed; z-index: 2000; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: min(420px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow: auto;
+  box-sizing: border-box; padding: 16px; border: 1px solid var(--accent);
+  border-radius: var(--radius); background: var(--surface-2); color: var(--text);
+}
+.position-add-form label { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; overflow-wrap: anywhere; }
+.position-add-form input, .position-add-form select { box-sizing: border-box; width: 100%; min-width: 0; max-width: 100%; }
+.position-add-form input[type="checkbox"] { width: auto; align-self: flex-start; }
+.position-add-actions { display: flex; justify-content: center; gap: 8px; }
+.position-add-form button, body.position-edit .leaflet-popup button { text-align: center; justify-content: center; }
+body.position-edit .position-deleted { display: none; }
