@@ -178,6 +178,8 @@ def check_places(chapters, map_keys):
     for sid in data.get("no_place", []):
         if sid not in steps:
             report("places", f"no_place 에 없는 단계: {sid}")
+        if places.get(sid):
+            report("places", f"no_place 인데 장소도 있음: {sid}")
     for sid, link in (data.get("extract_links") or {}).items():
         maps = steps.get(sid, [])
         maps = maps if isinstance(maps, list) else [maps]

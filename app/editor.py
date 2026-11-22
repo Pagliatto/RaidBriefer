@@ -517,6 +517,8 @@ def _add_change(plan, key, change, today):
         step = fields.get("step")
         if not isinstance(step, str) or step not in index:
             raise ValueError("step")
+        if (data.get("places") or {}).get(step):
+            raise ValueError("has-place")  # 장소가 있는 단계는 '장소 불필요'로 못 넣음 (모순)
         rows = data.setdefault("no_place", [])
         if not isinstance(rows, list) or step in rows:
             raise ValueError("duplicate-no-place")
@@ -530,6 +532,8 @@ def _add_change(plan, key, change, today):
         maps = overrides.get(step) if isinstance(step, str) and isinstance(overrides.get(step), list) else index.get(step, {}).get("maps")
         if not isinstance(step, str) or step not in index or map_key not in (maps or []):
             raise ValueError("step")
+        if step in (data.get("no_place") or []):
+            raise ValueError("no-place")  # '장소 불필요' 단계에는 장소를 못 넣음 (모순)
         if type(fields.get("candidate", False)) is not bool:
             raise ValueError("candidate")
         # y: 화면에서 고른 층의 높이 (없으면 가장 가까운 표시의 높이)

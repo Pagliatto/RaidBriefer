@@ -818,7 +818,7 @@ function showStoryWalk() {
   row.append(
     act("editor.walkPrev", () => { walk.index = Math.max(0, walk.index - 1); showStoryWalk(); }),
     act("editor.walkNext", () => advanceStoryWalk(), "story-walk-next"),
-    act("editor.walkNoPlace", storyWalkNoPlace),
+    act("editor.walkNoPlace", storyWalkNoPlace, placed ? "story-walk-blocked" : ""), // 장소를 넣은 단계는 못 누름
     act("editor.walkStop", stopStoryWalk),
   );
   card.append(row);
@@ -873,6 +873,9 @@ function storyWalkPlace(latlng) {
   const same = [...mapEditor.pending.values()].some((p) => p.edit?.seed?.add === "story" && p.fields?.step === item.step.id
     && p.map === mapUI.current?.key && Math.hypot(p.pos[0] - x, p.pos[1] - z) < 3);
   if (same) return;
+  // '장소 불필요'로 표시한 단계 (저장 전 포함)에는 못 넣음
+  if ((story.data?.noPlace || []).includes(item.step.id) || [...mapEditor.pending.values()].some((p) =>
+    p.edit?.seed?.add === "noplace" && p.fields?.step === item.step.id)) return;
   const pos = [x, z, floorHeight(x, z)];
   mapEditor.serial = (mapEditor.serial || 0) + 1;
   const id = "draft:" + mapEditor.serial;
@@ -900,6 +903,7 @@ function storyWalkNoPlace() {
   const item = storyWalkItem();
   const edit = mapEditor.options?.noplace;
   if (!item || !edit || !walkMaps(item).includes(mapUI.current?.key) || edit.seed?.map !== mapUI.current?.key) return;
+  if (mapUI.maps.some((m) => storyWalkUsed(item, m.key))) return; // 장소를 넣은 단계 ('장소 불필요'와 모순)
   const already = [...mapEditor.pending.values()].some((p) => p.edit?.seed?.add === "noplace" && p.fields?.step === item.step.id);
   // (같은 글 단계들은 저장할 때 함께 들어감: twins)
   if (already) { advanceStoryWalk(); return; } // 이미 '장소 불필요'로 넣은 단계 (이전으로 돌아온 경우)
