@@ -797,15 +797,31 @@ function storyWalkPlace(latlng) {
   const item = storyWalkItem();
   const edit = mapEditor.options?.story;
   if (!item || !edit || mapUI.current?.key !== item.map || edit.seed?.map !== item.map) return; // 맵이 바뀌는 중이면 무시 (옛 맵 열쇠로 넣지 않기)
-  const near = (mapEditor.heights || []).reduce((best, p) =>
-    !best || Math.hypot(p[0] - latlng.lng, p[1] - latlng.lat) < Math.hypot(best[0] - latlng.lng, best[1] - latlng.lat) ? p : best, null);
-  const pos = [Math.round(latlng.lng * 10) / 10, Math.round(latlng.lat * 10) / 10, near?.[2] || 0];
+  const x = Math.round(latlng.lng * 10) / 10;
+  const z = Math.round(latlng.lat * 10) / 10;
+  // 같은 단계를 거의 같은 자리에 또 누르면 무시 (겹친 핀이 쌓이지 않게)
+  const same = [...mapEditor.pending.values()].some((p) => p.edit?.seed?.add === "story" && p.fields?.step === item.step.id
+    && p.map === item.map && Math.hypot(p.pos[0] - x, p.pos[1] - z) < 3);
+  if (same) return;
+  const pos = [x, z, floorHeight(x, z)];
   mapEditor.serial = (mapEditor.serial || 0) + 1;
   const id = "draft:" + mapEditor.serial;
-  mapEditor.pending.set(id, { edit, fields: { step: item.step.id, candidate: false, note: "" }, pos, base: pos.slice(), map: item.map, label: item.step.ko });
+  mapEditor.pending.set(id, { edit, fields: { step: item.step.id, candidate: false, note: "", y: pos[2] }, pos, base: pos.slice(), map: item.map, label: item.step.ko });
   mapEditor.history.push({ id });
   refreshPositionEdits();
   showStoryWalk(); // 넣은 개수 갱신 (다음 단계는 [다음] 버튼으로)
+}
+
+// 지금 보고 있는 층의 높이: 그 층에 있는 가장 가까운 표시의 높이, 없으면 그 층 범위의 가운데
+function floorHeight(x, z) {
+  const heights = mapEditor.heights || [];
+  const nearest = (list) => list.reduce((best, p) =>
+    !best || Math.hypot(p[0] - x, p[1] - z) < Math.hypot(best[0] - x, best[1] - z) ? p : best, null);
+  const here = nearest(heights.filter((p) => floorOf([x, z, p[2]]) === mapUI.floor));
+  if (here) return here[2];
+  const range = mapUI.floor != null ? mapUI.view?.layers?.[mapUI.floor]?.extents?.[0]?.height : null;
+  if (Array.isArray(range) && range.every(Number.isFinite)) return Math.min(range[0] + 1.5, (range[0] + range[1]) / 2); // 그 층 바닥 조금 위
+  return nearest(heights)?.[2] || 0;
 }
 
 function storyWalkNoPlace() {
@@ -2172,7 +2188,8 @@ async function drawFeatures(leaf, m) {
     let down = null;
     box.addEventListener("pointerdown", (event) => { down = [event.clientX, event.clientY]; }, true);
     box.addEventListener("click", (event) => {
-      if (!mapEditor.walk || mapUI.leaflet !== leaf || event.target.closest(".leaflet-control, .leaflet-popup")) return;
+      // 스토리 핀(새로 넣은 것 포함)은 눌러서 팝업([삭제])을 열 수 있게 그대로 둠
+      if (!mapEditor.walk || mapUI.leaflet !== leaf || event.target.closest(".leaflet-control, .leaflet-popup, .mk-story")) return;
       if (down && Math.hypot(event.clientX - down[0], event.clientY - down[1]) > 5) return;
       event.stopPropagation(); // 아이콘 팝업 대신 장소 넣기
       if (!mapEditor.saving) storyWalkPlace(leaf.mouseEventToLatLng(event));

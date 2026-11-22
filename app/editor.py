@@ -465,7 +465,7 @@ def _add_change(plan, key, change, today):
         raise ValueError("fields")
     allowed = {"note"} | {"bd": {"count"}, "boss": {"bosses"}, "extract": {"name", "faction"},
                           "btr": {"name"}, "guide": {"kind", "label_ko", "label_en", "candidate", "steps"},
-                          "story": {"step", "candidate"}, "noplace": {"step"}}[kind]
+                          "story": {"step", "candidate", "y"}, "noplace": {"step"}}[kind]
     if set(fields) - allowed:
         raise ValueError("fields")
     def text(field, required=True):
@@ -497,7 +497,11 @@ def _add_change(plan, key, change, today):
             raise ValueError("step")
         if type(fields.get("candidate", False)) is not bool:
             raise ValueError("candidate")
-        place = {"map": map_key, "x": x, "y": near[2], "z": z, "candidate": fields.get("candidate", False),
+        # y: 화면에서 고른 층의 높이 (없으면 가장 가까운 표시의 높이)
+        y = fields.get("y", near[2])
+        if not _number(y) or abs(y) > 10000:
+            raise ValueError("y")
+        place = {"map": map_key, "x": x, "y": round(y, 2), "z": z, "candidate": fields.get("candidate", False),
                  "note": entry["note"], "from": "game", "checked": today}
         places = data.setdefault("places", {})
         rows = places.setdefault(step, [])
