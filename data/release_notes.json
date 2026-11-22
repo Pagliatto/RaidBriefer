@@ -110,5 +110,20 @@
       "The Terminal map is rotated to match common guide maps (north on the right)",
       "Lighthouse: the Road to Military Base V-Ex extract now appears on the map and for quest extract objectives"
     ]
+  },
+  "1.0.13": {
+    "date": "2026-11-22",
+    "ko": [
+      "켤 때 저장해 둔 게임 데이터를 바로 보여 주고, 새 데이터 확인은 뒤에서 해요 (인터넷이 느릴 때 훨씬 빨리 켜져요)",
+      "지도 부품을 프로그램에 넣어서 인터넷이 느리거나 끊겨도 지도가 떠요",
+      "같은 맵에 다시 들어가도 새 레이드로 알아차리고, 공략을 못 받아 오면 다시 시도해요",
+      "로그 폴더를 복사해 넣었거나 PC 시계가 바뀌어도 지금 쓰는 로그를 올바르게 찾아요"
+    ],
+    "en": [
+      "Starts with your saved game data right away and checks for new data in the background (much faster on slow internet)",
+      "The map library is now built in, so the map works even when the internet is slow or down",
+      "Re-entering the same map is recognized as a new raid, and a failed guide load is retried",
+      "Finds the current game log correctly even after copying log folders or changing the PC clock"
+    ]
   }
 }
