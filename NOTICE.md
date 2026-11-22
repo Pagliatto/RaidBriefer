@@ -13,7 +13,7 @@ belong to Battlestate Games Limited.
 | 대상 | 라이선스 |
 |---|---|
 | 소스 코드 (`app/`, `tools/`, 배치 파일) | **MIT** — `LICENSE` 참고 |
-| 스토리 데이터 (`data/story/`) | **CC BY-NC-SA 3.0** — 공식 위키 내용을 번역·요약한 2차 저작물 (아래 참고) |
+| 스토리 데이터 (`data/story/`) | **CC BY-NC-SA 3.0** — 공식 위키 내용을 번역·요약한 2차 저작물 (아래 참고). 스토리 장소 위치(`places.json`)는 만든 사람이 게임에서 직접 확인해 찍은 값 |
 | Terminal 공략 (`data/guides/`) | **CC BY-NC-SA 3.0** — 공식 위키 내용을 번역·요약한 2차 저작물 (스토리 데이터와 같은 조건) |
 | 퀘스트·지도 보정 (`data/corrections.json`) | **CC BY-NC-SA 3.0** (위키 기반 내용) — 퀘스트 목표의 번역과 탈출구·BTR 정류장·보스 구역·적 등장 위치. 위치는 공식 위키의 RE3MR / Jindouz 지도에서 읽거나 게임에서 직접 확인한 값 (항목별 출처 기록) |
 | 로고·아이콘 (`docs/logo/`, `app/static/icons/`) | MIT (이 프로젝트에서 만든 것) |

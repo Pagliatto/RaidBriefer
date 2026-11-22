@@ -136,5 +136,20 @@
       "The program now starts at the default size even if its window size file is damaged",
       "After an update, the backup of the previous version is cleaned up only once the new version's screen has loaded"
     ]
+  },
+  "1.1.0": {
+    "date": "2026-11-23",
+    "ko": [
+      "지도: 지금 할 스토리 단계의 장소가 책 모양 핀으로 나와요 (층까지 맞춰서). 지도 목록의 스토리 단계를 누르면 그 장소로 가요",
+      "스토리 탭: 장소가 있는 단계에 '지도에서 보기' 버튼이 생겼어요",
+      "지도: 쇄빙선에서 위키의 층별 배 지도로 가는 링크가 생겼어요",
+      "Dangerous Props 퀘스트 위치를 tarkov.dev 데이터로 보여 줘요"
+    ],
+    "en": [
+      "Map: places for your current story steps show as book pins, on the right floor. Click a story step in the map list to jump to its place",
+      "Story tab: steps with a place have a 'View on map' button",
+      "Map: Icebreaker has a link to the wiki's deck-by-deck ship map",
+      "Dangerous Props quest locations now come from tarkov.dev"
+    ]
   }
 }

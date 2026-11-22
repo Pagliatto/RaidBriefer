@@ -39,7 +39,8 @@ The goal is that you barely have to touch it.
 - **Your quest objectives are numbered on the map**, together with extracts, transits, locked doors, key and Bitcoin spawns, and floors. Other markers use colored icons, with names on hover.
 - **Map list**: check off story steps for the current map; hover a transit for its destination, or see reachable maps and their quest counts at the bottom of the list.
 - **Map tools**: hover locked doors and key spawns for key details and wiki links; the needed-items row can be collapsed.
-- **BTR**: stops on Streets of Tarkov, Woods and Lighthouse, plus a link to a BTR tracker.
+- **BTR**: stops on Streets of Tarkov, Woods and Lighthouse, plus a link to a BTR tracker. Icebreaker has a link to the wiki's deck-by-deck ship map.
+- **Story places on the map**: pins show where your current story steps happen (on the right floor), and the Story tab can jump to them on the map.
 - **Missing extracts** added from the wiki: Lighthouse's Road to Military Base V-Ex and Terminal's Zubr Boat.
 - **Terminal guide**: entry preparation and steps in the map list; click a step to see its places on the map.
 - **Terminal markers**: key, electrical panel, toolset and explosive spots, Black Division spawns with head counts, the boss location and Zubr Boat; the map matches common guide maps, with north on the right.
@@ -164,7 +165,7 @@ For errors, these help a lot:
 ## License and credits
 
 - Source code: **MIT** ([LICENSE](LICENSE))
-- Storyline data (`data/story/`) and Terminal guide (`data/guides/`): summarized and translated from the official wiki — **CC BY-NC-SA 3.0**
+- Storyline data (`data/story/`) and Terminal guide (`data/guides/`): summarized and translated from the official wiki — **CC BY-NC-SA 3.0**. Story place positions (`data/story/places.json`) were placed by the author from in-game play.
 - Quest and map corrections (`data/corrections.json`): wiki-derived content under **CC BY-NC-SA 3.0**; includes extract, BTR stop, boss zone and enemy spawn positions read from RE3MR / Jindouz maps on the official wiki or checked in game.
 - Map images: tarkov.dev SVG Maps — **CC BY-NC-SA 4.0**
 - Data: [tarkov.dev](https://tarkov.dev) (The Hideout); quest names/maps missing there: [SPT](https://github.com/SP-Tushonka/server-csharp) data files
