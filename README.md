@@ -36,11 +36,11 @@
 The goal is that you barely have to touch it.
 
 - **When you load into a map, it switches to that map automatically.** After the raid it goes back to Home. It also tracks Transits.
-- **Your quest objectives are numbered on the map**, together with extracts, transits, locked doors, key and Bitcoin spawns, and floors. Other markers use colored icons, with names on hover.
-- **Map list**: check off story steps for the current map; hover a transit for its destination, or see reachable maps and their quest counts at the bottom of the list.
+- **Your quest objectives are numbered on the map**, together with extracts, transits, locked doors, key and Bitcoin spawns, and floors. Other markers use colored icons grouped by meaning (exits, vehicles, locked, items, danger), with names on hover.
+- **To-do list** beside the map: story steps and quests for the current map. Check off story steps right there (even for chapters you haven't started, with where they start); collapse big sections; hover a transit for its destination, or see reachable maps and their quest counts at the bottom.
 - **Map tools**: hover locked doors and key spawns for key details and wiki links; the needed-items row can be collapsed.
 - **BTR**: stops on Streets of Tarkov, Woods and Lighthouse, plus a link to a BTR tracker. Icebreaker has a link to the wiki's deck-by-deck ship map.
-- **Story places on the map**: pins show where your current story steps happen (on the right floor), and the Story tab can jump to them on the map.
+- **Story places on the map**: diamond pins show where the remaining steps of each chapter's current section happen (on the right floor; the next place is highlighted), and the Story tab can jump to them on the map.
 - **Missing extracts** added from the wiki: Lighthouse's Road to Military Base V-Ex and Terminal's Zubr Boat.
 - **Terminal guide**: entry preparation and steps in the map list; click a step to see its places on the map.
 - **Terminal markers**: key, electrical panel, toolset and explosive spots, Black Division spawns with head counts, the boss location and Zubr Boat; the map matches common guide maps, with north on the right.

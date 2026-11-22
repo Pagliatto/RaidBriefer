@@ -151,5 +151,22 @@
       "Map: Icebreaker has a link to the wiki's deck-by-deck ship map",
       "Dangerous Props quest locations now come from tarkov.dev"
     ]
+  },
+  "1.2.0": {
+    "date": "2026-11-23",
+    "ko": [
+      "지도 옆 목록이 '할 일'이 됐어요. 시작 안 한 스토리 챕터도 시작 조건과 함께 보이고, 큰 칸(스토리·퀘스트 등)을 접을 수 있어요",
+      "스토리 핀이 챕터마다 현재 구간의 남은 단계를 모두 보여 줘요. 다음 갈 곳은 진하게, 나머지는 흐리게",
+      "지도 표시 색을 뜻별로 정리했어요. 스토리 장소는 크림색 마름모, 터미널 공략 핀도 같은 규칙",
+      "거의 쓰지 않던 '기타 귀중품' 표시를 없앴어요",
+      "스토리 카드의 '현재 단계'를 '현재 구간'으로 바꿨어요"
+    ],
+    "en": [
+      "The list beside the map is now a To-do list: story chapters you haven't started show with where they start, and big sections can be collapsed",
+      "Story pins show every remaining step of each chapter's current section; the next place is highlighted, the rest are dimmed",
+      "Map marker colors are grouped by meaning; story places are cream diamonds, and Terminal guide pins follow the same rule",
+      "Removed the rarely used Valuables markers",
+      "The story card's 'Current' label now says 'Current section'"
+    ]
   }
 }
