@@ -706,6 +706,29 @@ function currentStoryChapters(m = mapUI.current) {
     entry.maps.includes(m.name) && !covered.has(entry.step.id)) })).filter((c) => c.entries.length);
 }
 
+// 지도 핀용: 모든 챕터(시작 안 한 챕터 포함)의 현재 구간에서 체크 안 된 단계 (선택 단계 포함, 고른 갈림길만).
+// 챕터마다 이 맵에 장소가 있는 첫 단계가 current=true (진하게 = 다음 갈 곳), 나머지는 흐리게.
+// (2026-11-23 사용자: 첫 단계에 장소가 없으면 핀이 안 보이던 문제)
+function storyPinSteps(m = mapUI.current) {
+  if (!m || typeof visibleItems !== "function" || typeof story === "undefined" || !story.data) return [];
+  const covered = new Set((currentGuide()?.steps || []).map((step) => step.story_step).filter(Boolean));
+  const out = [];
+  for (const ch of story.data.chapters || []) {
+    const { items } = visibleItems(ch);
+    let first = true;
+    const unfinished = items.filter((it) => it.type === "section" && !isSectionDone(it));
+    unfinished.filter((it, index) => index === 0 || isSectionStarted(it)).forEach((it) => it.steps.forEach((step) => {
+      if (isStepDone(step) || covered.has(step.id)) return;
+      const maps = step.map_names && step.map_names.length ? step.map_names : (it.sec.map_names || []);
+      if (!maps.includes(m.name)) return;
+      const here = storyPlacesFor(step.id, m.key).length > 0;
+      out.push({ s: { ch }, entry: { step, section: it.sec }, current: here && first });
+      if (here) first = false;
+    }));
+  }
+  return out;
+}
+
 function storyPlaceEntry(id) {
   for (const ch of story.data?.chapters || []) {
     for (const section of ch.sections || []) {
@@ -1083,7 +1106,7 @@ function storyPinEntries() {
       .filter((id) => storyPlacesFor(id, mapUI.current?.key).length)
       .map(storyPlaceEntry).filter(Boolean);
   }
-  const entries = currentStoryChapters().flatMap(({ s, entries }) => entries.map((entry) => ({ s, entry })));
+  const entries = storyPinSteps();
   // explicit 이 없고 맵도 아직 안 골라졌을 때 undefined === undefined 로 통과하지 않게
   if (mapStory.explicit && mapStory.explicit.map === mapUI.current?.key && !entries.some(({ entry }) => entry.step.id === mapStory.explicit.id)) {
     const found = storyPlaceEntry(mapStory.explicit.id);
@@ -1110,11 +1133,12 @@ function drawStoryPins() {
   mapUI.floorItems = (mapUI.floorItems || []).filter((item) => !item.story);
   mapStory.markers = [];
   if (mapUI.leaflet && mapUI.groups?.story) {
-    storyPinEntries().forEach(({ s, entry }) => {
+    storyPinEntries().forEach(({ s, entry, current }) => {
       storyPlacesFor(entry.step.id, mapUI.current.key).forEach((point) => {
         const pos = [point.x, point.z, point.y];
         const icon = markerIcon("story", "book-open", 20);
         if (point.candidate) icon.options.className += " guide-candidate";
+        if (current === false) icon.options.className += " story-later"; // 현재 단계가 아닌 단계: 조금 흐리게
         const label = [s.ch.name, entry.step.ko, point.note,
           point.candidate ? t("map.guideCandidate") : ""].filter(Boolean).join(" · ");
         const marker = L.marker(gamePos(pos), { icon, title: label, alt: label });

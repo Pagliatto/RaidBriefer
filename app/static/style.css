@@ -2378,6 +2378,8 @@ body.position-edit .position-deleted { display: none; }
 .mk-story { --mk: #f4ecd8; }
 .mk-story > span { transform: rotate(45deg) scale(0.8); border-radius: 3px; }
 .mk-story > span > svg { transform: rotate(-45deg) scale(1.15); }
+.mk-story.story-later > span { opacity: 0.7; }   /* 같은 구간의 다음 단계들 (현재 단계는 진하게) */
+.mk-story.story-later.guide-highlight > span { opacity: 1; }
 .story-places-button { display: block; margin: 5px 0 5px 26px; max-width: calc(100% - 26px); text-align: center; white-space: normal; overflow-wrap: anywhere; font-size: 12px; }
 .drawer-story-steps li:has(.story-place-focus) { display: flex; align-items: flex-start; gap: 6px; }
 .story-place-focus { min-width: 0; flex: 1; text-align: left; white-space: normal; overflow-wrap: anywhere; font: inherit; padding: 2px 4px; }

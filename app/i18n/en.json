@@ -158,7 +158,7 @@
     "wiki": "Open on the wiki",
     "finished": "✓ {n} parts done{names}",
     "finishedChoices": " · {n} decisions made",
-    "currentLabel": "Current",
+    "currentLabel": "Current section",
     "stepNow": "Now",
     "coming": "Chapters in preparation: {n}",
     "saveFailed": "Couldn't save your selection. Make sure the program is running.",
