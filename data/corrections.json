@@ -3,13 +3,7 @@
   "quests": {
     "6aba40a15ef26da1360746b8": {
       "same_as": "671a59e43d73dac1360765cc",
-      "name": "Dangerous Props",
-      "trader": "스키어",
-      "objective": "MPS Auto Assault-12 샷건으로 아무 타겟 20명 사살 (지역 상관없음)",
-      "link": "https://ytyler.tistory.com/451",
-      "objective_en": "Eliminate 20 targets with an MPS Auto Assault-12 shotgun (any location)",
-      "from": "blog",
-      "checked": "2026-11-20"
+      "checked": "2026-11-22"
     },
     "6a763df2161e4b45b1015663": {
       "name": "낯이 익은데...",

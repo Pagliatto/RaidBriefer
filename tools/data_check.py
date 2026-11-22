@@ -379,6 +379,8 @@ def main() -> int:
                 if quests._has_manual_objectives(entry) and task.get("objectives"):
                     fields.append("objectives")
             row = f"  {quest_id}: {entry.get('name_en') or entry.get('name') or quest_id} — dev 공통 필드: {', '.join(fields) or '없음'}"
+            if set(entry) <= {"same_as", "checked"}:
+                continue  # 이미 연결만 남긴 항목 (은퇴 끝남)
             if entry.get("from") == "game":
                 kept.append(row)
             elif task and quest_id not in tasks:
@@ -411,7 +413,7 @@ def main() -> int:
                 flags = []
                 if entry.get("from", entry.get("source")) == "blog":
                     flags.append("blog 출처")
-                if not entry.get("link"):
+                if not entry.get("link") and not set(entry) <= {"same_as", "checked"}:
                     flags.append("link 없음")
                 if not entry.get("checked"):
                     flags.append("checked 없음")
