@@ -258,8 +258,14 @@ document.querySelectorAll(".tab").forEach((btn) => {
 });
 
 // 다른 화면(홈)에 "퀘스트 정보가 바뀌었다"고 알리기
+let firstDataShown = false;
 function notifyChanged(name) {
   document.dispatchEvent(new Event(name));
+  // dispatchEvent가 돌아오면 home.js의 동기 renderHome도 끝난 상태다.
+  if (name === "quests-changed" && state.data && !firstDataShown && typeof renderHome === "function") {
+    firstDataShown = true;
+    performance.mark("raidbriefer:first-data-shown");
+  }
 }
 
 // ---------- 진행 중 / 완료 / 실패 ----------

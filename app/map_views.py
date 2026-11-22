@@ -27,6 +27,10 @@ CHECK_SECONDS = 24 * 3600
 SAFE_SVG_NAME = re.compile(r"^[A-Za-z0-9_\-]+\.svg$")
 
 _lock = threading.Lock()
+_views_read_lock = threading.Lock()
+_views_loaded = None
+_views_retry_after = 0.0
+_views_error = None
 
 
 def _download(url: str) -> bytes:
@@ -35,21 +39,84 @@ def _download(url: str) -> bytes:
         return response.read()
 
 
-def _load_views() -> list:
-    """tarkov.dev 의 지도 설정 목록 (저장본이 하루 넘게 지났으면 새로 받기)"""
-    with _lock:
-        fresh = VIEWS_FILE.exists() and time.time() - VIEWS_FILE.stat().st_mtime < CHECK_SECONDS
-        if not fresh:
+def _validate_views(data) -> None:
+    if not isinstance(data, list) or not all(
+        isinstance(group, dict) and isinstance(group.get("maps", []), list)
+        and all(isinstance(view, dict) for view in group.get("maps", []))
+        for group in data
+    ):
+        raise ValueError(i18n.t("data.notSaved", name="map_views"))
+
+
+def _read_views() -> tuple:
+    global _views_loaded
+    # 이 잠금은 파일 읽기/parse만 보호한다. 네트워크 일꾼은 잡지 않는다.
+    started = time.perf_counter()
+    with _views_read_lock:
+        tarkov_api.profile_wait("map_views_read", started)
+        try:
+            stat = VIEWS_FILE.stat()
+            signature = (stat.st_mtime_ns, stat.st_size)
+            if _views_loaded and _views_loaded[0] == signature:
+                return _views_loaded
+            data = json.loads(VIEWS_FILE.read_text(encoding="utf-8"))
+            _validate_views(data)
+            _views_loaded = (signature, data, stat.st_mtime)
+            return _views_loaded
+        except PermissionError:
+            if _views_loaded:
+                return _views_loaded
+            raise
+
+
+def _refresh_views() -> None:
+    global _views_retry_after, _views_error
+    temp = None
+    try:
+        data = _download(VIEWS_URL)
+        _validate_views(json.loads(data))
+        CACHE_DIR.mkdir(exist_ok=True)
+        temp = VIEWS_FILE.with_name(f"{VIEWS_FILE.name}.{uuid.uuid4().hex}.tmp")
+        temp.write_bytes(data)
+        temp.replace(VIEWS_FILE)  # 읽는 요청은 완전한 이전 파일 또는 새 파일만 본다.
+        _views_error = None
+        _views_retry_after = 0.0
+    except Exception as error:
+        _views_error = str(error)
+        # 저장본의 mtime을 바꾸지 않는다. 시계 변경과 쓰기 제한에서도 재시도 폭주 방지.
+        _views_retry_after = time.monotonic() + (CHECK_SECONDS if _views_loaded else 60)
+    finally:
+        if temp is not None:
             try:
-                data = _download(VIEWS_URL)
-                json.loads(data)  # 깨진 파일은 저장하지 않음
-                CACHE_DIR.mkdir(exist_ok=True)
-                VIEWS_FILE.write_bytes(data)
-            except Exception:
-                if not VIEWS_FILE.exists():
-                    raise
-                VIEWS_FILE.touch()  # 실패해도 저장본으로 하루 버팀 (매번 다시 시도하지 않게)
-        return json.loads(VIEWS_FILE.read_text(encoding="utf-8"))
+                temp.unlink(missing_ok=True)
+            except OSError:
+                pass
+        _lock.release()
+
+
+def _load_views() -> list:
+    """저장본은 즉시 제공하고, 하루 지난 설정은 하나의 일꾼이 갱신한다."""
+    try:
+        saved = _read_views()
+    except (ValueError, OSError):
+        saved = None
+    fresh = saved is not None and 0 <= time.time() - saved[2] < CHECK_SECONDS
+    if not fresh and time.monotonic() >= _views_retry_after and _lock.acquire(blocking=False):
+        try:
+            threading.Thread(target=_refresh_views, name="map-views", daemon=True).start()
+        except Exception:
+            _lock.release()
+            if saved is None:
+                raise
+    if saved is not None:
+        return saved[1]
+    started = time.perf_counter()
+    with _lock:
+        tarkov_api.profile_wait("map_views_refresh", started)
+    try:
+        return _read_views()[1]
+    except (ValueError, OSError) as error:
+        raise RuntimeError(_views_error or str(error)) from error
 
 
 def view_for(normalized_name: str) -> dict | None:

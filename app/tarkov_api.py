@@ -14,6 +14,9 @@
 """
 
 import json
+import math
+import os
+import queue
 import re
 import tempfile
 import threading
@@ -48,9 +51,105 @@ _spt_last_attempt = 0.0
 _spt_loaded: tuple | None = None
 _data_update_lock = threading.Lock()
 _data_update_count = 0
-# 데이터 받기는 한 번에 하나만: 프로그램을 켜면 퀘스트·지도 요청이 동시에 받기를 시작해서,
-# 한쪽이 파일을 바꾸는 순간 다른 쪽이 읽다가 실패하는 일이 있었음 (지도 탭 오류)
+# 갱신 작업자만 직렬화한다. 정상 저장본을 읽는 요청은 이 잠금을 기다리지 않는다.
 _update_all_lock = threading.Lock()
+
+# 계측은 켰을 때만 별도 일꾼이 쓴다. 요청 스레드는 디스크 쓰기를 기다리지 않는다.
+PROFILE_STARTUP = os.environ.get("RAIDBRIEFER_PROFILE_STARTUP") == "1"
+_profile_origin = time.perf_counter()
+_profile_queue = queue.Queue(maxsize=4096)
+_profile_local = threading.local()
+
+
+def profile_event(event: str, **fields) -> None:
+    if not PROFILE_STARTUP:
+        return
+    try:
+        _profile_queue.put_nowait({"ms": round((time.perf_counter() - _profile_origin) * 1000, 3),
+                                  "event": event, **fields})
+    except Exception:
+        pass
+
+
+def profile_start(origin: float) -> None:
+    global _profile_origin
+    if not PROFILE_STARTUP:
+        return
+    _profile_origin = origin
+    origin_name = "server_import"
+    started_at = time.time() - (time.perf_counter() - origin)
+    # 위험 파일의 진입점을 바꾸지 않고 현재 서버 프로세스의 생성 시각만 읽는다.
+    # 이후 모든 간격은 perf_counter를 사용한다. Windows 외에는 import 시점이 기준이다.
+    if os.name == "nt":
+        try:
+            import ctypes
+            from ctypes import wintypes
+
+            kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+            kernel.GetCurrentProcess.restype = wintypes.HANDLE
+            kernel.GetProcessTimes.argtypes = [wintypes.HANDLE] + [ctypes.POINTER(wintypes.FILETIME)] * 4
+            created, exited, kernel_time, user_time = (wintypes.FILETIME() for _ in range(4))
+            if kernel.GetProcessTimes(kernel.GetCurrentProcess(), ctypes.byref(created), ctypes.byref(exited),
+                                      ctypes.byref(kernel_time), ctypes.byref(user_time)):
+                started_at = ((created.dwHighDateTime << 32) | created.dwLowDateTime) / 10_000_000 - 11644473600
+                _profile_origin = time.perf_counter() - max(0, time.time() - started_at)
+                origin_name = "windows_process_creation"
+        except Exception:
+            pass
+
+    def write():
+        try:
+            paths.USER_DIR.mkdir(parents=True, exist_ok=True)
+            with (paths.USER_DIR / "startup_profile.log").open("a", encoding="utf-8") as stream:
+                stream.write("\n" + json.dumps({"start": time.strftime("%Y-%m-%dT%H:%M:%S%z", time.localtime(started_at)),
+                                               "pid": os.getpid(), "origin": origin_name}) + "\n")
+                stream.flush()
+                while True:
+                    stream.write(json.dumps(_profile_queue.get(), ensure_ascii=False) + "\n")
+                    stream.flush()
+        except Exception:
+            pass
+
+    try:
+        threading.Thread(target=write, name="startup-profile", daemon=True).start()
+        profile_event("process_start", started_ms=0)
+        profile_event("server_import", started_ms=(origin - _profile_origin) * 1000)
+    except Exception:
+        pass
+
+
+def profile_wait(name: str, started: float) -> None:
+    if PROFILE_STARTUP:
+        try:
+            elapsed = (time.perf_counter() - started) * 1000
+            waits = getattr(_profile_local, "waits", None)
+            if waits is not None:
+                waits[name] = waits.get(name, 0) + elapsed
+        except Exception:
+            pass
+
+
+class ProfileLock:
+    """계측을 켠 실행에서만 기존 잠금을 감싼다 (잠금 동작은 그대로)."""
+    def __init__(self, lock, name):
+        self.lock, self.name = lock, name
+
+    def acquire(self, *args, **kwargs):
+        started = time.perf_counter()
+        acquired = self.lock.acquire(*args, **kwargs)
+        if acquired:
+            profile_wait(self.name, started)
+        return acquired
+
+    def release(self):
+        return self.lock.release()
+
+    def __enter__(self):
+        self.acquire()
+        return self
+
+    def __exit__(self, *args):
+        self.release()
 
 
 def _data_activity(delta: int) -> None:
@@ -106,17 +205,27 @@ def _cache_path(name: str) -> Path:
 def _write_json(path: Path, value) -> None:
     CACHE_DIR.mkdir(exist_ok=True)
     # 임시 파일에 먼저 쓰고 바꿔치기 → 쓰는 도중 꺼져도 기존 파일이 안 깨짐
-    temp = path.with_suffix(".tmp")
-    temp.write_text(json.dumps(value, ensure_ascii=False), encoding="utf-8")
-    for attempt in range(5):
-        try:
-            temp.replace(path)
-            return
-        except PermissionError:
-            # Windows: 다른 요청이 그 파일을 읽는 중이면 바꿔치기가 잠깐 막힘 → 조금 뒤 다시
-            if attempt == 4:
-                raise
-            time.sleep(0.2)
+    temp = None
+    try:
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=path.parent,
+                                         prefix=path.name + ".", suffix=".tmp", delete=False) as stream:
+            temp = Path(stream.name)
+            json.dump(value, stream, ensure_ascii=False)
+        for attempt in range(5):
+            try:
+                temp.replace(path)
+                return
+            except PermissionError:
+                # Windows: 읽기/백신의 일시 잠금. 원본을 지우지 않고 교체만 재시도한다.
+                if attempt == 4:
+                    raise
+                time.sleep(0.2)
+    finally:
+        if temp is not None:
+            try:
+                temp.unlink(missing_ok=True)
+            except OSError:
+                pass
 
 
 def _compact_cache(name: str, data):
@@ -320,21 +429,62 @@ def _read_meta() -> dict:
     """{"files": {이름: {"etag": ...}}, "checked_at": 시각, "retry_wait": 초, "next_try": 시각}"""
     try:
         meta = json.loads(META_FILE.read_text(encoding="utf-8"))
-    except (FileNotFoundError, json.JSONDecodeError, OSError):
+    except (ValueError, OSError):
         meta = {}
-    meta.setdefault("files", {})
-    meta.setdefault("checked_at", 0)
-    meta.setdefault("retry_wait", 0)
-    meta.setdefault("next_try", 0)
+    if not isinstance(meta, dict):
+        meta = {}
+    files = meta.get("files")
+    meta["files"] = {
+        name: {"etag": entry.get("etag") if isinstance(entry.get("etag"), str) else None}
+        for name, entry in (files.items() if isinstance(files, dict) else [])
+        if isinstance(entry, dict)
+    }
+    for key in ("checked_at", "retry_wait", "next_try"):
+        value = meta.get(key)
+        if type(value) not in (int, float) or not 0 <= value <= 253402300799 or not math.isfinite(value):
+            value = 0
+        meta[key] = value
+    # 시계가 뒤로 바뀐 경우 미래 시각 때문에 영구히 확인을 건너뛰지 않는다.
+    now = time.time()
+    if meta["checked_at"] > now:
+        meta["checked_at"] = 0
+    if meta["next_try"] > now + RETRY_MAX_SECONDS:
+        meta["next_try"] = 0
     return meta
 
 
 def _all_saved() -> bool:
-    return all(_cache_path(name).exists() for name in DATA_FILES)
+    return all(_usable(name) for name in DATA_FILES)
+
+
+def _usable(name: str) -> bool:
+    try:
+        _read_saved(name)
+        return True
+    except DataError:
+        return False
+
+
+def _validate_data(name: str, data) -> None:
+    if not isinstance(data, dict):
+        raise ValueError(i18n.t("data.notSaved", name=name))
+    if name in ("tasks", "maps"):
+        entries = data.get(name)
+    elif name in ("traders", "hideout"):
+        entries = data
+    else:
+        if not all(value is None or isinstance(value, str) for value in data.values()):
+            raise ValueError(i18n.t("data.notSaved", name=name))
+        return
+    if not isinstance(entries, dict) or not all(isinstance(value, dict) for value in entries.values()):
+        raise ValueError(i18n.t("data.notSaved", name=name))
 
 
 def _time_text(when: float) -> str:
-    return time.strftime("%Y-%m-%d %H:%M", time.localtime(when))
+    try:
+        return time.strftime("%Y-%m-%d %H:%M", time.localtime(when))
+    except (OSError, OverflowError, ValueError):
+        return time.strftime("%Y-%m-%d %H:%M", time.localtime(0))
 
 
 # ---------- 확인하고 받아오기 ----------
@@ -343,98 +493,202 @@ def _fetch_if_changed(name: str, etag: str | None):
     """바뀌었으면 (새 데이터, 새 ETag), 안 바뀌었으면 (None, 기존 ETag)."""
     headers = {"If-None-Match": etag} if etag else {}
     url = f"{BASE_URL}/{GAME_MODE}/{name}"
-    response = requests.get(url, headers=headers, timeout=60)
-    if response.status_code == 304:  # "그대로예요"
-        return None, etag
-    response.raise_for_status()  # 404, 500 같은 오류면 여기서 멈춤
-    return response.json()["data"], response.headers.get("ETag")
+    started = time.perf_counter()
+    try:
+        response = requests.get(url, headers=headers, timeout=60)
+    finally:
+        profile_event("data_network", file=name, duration_ms=(time.perf_counter() - started) * 1000)
+    with response:
+        if response.status_code == 304:
+            if not etag:
+                raise ValueError(i18n.t("data.notSaved", name=name))
+            return None, etag
+        response.raise_for_status()
+        started = time.perf_counter()
+        try:
+            data = response.json()["data"]
+            _validate_data(name, data)
+            return data, response.headers.get("ETag")
+        finally:
+            profile_event("data_parse", file=name, duration_ms=(time.perf_counter() - started) * 1000)
+
+
+_last_error = None
+_retry_after = 0.0  # 실행 중 재시도 간격은 PC 시계 변경의 영향을 받지 않는다.
+_data_revision = 0
+
+
+def data_revision() -> int:
+    return _data_revision
+
+
+def data_message() -> str:
+    meta = _read_meta()
+    if _last_error:
+        return i18n.t("data.checkFailed", error=_last_error, time=_time_text(meta["checked_at"]))
+    if time.time() < meta["next_try"]:
+        minutes = int((meta["next_try"] - time.time()) // 60) + 1
+        return i18n.t("data.retryLater", minutes=minutes, time=_time_text(meta["checked_at"]))
+    return i18n.t("data.usingSaved", time=_time_text(meta["checked_at"]))
 
 
 def update_all(force: bool = False) -> str:
-    """필요하면 바뀐 파일만 새로 받는다. 안내 메시지를 돌려준다.
+    """저장본을 먼저 사용하고 갱신은 하나의 작업자에게 맡긴다.
 
-    force=True면 확인 시각과 상관없이 지금 바로 확인한다.
-    동시에 불리면 앞의 것이 끝날 때까지 기다린 뒤, 방금 받은 저장본을 그대로 쓴다.
+    없는 파일의 대기는 load()에서만 한다. force=True는 명시적 동기 갱신이다.
     """
-    with _update_all_lock:
-        return _update_all(force)
+    global _last_error, _retry_after
+    if not _update_all_lock.acquire(blocking=False):
+        if force:
+            started = time.perf_counter()
+            with _update_all_lock:
+                profile_wait("data_refresh", started)
+            if not _all_saved():
+                raise DataError(i18n.t("data.noData", error=_last_error or i18n.t("common.unknownError")))
+        return data_message()
+    handed_off = False
+    try:
+        meta = _read_meta()
+        if not force:
+            retry_pending = (time.monotonic() < _retry_after if _retry_after
+                             else time.time() < meta["next_try"])
+            if retry_pending:
+                return data_message()
+            if 0 <= time.time() - meta["checked_at"] < CHECK_HOURS * 3600 and _all_saved():
+                profile_event("update_all_start", force=False)
+                for name in DATA_FILES:
+                    profile_event("data_skipped_fresh", file=name)
+                profile_event("update_all_end", skipped="fresh", failed=False)
+                return data_message()
+        if force:
+            message = _update_all(force)
+            if not _all_saved():
+                raise DataError(i18n.t("data.noData", error=_last_error or i18n.t("common.unknownError")))
+            return message
+        # 상태 플래그는 thread 시작 전에 올려 매우 빠른 첫 poll도 놓치지 않게 한다.
+        _data_activity(1)
+        try:
+            threading.Thread(target=_refresh_worker, name="tarkov-data", daemon=True).start()
+        except Exception as error:
+            _data_activity(-1)
+            _last_error = str(error)
+            _retry_after = time.monotonic() + RETRY_START_SECONDS
+            return data_message()
+        handed_off = True
+        return data_message()
+    finally:
+        if not handed_off:
+            _update_all_lock.release()
+
+
+def _refresh_worker() -> None:
+    try:
+        _update_all(False)
+    except Exception:
+        pass  # 오류 내용과 재시도 시각은 _update_all에서 보존한다.
+    finally:
+        _data_activity(-1)
+        _update_all_lock.release()
 
 
 def _update_all(force: bool) -> str:
+    global _last_error, _retry_after, _data_revision
     meta = _read_meta()
-    saved = _all_saved()
-    now = time.time()
-
-    if saved and not force and now - meta["checked_at"] < CHECK_HOURS * 3600:
-        return i18n.t("data.usingSaved", time=_time_text(meta["checked_at"]))
-
-    if not force and now < meta["next_try"]:
-        if not saved:
-            raise DataError(i18n.t("data.noData", error=i18n.t("common.unknownError")))
-        minutes = int((meta["next_try"] - now) // 60) + 1
-        return i18n.t("data.retryLater", minutes=minutes, time=_time_text(meta["checked_at"]))
-
+    started = time.perf_counter()
+    profile_event("update_all_start", force=force)
     _data_activity(1)
     try:
         results = {}
         for name in DATA_FILES:
-            # 저장 파일이 없으면 ETag를 보내지 않음 → 무조건 새로 받음
-            etag = meta["files"].get(name, {}).get("etag") if _cache_path(name).exists() else None
+            # 존재 여부만으로 판단하지 않는다. 손상 본문에는 옛 ETag를 보내지 않는다.
+            etag = meta["files"].get(name, {}).get("etag") if _usable(name) else None
             results[name] = _fetch_if_changed(name, etag)
+        changed = []
+        for name, (data, etag) in results.items():
+            write_started = time.perf_counter()
+            try:
+                if data is not None:
+                    _write_json(_cache_path(name), _compact_cache(name, data))
+                    _loaded.pop(name, None)
+                    _data_revision += 1
+                    changed.append(name)
+                elif name in COMPACT_CACHE_FILES:
+                    cached = _read_saved(name)
+                    compact = _compact_cache(name, cached)
+                    if compact != cached:
+                        _write_json(_cache_path(name), compact)
+                        _loaded.pop(name, None)
+                        _data_revision += 1
+                meta["files"][name] = {"etag": etag}
+            finally:
+                profile_event("data_write", file=name, duration_ms=(time.perf_counter() - write_started) * 1000)
+        # 마지막 성공 시각은 본문과 메타데이터를 모두 저장했을 때만 갱신한다.
+        updated_meta = {**meta, "checked_at": time.time(), "retry_wait": 0, "next_try": 0}
+        _write_json(META_FILE, updated_meta)
+        _last_error = None
+        _retry_after = 0.0
+        return i18n.t("data.updated", names=", ".join(changed)) if changed else i18n.t("data.upToDate")
     except Exception as error:  # 인터넷 끊김, 서버 장애 등
+        _last_error = str(error)
         meta["retry_wait"] = min(max(meta["retry_wait"] * 2, RETRY_START_SECONDS), RETRY_MAX_SECONDS)
-        meta["next_try"] = now + meta["retry_wait"]
-        _write_json(META_FILE, meta)
-        if saved:
-            return i18n.t("data.checkFailed", error=error, time=_time_text(meta["checked_at"]))
+        meta["next_try"] = time.time() + meta["retry_wait"]
+        _retry_after = time.monotonic() + meta["retry_wait"]
+        try:
+            _write_json(META_FILE, meta)
+        except Exception:
+            pass  # 쓰기 금지/잠금이어도 기존 저장본은 계속 제공한다.
+        if _all_saved():
+            return data_message()
         raise DataError(i18n.t("data.noData", error=error)) from error
     finally:
         _data_activity(-1)
-
-    # 전부 확인에 성공했을 때만 저장 → 일부만 새것이 되는 일이 없음
-    changed = []
-    for name, (data, etag) in results.items():
-        if data is not None:
-            _write_json(_cache_path(name), _compact_cache(name, data))
-            _loaded.pop(name, None)
-            changed.append(name)
-        elif name in COMPACT_CACHE_FILES:
-            # 304여도 이전의 큰 저장본은 정상 갱신 때 한 번 줄인다. 재다운로드는 필요 없다.
-            cached = load(name)
-            compact = _compact_cache(name, cached)
-            if compact != cached:
-                _write_json(_cache_path(name), compact)
-                _loaded.pop(name, None)
-        meta["files"][name] = {"etag": etag}
-    meta.update(checked_at=now, retry_wait=0, next_try=0)
-    _write_json(META_FILE, meta)
-
-    if changed:
-        return i18n.t("data.updated", names=", ".join(changed))
-    return i18n.t("data.upToDate")
+        _data_revision += 1  # 304와 실패 안내도 퀘스트 응답 cache에 반영한다.
+        profile_event("update_all_end", duration_ms=(time.perf_counter() - started) * 1000,
+                      failed=bool(_last_error))
 
 
 _loaded: dict = {}  # 파일 이름 → (수정 시각, 내용). 같은 파일을 여러 번 읽지 않게
 
 
 def load(name: str):
-    """저장된 파일 하나의 내용을 돌려준다. (먼저 update_all을 불러야 함)"""
+    """유효한 파일은 갱신 잠금을 잡지 않고 읽는다. 없는 파일만 기다린다."""
+    try:
+        return _read_saved(name)
+    except DataError:
+        update_all()
+        started = time.perf_counter()
+        with _update_all_lock:
+            profile_wait("data_refresh", started)
+        try:
+            return _read_saved(name)
+        except DataError as error:
+            if _last_error:
+                raise DataError(i18n.t("data.noData", error=_last_error)) from error
+            raise
+
+
+def _read_saved(name: str):
     path = _cache_path(name)
     for attempt in range(3):
         try:
-            mtime = path.stat().st_mtime
+            stat = path.stat()
+            mtime = (stat.st_mtime_ns, stat.st_size)
             hit = _loaded.get(name)
             if hit and hit[0] == mtime:
                 return hit[1]
             data = json.loads(path.read_text(encoding="utf-8"))
+            _validate_data(name, data)
             _loaded[name] = (mtime, data)
             return data
         except PermissionError as error:
+            hit = _loaded.get(name)
+            if hit:
+                return hit[1]  # 백신의 일시 잠금 동안 이미 확인한 메모리 저장본 사용
             # Windows: 다른 쪽이 막 새 파일로 바꾸는 중이면 잠깐 못 읽음 → 조금 뒤 다시
             if attempt == 2:
                 raise DataError(i18n.t("data.notSaved", name=name)) from error
             time.sleep(0.2)
-        except (FileNotFoundError, json.JSONDecodeError, OSError) as error:
+        except (ValueError, OSError) as error:
             raise DataError(i18n.t("data.notSaved", name=name)) from error
 
 

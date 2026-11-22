@@ -4,10 +4,14 @@
 그다음 브라우저에서 http://127.0.0.1:8765 를 연다.
 """
 
+import time
+
+_server_import_at = time.perf_counter()
+
 import atexit
 import json
 import re
-import time
+import threading
 from pathlib import Path
 
 from flask import Flask, abort, jsonify, render_template, request, send_file
@@ -21,9 +25,90 @@ PORT = 8765
 
 app = Flask(__name__)
 
+
+def _install_startup_profile() -> None:
+    if not tarkov_api.PROFILE_STARTUP:
+        return
+    tarkov_api.profile_start(_server_import_at)
+    # 허용 범위 밖인 quest_log.py는 수정하지 않고, 계측 실행에서만 경계를 감싼다.
+    for module, attr in ((quest_log, "_log_cache_lock"), (quest_log, "_reading_lock"),
+                         (quest_log, "_revision_poll_lock"), (game_state, "_lock"),
+                         (quests, "_spt_start_lock"), (progress, "_lock"),
+                         (settings, "_lock"), (i18n, "_lock")):
+        setattr(module, attr, tarkov_api.ProfileLock(getattr(module, attr), module.__name__ + "." + attr))
+
+    def probe_once(function, event):
+        reported = False
+
+        def measured(*args, **kwargs):
+            nonlocal reported
+            if reported:
+                return function(*args, **kwargs)
+            started = time.perf_counter()
+            result = function(*args, **kwargs)
+            if not reported:
+                reported = True
+                tarkov_api.profile_event(event, duration_ms=(time.perf_counter() - started) * 1000)
+            return result
+        return measured
+
+    quest_log._read_index = probe_once(quest_log._read_index, "quest_index_read_done")
+    quest_log._log_folders = probe_once(quest_log._log_folders, "quest_index_restore_done")
+    quest_log._refresh_index = probe_once(quest_log._refresh_index, "quest_index_scan_done")
+    application = app.wsgi_app
+    seen = set()
+    seen_lock = threading.Lock()
+    received = False
+
+    def measured_request(environ, start_response):
+        nonlocal received
+        path = environ.get("PATH_INFO", "")
+        with seen_lock:
+            first_response = not received
+            received = True
+            tracked = path in {"/api/state", "/api/quests", "/api/maps", "/api/story", "/api/hideout"} and path not in seen
+            if tracked:
+                seen.add(path)
+        if not tracked and not first_response:
+            return application(environ, start_response)
+        started = time.perf_counter()
+        tarkov_api._profile_local.waits = {}
+        if first_response:
+            tarkov_api.profile_event("server_bound_observed")
+        tarkov_api.profile_event("request_received", path=path)
+        status_code = None
+
+        def response_headers(status, headers, exc_info=None):
+            nonlocal status_code
+            status_code = status.split(" ", 1)[0]
+            return start_response(status, headers, exc_info)
+
+        def response_body():
+            response = None
+            try:
+                response = application(environ, response_headers)
+                yield from response
+            finally:
+                try:
+                    if response is not None and hasattr(response, "close"):
+                        response.close()
+                finally:
+                    waits = getattr(tarkov_api._profile_local, "waits", None) or {}
+                    tarkov_api._profile_local.waits = None
+                    tarkov_api.profile_event("response_sent", path=path, status=status_code,
+                                            duration_ms=(time.perf_counter() - started) * 1000,
+                                            lock_wait_ms=sum(waits.values()), locks=waits,
+                                            first_response=first_response)
+        return response_body()
+
+    app.wsgi_app = measured_request
+
+
+_install_startup_profile()
+
 # 로그 전체를 읽는 데 1초쯤 걸려서, 퀘스트 알림 로그가 그대로면 계산한 결과를 재사용
 # (로그가 바뀌면 바로 다시 계산. 혹시 몰라 1분이 지나도 다시)
-_cache = {"at": 0.0, "data": None, "rev": None}
+_cache = {"at": 0.0, "data": None, "rev": None, "data_rev": None}
 CACHE_SECONDS = 60
 
 
@@ -68,17 +153,22 @@ def favicon(ext):
 
 @app.route("/api/quests")
 def api_quests():
+    global _cache
     rev = quest_log.log_rev()
-    if _cache["data"] is None or _cache["rev"] != rev or time.time() - _cache["at"] > CACHE_SECONDS:
+    data_rev = tarkov_api.data_revision()
+    cached = _cache
+    data = cached["data"]
+    if (data is None or cached["rev"] != rev or cached.get("data_rev") != data_rev
+            or time.time() - cached["at"] > CACHE_SECONDS):
         try:
-            _cache["data"] = quests.build()
-            _cache["at"] = time.time()
-            _cache["rev"] = rev
+            data = quests.build()
+            # 동시 요청이 내용과 세대 번호를 서로 섞어 저장하지 않게 한 번에 공개한다.
+            _cache = {"data": data, "at": time.time(), "rev": rev, "data_rev": data_rev}
         except settings.DataReadError:
             raise
         except Exception as error:  # 화면에 오류 안내를 보여주기 위해
             return jsonify({"error": i18n.t("server.questsFailed", error=error)}), 500
-    return jsonify(_cache["data"])
+    return jsonify({**data, "data_message": tarkov_api.data_message()})
 
 
 @app.route("/api/quest-catalog")
@@ -436,14 +526,14 @@ def api_check_set(kind):
 
 def serve(port: int = PORT) -> None:
     """서버 켜기 (브라우저 방식·프로그램 창 방식이 같이 씀). 끝날 때까지 돌아오지 않음"""
-    import threading
-
+    tarkov_api.profile_event("server_start")
     atexit.register(brightness.shutdown)
     brightness.init()
     game_state.start()  # 게임 로그를 뒤에서 계속 지켜보기 (상단바 상태)
     updater.check_in_background()  # 새 버전이 있는지 깃허브에 한 번 물어봄
     # 프레스티지 찾기는 처음 한 번 몇 초 걸려서 미리 해 둠 (화면이 기다리지 않게)
     threading.Thread(target=quest_log.last_prestige, daemon=True).start()
+    tarkov_api.profile_event("server_bind_start")
     app.run(host=HOST, port=port, debug=False)
 
 

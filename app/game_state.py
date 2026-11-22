@@ -42,6 +42,7 @@ def _run() -> None:
             for m in tarkov_api.load("maps")["maps"].values():
                 _raid_minutes[m["id"]] = m.get("raidDuration")
             delay = 1
+            tarkov_api.profile_event("game_log_watch_start")
             map_watch.watch(interval=1.0, on_change=_on_change)
         except Exception as error:
             print(f"게임 상태 확인을 다시 시도해요: {error}")  # i18n-ok: 개발용 콘솔
