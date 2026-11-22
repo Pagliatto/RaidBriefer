@@ -474,15 +474,14 @@
     "Vitality": "활력"
   },
   "editor": {
+    "walkNext": "다음",
+    "walkPlaced": "이 단계 장소 {n}곳. 더 클릭하면 더 넣고, 다 넣었으면 [다음].",
+    "walkHint": "지도를 클릭해 이 단계 장소를 넣고 [다음]을 누르세요. 장소를 모르면 그냥 [다음].",
     "walk": "스토리 연속 입력",
     "walkDone": "장소를 넣을 단계가 더 없어요. 저장을 눌러 주세요.",
     "walkStop": "끝내기",
-    "walkHint": "지도를 클릭하면 이 단계 장소로 넣고 다음으로 넘어가요.",
-    "walkMoreHint": "한 곳 더: 클릭할 때마다 후보 장소가 추가되고 이 단계에 머물러요.",
     "walkPrev": "이전",
-    "walkSkip": "건너뛰기",
     "walkNoPlace": "장소 불필요",
-    "walkMore": "한 곳 더",
     "title": "위치 편집 모드",
     "changed": "바뀐 것 {n}개",
     "undo": "되돌리기",

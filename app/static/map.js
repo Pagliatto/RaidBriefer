@@ -300,7 +300,7 @@ function undoPositionEdit() {
   else mapEditor.pending.delete(previous.id);
   refreshPositionEdits();
   const back = mapEditor.walk && !previous.before && step ? mapEditor.walk.queue.findIndex((i) => i.step.id === step) : -1;
-  if (back >= 0) { mapEditor.walk.index = back; mapEditor.walk.more = false; showStoryWalk(); } // 연속 입력: 되돌린 단계로
+  if (back >= 0) { mapEditor.walk.index = back; showStoryWalk(); } // 연속 입력: 되돌린 단계로
 }
 
 function bindPositionEditor(marker, item, label, guide = false) {
@@ -717,7 +717,7 @@ function storyWalkQueue() {
 
 function startStoryWalk() {
   cancelMarkerDraft();
-  mapEditor.walk = { queue: storyWalkQueue(), index: 0, more: false };
+  mapEditor.walk = { queue: storyWalkQueue(), index: 0 };
   showStoryWalk();
 }
 
@@ -772,13 +772,13 @@ function showStoryWalk() {
     pics.append(link);
   });
   if (pics.childElementCount) card.append(pics);
-  card.append(el("p", "story-walk-hint", walk.more ? t("editor.walkMoreHint") : t("editor.walkHint")));
+  const placed = [...mapEditor.pending.values()].filter((p) => p.edit?.seed?.add === "story" && p.fields?.step === item.step.id).length;
+  card.append(el("p", "story-walk-hint", placed ? t("editor.walkPlaced", { n: placed }) : t("editor.walkHint")));
   const row = el("div", "story-walk-actions");
   row.append(
-    act("editor.walkPrev", () => { walk.index = Math.max(0, walk.index - 1); walk.more = false; showStoryWalk(); }),
-    act("editor.walkSkip", () => advanceStoryWalk()),
+    act("editor.walkPrev", () => { walk.index = Math.max(0, walk.index - 1); showStoryWalk(); }),
+    act("editor.walkNext", () => advanceStoryWalk(), "story-walk-next"),
     act("editor.walkNoPlace", storyWalkNoPlace),
-    act("editor.walkMore", () => { walk.more = !walk.more; showStoryWalk(); }, walk.more ? "on" : ""),
     act("editor.walkStop", stopStoryWalk),
   );
   card.append(row);
@@ -789,7 +789,6 @@ function advanceStoryWalk() {
   const walk = mapEditor.walk;
   if (!walk) return;
   walk.index = Math.min(walk.queue.length, walk.index + 1);
-  walk.more = false;
   showStoryWalk();
 }
 
@@ -806,7 +805,7 @@ function storyWalkPlace(latlng) {
   mapEditor.pending.set(id, { edit, fields: { step: item.step.id, candidate: false, note: "" }, pos, base: pos.slice(), map: item.map, label: item.step.ko });
   mapEditor.history.push({ id });
   refreshPositionEdits();
-  if (!mapEditor.walk.more) advanceStoryWalk();
+  showStoryWalk(); // 넣은 개수 갱신 (다음 단계는 [다음] 버튼으로)
 }
 
 function storyWalkNoPlace() {
@@ -872,6 +871,7 @@ function applyStoryExtractLinks() {
 
 function storyPinEntries() {
   if (mapEditor.active) {
+    if (!mapUI.current) return []; // 맵을 고르기 전 (맵 없이 세면 모든 맵의 장소가 잡힘)
     // 편집 모드: 지금 할 단계가 아니어도 이 맵에 장소가 있는 단계는 모두 (옮기려면 보여야 함)
     return Object.keys(story.data?.places || {})
       .filter((id) => storyPlacesFor(id, mapUI.current?.key).length)
@@ -2104,7 +2104,7 @@ function renderLayerDrawer() {
     const info = LAYER_INFO[key];
     if (key === "guide" && !currentGuide()) return;
     // 편집 모드는 이 맵의 모든 장소, 평소에는 지금 할 단계의 장소 기준 (storyPinEntries 와 같은 기준)
-    if (key === "story" && !storyPinEntries().some(({ entry }) => storyPlacesFor(entry.step.id, mapUI.current.key).length)) return;
+    if (key === "story" && (!mapUI.current || !storyPinEntries().some(({ entry }) => storyPlacesFor(entry.step.id, mapUI.current.key).length))) return;
     if ((key === "blackDivision" || key === "bossZones") && !layerCount(key)) return;
     if (info.always) return;  // 항상 보이는 표시는 서랍에 스위치를 두지 않음
     const on = layerOn(key);
@@ -2165,9 +2165,18 @@ async function drawFeatures(leaf, m) {
     mapEditor.options = data.editorAdd || null;
     mapEditor.heights = data.editorHeights || [];
     leaf.on("click", (event) => {
-      if (mapEditor.walk && !mapEditor.saving) storyWalkPlace(event.latlng);
-      else if (mapEditor.placing && !mapEditor.saving && mapEditor.options) openMarkerForm(event.latlng);
+      if (!mapEditor.walk && mapEditor.placing && !mapEditor.saving && mapEditor.options) openMarkerForm(event.latlng);
     });
+    // 연속 입력: 아이콘·영역 위를 눌러도 장소로 넣음 (Leaflet 지도 클릭은 아이콘 위에서 안 생김). 끌기는 무시
+    const box = leaf.getContainer();
+    let down = null;
+    box.addEventListener("pointerdown", (event) => { down = [event.clientX, event.clientY]; }, true);
+    box.addEventListener("click", (event) => {
+      if (!mapEditor.walk || mapUI.leaflet !== leaf || event.target.closest(".leaflet-control, .leaflet-popup")) return;
+      if (down && Math.hypot(event.clientX - down[0], event.clientY - down[1]) > 5) return;
+      event.stopPropagation(); // 아이콘 팝업 대신 장소 넣기
+      if (!mapEditor.saving) storyWalkPlace(leaf.mouseEventToLatLng(event));
+    }, true);
     refreshNewMarkers();
     updatePositionEditor(mapEditor.status?.textContent || "");
   }
