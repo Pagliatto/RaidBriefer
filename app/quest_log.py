@@ -336,7 +336,6 @@ def _log_folders():
         state.root_time = root_time
         state.folders = folders
         state.newest = newest
-        state.revision_folder = max(folders, key=os.path.normcase, default=None)
         with state.pending_lock:
             for folder in list(_folder_cache):
                 if folder not in folders:
@@ -462,31 +461,49 @@ def is_pve(timeline: tuple, when: datetime | None) -> bool:
 
 
 
+def _read_prestige_tail(path, previous, signature):
+    """완성된 마지막 줄 다음부터 읽는다. 교체/축소/같은 크기 덮어쓰기는 재구성."""
+    with open(path, "rb") as stream:
+        stat = os.fstat(stream.fileno())
+        identity = (stat.st_dev, stat.st_ino, getattr(stat, "st_birthtime_ns", None))
+        reset = (previous is None or previous["identity"] != identity
+                 or stat.st_size < previous["size"]
+                 or (stat.st_size == previous["size"] and stat.st_mtime_ns != previous["mtime"]))
+        offset = 0 if reset else previous["offset"]
+        stream.seek(offset)
+        chunk = stream.read()
+    end = chunk.rfind(b"\n") + 1
+    lines = chunk[:end].decode("utf-8", errors="replace").splitlines()
+    times = [] if reset else list(previous["times"])
+    times.extend(when for line in lines if PRESTIGE_RE.match(line) and (when := line_time(line)))
+    return {"signature": signature, "identity": identity, "offset": offset + end,
+            "size": stat.st_size, "mtime": stat.st_mtime_ns, "times": times}, lines
+
+
 def _prime_backend(cache, backend, signature):
     """첫 읽기는 backend 한 번으로 모드와 프레스티지를 함께 추출한다."""
     requests = []
     complete = True
+    from app.map_watch import LogTail
+    tail = LogTail(Path(backend[0][0]).parent, backend_only=True) if backend else None
     for path, file_signature in _file_signature(backend):
-        prestige = []
         try:
-            with open(path, encoding="utf-8", errors="replace") as stream:
-                for line in stream:
-                    if "Request HTTPS" not in line:
-                        continue
-                    when = line_time(line)
-                    if when is None:
-                        continue
-                    if line.endswith("\n") and PRESTIGE_RE.match(line):
-                        prestige.append(when)
-                    request = _MODE_REQUEST.search(line)
-                    # LogTail과 같이 아직 끝나지 않은 마지막 줄은 모드 판단에서 제외한다.
-                    if (line.endswith("\n") and request
-                            and request[2].rstrip("/.") != "/client/game/mode"):
-                        requests.append((line[:23], when, request[1].startswith("gw-pve")))
+            parsed, lines = _read_prestige_tail(path, None, file_signature)
         except OSError:
             complete = False
             continue
-        cache.prestige_files[path] = (file_signature, prestige)
+        cache.prestige_files[path] = parsed
+        file_path = Path(path)
+        tail.positions[file_path] = parsed["offset"]
+        tail.identities[file_path] = parsed["identity"]
+        tail.file_stats[file_path] = (parsed["size"], parsed["mtime"])
+        for line in lines:
+            if "Request HTTPS" not in line:
+                continue
+            when = line_time(line)
+            request = _MODE_REQUEST.search(line)
+            if when is not None and request and request[2].rstrip("/.") != "/client/game/mode":
+                requests.append((line[:23], when, request[1].startswith("gw-pve")))
     # LogTail의 문자열 시각 정렬 뒤 datetime 정렬과 동률 순서까지 맞춘다.
     requests.sort(key=lambda item: item[0])
     requests.sort(key=lambda item: item[1])
@@ -495,7 +512,7 @@ def _prime_backend(cache, backend, signature):
         if not modes or modes[-1] != mode:
             times.append(when)
             modes.append(mode)
-    cache.mode = {"tail": None, "last": requests[-1][1] if requests else None, "timeline": (times, modes)}
+    cache.mode = {"tail": tail, "last": requests[-1][1] if requests else None, "timeline": (times, modes)}
     cache.mode_signature = signature if complete else None
 
 
@@ -518,16 +535,14 @@ def _refresh_folder(folder, cache, files, signature):
         times = []
         for path, file_signature in backend:
             cached = cache.prestige_files.get(path)
-            if cached is None or cached[0] != file_signature:
+            if cached is None or cached["signature"] != file_signature:
                 try:
-                    with open(path, encoding="utf-8", errors="replace") as stream:
-                        parsed = [when for line in stream
-                                  if line.endswith("\n") and PRESTIGE_RE.match(line) and (when := line_time(line))]
+                    parsed, _ = _read_prestige_tail(path, cached, file_signature)
                 except OSError:
                     complete = False
                     continue
-                cache.prestige_files[path] = cached = (file_signature, parsed)
-            times.extend(when for when in cached[1] if is_pve(timeline, when))
+                cache.prestige_files[path] = cached = parsed
+            times.extend(when for when in cached["times"] if is_pve(timeline, when))
         cache.prestige = max(times, default=None)
         cache.prestige_times = times
         cache.prestige_signature = backend_signature if complete else None
@@ -766,21 +781,17 @@ def _read_notifications(log_file: str | Path, files: dict, signature):
 
 
 def log_rev() -> str:
-    """기존과 같은 이름순 마지막 폴더의 알림 크기. 폴더 목록만 재사용한다."""
-    with _log_cache_lock:
-        state = _log_folders()
-        newest = state.revision_folder
+    """맵 감시와 같은 활성 폴더의 알림 크기. 전체 색인 잠금을 기다리지 않는다."""
+    from app.map_watch import latest_log_folder
+    try:
+        # 쉬는 폴더의 순회 확인은 watcher가 맡는다. 평소 API는 활성 폴더만 조회한다.
+        newest = latest_log_folder(scan_history=False)
         if newest is None:
             return ""
-        try:
-            cached = state.sealed.get(newest)
-            if cached is not None:
-                size = sum(row[2] for row in cached.signature[1][1])
-            else:
-                size = sum(sig[1] for _, sig in _scan_folder_files(newest)[1])
-            return f"{os.path.basename(newest)}:{size}"
-        except OSError:
-            return ""
+        size = sum(sig[1] for _, sig in _scan_folder_files(newest)[1])
+        return f"{os.path.basename(newest)}:{size}"
+    except OSError:
+        return _revision_snapshot  # 파일 잠금은 기록 삭제/새 revision으로 취급하지 않는다.
 
 
 def read_quest_events(since: datetime | None = None) -> list[dict]:

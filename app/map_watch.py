@@ -12,6 +12,8 @@
 import re
 import os
 import time
+import logging
+import threading
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -56,12 +58,88 @@ class MapLookup:
         return self.by_scene.get(scene_path, (None, i18n.t("server.unknownMap", path=scene_path)))
 
 
-def latest_log_folder() -> Path | None:
-    """가장 최근에 만들어진 로그 폴더 (게임을 켤 때마다 새로 생김)."""
-    # 폴더 이름에 날짜가 들어 있어서(log_2026.11.19_11-47-57_…) 이름순 최댓값 = 가장 최근.
-    # 폴더마다 수정 시각을 읽으면 1초마다 500개 넘게 읽어야 해서 느림 (25ms → 2ms, 2026-11-19)
-    folders = sorted(settings.logs_dir().glob("log_*"), reverse=True)
-    return next((f for f in folders if f.is_dir()), None)
+_folder_lock = threading.Lock()
+_folder_scan = {"root": None, "root_time": None, "files": {}, "active": None,
+                "checked": 0.0, "cursor": 0, "folders": []}
+_bad_date_reported = False
+
+
+def _activity(folder):
+    """내용 대신 파일 정보만 읽는다. 빈 폴더는 파일이 있는 폴더보다 낮은 우선순위."""
+    files = []
+    with os.scandir(folder) as entries:
+        for entry in entries:
+            if entry.name.lower().endswith(".log") and entry.is_file():
+                stat = entry.stat()
+                files.append((entry.name, stat.st_mtime_ns, stat.st_size, entry.inode()))
+    return tuple(sorted(files))
+
+
+def latest_log_folder(*, scan_history: bool = True) -> Path | None:
+    """파일 쓰기로 선택. 목록은 재사용하고 쉬는 폴더는 매번 64개씩만 확인한다."""
+    root = settings.logs_dir()
+    now = time.monotonic()
+    with _folder_lock:
+        cache = _folder_scan
+        if cache["root"] != root:
+            cache.update(root=root, root_time=None, files={}, active=None,
+                         checked=0.0, cursor=0, folders=[])
+        if now - cache["checked"] < 0.9:
+            return cache["active"]
+        cache["checked"] = now
+        try:
+            root_time = root.stat().st_mtime_ns
+            if cache["root_time"] != root_time:
+                with os.scandir(root) as entries:
+                    folders = [Path(e.path) for e in entries if e.name.lower().startswith("log_") and e.is_dir()]
+                cache["folders"] = folders
+                cache["root_time"] = root_time
+                present = set(folders)
+                cache["files"] = {f: value for f, value in cache["files"].items() if f in present}
+                # 초기만 전체 검사. 새 폴더는 이름/생성 시각과 무관하게 즉시 후보로 검사.
+                candidates = [f for f in folders if f not in cache["files"]]
+            else:
+                candidates = []
+            folders = cache["folders"]
+            start = cache["cursor"]
+            if scan_history:
+                candidates.extend(folders[start:start + 64])
+                cache["cursor"] = start + 64 if start + 64 < len(folders) else 0
+            if cache["active"] in folders:
+                candidates.append(cache["active"])
+            changed, observed_writes = [], []
+            for folder in dict.fromkeys(candidates):
+                try:
+                    activity = _activity(folder)
+                except OSError:
+                    continue  # 잠금/일시 오류에는 마지막 선택과 정보를 보존한다.
+                previous = cache["files"].get(folder)
+                cache["files"][folder] = activity
+                if activity and activity != previous:
+                    changed.append(folder)
+                    if previous is not None:
+                        observed_writes.append(folder)
+            def newest_file(folder):
+                return max((row[1] for row in cache["files"].get(folder, ())), default=0)
+            # 이미 쓰던 파일의 실제 변화는 과거 시각을 보존한 새 복사본보다 우선한다.
+            active = cache["active"]
+            # 새 세션은 현재 시계와 가까운 쓰기로 구별한다(5분은 탐색/파일 잠금 여유).
+            fresh = [f for f in changed if abs(time.time_ns() - newest_file(f)) < 300 * 10**9]
+            if observed_writes or fresh:
+                # 시계를 뒤로 맞춘 뒤의 실제 쓰기도 옛 미래 mtime보다 우선한다.
+                cache["active"] = max(set(observed_writes + fresh), key=newest_file)
+            elif changed:
+                # 새 후보가 과거 복사본이면 현재 파일의 최신 쓰기를 유지한다.
+                best = max(changed, key=newest_file)
+                if active not in folders or newest_file(best) >= newest_file(active):
+                    cache["active"] = best
+            if cache["active"] not in folders:
+                cache["active"] = max(cache["files"], key=newest_file, default=None)
+                if cache["active"] is None and folders:
+                    cache["active"] = folders[0]  # 비어 있거나 잠긴 파일도 다음 검사에서 다시 시도
+        except OSError:
+            pass
+        return cache["active"]
 
 
 def apply_line(state: MapState, line: str, lookup: MapLookup) -> bool:
@@ -69,7 +147,14 @@ def apply_line(state: MapState, line: str, lookup: MapLookup) -> bool:
     time_match = TIME_RE.match(line)
     if not time_match:
         return False
-    when = datetime.strptime(time_match[1], "%Y-%m-%d %H:%M:%S")
+    global _bad_date_reported
+    try:
+        when = datetime.strptime(time_match[1], "%Y-%m-%d %H:%M:%S")
+    except ValueError:
+        if not _bad_date_reported:
+            logging.getLogger(__name__).warning("Invalid game-log date skipped")  # i18n-ok: 개발 로그, 원문 제외
+            _bad_date_reported = True
+        return False
 
     scene = SCENE_RE.search(line)
     if scene:

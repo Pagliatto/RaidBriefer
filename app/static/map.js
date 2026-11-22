@@ -877,7 +877,8 @@ function numberedObjectives() {
 }
 
 // ---------- 맵별 공략 (별도 진행 저장 없이 기존 스토리 기록 사용) ----------
-const mapGuide = { key: null, data: null, prep: null, controller: null, revision: 0, focused: null };
+const mapGuide = { key: null, data: null, prep: null, controller: null, revision: 0, focused: null,
+  failed: false, retryAt: 0, retryTimer: null };
 const GUIDE_ICONS = { key_spawn: "key", panel: "layers", toolset: "settings", explosive: "triangle-alert",
   door: "lock", lock: "lock", building: "package", start: "door-open" };
 
@@ -892,24 +893,34 @@ function guideText(item, prefix = "") {
 }
 
 async function loadMapGuide(m) {
-  if (mapGuide.key === m.key) return;
+  if (mapGuide.key === m.key && (!mapGuide.failed || mapGuide.controller || performance.now() < mapGuide.retryAt)) return;
+  clearTimeout(mapGuide.retryTimer);
+  mapGuide.retryTimer = null;
   mapGuide.controller?.abort();
   const controller = new AbortController();
   const revision = ++mapGuide.revision;
-  Object.assign(mapGuide, { key: m.key, data: null, prep: null, focused: null, controller });
+  Object.assign(mapGuide, { key: m.key, data: null, prep: null, focused: null, controller, failed: false });
   renderLayerDrawer();
+  let failed = false;
   async function read(key) {
     try {
       const res = await fetch('/api/guide/' + encodeURIComponent(key), { signal: controller.signal });
-      if (!res.ok) return null;
+      if (!res.ok) throw new Error();
       const data = await res.json();
+      if (!Array.isArray(data?.steps)) throw new Error();
       return Array.isArray(data?.steps) && (data.steps.length ||
         (mapEditor.active && Object.keys(data.points || {}).length)) ? data : null;
-    } catch (error) { return null; } // 안내를 못 받아도 기존 지도/스토리는 유지
+    } catch (error) { failed = true; return null; } // 안내를 못 받아도 기존 지도/스토리는 유지
   }
   const [data, prep] = await Promise.all([read(m.key), m.key === "shoreline" ? read("terminal") : null]);
   if (revision !== mapGuide.revision || mapUI.current?.key !== m.key) return;
-  Object.assign(mapGuide, { data, prep, controller: null });
+  Object.assign(mapGuide, { data, prep, controller: null, failed, retryAt: performance.now() + 2000 });
+  if (failed && !controller.signal.aborted) {
+    mapGuide.retryTimer = setTimeout(() => {
+      mapGuide.retryTimer = null;
+      if (revision === mapGuide.revision && mapUI.current?.key === m.key && currentTab() === "map") loadMapGuide(m);
+    }, 2100); // 타이머는 하나만, 맵 변경/성공 시 해제. 정상 빈 공략은 다시 받지 않는다.
+  }
   drawGuidePins();
   renderDrawer();
   maybeOpenGuideDrawer();
