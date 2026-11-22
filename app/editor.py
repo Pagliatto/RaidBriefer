@@ -59,6 +59,9 @@ def _target(file, route):
                 raise ValueError("index")
         elif route[0] != "enemy_spawns" or len(route) != 3 or not isinstance(route[2], str) or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*", route[2]):
             raise ValueError("spawn")
+    elif file == "story/places.json" and route[:1] == ["step_maps"]:
+        if len(route) != 2 or not isinstance(route[1], str) or not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,99}", route[1]):
+            raise ValueError("step_maps")
     elif file == "story/places.json" and route[:1] == ["no_place"]:
         if len(route) != 2 or type(route[1]) is not int or route[1] < 0:
             raise ValueError("no_place")
@@ -156,8 +159,16 @@ def guide_keys(guide):
 
 
 def _story_steps(map_key):
-    """이 맵이 적힌 스토리 단계 목록 (챕터 이름·한/영 글)"""
-    steps = []
+    """이 맵이 적힌 스토리 단계 목록 (챕터 이름·한/영 글). 편집자가 고친 맵 목록(step_maps)을 따름"""
+    from app import story_places
+    overrides = story_places.step_maps()
+    return [{"id": sid, "chapter": s["chapter"], "ko": s["ko"], "en": s["en"]}
+            for sid, s in _step_index().items() if map_key in overrides.get(sid, s["maps"])]
+
+
+def _step_index():
+    """모든 스토리 단계 {id: 원래 맵 목록·챕터·글} (단계에 맵이 없으면 구간 맵)"""
+    steps = {}
     for path in sorted((paths.DATA_DIR / "story").glob("*.json")):
         if path.name == "places.json":
             continue
@@ -176,9 +187,8 @@ def _story_steps(map_key):
                 if not isinstance(step, dict) or not isinstance(step.get("id"), str):
                     continue
                 maps = step.get("map") or section.get("map")
-                maps = maps if isinstance(maps, list) else [maps]
-                if map_key in maps:
-                    steps.append({"id": step["id"], "chapter": name, "ko": step.get("ko", ""), "en": step.get("en", "")})
+                maps = [m for m in (maps if isinstance(maps, list) else [maps]) if isinstance(m, str)]
+                steps[step["id"]] = {"maps": maps, "chapter": name, "ko": step.get("ko", ""), "en": step.get("en", "")}
     return steps
 
 
@@ -266,16 +276,18 @@ def _add_keys(map_key, result, snapshot):
     except (OSError, ValueError):
         story = None
     story_steps = _story_steps(map_key) if story is not None else []
-    for kind in ("bd", "boss", "extract", "btr", "guide", "story", "noplace"):
+    for kind in ("bd", "boss", "extract", "btr", "guide", "story", "noplace", "maps"):
         if kind == "guide" and guide is None:
             continue
         if kind in ("story", "noplace") and not story_steps:
             continue
+        if kind == "maps" and story is None:
+            continue
         file = {"guide": "guides/" + map_key + ".json", "story": "story/places.json",
-                "noplace": "story/places.json"}.get(kind, "corrections.json")
-        raw, data = {"guide": guide, "story": story, "noplace": story}.get(kind) or snapshot
+                "noplace": "story/places.json", "maps": "story/places.json"}.get(kind, "corrections.json")
+        raw, data = {"guide": guide, "story": story, "noplace": story, "maps": story}.get(kind) or snapshot
         route = {"guide": ["points", "_"], "story": ["places", "x", 0],
-                 "noplace": ["no_place", 0]}.get(kind, ["enemy_spawns", map_key, "Editor"])
+                 "noplace": ["no_place", 0], "maps": ["step_maps", "x"]}.get(kind, ["enemy_spawns", map_key, "Editor"])
         context = hashlib.sha256(json.dumps([map_key, heights], separators=(",", ":")).encode()).hexdigest()
         _add_context[context] = heights
         # Keep old tabs usable without unbounded growth in long editing sessions.
@@ -465,7 +477,8 @@ def _add_change(plan, key, change, today):
         raise ValueError("fields")
     allowed = {"note"} | {"bd": {"count"}, "boss": {"bosses"}, "extract": {"name", "faction"},
                           "btr": {"name"}, "guide": {"kind", "label_ko", "label_en", "candidate", "steps"},
-                          "story": {"step", "candidate", "y"}, "noplace": {"step"}}[kind]
+                          "story": {"step", "candidate", "y"}, "noplace": {"step"},
+                          "maps": {"step", "maps"}}[kind]
     if set(fields) - allowed:
         raise ValueError("fields")
     def text(field, required=True):
@@ -479,10 +492,30 @@ def _add_change(plan, key, change, today):
     near = min(_add_context[seed["context"]], key=lambda p: (p[0] - x)**2 + (p[1] - z)**2, default=[0, 0, 0])
     entry = {"x": x, "y": near[2], "z": z, "note": text("note", False), "from": "game", "checked": today}
     data = plan["data"]
+    index = _step_index() if kind in ("story", "noplace", "maps") else {}
+    overrides = data.get("step_maps") if isinstance(data.get("step_maps"), dict) else {}
+    if kind == "maps":
+        # 단계가 쓰는 맵 목록 바꾸기 (편집자가 여러 맵 체크). 이미 장소가 있는 맵은 뺄 수 없음
+        from app import tarkov_api
+        step, maps = fields.get("step"), fields.get("maps")
+        known = {m.get("normalizedName") for m in tarkov_api.load("maps").get("maps", {}).values() if isinstance(m, dict)}
+        if not isinstance(step, str) or step not in index:
+            raise ValueError("step")
+        if (not isinstance(maps, list) or not 1 <= len(maps) <= 30 or len(set(maps)) != len(maps)
+                or not all(isinstance(m, str) and m in known for m in maps)):
+            raise ValueError("maps")
+        used = {r.get("map") for r in (data.get("places") or {}).get(step, []) if isinstance(r, dict)}
+        if used - set(maps):
+            raise ValueError("maps-in-use")
+        if "step_maps" in data and not isinstance(data["step_maps"], dict):
+            raise ValueError("step_maps")
+        data.setdefault("step_maps", {})[step] = maps
+        plan["updates"].append((("step_maps", step), maps))
+        return
     if kind == "noplace":
         # 연속 입력에서 '장소 불필요' (자동 분류가 틀렸을 때 바로잡기)
         step = fields.get("step")
-        if not isinstance(step, str) or step not in seed.get("steps", []):
+        if not isinstance(step, str) or step not in index:
             raise ValueError("step")
         rows = data.setdefault("no_place", [])
         if not isinstance(rows, list) or step in rows:
@@ -493,7 +526,9 @@ def _add_change(plan, key, change, today):
         return
     if kind == "story":
         step = fields.get("step")
-        if not isinstance(step, str) or step not in {s["id"] for s in seed.get("steps", [])}:
+        # 단계의 맵: 같은 저장에서 바꾼 맵 목록(step_maps)이 먼저, 없으면 원래 맵
+        maps = overrides.get(step) if isinstance(step, str) and isinstance(overrides.get(step), list) else index.get(step, {}).get("maps")
+        if not isinstance(step, str) or step not in index or map_key not in (maps or []):
             raise ValueError("step")
         if type(fields.get("candidate", False)) is not bool:
             raise ValueError("candidate")

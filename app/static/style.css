@@ -2402,3 +2402,6 @@ body.position-edit .position-deleted { display: none; }
 .story-walk-actions { display: flex; flex-wrap: wrap; gap: 4px; }
 .story-walk-actions .layer-toggle-btn { justify-content: center; }
 .story-walk-actions .on, .position-editor .on { outline: 2px solid #9cf; }
+.story-walk-maps { font-size: 12px; }
+.story-walk-maps summary { cursor: pointer; color: #9cf; }
+.story-walk-maps label { display: inline-flex; align-items: center; gap: 2px; margin: 2px 8px 2px 0; }

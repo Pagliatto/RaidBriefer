@@ -50,7 +50,7 @@ function refreshNewMarkers() {
   for (const [id, pending] of mapEditor.pending) {
     if (!pending.fields || pending.map !== mapUI.current?.key) continue;
     const kind = pending.edit.seed.add;
-    if (kind === "noplace") continue; // 위치 없는 항목 (스토리 연속 입력의 '장소 불필요')
+    if (kind === "noplace" || kind === "maps") continue; // 위치 없는 항목 (스토리 연속 입력의 '장소 불필요'·맵 고치기)
     const pin = pending.fields.kind;
     const icons = { bd: ["enemy", "crosshair"], boss: ["boss", "skull"], extract: [`extract-${pending.fields.faction}`, "door-open"], btr: ["btr", "bus"], story: ["story", "book-open"], guide: [pin === "lock" ? "lock" : "guide-" + pin, GUIDE_ICONS[pin] || "door-open"] };
     const marker = L.marker(gamePos(pending.pos), { icon: markerIcon(...icons[kind], 22) });
@@ -101,7 +101,7 @@ function openMarkerForm(latlng) {
     }
     return input;
   };
-  const kind = field(form, "kind", select(Object.keys(options).filter((key) => key !== "noplace")
+  const kind = field(form, "kind", select(Object.keys(options).filter((key) => key !== "noplace" && key !== "maps")
     .map((key) => [key, editorText("kind_" + key)])));
   if (typeof picked === "string" && options[picked]) {
     kind.value = picked;
@@ -301,6 +301,7 @@ function undoPositionEdit() {
   refreshPositionEdits();
   const back = mapEditor.walk && !previous.before && step ? mapEditor.walk.queue.findIndex((i) => i.step.id === step) : -1;
   if (back >= 0) { mapEditor.walk.index = back; showStoryWalk(); } // 연속 입력: 되돌린 단계로
+  else if (mapEditor.walk) showStoryWalk();
 }
 
 function bindPositionEditor(marker, item, label, guide = false) {
@@ -388,7 +389,9 @@ async function savePositionEdits() {
   let wrote = false;
   try {
     // 같은 글 단계(twins)는 같은 장소·같은 열쇠로 한 번씩 더 넣음
-    const changes = [...mapEditor.pending.values()].flatMap(({ edit, pos, fields, delete: removed, twins }) =>
+    const ordered = [...mapEditor.pending.values()].sort((a, b) =>
+      (b.edit?.seed?.add === "maps") - (a.edit?.seed?.add === "maps")); // 맵 고치기 먼저
+    const changes = ordered.flatMap(({ edit, pos, fields, delete: removed, twins }) =>
       [fields?.step, ...(fields && twins ? twins : [])].map((step, i) => ({ edit, x: pos[0], z: pos[1],
         ...(fields ? { fields: i ? { ...fields, step } : fields } : {}), ...(removed ? { delete: true } : {}) })));
     const response = await fetch("/api/editor", {
@@ -418,6 +421,7 @@ async function savePositionEdits() {
     mapGuide.controller?.abort();
     mapGuide.key = null;
     if (typeof loadStory === "function") await loadStory(); // 스토리 장소의 새 순번·서명
+    showStoryWalk(); // 연속 입력 카드도 새 데이터로
     await drawMap();
   }
 }
@@ -699,7 +703,7 @@ function storyPlaceEntry(id) {
 function storyWalkQueue() {
   const skip = new Set(story.data?.noPlace || []);
   const links = story.data?.extractLinks || {};
-  const waiting = new Set([...mapEditor.pending.values()].filter((p) => p.fields?.step)
+  const waiting = new Set([...mapEditor.pending.values()].filter((p) => p.fields?.step && p.edit?.seed?.add !== "maps")
     .flatMap((p) => [p.fields.step, ...(p.twins || [])]));
   const chapters = story.data?.chapters || [];
   const ordered = [...chapters.filter((ch) => isChapterStarted(ch)), ...chapters.filter((ch) => !isChapterStarted(ch))];
@@ -761,7 +765,7 @@ function showStoryWalk() {
     card.append(el("p", "", t("editor.walkDone")), act("editor.walkStop", stopStoryWalk));
     return;
   }
-  const mapName = mapUI.maps.find((m) => m.key === item.map)?.name || item.map;
+  const mapName = walkMaps(item).map((key) => mapUI.maps.find((m) => m.key === key)?.name || key).join(" / ");
   card.append(el("div", "story-walk-head", `${walk.index + 1} / ${walk.queue.length} · ${item.ch.name} · ${mapName}`));
   card.append(el("strong", "", item.step.ko));
   if (item.twins.length) card.append(el("small", "story-walk-twins", t("editor.walkTwins", { n: item.twins.length + 1 })));
@@ -781,13 +785,34 @@ function showStoryWalk() {
     pics.append(link);
   });
   if (pics.childElementCount) card.append(pics);
-  if (item.maps.length > 1) { // 맵이 여러 개인 단계: 장소가 있는 맵을 골라서 찍기
+  const maps = walkMaps(item);
+  if (maps.length > 1) { // 맵이 여러 개인 단계: 장소가 있는 맵을 골라서 찍기
     const pick = el("div", "story-walk-actions");
-    item.maps.forEach((key) => pick.append(act("", () => chooseMap(key, false),
+    maps.forEach((key) => pick.append(act("", () => chooseMap(key, false),
       key === mapUI.current?.key ? "on" : "", mapUI.maps.find((m) => m.key === key)?.name || key)));
     card.append(pick);
   }
-  const placed = [...mapEditor.pending.values()].filter((p) => p.edit?.seed?.add === "story" && p.fields?.step === item.step.id).length;
+  // 이 단계가 쓰는 맵 고치기 (데이터에 빠진 맵 체크). 장소가 있는 맵·마지막 하나는 못 뺌
+  if (mapEditor.options?.maps) {
+    const box = el("details", "story-walk-maps");
+    box.open = !!walk.mapsOpen;
+    box.addEventListener("toggle", () => { walk.mapsOpen = box.open; });
+    box.append(el("summary", "", t("editor.walkMaps")));
+    mapUI.maps.forEach((m) => {
+      const label = el("label");
+      const check = el("input");
+      check.type = "checkbox";
+      check.checked = maps.includes(m.key);
+      check.disabled = check.checked && (maps.length === 1 || storyWalkUsed(item, m.key));
+      check.addEventListener("change", () => setWalkMaps(item, check.checked
+        ? [...maps, m.key] : maps.filter((k) => k !== m.key), check.checked ? m.key : null));
+      label.append(check, " " + m.name);
+      box.append(label);
+    });
+    card.append(box);
+  }
+  const placed = storyPlacesFor(item.step.id).length + [...mapEditor.pending.values()]
+    .filter((p) => p.edit?.seed?.add === "story" && p.fields?.step === item.step.id && !p.delete).length;
   card.append(el("p", "story-walk-hint", placed ? t("editor.walkPlaced", { n: placed }) : t("editor.walkHint")));
   const row = el("div", "story-walk-actions");
   row.append(
@@ -797,7 +822,37 @@ function showStoryWalk() {
     act("editor.walkStop", stopStoryWalk),
   );
   card.append(row);
-  if (!item.maps.includes(mapUI.current?.key)) chooseMap(item.map, false); // 그 단계의 맵으로
+  if (!maps.includes(mapUI.current?.key)) chooseMap(maps[0], false); // 그 단계의 맵으로
+}
+
+// 이 단계가 지금 쓰는 맵 (편집 중 고친 목록이 있으면 그것)
+function walkMaps(item) {
+  const pending = mapEditor.pending.get("maps:" + item.step.id)?.fields.maps;
+  if (pending) return pending;
+  // 저장 뒤에는 새로 받은 스토리 데이터의 맵 (step_maps 반영)
+  const saved = story.data?.stepMaps?.[item.step.id];
+  return Array.isArray(saved) && saved.length ? saved.filter((key) => mapUI.maps.some((m) => m.key === key)) : item.maps;
+}
+
+// 이 맵에 이 단계 장소가 있나 (저장된 것·저장 전 핀)
+function storyWalkUsed(item, key) {
+  return storyPlacesFor(item.step.id, key).length > 0 || [...mapEditor.pending.values()].some((p) =>
+    p.edit?.seed?.add === "story" && p.fields?.step === item.step.id && p.map === key && !p.delete);
+}
+
+function setWalkMaps(item, maps, go) {
+  const edit = mapEditor.options?.maps;
+  if (mapEditor.saving || !edit || !maps.length) return showStoryWalk();
+  const id = "maps:" + item.step.id;
+  mapEditor.history.push({ id, before: mapEditor.pending.get(id) });
+  const base = story.data?.stepMaps?.[item.step.id] || item.maps;
+  const same = maps.length === base.length && maps.every((k) => base.includes(k));
+  if (same) mapEditor.pending.delete(id); // 원래대로 돌아오면 바꿀 것 없음
+  else mapEditor.pending.set(id, { edit, fields: { step: item.step.id, maps }, pos: [0, 0, 0], base: [0, 0, 0],
+    map: mapUI.current?.key, label: item.step.ko, twins: item.twins.slice() });
+  refreshPositionEdits();
+  if (go) chooseMap(go, false); // 새로 체크한 맵으로 이동
+  showStoryWalk();
 }
 
 function advanceStoryWalk() {
@@ -811,7 +866,7 @@ function storyWalkPlace(latlng) {
   if (mapEditor.saving) return;
   const item = storyWalkItem();
   const edit = mapEditor.options?.story;
-  if (!item || !edit || !item.maps.includes(mapUI.current?.key) || edit.seed?.map !== mapUI.current?.key) return; // 맵이 바뀌는 중이면 무시 (옛 맵 열쇠로 넣지 않기)
+  if (!item || !edit || !walkMaps(item).includes(mapUI.current?.key) || edit.seed?.map !== mapUI.current?.key) return; // 맵이 바뀌는 중이면 무시 (옛 맵 열쇠로 넣지 않기)
   const x = Math.round(latlng.lng * 10) / 10;
   const z = Math.round(latlng.lat * 10) / 10;
   // 같은 단계를 거의 같은 자리에 또 누르면 무시 (겹친 핀이 쌓이지 않게)
@@ -844,7 +899,7 @@ function storyWalkNoPlace() {
   if (mapEditor.saving) return; // 저장 중에 넣으면 저장 결과 처리에서 같이 지워짐
   const item = storyWalkItem();
   const edit = mapEditor.options?.noplace;
-  if (!item || !edit || !item.maps.includes(mapUI.current?.key) || edit.seed?.map !== mapUI.current?.key) return;
+  if (!item || !edit || !walkMaps(item).includes(mapUI.current?.key) || edit.seed?.map !== mapUI.current?.key) return;
   const already = [...mapEditor.pending.values()].some((p) => p.edit?.seed?.add === "noplace" && p.fields?.step === item.step.id);
   // (같은 글 단계들은 저장할 때 함께 들어감: twins)
   if (already) { advanceStoryWalk(); return; } // 이미 '장소 불필요'로 넣은 단계 (이전으로 돌아온 경우)

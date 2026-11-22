@@ -474,6 +474,7 @@
     "Vitality": "Vitality"
   },
   "editor": {
+    "walkMaps": "Edit this step's maps",
     "walkTwins": "Applies to {n} steps with the same text (same action on each branch)",
     "walkNext": "Next",
     "walkPlaced": "{n} place(s) for this step. Click again to add more, then press Next.",

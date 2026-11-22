@@ -140,6 +140,18 @@ def check_places(chapters, map_keys):
     except (OSError, ValueError) as error:
         report("places", str(error))
         return
+    # 편집자가 고친 단계별 맵 목록 (step_maps): 있으면 원래 맵 대신
+    step_maps = data.get("step_maps", {})
+    if not isinstance(step_maps, dict):
+        report("places", "step_maps 가 객체가 아님")
+        step_maps = {}
+    for sid, maps in step_maps.items():
+        if sid not in steps:
+            report("places", f"step_maps 에 없는 단계: {sid}")
+        elif not isinstance(maps, list) or not maps or any(m not in map_keys for m in maps) or len(set(maps)) != len(maps):
+            report("places", f"step_maps 맵 목록 오류: {sid}")
+        else:
+            steps[sid] = maps
     for sid, entries in places.items():
         if sid not in steps:
             report("places", f"없는 단계: {sid}")

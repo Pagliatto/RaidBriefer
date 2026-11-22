@@ -24,7 +24,8 @@ def valid(p) -> bool:
             and isinstance(p.get("candidate", False), bool) and isinstance(p.get("note", ""), str))
 
 
-_extras_cache = [None, {"noPlace": [], "extractLinks": {}}]
+_EMPTY = {"noPlace": [], "extractLinks": {}, "stepMaps": {}}
+_extras_cache = [None, _EMPTY]
 
 
 def _extras(data) -> dict:
@@ -38,12 +39,23 @@ def _extras(data) -> dict:
             if (isinstance(sid, str) and isinstance(link, dict) and isinstance(link.get("map"), str) and link["map"]
                     and isinstance(link.get("extract"), str) and link["extract"]):
                 links[sid] = {"map": link["map"], "extract": link["extract"]}
-    return {"noPlace": no_place, "extractLinks": links}
+    # 편집자가 고친 단계별 맵 목록 (스토리 데이터의 map 대신 씀)
+    step_maps = {}
+    raw = data.get("step_maps")
+    if isinstance(raw, dict):
+        for sid, maps in raw.items():
+            if isinstance(sid, str) and isinstance(maps, list) and maps and all(isinstance(m, str) and m for m in maps):
+                step_maps[sid] = list(dict.fromkeys(maps))
+    return {"noPlace": no_place, "extractLinks": links, "stepMaps": step_maps}
 
 
 def extras() -> dict:
     load()  # 파일이 바뀌었으면 같이 다시 읽음
-    return _extras_cache[1] if _extras_cache[0] is not None else {"noPlace": [], "extractLinks": {}}
+    return _extras_cache[1] if _extras_cache[0] is not None else _EMPTY
+
+
+def step_maps() -> dict:
+    return extras().get("stepMaps", {})
 
 
 def load() -> dict:

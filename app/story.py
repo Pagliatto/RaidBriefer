@@ -98,6 +98,8 @@ def build() -> dict:
         find = _item_id_finder()
     except Exception:
         find = lambda text: []  # 아이템 정보가 없어도 스토리는 그대로
+    from app import story_places
+    overrides = story_places.step_maps()  # 편집자가 고친 단계별 맵 (여러 맵 체크)
     chapters = []
     for chapter_id in CHAPTER_ORDER:
         path = STORY_DIR / f"{chapter_id}.json"
@@ -115,6 +117,8 @@ def build() -> dict:
         for section in chapter["sections"]:
             with_names(section)
             for step in section.get("steps", []):
+                if step.get("id") in overrides:
+                    step["map"] = overrides[step["id"]]
                 with_names(step)
         _add_item_ids(chapter, find)  # 아이콘은 원래(한국어) 글자로 찾은 뒤
         if lang != "ko":
