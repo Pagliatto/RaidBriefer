@@ -133,6 +133,7 @@
     "markAllSeen": "모두 확인"
   },
   "story": {
+    "viewPlaces": "📍 지도에서 보기",
     "stepUndo": "이 단계 체크 해제",
     "stepDone": "이 단계 완료",
     "sectionDone": "전체 체크",
@@ -222,6 +223,7 @@
     "newBadge": "새로 가능"
   },
   "map": {
+    "storyLayer": "스토리",
     "layerBlackDivision": "블랙 디비전",
     "layerBossZones": "보스 구역",
     "blackDivisionCount": "블랙 디비전 {n}명",

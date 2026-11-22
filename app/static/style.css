@@ -2375,3 +2375,11 @@ body.position-saving #map-view { pointer-events: none; }
 .position-add-actions { display: flex; justify-content: center; gap: 8px; }
 .position-add-form button, body.position-edit .leaflet-popup button { text-align: center; justify-content: center; }
 body.position-edit .position-deleted { display: none; }
+
+/* Story place controls: normal buttons centered; drawer prose is a list row. */
+.mk-story { --mk: #b39ddb; }
+.story-places-button { display: block; margin: 5px 0 5px 26px; max-width: calc(100% - 26px); text-align: center; white-space: normal; overflow-wrap: anywhere; font-size: 12px; }
+.drawer-story-steps li:has(.story-place-focus) { display: flex; align-items: flex-start; gap: 6px; }
+.story-place-focus { min-width: 0; flex: 1; text-align: left; white-space: normal; overflow-wrap: anywhere; font: inherit; padding: 2px 4px; }
+.story-place-focused { background: var(--surface-3); outline: 1px solid #b39ddb; border-radius: 4px; }
+.story-place-focus:focus-visible, .story-places-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

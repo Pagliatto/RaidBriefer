@@ -13,6 +13,7 @@ data/story/*.json 을 검사해서 문제를 찾는다.
 """
 
 import json
+import math
 import re
 import sys
 from collections import Counter
@@ -121,6 +122,48 @@ def check_choices(ch):
     return results
 
 
+def finite_number(value):
+    try:
+        return type(value) in (int, float) and math.isfinite(value)
+    except OverflowError:
+        return False
+
+
+def check_places(chapters, map_keys):
+    steps = {st["id"]: st.get("map") or sec.get("map") or []
+             for ch in chapters for sec in ch["sections"] for st in sec.get("steps", [])}
+    try:
+        data = json.loads((ROOT / "data/story/places.json").read_text(encoding="utf-8"))
+        places = data.get("places") if isinstance(data, dict) else None
+        if not isinstance(places, dict):
+            raise ValueError("places must be an object")
+    except (OSError, ValueError) as error:
+        report("places", str(error))
+        return
+    for sid, entries in places.items():
+        if sid not in steps:
+            report("places", f"없는 단계: {sid}")
+        maps = steps.get(sid, [])
+        maps = maps if isinstance(maps, list) else [maps]
+        if not isinstance(entries, list):
+            report("places", f"장소 배열 아님: {sid}")
+            continue
+        for p in entries:
+            if not isinstance(p, dict):
+                report("places", f"장소 객체 아님: {sid}")
+                continue
+            key = p.get("map")
+            if not isinstance(key, str) or key not in map_keys or key not in maps:
+                report("places", f"단계에 없는 맵: {sid} / {key}")
+            if not all(finite_number(p.get(k)) for k in ("x", "y", "z")):
+                report("places", f"유효하지 않은 좌표: {sid}")
+            for field in ("from", "checked"):
+                if not isinstance(p.get(field), str) or not p[field].strip():
+                    report("places", f"{field} 누락: {sid}")
+            if not isinstance(p.get("candidate"), bool) or not isinstance(p.get("note"), str):
+                report("places", f"candidate/note 형식 오류: {sid}")
+
+
 def main():
     tarkov_api.update_all()
     map_keys = {m["normalizedName"] for m in tarkov_api.load("maps")["maps"].values()}
@@ -129,7 +172,7 @@ def main():
     summary = []
 
     paths = sorted((ROOT / "data" / "story").glob("*.json"))
-    loaded = [json.loads(p.read_text(encoding="utf-8")) for p in paths]
+    loaded = [json.loads(p.read_text(encoding="utf-8")) for p in paths if p.name != "places.json"]
     # 챕터 id → {갈림길 id: [선택지 id]} (다른 챕터 조건 점검용)
     all_chapters = {c["id"]: {s["choice"]["id"]: [o["id"] for o in s["choice"]["options"]]
                               for s in c["sections"] if "choice" in s} for c in loaded}
@@ -257,6 +300,8 @@ def main():
 
         routes = check_choices(ch)
         summary.append((ch["name"], len(steps), len(ch["sections"]), routes))
+
+    check_places(loaded, map_keys)
 
     # 3) id 중복
     for sid, n in all_ids.items():

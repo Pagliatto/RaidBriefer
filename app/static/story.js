@@ -170,6 +170,20 @@ function appendStoryMapTags(parent, item) {
   names.forEach((name, index) => parent.append(mapTag(name, null, false, keys[index] || name)));
 }
 
+function storyPlacesFor(id, map = null) {
+  const places = story.data?.places?.[id];
+  return Array.isArray(places) ? places.filter((p) => p && typeof p.map === "string"
+    && (!map || p.map === map) && [p.x, p.y, p.z].every(Number.isFinite)) : [];
+}
+
+function appendStoryPlacesButton(li, step) {
+  if (!storyPlacesFor(step.id).length) return;
+  const button = el("button", "story-places-button", t("story.viewPlaces"));
+  button.type = "button";
+  button.addEventListener("click", () => openStoryPlaces(step.id));
+  li.append(button);
+}
+
 function renderStep(step, current = false) {
   const done = isStepDone(step);
   const li = el("li", "step" + (step.optional ? " optional" : "") + (done ? " done" : ""));
@@ -187,6 +201,7 @@ function renderStep(step, current = false) {
     label.append(el("span", "step-now", t("story.stepNow")));
   }
   li.append(label);
+  appendStoryPlacesButton(li, step);
   return li;
 }
 
@@ -204,6 +219,7 @@ function renderManualStep(step) {
   label.append(box, el("span", "step-text", step.ko), el("span", "manual-mark", t("story.manualMark")));
   appendStoryMapTags(label, step);
   li.append(label);
+  appendStoryPlacesButton(li, step);
   return li;
 }
 

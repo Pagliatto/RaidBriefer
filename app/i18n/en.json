@@ -133,6 +133,7 @@
     "markAllSeen": "Mark all seen"
   },
   "story": {
+    "viewPlaces": "📍 View on map",
     "stepUndo": "Uncheck this step",
     "stepDone": "Check this step",
     "sectionDone": "Check all",
@@ -222,6 +223,7 @@
     "newBadge": "New"
   },
   "map": {
+    "storyLayer": "Story",
     "layerBlackDivision": "Black Division",
     "layerBossZones": "Boss zones",
     "blackDivisionCount": "Black Division: {n} troops",

@@ -620,6 +620,107 @@ function mapQuests(name) {
 }
 
 // ---------- 지도 그리기 ----------
+const mapStory = { focused: null, explicit: null, markers: [] };
+
+// Use exactly the current steps shown in the drawer, including its guide de-duplication.
+function currentStoryChapters(m = mapUI.current) {
+  if (!m || typeof storyNext !== "function" || typeof story === "undefined" || !story.data) return [];
+  const covered = new Set((currentGuide()?.steps || []).map((step) => step.story_step).filter(Boolean));
+  return storyNext().map((s) => ({ s, entries: s.mapSteps.filter((entry) =>
+    entry.maps.includes(m.name) && !covered.has(entry.step.id)) })).filter((c) => c.entries.length);
+}
+
+function storyPlaceEntry(id) {
+  for (const ch of story.data?.chapters || []) {
+    for (const section of ch.sections || []) {
+      const step = (section.steps || []).find((st) => st.id === id);
+      if (step) return { s: { ch }, entry: { step, section } };
+    }
+  }
+  return null;
+}
+
+function storyPinEntries() {
+  const entries = currentStoryChapters().flatMap(({ s, entries }) => entries.map((entry) => ({ s, entry })));
+  if (mapStory.explicit?.map === mapUI.current?.key && !entries.some(({ entry }) => entry.step.id === mapStory.explicit.id)) {
+    const found = storyPlaceEntry(mapStory.explicit.id);
+    if (found) entries.push(found);
+  }
+  return entries;
+}
+
+function highlightStoryStep() {
+  mapStory.markers.forEach(({ marker, id }) => {
+    const selected = id === mapStory.focused;
+    marker.getElement()?.classList.toggle("guide-highlight", selected);
+    marker.setZIndexOffset(selected ? 800 : 0);
+  });
+  document.querySelectorAll("#drawer-list [data-story-step]").forEach((row) => {
+    const selected = row.dataset.storyStep === mapStory.focused;
+    row.classList.toggle("story-place-focused", selected);
+    row.querySelector(".story-place-focus")?.setAttribute("aria-pressed", String(selected));
+  });
+}
+
+function drawStoryPins() {
+  mapUI.groups?.story?.clearLayers();
+  mapUI.floorItems = (mapUI.floorItems || []).filter((item) => !item.story);
+  mapStory.markers = [];
+  if (mapUI.leaflet && mapUI.groups?.story) {
+    storyPinEntries().forEach(({ s, entry }) => {
+      storyPlacesFor(entry.step.id, mapUI.current.key).forEach((point) => {
+        const pos = [point.x, point.z, point.y];
+        const icon = markerIcon("story", "book-open", 20);
+        if (point.candidate) icon.options.className += " guide-candidate";
+        const label = [s.ch.name, entry.step.ko, point.note,
+          point.candidate ? t("map.guideCandidate") : ""].filter(Boolean).join(" · ");
+        const marker = L.marker(gamePos(pos), { icon, title: label, alt: label });
+        marker.bindTooltip(escapeHtml(label), { direction: "top", offset: [0, -10] });
+        const floor = floorOf(pos);
+        marker.on("click", () => {
+          if (!mapUI.drawerOpen) setDrawer(true);
+          goToFloorOf(floor);
+          mapStory.focused = entry.step.id;
+          highlightStoryStep();
+          const row = [...document.querySelectorAll("#drawer-list [data-story-step]")]
+            .find((row) => row.dataset.storyStep === entry.step.id);
+          row?.scrollIntoView({ block: "center", behavior: reducedMotion() ? "instant" : "smooth" });
+        });
+        marker.addTo(mapUI.groups.story);
+        mapStory.markers.push({ marker, id: entry.step.id });
+        mapUI.floorItems.push({ layer: marker, floor, story: true });
+      });
+    });
+    applyFloor();
+    highlightStoryStep();
+  }
+  renderLayerDrawer();
+}
+
+function focusStoryStep(id, toggle = true) {
+  mapStory.focused = toggle && mapStory.focused === id ? null : id;
+  const points = storyPlacesFor(id, mapUI.current?.key);
+  const leaf = mapUI.leaflet;
+  if (mapStory.focused && leaf && points.length) {
+    if (!layerOn("story")) setLayer("story", true);
+    goToFloorOf(floorOf([points[0].x, points[0].z, points[0].y]));
+    collapseAll();
+    fitArea(leaf, L.latLngBounds(points.map((p) => gamePos([p.x, p.z, p.y]))),
+      { maxZoom: Math.min(4, leaf.getMaxZoom()), padding: 40, animate: true });
+  }
+  highlightStoryStep();
+}
+
+function openStoryPlaces(id) {
+  const points = storyPlacesFor(id);
+  const point = points.find((p) => mapUI.maps.some((m) => m.key === p.map));
+  if (!point) return;
+  goTab("map");
+  mapStory.explicit = { id, map: point.map };
+  mapStory.focused = id;
+  chooseMap(point.map);
+}
+
 let mapGeneration = 0;
 async function drawMap() {
   const generation = ++mapGeneration;
@@ -634,6 +735,8 @@ async function drawMap() {
   lootRevision++;
   lootController?.abort();
   const m = mapUI.current;
+  if (mapStory.explicit?.map !== m?.key) { mapStory.explicit = null; mapStory.focused = null; }
+  mapStory.markers = [];
   const box = document.getElementById("map-view");
   if (mapUI.leaflet) {
     mapUI.leaflet.remove();
@@ -706,6 +809,7 @@ async function drawMap() {
   setTimeout(() => {
     if (mapUI.leaflet !== leaf) return;
     fitFull(leaf, true);
+    if (mapStory.focused) focusStoryStep(mapStory.focused, false);
   }, 0);
 
   if (view.svg) {
@@ -1217,7 +1321,7 @@ function drawGuidePins() {
     applyFloor();
     highlightGuideStep();
   }
-  renderLayerDrawer();
+  drawStoryPins();
 }
 
 // 탈출구는 기존 표시를 재사용한다. 이름이 맞지 않아도 단계의 좌표 이동은 가능하다.
@@ -1422,11 +1526,11 @@ function afterMove(leaf, fn) {
 // 지도 서랍 맨 위 '스토리' 칸: 지금 맵에서 할 스토리 단계 (홈과 같은 규칙: 진행 중 구간 + 다음 구간)
 // 체크는 여기서 바로(스토리 탭과 같은 기록), 위치 설명은 펼쳐서, 사진만 스토리 탭으로
 function renderDrawerStories(list, m) {
-  if (typeof storyNext !== "function" || typeof story === "undefined" || !story.data) return 0;
-  const covered = new Set((currentGuide()?.steps || []).map((step) => step.story_step).filter(Boolean));
-  const chapters = storyNext()
-    .map((s) => ({ s, entries: s.mapSteps.filter((entry) => entry.maps.includes(m.name) && !covered.has(entry.step.id)) }))
-    .filter((c) => c.entries.length);
+  const chapters = currentStoryChapters(m);
+  if (mapStory.explicit?.map === m.key && !chapters.some((c) => c.entries.some((e) => e.step.id === mapStory.explicit.id))) {
+    const found = storyPlaceEntry(mapStory.explicit.id);
+    if (found) chapters.push({ s: found.s, entries: [found.entry] });
+  }
   if (!chapters.length) return 0;
   list.append(el("li", "drawer-divider drawer-section-title drawer-story-title", t("map.drawerStory")));
   chapters.forEach(({ s, entries }) => {
@@ -1450,14 +1554,27 @@ function renderDrawerStories(list, m) {
       const goals = el("ul", "drawer-goals drawer-story-steps");
       steps.forEach((step) => {
         const row = el("li");
+        row.dataset.storyStep = step.id;
         const label = el("label");
         const box = document.createElement("input");
         box.type = "checkbox";
         box.checked = isStepDone(step);
         box.title = t("story.stepDone");
         box.addEventListener("change", () => saveStoryChanges({ [`${step.id}!`]: box.checked ? "done" : null }));
-        label.append(box, el("span", "", step.ko));
-        row.append(label);
+        if (storyPlacesFor(step.id, m.key).length) {
+          label.append(box);
+          const focus = el("button", "story-place-focus", step.ko);
+          focus.type = "button";
+          focus.title = t("story.viewPlaces");
+          focus.setAttribute("aria-pressed", String(mapStory.focused === step.id));
+          focus.addEventListener("click", () => focusStoryStep(step.id));
+          row.append(label, focus);
+        } else {
+          label.append(box, el("span", "", step.ko));
+          row.append(label);
+        }
+        box.setAttribute("aria-label", step.ko);
+        row.classList.toggle("story-place-focused", mapStory.focused === step.id);
         goals.append(row);
       });
       li.append(goals);
@@ -1623,7 +1740,10 @@ document.addEventListener("tab-shown", (e) => {
 // 필요템 줄 수가 바뀌거나 사라져도 남은 지도 크기에 맞춘다.
 const lootBarObserver = new ResizeObserver(() => {
   updateLootToggle();
-  if (mapUI.leaflet && currentTab() === "map") fitFull(mapUI.leaflet, false);
+  if (mapUI.leaflet && currentTab() === "map") {
+    fitFull(mapUI.leaflet, false);
+    if (mapStory.focused) focusStoryStep(mapStory.focused, false);
+  }
 });
 lootBarObserver.observe(document.getElementById("loot-bar"));
 
@@ -1648,6 +1768,9 @@ function scheduleMapRefresh() {
 document.addEventListener("hideout-changed", scheduleMapRefresh);
 document.addEventListener("story-changed", () => {
   scheduleMapRefresh();
+  mapStory.explicit = null;
+  mapStory.focused = null;
+  drawStoryPins();
   // 서랍 맨 위 스토리 칸: 체크 성공(다음 구간)·실패(되돌림) 모두 바로 반영 (Codex 41 #1)
   if (currentTab() === "map" && mapUI.current) renderDrawer();
   else if (mapUI.current) mapUI.drawerDirty = true;
@@ -1675,8 +1798,9 @@ initializePositionEditor().then(loadMapList);
 
 // ---------- 표시 켜기/끄기 (왼쪽 서랍) ----------
 // 퀘스트·먹을 것·탈출구·트랜짓·열쇠·귀중품. 고른 값은 이 브라우저에 기억 (다음에 켜도 그대로)
-const LAYER_KEYS = ["quests", "loot", "extracts", "scavExtracts", "transits", "btrStops", "keys", "bitcoin", "keySpawns", "valuables", "guide", "blackDivision", "bossZones"];
+const LAYER_KEYS = ["quests", "loot", "extracts", "scavExtracts", "transits", "btrStops", "keys", "bitcoin", "keySpawns", "valuables", "guide", "story", "blackDivision", "bossZones"];
 const LAYER_INFO = {
+  story: { label: t("map.storyLayer"), mark: "mk:story:book-open", on: true },
   blackDivision: { label: t("map.layerBlackDivision"), mark: "mk:enemy:crosshair", on: true },
   bossZones: { label: t("map.layerBossZones"), mark: "mk:boss:skull", on: true },
   guide: { label: t("map.guideLayer"), mark: "mk:guide-start:book-open", on: true },
@@ -1722,6 +1846,7 @@ function setLayer(key, on) {
     if (on) group.addTo(mapUI.leaflet);
     else group.remove();
   }
+  highlightStoryStep();
   highlightGuideStep(); // 다시 켜면서 Leaflet이 만든 새 아이콘에도 선택 표시 유지
   renderLayerDrawer();
 }
@@ -1732,6 +1857,7 @@ function renderLayerDrawer() {
   LAYER_KEYS.forEach((key) => {
     const info = LAYER_INFO[key];
     if (key === "guide" && !currentGuide()) return;
+    if (key === "story" && !currentStoryChapters().some(({ entries }) => entries.some(({ step }) => storyPlacesFor(step.id, mapUI.current.key).length))) return;
     if ((key === "blackDivision" || key === "bossZones") && !layerCount(key)) return;
     if (info.always) return;  // 항상 보이는 표시는 서랍에 스위치를 두지 않음
     const on = layerOn(key);

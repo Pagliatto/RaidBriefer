@@ -17,7 +17,7 @@ from pathlib import Path
 
 from flask import Flask, abort, jsonify, render_template, request, send_file
 
-from app import brightness, game_state, hideout, i18n, updater, map_views, paths, progress, quest_log, quests, settings, story, tarkov_api
+from app import brightness, game_state, hideout, i18n, updater, map_views, paths, progress, quest_log, quests, settings, story, story_places, tarkov_api
 
 from app.version import VERSION
 
@@ -525,7 +525,7 @@ def api_settings_set():
 @app.route("/api/story")
 def api_story():
     try:
-        return jsonify(story.build())
+        return jsonify({**story.build(), "places": story_places.load()})
     except settings.DataReadError:
         raise
     except Exception as error:
