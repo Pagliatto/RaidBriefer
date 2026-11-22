@@ -2409,3 +2409,9 @@ body.position-edit .position-deleted { display: none; }
 .story-walk-maps label { display: inline-flex; align-items: center; gap: 2px; margin: 2px 8px 2px 0; }
 .story-walk-actions .story-walk-blocked { opacity: 0.4; pointer-events: none; }
 .drawer-story-start { margin: 2px 0 4px; font-size: 12px; color: var(--text-dim); }
+/* 할 일 서랍 큰 칸 접기: 제목 줄 전체가 버튼 (목록 머리라 왼쪽 정렬) */
+#drawer-list > li[data-fold] { padding: 0; }
+.drawer-fold { display: flex; align-items: center; gap: 4px; width: 100%; padding: 6px 12px; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.drawer-fold:hover { color: var(--text); }
+.drawer-fold svg { flex: none; }
+#drawer-list > li.drawer-folded { display: none !important; }

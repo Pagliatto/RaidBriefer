@@ -1154,6 +1154,7 @@ function drawStoryPins() {
           highlightStoryStep();
           const row = [...document.querySelectorAll("#drawer-list [data-story-step]")]
             .find((row) => row.dataset.storyStep === entry.step.id);
+          unfoldDrawerFor(row);
           row?.scrollIntoView({ block: "center", behavior: reducedMotion() ? "instant" : "smooth" });
         });
         marker.addTo(mapUI.groups.story);
@@ -1731,7 +1732,7 @@ function renderDrawerGuide(list, m) {
     list.append(row);
     return 1;
   }
-  list.append(el("li", "drawer-divider drawer-section-title guide-title", t("map.guideTitle")));
+  list.append(foldKey(el("li", "drawer-divider drawer-section-title guide-title", t("map.guideTitle")), "guide"));
   const section = el("li", "drawer-guide");
   section.append(guidePrepDetails(data, t("map.guidePrep"), "guide/" + m.key + "/prep"));
   const steps = el("ol", "guide-steps");
@@ -1853,6 +1854,7 @@ function showGuidePoint(id) {
   mapGuide.focused = step.id;
   highlightGuideStep();
   const row = [...document.querySelectorAll("#drawer-list [data-guide-step]")].find((row) => row.dataset.guideStep === step.id);
+  unfoldDrawerFor(row);
   row?.scrollIntoView({ block: "center", behavior: reducedMotion() ? "instant" : "smooth" });
 }
 
@@ -1936,15 +1938,73 @@ function renderDrawer() {
   const storyCount = renderDrawerStories(list, m);
   // '할 일' 버튼 숫자 = 퀘스트 + 서랍에 보이는 스토리 단계
   document.getElementById("drawer-count").textContent = here.length + anywhere.length + storyCount;
-  if (guideCount || storyCount) list.append(el("li", "drawer-divider drawer-section-title", t("map.drawerQuests")));
+  if (guideCount || storyCount) list.append(foldKey(el("li", "drawer-divider drawer-section-title", t("map.drawerQuests")), "quests"));
   if (!here.length && !anywhere.length) list.append(el("li", "empty", t("map.noQuests")));
   here.forEach(addQuest);
   if (anywhere.length) {
-    list.append(el("li", "drawer-divider", `${mapLabel(ALL_MAPS)} (${anywhere.length})`));
+    list.append(foldKey(el("li", "drawer-divider", `${mapLabel(ALL_MAPS)} (${anywhere.length})`), "anywhere"));
     anywhere.forEach(addQuest);
   }
   renderDrawerTransits(list);
+  foldDrawerSections(list);
   restore();
+}
+
+// ---------- 할 일 서랍 큰 칸 접기 (2026-11-23 사용자: 스토리·퀘스트가 길어서 보기 힘듦) ----------
+// 큰 제목(스토리·공략·퀘스트·모든 맵·트랜짓)을 누르면 다음 제목 전까지 접힘. 접은 상태는 이 PC 에 기억
+const DRAWER_FOLD_STORAGE = "tarkovhelper.drawerFolded";
+const drawerFolded = (() => {
+  try { return new Set(JSON.parse(localStorage.getItem(DRAWER_FOLD_STORAGE) || "[]")); } catch (e) { return new Set(); }
+})();
+
+function foldKey(li, key) {
+  li.dataset.fold = key;
+  return li;
+}
+
+function foldDrawerSections(list) {
+  let key = null;
+  [...list.children].forEach((li) => {
+    if (li.dataset.fold) {
+      key = li.dataset.fold;
+      const open = !drawerFolded.has(key);
+      const button = el("button", "drawer-fold");
+      button.type = "button";
+      button.setAttribute("aria-expanded", String(open));
+      button.title = t(open ? "map.foldHide" : "map.foldShow");
+      button.dataset.label = li.textContent;
+      button.innerHTML = iconSvg(open ? "chevron-down" : "chevron-right", 13);
+      button.append(" " + button.dataset.label);
+      li.replaceChildren(button);
+      li.classList.toggle("folded", !open);
+      button.addEventListener("click", () => setDrawerFold(li.dataset.fold, drawerFolded.has(li.dataset.fold)));
+    } else if (key) {
+      li.dataset.foldIn = key;
+      li.classList.toggle("drawer-folded", drawerFolded.has(key));
+    }
+  });
+}
+
+function setDrawerFold(key, open) {
+  if (open) drawerFolded.delete(key); else drawerFolded.add(key);
+  try { localStorage.setItem(DRAWER_FOLD_STORAGE, JSON.stringify([...drawerFolded])); } catch (e) { /* 저장소를 못 쓰는 창 */ }
+  const list = document.getElementById("drawer-list");
+  list.querySelectorAll(`:scope > li[data-fold-in="${key}"]`).forEach((li) => li.classList.toggle("drawer-folded", !open));
+  const title = list.querySelector(`:scope > li[data-fold="${key}"]`);
+  const button = title?.querySelector(".drawer-fold");
+  if (button) {
+    title.classList.toggle("folded", !open);
+    button.setAttribute("aria-expanded", String(open));
+    button.title = t(open ? "map.foldHide" : "map.foldShow");
+    button.innerHTML = iconSvg(open ? "chevron-down" : "chevron-right", 13);
+    button.append(" " + button.dataset.label);
+  }
+}
+
+// 지도 핀을 눌러 서랍의 줄로 갈 때, 그 줄이 접힌 칸에 있으면 펼침
+function unfoldDrawerFor(node) {
+  const key = node?.closest("#drawer-list > li")?.dataset.foldIn;
+  if (key && drawerFolded.has(key)) setDrawerFold(key, true);
 }
 
 // 트랜짓 도착 맵 → 맵 목록의 맵 (변형 맵은 이름 앞부분으로: '연구소 (Dark)' → 연구소)
@@ -1963,7 +2023,7 @@ function renderDrawerTransits(list) {
     groups.get(id).items.push(tr);
   });
   if (!groups.size) return;
-  list.append(el("li", "drawer-divider drawer-transit-title", t("map.drawerTransits")));
+  list.append(foldKey(el("li", "drawer-divider drawer-transit-title", t("map.drawerTransits")), "transits"));
   const rows = [...groups.values()].map((g) => ({ ...g, count: g.target ? mapQuests(g.target.name).length : 0 }));
   rows.sort((a, b) => b.count - a.count); // 할 일이 많은 맵부터
   rows.forEach((g) => {
@@ -2015,7 +2075,7 @@ function renderDrawerStories(list, m) {
     if (found) chapters.push({ s: found.s, entries: [found.entry] });
   }
   if (!chapters.length) return 0;
-  list.append(el("li", "drawer-divider drawer-section-title drawer-story-title", t("map.drawerStory")));
+  list.append(foldKey(el("li", "drawer-divider drawer-section-title drawer-story-title", t("map.drawerStory")), "story"));
   chapters.forEach(({ s, entries }) => {
     const li = el("li", "drawer-quest drawer-story");
     const name = el("button", "drawer-quest-name");
@@ -2109,6 +2169,7 @@ function highlightDrawer(n, flash = false) {
   document.querySelectorAll("#drawer-list .has-pin").forEach((g) => g.classList.toggle("focused", g.dataset.pin === String(n)));
   const target = document.querySelector(`#drawer-list .has-pin[data-pin="${n}"]`);
   if (!target) return;
+  unfoldDrawerFor(target);
   // 서랍이 막 열리는 중이면 펼쳐진 뒤에 스크롤
   setTimeout(() => target.scrollIntoView({ block: "center", behavior: reducedMotion() ? "instant" : "smooth" }), flash ? 250 : 0);
   if (flash) {

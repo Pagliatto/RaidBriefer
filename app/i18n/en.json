@@ -286,6 +286,8 @@
     "auto": "● Current raid map",
     "drawer": "To-do",
     "drawerHint": "To-do list (story and quests)",
+    "foldHide": "Collapse",
+    "foldShow": "Expand",
     "layerTitle": "Map layers",
     "loadingMap": "Loading the map…",
     "layerBtrStops": "BTR stops",

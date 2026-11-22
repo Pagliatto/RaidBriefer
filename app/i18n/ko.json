@@ -286,6 +286,8 @@
     "auto": "● 지금 레이드 맵",
     "drawer": "할 일",
     "drawerHint": "할 일 목록 (스토리·퀘스트)",
+    "foldHide": "접기",
+    "foldShow": "펼치기",
     "layerTitle": "지도 표시",
     "loadingMap": "지도를 불러오는 중…",
     "layerBtrStops": "BTR 정류장",
