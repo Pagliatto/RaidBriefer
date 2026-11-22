@@ -10,6 +10,7 @@
 """
 
 import json
+import math
 import os
 import shutil
 import sys
@@ -36,9 +37,10 @@ def _url(port: int) -> str:
 
 
 def _is_our_server(port: int) -> bool:
-    """그 번호에 RaidBriefer 서버가 이미 켜져 있는지 (/api/state 가 대답하는지)"""
+    """그 번호에 RaidBriefer 서버가 이미 켜져 있는지 (/api/state 가 대답하는지)
+    probe=1: 창이 뜨기 전 확인이라 '정상 시작'으로 치지 않음 → 업데이트 백업은 화면이 실제로 뜬 뒤에만 정리"""
     try:
-        with urllib.request.urlopen(_url(port) + "/api/state", timeout=1) as res:
+        with urllib.request.urlopen(_url(port) + "/api/state?probe=1", timeout=1) as res:
             return "status" in json.loads(res.read().decode("utf-8"))
     except Exception:
         return False
@@ -53,20 +55,35 @@ def _start_server(port: int) -> None:
         time.sleep(0.1)
 
 
+def _whole(value, low: int, high: int):
+    """정상 범위의 숫자면 정수로, 아니면 None (참/거짓·무한대·NaN·문자열·아주 큰 값 모두 거름)"""
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    if not math.isfinite(value) or not low <= value <= high:
+        return None
+    return int(value)
+
+
 def _load_geometry() -> dict:
+    """창 크기·위치. 파일이 없거나 망가져도 절대 오류를 내지 않고 기본 크기로 (켜지지 않으면 업데이트도 못 받음)"""
+    default = {"width": DEFAULT_SIZE[0], "height": DEFAULT_SIZE[1]}
     try:
         saved = json.loads(WINDOW_FILE.read_text(encoding="utf-8"))
-        w, h = int(saved["width"]), int(saved["height"])
-        if w < MIN_SIZE[0] or h < MIN_SIZE[1]:
-            raise ValueError
+        if not isinstance(saved, dict):
+            return default
+        w = _whole(saved.get("width"), MIN_SIZE[0], 20000)
+        h = _whole(saved.get("height"), MIN_SIZE[1], 20000)
+        if w is None or h is None:
+            return default
         geo = {"width": w, "height": h}
         # 위치는 모니터를 뺐을 때 화면 밖으로 나갈 수 있어서, 아주 이상한 값이면 버림
-        x, y = saved.get("x"), saved.get("y")
-        if isinstance(x, int) and isinstance(y, int) and -10000 < x < 20000 and -1000 < y < 10000:
+        x = _whole(saved.get("x"), -10000, 20000)
+        y = _whole(saved.get("y"), -1000, 10000)
+        if x is not None and y is not None:
             geo.update(x=x, y=y)
         return geo
-    except (OSError, ValueError, KeyError, TypeError):
-        return {"width": DEFAULT_SIZE[0], "height": DEFAULT_SIZE[1]}
+    except Exception:
+        return default
 
 
 def _save_geometry(window) -> None:

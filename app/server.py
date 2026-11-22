@@ -374,7 +374,9 @@ def api_state():
     state["data_updating"] = tarkov_api.is_updating()
     state["quest_rev"] = quest_log.poll_log_rev()  # 디스크 조회는 별도 스레드에서만
     state["log_reading"] = quest_log.log_reading()
-    updater.cleanup(started=True)
+    # 창이 뜨기 전 확인(probe=1)은 정상 시작이 아님. 화면이 실제로 뜬 뒤의 요청만 성공으로 보고 옛 버전 백업을 정리
+    if request.args.get("probe") != "1":
+        updater.cleanup(started=True)
     return jsonify(state)
 
 
