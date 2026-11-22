@@ -516,6 +516,10 @@
     "pin_door": "문",
     "pin_lock": "잠긴 문",
     "pin_building": "건물",
-    "pin_start": "시작 위치"
+    "pin_start": "시작 위치",
+    "kind_story": "스토리 장소",
+    "storyStep": "스토리 단계",
+    "storyProgress": "스토리 장소 {n}/{total}",
+    "storyMissing": "아직 장소가 없는 단계:"
   }
 }

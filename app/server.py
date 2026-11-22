@@ -524,8 +524,9 @@ def api_settings_set():
 
 @app.route("/api/story")
 def api_story():
+    from app import editor
     try:
-        return jsonify({**story.build(), "places": story_places.load()})
+        return jsonify({**story.build(), "places": editor.story_keys(story_places.load())})
     except settings.DataReadError:
         raise
     except Exception as error:

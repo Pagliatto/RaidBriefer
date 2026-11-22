@@ -51,7 +51,7 @@ function refreshNewMarkers() {
     if (!pending.fields || pending.map !== mapUI.current?.key) continue;
     const kind = pending.edit.seed.add;
     const pin = pending.fields.kind;
-    const icons = { bd: ["enemy", "crosshair"], boss: ["boss", "skull"], extract: [`extract-${pending.fields.faction}`, "door-open"], btr: ["btr", "bus"], guide: [pin === "lock" ? "lock" : "guide-" + pin, GUIDE_ICONS[pin] || "door-open"] };
+    const icons = { bd: ["enemy", "crosshair"], boss: ["boss", "skull"], extract: [`extract-${pending.fields.faction}`, "door-open"], btr: ["btr", "bus"], story: ["story", "book-open"], guide: [pin === "lock" ? "lock" : "guide-" + pin, GUIDE_ICONS[pin] || "door-open"] };
     const marker = L.marker(gamePos(pending.pos), { icon: markerIcon(...icons[kind], 22) });
     bindPositionEditor(marker, { edit: pending.edit, pos: pending.pos, draftId: id }, pending.label);
     mapEditor.bindings.get(id).draft = true;
@@ -67,7 +67,8 @@ const EDITOR_TEXT = {
   faction: () => t("editor.faction"), pinKind: () => t("editor.pinKind"), candidate: () => t("editor.candidate"),
   steps: () => t("editor.steps"), note: () => t("editor.note"),
   kind_bd: () => t("editor.kind_bd"), kind_boss: () => t("editor.kind_boss"), kind_extract: () => t("editor.kind_extract"),
-  kind_btr: () => t("editor.kind_btr"), kind_guide: () => t("editor.kind_guide"),
+  kind_btr: () => t("editor.kind_btr"), kind_guide: () => t("editor.kind_guide"), kind_story: () => t("editor.kind_story"),
+  storyStep: () => t("editor.storyStep"),
   faction_pmc: () => t("editor.faction_pmc"), faction_scav: () => t("editor.faction_scav"), faction_shared: () => t("editor.faction_shared"),
   pin_key_spawn: () => t("editor.pin_key_spawn"), pin_panel: () => t("editor.pin_panel"), pin_toolset: () => t("editor.pin_toolset"),
   pin_explosive: () => t("editor.pin_explosive"), pin_door: () => t("editor.pin_door"), pin_lock: () => t("editor.pin_lock"),
@@ -125,6 +126,12 @@ function openMarkerForm(latlng) {
     } else if (kind.value === "extract" || kind.value === "btr") {
       input("name", kind.value === "extract" ? "nameEn" : "name");
       if (kind.value === "extract") choice("faction", "faction", ["pmc", "scav", "shared"].map((id) => [id, editorText("faction_" + id)]));
+    } else if (kind.value === "story") {
+      // 이 맵이 적힌 스토리 단계만 (이미 핀이 있는 단계는 ✓)
+      const placed = new Set(options.story.seed.placed || []);
+      choice("step", "storyStep", options.story.seed.steps.map((s) =>
+        [s.id, (placed.has(s.id) ? "✓ " : "") + s.chapter + " · " + s.ko + " / " + s.en]));
+      input("candidate", "candidate", "checkbox", false);
     } else {
       choice("kind", "pinKind", ["key_spawn", "panel", "toolset", "explosive", "door", "lock", "building", "start"].map((id) => [id, editorText("pin_" + id)]));
       input("label_ko", "nameKo"); input("label_en", "nameEn");
@@ -179,6 +186,9 @@ async function initializePositionEditor() {
   banner.append(el("strong", "", t("editor.title")));
   mapEditor.counter = el("span");
   banner.append(mapEditor.counter);
+  mapEditor.storyCount = el("span", "position-story-count"); // 이 맵 스토리 장소 N/M (마우스를 올리면 핀 없는 단계)
+  mapEditor.storyCount.hidden = true;
+  banner.append(mapEditor.storyCount);
   const button = (key, action) => {
     const node = el("button", "layer-toggle-btn", t(key));
     node.type = "button";
@@ -230,6 +240,16 @@ async function initializePositionEditor() {
 function updatePositionEditor(message = "") {
   if (!mapEditor.active) return;
   mapEditor.counter.textContent = t("editor.changed", { n: mapEditor.pending.size });
+  const storySeed = mapEditor.options?.story?.seed;
+  if (mapEditor.storyCount) {
+    mapEditor.storyCount.hidden = !storySeed;
+    if (storySeed) {
+      const placed = new Set(storySeed.placed || []);
+      const missing = storySeed.steps.filter((s) => !placed.has(s.id));
+      mapEditor.storyCount.textContent = t("editor.storyProgress", { n: storySeed.steps.length - missing.length, total: storySeed.steps.length });
+      mapEditor.storyCount.title = missing.length ? [t("editor.storyMissing"), ...missing.map((s) => s.chapter + " · " + s.ko)].join(String.fromCharCode(10)) : "";
+    }
+  }
   mapEditor.undo.disabled = mapEditor.saving || !mapEditor.history.length;
   mapEditor.cancel.disabled = mapEditor.save.disabled = mapEditor.saving || !mapEditor.pending.size;
   mapEditor.status.textContent = message;
@@ -365,6 +385,7 @@ async function savePositionEdits() {
     // Get fresh signatures/revisions; never retain old guide coordinates after saving.
     mapGuide.controller?.abort();
     mapGuide.key = null;
+    if (typeof loadStory === "function") await loadStory(); // 스토리 장소의 새 순번·서명
     await drawMap();
   }
 }
@@ -641,6 +662,12 @@ function storyPlaceEntry(id) {
 }
 
 function storyPinEntries() {
+  if (mapEditor.active) {
+    // 편집 모드: 지금 할 단계가 아니어도 이 맵에 장소가 있는 단계는 모두 (옮기려면 보여야 함)
+    return Object.keys(story.data?.places || {})
+      .filter((id) => storyPlacesFor(id, mapUI.current?.key).length)
+      .map(storyPlaceEntry).filter(Boolean);
+  }
   const entries = currentStoryChapters().flatMap(({ s, entries }) => entries.map((entry) => ({ s, entry })));
   if (mapStory.explicit?.map === mapUI.current?.key && !entries.some(({ entry }) => entry.step.id === mapStory.explicit.id)) {
     const found = storyPlaceEntry(mapStory.explicit.id);
@@ -687,6 +714,7 @@ function drawStoryPins() {
           row?.scrollIntoView({ block: "center", behavior: reducedMotion() ? "instant" : "smooth" });
         });
         marker.addTo(mapUI.groups.story);
+        bindPositionEditor(marker, { edit: point.edit, pos }, label);
         mapStory.markers.push({ marker, id: entry.step.id });
         mapUI.floorItems.push({ layer: marker, floor, story: true });
       });
@@ -1857,7 +1885,8 @@ function renderLayerDrawer() {
   LAYER_KEYS.forEach((key) => {
     const info = LAYER_INFO[key];
     if (key === "guide" && !currentGuide()) return;
-    if (key === "story" && !currentStoryChapters().some(({ entries }) => entries.some(({ step }) => storyPlacesFor(step.id, mapUI.current.key).length))) return;
+    // 편집 모드는 이 맵의 모든 장소, 평소에는 지금 할 단계의 장소 기준 (storyPinEntries 와 같은 기준)
+    if (key === "story" && !storyPinEntries().some(({ entry }) => storyPlacesFor(entry.step.id, mapUI.current.key).length)) return;
     if ((key === "blackDivision" || key === "bossZones") && !layerCount(key)) return;
     if (info.always) return;  // 항상 보이는 표시는 서랍에 스위치를 두지 않음
     const on = layerOn(key);

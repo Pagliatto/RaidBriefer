@@ -516,6 +516,10 @@
     "pin_door": "Door",
     "pin_lock": "Lock",
     "pin_building": "Building",
-    "pin_start": "Start"
+    "pin_start": "Start",
+    "kind_story": "Story place",
+    "storyStep": "Story step",
+    "storyProgress": "Story places {n}/{total}",
+    "storyMissing": "Steps without a place yet:"
   }
 }

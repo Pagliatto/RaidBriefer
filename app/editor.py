@@ -28,6 +28,8 @@ _KINDS = {"key_spawn", "panel", "toolset", "explosive", "door", "lock", "buildin
 
 def _identity(file, route, entry):
     name = route[-1] if isinstance(route[-1], str) else entry.get("spawn_location", entry.get("name"))
+    if name is None:  # 이름 없는 목록 항목(스토리 장소)은 단계·좌표로 구분
+        name = (entry.get("map"), entry.get("x"), entry.get("z"))
     return (file, tuple(route[:-1]), name)
 
 
@@ -57,6 +59,10 @@ def _target(file, route):
                 raise ValueError("index")
         elif route[0] != "enemy_spawns" or len(route) != 3 or not isinstance(route[2], str) or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*", route[2]):
             raise ValueError("spawn")
+    elif file == "story/places.json":
+        if (len(route) != 3 or route[0] != "places" or not isinstance(route[1], str)
+                or not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,99}", route[1]) or type(route[2]) is not int or route[2] < 0):
+            raise ValueError("place")
     elif re.fullmatch(r"guides/[a-z0-9][a-z0-9_-]{0,59}\.json", file):
         if len(route) != 2 or route[0] != "points" or not isinstance(route[1], str) or not route[1]:
             raise ValueError("point")
@@ -146,6 +152,56 @@ def guide_keys(guide):
     return guide
 
 
+def _story_steps(map_key):
+    """이 맵이 적힌 스토리 단계 목록 (챕터 이름·한/영 글)"""
+    steps = []
+    for path in sorted((paths.DATA_DIR / "story").glob("*.json")):
+        if path.name == "places.json":
+            continue
+        try:
+            chapter = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        name = chapter.get("name", path.stem) if isinstance(chapter, dict) else path.stem
+        def walk(node):
+            if isinstance(node, dict):
+                maps = node.get("map")
+                maps = maps if isinstance(maps, list) else [maps]
+                if isinstance(node.get("id"), str) and map_key in maps:
+                    steps.append({"id": node["id"], "chapter": name, "ko": node.get("ko", ""), "en": node.get("en", "")})
+                for value in node.values():
+                    walk(value)
+            elif isinstance(node, list):
+                for value in node:
+                    walk(value)
+        walk(chapter)
+    return steps
+
+
+def story_keys(places):
+    """스토리 장소마다 편집 키 (편집 모드일 때만). 파일의 실제 순번과 맞춘다"""
+    if not enabled():
+        return places
+    from app import story_places
+    try:
+        snapshot = _read(_target("story/places.json", ["places", "x", 0]))
+        raw_places = snapshot[1].get("places", {})
+        result = {}
+        for sid, entries in places.items():
+            rows = raw_places.get(sid) if isinstance(raw_places, dict) else None
+            valid_index = [i for i, row in enumerate(rows or []) if story_places.valid(row)]
+            copies = []
+            for k, point in enumerate(entries):
+                item = dict(point)
+                if k < len(valid_index):
+                    _attach(item, "story/places.json", ["places", sid, valid_index[k]], snapshot)
+                copies.append(item)
+            result[sid] = copies
+        return result
+    except (OSError, ValueError, RecursionError):
+        return places
+
+
 def feature_keys(map_key, result):
     if not enabled() or not _MAP.fullmatch(map_key):
         return result
@@ -200,12 +256,20 @@ def _add_keys(map_key, result, snapshot):
         guide = None
     result_keys = {}
     result["editorHeights"] = heights
-    for kind in ("bd", "boss", "extract", "btr", "guide"):
+    story = None
+    try:
+        story = _read(_target("story/places.json", ["places", "x", 0]))
+    except (OSError, ValueError):
+        story = None
+    story_steps = _story_steps(map_key) if story is not None else []
+    for kind in ("bd", "boss", "extract", "btr", "guide", "story"):
         if kind == "guide" and guide is None:
             continue
-        file = "guides/" + map_key + ".json" if kind == "guide" else "corrections.json"
-        raw, data = guide if kind == "guide" else snapshot
-        route = ["points", "_"] if kind == "guide" else ["enemy_spawns", map_key, "Editor"]
+        if kind == "story" and not story_steps:
+            continue
+        file = {"guide": "guides/" + map_key + ".json", "story": "story/places.json"}.get(kind, "corrections.json")
+        raw, data = {"guide": guide, "story": story}.get(kind) or snapshot
+        route = {"guide": ["points", "_"], "story": ["places", "x", 0]}.get(kind, ["enemy_spawns", map_key, "Editor"])
         context = hashlib.sha256(json.dumps([map_key, heights], separators=(",", ":")).encode()).hexdigest()
         _add_context[context] = heights
         # Keep old tabs usable without unbounded growth in long editing sessions.
@@ -214,6 +278,10 @@ def _add_keys(map_key, result, snapshot):
         seed = {"add": kind, "map": map_key, "bosses": bosses, "context": context}
         if kind in ("extract", "btr"):
             seed["names"] = [item.get("name") for item in result.get("extracts" if kind == "extract" else "btrStops", [])]
+        if kind == "story":
+            seed["steps"] = story_steps
+            seed["placed"] = sorted(sid for sid, rows in (data.get("places") or {}).items()
+                                    if isinstance(rows, list) and any(isinstance(r, dict) and r.get("map") == map_key for r in rows))
         if kind == "guide":
             seed["steps"] = [{"id": s["id"], "ko": s.get("ko", ""), "en": s.get("en", "")}
                              for s in data.get("steps", []) if isinstance(s, dict) and isinstance(s.get("id"), str)]
@@ -372,7 +440,9 @@ def _file_lock(path):
 
 
 def _invalidate():
-    from app import corrections, guides
+    from app import corrections, guides, story_places
+    with story_places._lock:
+        story_places._cached = None
     # Also work on filesystems with coarse mtime resolution.
     with corrections._lock:
         corrections._cached = None
@@ -386,7 +456,8 @@ def _add_change(plan, key, change, today):
     if not isinstance(fields, dict):
         raise ValueError("fields")
     allowed = {"note"} | {"bd": {"count"}, "boss": {"bosses"}, "extract": {"name", "faction"},
-                          "btr": {"name"}, "guide": {"kind", "label_ko", "label_en", "candidate", "steps"}}[kind]
+                          "btr": {"name"}, "guide": {"kind", "label_ko", "label_en", "candidate", "steps"},
+                          "story": {"step", "candidate"}}[kind]
     if set(fields) - allowed:
         raise ValueError("fields")
     def text(field, required=True):
@@ -400,6 +471,23 @@ def _add_change(plan, key, change, today):
     near = min(_add_context[seed["context"]], key=lambda p: (p[0] - x)**2 + (p[1] - z)**2, default=[0, 0, 0])
     entry = {"x": x, "y": near[2], "z": z, "note": text("note", False), "from": "game", "checked": today}
     data = plan["data"]
+    if kind == "story":
+        step = fields.get("step")
+        if not isinstance(step, str) or step not in {s["id"] for s in seed.get("steps", [])}:
+            raise ValueError("step")
+        if type(fields.get("candidate", False)) is not bool:
+            raise ValueError("candidate")
+        place = {"map": map_key, "x": x, "y": near[2], "z": z, "candidate": fields.get("candidate", False),
+                 "note": entry["note"], "from": "game", "checked": today}
+        places = data.setdefault("places", {})
+        rows = places.setdefault(step, [])
+        if any(isinstance(r, dict) and (r.get("map"), r.get("x"), r.get("z")) == (map_key, x, z) for r in rows):
+            raise ValueError("duplicate-place")
+        route = ["places", step, len(rows)]
+        rows.append(place)
+        plan["updates"].append((tuple(route), place))
+        plan["created"].append(_identity(key["file"], route, place))
+        return
     if kind == "guide":
         subtype = fields.get("kind")
         if not isinstance(subtype, str) or subtype not in _KINDS or type(fields.get("candidate")) is not bool:
@@ -526,6 +614,11 @@ def save(changes):
                 raise ValueError("position")
             # Existing y, count, merge_into, descriptions and file-level metadata stay byte-for-byte intact.
             plan["updates"].extend((tuple(key["path"]) + (field,), value) for field, value in updates.items())
+            if isinstance(entry, dict):
+                old_identity = _identity(key["file"], key["path"], entry)
+                if old_identity in _created:
+                    plan.setdefault("moved", []).append(
+                        (old_identity, _identity(key["file"], key["path"], {**entry, **updates})))
             plan["keys"].append(key)
         for plan in plans.values():
             plan["new"] = _patch(plan["raw"], plan["updates"])
@@ -554,6 +647,9 @@ def save(changes):
                             raise ValueError("stale")
                         os.replace(temp, path)
                         _created.update(plan["created"])
+                        for old_identity, new_identity in plan.get("moved", []):
+                            _created.discard(old_identity)
+                            _created.add(new_identity)
                         saved.extend(plan["keys"])
                     finally:
                         if temp is not None:
