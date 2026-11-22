@@ -676,6 +676,17 @@ function drawBtrTrackerLink() {
   const site = mapUI.current && BTR_TRACKER_MAPS[mapUI.current.key];
   link.hidden = !site;
   if (site) link.href = `https://tarkovbtr.com/?map=${site}`;
+  drawWikiMapLink();
+}
+
+// 위키 지도 링크: 우리 지도로는 안을 보기 어려운 맵만 (쇄빙선: 층별 배 내부, 2026-11-23 사용자)
+const WIKI_MAP_PAGES = { icebreaker: "Map:Icebreaker" };
+function drawWikiMapLink() {
+  const link = document.getElementById("wiki-map-link");
+  const page = mapUI.current && WIKI_MAP_PAGES[mapUI.current.key];
+  if (!link) return;
+  link.hidden = !page;
+  if (page) link.href = `https://escapefromtarkov.fandom.com/wiki/${page}`;
 }
 
 // 이 맵의 진행 중 퀘스트 (숨긴 것 제외) → 그다음 '모든 맵' 퀘스트

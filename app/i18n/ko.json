@@ -290,7 +290,9 @@
     "loadingMap": "지도를 불러오는 중…",
     "layerBtrStops": "BTR 정류장",
     "btrTracker": "BTR 트래커",
-    "btrTrackerHint": "BTR 위치·시간 예상 (tarkovbtr.com, 외부 사이트)"
+    "btrTrackerHint": "BTR 위치·시간 예상 (tarkovbtr.com, 외부 사이트)",
+    "wikiMap": "위키 지도",
+    "wikiMapHint": "층별 배 안 지도 (공식 위키, 외부 사이트)"
   },
   "floors": {
     "Underground": "지하",

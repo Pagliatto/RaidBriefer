@@ -290,7 +290,9 @@
     "loadingMap": "Loading the map…",
     "layerBtrStops": "BTR stops",
     "btrTracker": "BTR tracker",
-    "btrTrackerHint": "BTR position and timing (tarkovbtr.com, external site)"
+    "btrTrackerHint": "BTR position and timing (tarkovbtr.com, external site)",
+    "wikiMap": "Wiki map",
+    "wikiMapHint": "Deck-by-deck ship map (official wiki, external site)"
   },
   "floors": {
     "Underground": "Underground",

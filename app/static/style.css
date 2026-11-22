@@ -2339,7 +2339,7 @@ body.position-edit .map-drawer,
 body.position-edit #drawer-toggle,
 body.position-edit #loot-bar,
 body.position-edit #map-auto,
-body.position-edit #btr-tracker-link { display: none !important; }
+body.position-edit #btr-tracker-link, body.position-edit #wiki-map-link { display: none !important; }
 body.position-edit .map-bar { flex-wrap: wrap; }
 body.position-edit .map-bar select { max-width: 100%; min-width: 0; }
 .position-editor {
