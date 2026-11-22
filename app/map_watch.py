@@ -247,17 +247,72 @@ class LogTail:
         return lines
 
 
+# ---------- 로그 형식 점검 (2026-11-23 사용자) ----------
+# 게임 업데이트로 로그 모양이 바뀌면 자동 전환이 조용히 멈춘다 → 알아챌 수 있게 표시.
+# - "unreadable": 이 폴더에서 로그 줄이 HEALTH_MIN_LINES 넘게 쌓였는데 '날짜 시간|' 모양 줄이나
+#   서버 요청 줄(Request HTTPS)이 하나도 없음. 로비에 오래 있어도 서버 요청 줄은 계속 쌓이므로 헷갈리지 않음
+# - "no_map": 레이드 시작 요청(/client/match/local/start)은 보이는데 그 전에 와야 할 맵 로딩 줄이 없음
+#   (맵 로딩 줄이 약 10초 먼저 나옴, 2026-11-23 로그 확인)
+# 판단은 로그 파일만 보고 함 (게임 메모리·파일 수정 없음). 새 폴더(게임 재시작)면 처음부터 다시 셈
+HEALTH_MIN_LINES = 200
+_health_lock = threading.Lock()
+_health = {"lines": 0, "stamped": 0, "requests": 0, "no_map": False}
+
+
+def _reset_health() -> None:
+    with _health_lock:
+        _health.update(lines=0, stamped=0, requests=0, no_map=False)
+
+
+def _count_health(tail: "LogTail") -> None:
+    """PvE 거르기 전의 원래 줄로 센다 (형식이 바뀌면 거르기에서 다 빠지므로)"""
+    lines = [line for rows in tail.lines_by_file.values() for line in rows]
+    if not lines:
+        return
+    with _health_lock:
+        _health["lines"] += len(lines)
+        _health["stamped"] += sum(1 for line in lines if TIME_RE.match(line) and "|" in line[:40])
+        _health["requests"] += sum(1 for line in lines if "Request HTTPS" in line)
+
+
+def _check_raid_start(state: MapState, line: str) -> None:
+    if "Request HTTPS" in line and "/client/match/local/start" in line:
+        with _health_lock:
+            _health["no_map"] = state.status == LOBBY  # 맵 로딩 줄을 못 알아봤음
+    elif state.status != LOBBY:
+        with _health_lock:
+            _health["no_map"] = False
+
+
+def log_problem() -> str | None:
+    """화면 경고용: None(정상) / "unreadable" / "no_map" """
+    with _health_lock:
+        if _health["lines"] >= HEALTH_MIN_LINES and (_health["stamped"] == 0 or _health["requests"] == 0):
+            return "unreadable"
+        return "no_map" if _health["no_map"] else None
+
+
+def _feed(tail: "LogTail", state: MapState, lookup: MapLookup, on_change=None) -> None:
+    lines = tail.new_lines()
+    _count_health(tail)
+    for line in lines:
+        changed = apply_line(state, line, lookup)
+        _check_raid_start(state, line)
+        if changed and on_change:
+            on_change(state)
+
+
 def watch(interval: float = 1.0, on_change=print) -> None:
     """로그를 계속 지켜보다가 상태가 바뀌면 on_change(상태)를 부른다."""
     lookup = MapLookup()
     state = MapState()
     folder = latest_log_folder()
     tail = LogTail(folder) if folder else None
+    _reset_health()
 
     # 처음에는 지금 폴더의 기존 줄을 다 읽어서 현재 상태를 맞춘다
     if tail:
-        for line in tail.new_lines():
-            apply_line(state, line, lookup)
+        _feed(tail, state, lookup)
     on_change(state)
 
     while True:
@@ -265,12 +320,11 @@ def watch(interval: float = 1.0, on_change=print) -> None:
         newest = latest_log_folder()
         if newest != folder:  # 새 폴더나 설치 위치 변경은 빈 상태부터 다시 읽는다.
             folder, tail, state = newest, LogTail(newest) if newest else None, MapState()
+            _reset_health()
             on_change(state)
         if not tail:
             continue
-        for line in tail.new_lines():
-            if apply_line(state, line, lookup):
-                on_change(state)
+        _feed(tail, state, lookup, on_change)
 
 
 def replay(folder: Path) -> list[str]:

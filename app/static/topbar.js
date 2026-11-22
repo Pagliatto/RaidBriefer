@@ -60,6 +60,14 @@ function drawTopbar() {
   const showMap = s.map_name && (status === "loading" || status === "raid");
   topbar.get("raid-state-text").textContent = showMap ? s.map_name : label;
   pill.title = showMap ? `${label} · ${s.map_name}` : label;
+  // 게임 로그를 못 읽는 중: 상태 칸에 ⚠ + 홈 안내 (게임이 켜져 있을 때만 서버가 보냄)
+  const problem = s.log_problem === "unreadable" || s.log_problem === "no_map" ? s.log_problem : null;
+  topbar.get("log-warn").hidden = !problem;
+  pill.classList.toggle("log-problem", !!problem);
+  if (problem) pill.title = `${pill.title} · ${t("topbar.logProblem")}`;
+  const banner = document.getElementById("log-banner");
+  if (banner && banner.hidden !== !problem) banner.hidden = !problem;
+  if (problem) document.getElementById("log-banner-text").textContent = t(problem === "no_map" ? "home.logNoMap" : "home.logUnreadable");
 
   // 레이드 밖에서도 같은 칸을 유지하고 시간만 대기 표시로 바꿈
   const inRaid = s.status === "raid" && s.since;

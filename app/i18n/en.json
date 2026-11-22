@@ -12,6 +12,9 @@
     "folders": "{done} / {total} folders"
   },
   "home": {
+    "logProblemTitle": "RaidBriefer can't read the game logs.",
+    "logUnreadable": "A game update may have changed the log format. Automatic map switching, the raid timer and quest updates may stop. Check for a new version.",
+    "logNoMap": "A raid started but the map couldn't be recognized. A game update may have changed the log format. Check for a new version.",
     "gapTitle": "Some game logs seem to be missing.",
     "gapBody": "{count} quests finished without a start record.<br>\n            Quests you took earlier may be missing from the list, so please check your active quests.",
     "gapCheck": "Check",
@@ -388,6 +391,7 @@
     "tabAbout": "About"
   },
   "topbar": {
+    "logProblem": "Can't read the game logs (see Home)",
     "clockNight": "Tarkov in-game time (night)",
     "clockDay": "Tarkov in-game time (day)",
     "stateOff": "Game not running",

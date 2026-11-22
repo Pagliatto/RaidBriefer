@@ -2415,3 +2415,7 @@ body.position-edit .position-deleted { display: none; }
 .drawer-fold:hover { color: var(--text); }
 .drawer-fold svg { flex: none; }
 #drawer-list > li.drawer-folded { display: none !important; }
+/* 게임 로그를 못 읽는 중 (map_watch.log_problem) */
+.state-pill .log-warn { display: inline-flex; color: var(--warn); margin-left: 2px; }
+.state-pill .log-warn[hidden] { display: none; }
+.log-banner b { color: var(--warn); }

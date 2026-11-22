@@ -97,6 +97,8 @@ def get() -> dict:
     with _lock:
         state = dict(_state)
     state["map_name"] = _map_name(state.get("map_id"), state.get("map_name"))
+    # 로그 형식 경고는 게임이 켜져 있을 때만 (map_watch.log_problem)
+    state["log_problem"] = map_watch.log_problem() if _game_running else None
     if not _game_running:  # 게임이 꺼져 있으면 로그 상태와 상관없이 '게임 꺼짐'
         state.update(status=GAME_OFF, map_id=None, map_name=None, since=None, raid_minutes=None, cancelled=False)
     return state

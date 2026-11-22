@@ -41,6 +41,7 @@
           </g>
         </svg>
         <span id="raid-state-text">{{ t('topbar.stateOff') }}</span>
+        <span class="log-warn" id="log-warn" data-icon="triangle-alert" data-size="13" hidden></span>
       </span>
       <span class="raid-time idle" id="raid-time">
         <span class="label">{{ t('topbar.left') }}</span> <b id="raid-left">-- : --</b>
@@ -114,6 +115,13 @@
           <p>{{ t('home.gapBody', count='<span id="gap-count">0</span>')|safe }}</p>
         </div>
         <button type="button" id="gap-check">{{ t('home.gapCheck') }}</button>
+      </div>
+      <!-- 게임 로그를 읽지 못할 때만 뜸 (게임 업데이트로 형식이 바뀐 경우 등, map_watch.log_problem) -->
+      <div class="gap-banner log-banner" id="log-banner" role="status" hidden>
+        <div>
+          <b>{{ t('home.logProblemTitle') }}</b>
+          <p id="log-banner-text"></p>
+        </div>
       </div>
       <h2 class="home-title">{{ t('home.collectTitle') }} <small>{{ t('home.collectHint') }}</small></h2>
       <div class="home-collect" id="home-collect"></div>
