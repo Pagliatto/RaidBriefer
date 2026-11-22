@@ -699,13 +699,6 @@ function mapQuests(name) {
 const mapStory = { focused: null, explicit: null, markers: [] };
 
 // Use exactly the current steps shown in the drawer, including its guide de-duplication.
-function currentStoryChapters(m = mapUI.current) {
-  if (!m || typeof storyNext !== "function" || typeof story === "undefined" || !story.data) return [];
-  const covered = new Set((currentGuide()?.steps || []).map((step) => step.story_step).filter(Boolean));
-  return storyNext().map((s) => ({ s, entries: s.mapSteps.filter((entry) =>
-    entry.maps.includes(m.name) && !covered.has(entry.step.id)) })).filter((c) => c.entries.length);
-}
-
 // 지도 핀용: 모든 챕터(시작 안 한 챕터 포함)의 현재 구간에서 체크 안 된 단계 (선택 단계 포함, 고른 갈림길만).
 // 챕터마다 이 맵에 장소가 있는 첫 단계가 current=true (진하게 = 다음 갈 곳), 나머지는 흐리게.
 // (2026-11-23 사용자: 첫 단계에 장소가 없으면 핀이 안 보이던 문제)
@@ -727,6 +720,16 @@ function storyPinSteps(m = mapUI.current) {
     }));
   }
   return out;
+}
+
+// 서랍 스토리 칸도 핀과 같은 규칙 (챕터별로 묶음). 시작 안 한 챕터도 보임 — 어디서 시작할지 모르는 뉴비용 (2026-11-23 사용자)
+function storyDrawerChapters(m = mapUI.current) {
+  const byChapter = new Map();
+  storyPinSteps(m).forEach(({ s, entry }) => {
+    if (!byChapter.has(s.ch.id)) byChapter.set(s.ch.id, { s, entries: [] });
+    byChapter.get(s.ch.id).entries.push(entry);
+  });
+  return [...byChapter.values()];
 }
 
 function storyPlaceEntry(id) {
@@ -1074,7 +1077,7 @@ function applyStoryExtractLinks() {
   });
   if (!mapUI.current || mapEditor.active) return;
   const links = story.data?.extractLinks || {};
-  currentStoryChapters().forEach(({ s, entries }) => entries.forEach((entry) => {
+  storyDrawerChapters().forEach(({ s, entries }) => entries.forEach((entry) => {
     const link = links[entry.step.id];
     if (!link || link.map !== mapUI.current.key) return;
     const item = (mapUI.extractMarkers || []).find((x) => x.name === link.extract);
@@ -1931,6 +1934,8 @@ function renderDrawer() {
   // 스토리: 목록 맨 위에 구분해서 (2026-11-21 사용자: 지도 한 화면에서 스토리도)
   const guideCount = renderDrawerGuide(list, m);
   const storyCount = renderDrawerStories(list, m);
+  // '할 일' 버튼 숫자 = 퀘스트 + 서랍에 보이는 스토리 단계
+  document.getElementById("drawer-count").textContent = here.length + anywhere.length + storyCount;
   if (guideCount || storyCount) list.append(el("li", "drawer-divider drawer-section-title", t("map.drawerQuests")));
   if (!here.length && !anywhere.length) list.append(el("li", "empty", t("map.noQuests")));
   here.forEach(addQuest);
@@ -2004,7 +2009,7 @@ function afterMove(leaf, fn) {
 // 지도 서랍 맨 위 '스토리' 칸: 지금 맵에서 할 스토리 단계 (홈과 같은 규칙: 진행 중 구간 + 다음 구간)
 // 체크는 여기서 바로(스토리 탭과 같은 기록), 위치 설명은 펼쳐서, 사진만 스토리 탭으로
 function renderDrawerStories(list, m) {
-  const chapters = currentStoryChapters(m);
+  const chapters = storyDrawerChapters(m);
   if (mapStory.explicit?.map === m.key && !chapters.some((c) => c.entries.some((e) => e.step.id === mapStory.explicit.id))) {
     const found = storyPlaceEntry(mapStory.explicit.id);
     if (found) chapters.push({ s: found.s, entries: [found.entry] });
@@ -2021,6 +2026,10 @@ function renderDrawerStories(list, m) {
     const heading = el("div", "drawer-quest-heading");
     heading.append(name);
     li.append(heading);
+    // 아직 시작 안 한 챕터: 시작 조건(어디서 시작하는지)을 같이 보여 줌
+    if (!isChapterStarted(s.ch) && s.ch.requirement) {
+      li.append(el("p", "drawer-story-start", t("story.flow.notStarted", { requirement: s.ch.requirement })));
+    }
     // 구간(장소)별로 묶음: 구간 이름 = 장소 설명
     const sections = new Map();
     entries.forEach((entry) => {
@@ -2042,13 +2051,16 @@ function renderDrawerStories(list, m) {
         if (storyPlacesFor(step.id, m.key).length || story.data?.extractLinks?.[step.id]?.map === m.key) {
           label.append(box);
           const focus = el("button", "story-place-focus", step.ko);
+          if (step.optional) focus.append(el("span", "opt-mark", t("story.optional")));
           focus.type = "button";
           focus.title = t("story.viewPlaces");
           focus.setAttribute("aria-pressed", String(mapStory.focused === step.id));
           focus.addEventListener("click", () => focusStoryStep(step.id));
           row.append(label, focus);
         } else {
-          label.append(box, el("span", "", step.ko));
+          const text = el("span", "", step.ko);
+          if (step.optional) text.append(el("span", "opt-mark", t("story.optional")));
+          label.append(box, text);
           row.append(label);
         }
         box.setAttribute("aria-label", step.ko);
@@ -2065,7 +2077,7 @@ function renderDrawerStories(list, m) {
     });
     list.append(li);
   });
-  return chapters.length;
+  return chapters.reduce((n, c) => n + c.entries.length, 0); // 서랍에 보인 스토리 단계 수 ('할 일' 숫자에 더함)
 }
 
 // 서랍의 목표를 누르면 지도에서 그 목표 위치로 이동

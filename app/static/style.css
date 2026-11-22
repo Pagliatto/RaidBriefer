@@ -2408,3 +2408,4 @@ body.position-edit .position-deleted { display: none; }
 .story-walk-maps summary { cursor: pointer; color: #9cf; }
 .story-walk-maps label { display: inline-flex; align-items: center; gap: 2px; margin: 2px 8px 2px 0; }
 .story-walk-actions .story-walk-blocked { opacity: 0.4; pointer-events: none; }
+.drawer-story-start { margin: 2px 0 4px; font-size: 12px; color: var(--text-dim); }
