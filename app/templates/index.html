@@ -7,9 +7,10 @@
   <link rel="icon" type="image/x-icon" href="{{ url_for('favicon', ext='ico') }}">
   <link rel="icon" type="image/svg+xml" sizes="any" href="{{ url_for('favicon', ext='svg') }}">
   <!-- 지도 그리기 도구 Leaflet (BSD 라이선스) -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/leaflet/leaflet.min.css') }}">
   <!-- 글꼴 Pretendard (OFL 라이선스, 쓰는 글자만 받는 방식) -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css"></noscript>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <!-- 화면 글자 사전 (app/i18n/<언어>.json). i18n.js 의 t() 가 씀 -->
   <script>window.I18N = {{ i18n|tojson }};</script>
@@ -420,7 +421,7 @@
   <script src="{{ url_for('static', filename='settings.js') }}"></script>
   <script src="{{ url_for('static', filename='update.js') }}"></script>
   <script src="{{ url_for('static', filename='setup.js') }}"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="{{ url_for('static', filename='vendor/leaflet/leaflet.min.js') }}"></script>
   <script src="{{ url_for('static', filename='map.js') }}"></script>
   <script src="{{ url_for('static', filename='hideout.js') }}"></script>
 </body>

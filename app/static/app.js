@@ -778,9 +778,7 @@ async function load() {
     notifyChanged("quests-changed");
     try {
       await queueChecks(() => revision === questLoadRevision ? migrateHanded(body) : undefined);
-      if (revision !== questLoadRevision) return;
-      render();
-      notifyChanged("quests-changed");
+      // 화면에는 applyHandedAliases로 이미 반영했다. 저장 키 이전만으로 다시 그리지 않는다.
     } catch (error) {
       // 목록은 유지하고 다음 불러오기에서 다시 이전한다. 옛 키는 성공 전까지 보존한다.
       if (revision === questLoadRevision) showCheckError("quest.migrationFailed");

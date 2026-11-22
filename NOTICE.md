@@ -51,7 +51,7 @@ belong to Battlestate Games Limited.
 | pywebview | 프로그램 창 | BSD-3-Clause |
 | PyInstaller | exe 로 묶기 (실행 파일 안의 시작 장치) | GPL-2.0 + bootloader 예외 (묶은 프로그램은 자유롭게 배포 가능) |
 | Python | exe 안에 포함된 실행 환경 | PSF License |
-| Leaflet 1.9.4 | 지도 표시 (cdnjs) | BSD-2-Clause |
+| Leaflet 1.9.4 | 지도 표시 (`app/static/vendor/leaflet/`에 포함) | BSD-2-Clause — [저작권 고지·라이선스 전문](app/static/vendor/leaflet/LICENSE) |
 | Pretendard 1.3.9 | 글꼴 (jsDelivr) | SIL Open Font License 1.1 |
 | Lucide | 아이콘 (`app/static/icons.js` 에 그림 데이터 포함) | ISC |
 

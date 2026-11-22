@@ -12,6 +12,7 @@ import atexit
 import json
 import re
 import threading
+from concurrent.futures import Future
 from pathlib import Path
 
 from flask import Flask, abort, jsonify, render_template, request, send_file
@@ -110,6 +111,60 @@ _install_startup_profile()
 # (로그가 바뀌면 바로 다시 계산. 혹시 몰라 1분이 지나도 다시)
 _cache = {"at": 0.0, "data": None, "rev": None, "data_rev": None}
 CACHE_SECONDS = 60
+_quests_cache_lock = threading.Lock()
+_quests_cache_epoch = 0
+_quests_flight = None
+
+
+def _invalidate_quests_cache():
+    global _quests_cache_epoch
+    with _quests_cache_lock:
+        _quests_cache_epoch += 1
+        _cache["data"] = None
+
+
+def _quests_data():
+    global _cache, _quests_flight
+    while True:
+        rev = quest_log.log_rev()
+        data_rev = tarkov_api.data_revision()
+        with _quests_cache_lock:
+            cached = _cache
+            if (cached["data"] is not None and cached["rev"] == rev
+                    and cached["data_rev"] == data_rev
+                    and time.time() - cached["at"] <= CACHE_SECONDS):
+                return cached["data"]
+            key = (rev, data_rev, _quests_cache_epoch)
+            owner = _quests_flight is None
+            if owner:
+                _quests_flight = (key, Future())
+            flight_key, future = _quests_flight
+        if not owner:
+            try:
+                data = future.result()
+            except Exception:
+                if flight_key == key:
+                    raise
+            else:
+                if flight_key == key:
+                    return data
+            # 다른 로그·데이터·설정의 계산이었다면, 끝난 뒤 현재 조건으로 다시 확인한다.
+            continue
+        try:
+            data = quests.build()
+        except BaseException as error:
+            # 실패도 같은 요청끼리 공유하고 다음 호출은 다시 시도할 수 있게 풀어 준다.
+            with _quests_cache_lock:
+                future.set_exception(error)
+                _quests_flight = None
+            raise
+        with _quests_cache_lock:
+            # 계산 중 설정/진행 기록이 바뀌었다면 그 무효화를 옛 결과로 덮지 않는다.
+            if _quests_cache_epoch == key[2]:
+                _cache = {"data": data, "at": time.time(), "rev": rev, "data_rev": data_rev}
+            future.set_result(data)
+            _quests_flight = None
+        return data
 
 
 @app.before_request
@@ -153,21 +208,12 @@ def favicon(ext):
 
 @app.route("/api/quests")
 def api_quests():
-    global _cache
-    rev = quest_log.log_rev()
-    data_rev = tarkov_api.data_revision()
-    cached = _cache
-    data = cached["data"]
-    if (data is None or cached["rev"] != rev or cached.get("data_rev") != data_rev
-            or time.time() - cached["at"] > CACHE_SECONDS):
-        try:
-            data = quests.build()
-            # 동시 요청이 내용과 세대 번호를 서로 섞어 저장하지 않게 한 번에 공개한다.
-            _cache = {"data": data, "at": time.time(), "rev": rev, "data_rev": data_rev}
-        except settings.DataReadError:
-            raise
-        except Exception as error:  # 화면에 오류 안내를 보여주기 위해
-            return jsonify({"error": i18n.t("server.questsFailed", error=error)}), 500
+    try:
+        data = _quests_data()
+    except settings.DataReadError:
+        raise
+    except Exception as error:  # 화면에 오류 안내를 보여주기 위해
+        return jsonify({"error": i18n.t("server.questsFailed", error=error)}), 500
     return jsonify({**data, "data_message": tarkov_api.data_message()})
 
 
@@ -191,7 +237,7 @@ def api_log_gap_ok():
         return jsonify({"error": i18n.t("server.badRequest")}), 400
     for quest_id in ids:
         progress.set_check("gap_ok", quest_id, True)
-    _cache["data"] = None
+    _invalidate_quests_cache()
     return jsonify({"ok": True})
 
 
@@ -300,7 +346,7 @@ def api_reset():
     game_dir = settings.load()["game_dir"]
     progress.reset_all()
     settings.save({**settings.DEFAULTS, "game_dir": game_dir})
-    _cache["data"] = None
+    _invalidate_quests_cache()
     return jsonify({"ok": True})
 
 
@@ -441,7 +487,7 @@ def api_settings_set():
         if not isinstance(body["lang"], str) or body["lang"] not in i18n.LANGS:
             return jsonify({"error": i18n.t("server.badRequest")}), 400
         saved = settings.save({"lang": body["lang"]})
-        _cache["data"] = None  # 퀘스트 이름·목표를 새 언어로 다시 계산
+        _invalidate_quests_cache()  # 퀘스트 이름·목표를 새 언어로 다시 계산
         return jsonify({**saved, "check": settings.check_game_dir(saved["game_dir"])})
     if "edition" in body:  # 게임 에디션 (은신처 시작 레벨)
         if body["edition"] not in settings.EDITIONS:
@@ -470,7 +516,7 @@ def api_settings_set():
     if not check["ok"]:  # 틀린 위치는 저장하지 않음
         return jsonify({"error": check["message"]}), 400
     saved = settings.save({"game_dir": game_dir})
-    _cache["data"] = None  # 퀘스트를 새 위치의 로그로 다시 계산
+    _invalidate_quests_cache()  # 퀘스트를 새 위치의 로그로 다시 계산
     return jsonify({**saved, "check": check})
 
 
@@ -520,7 +566,7 @@ def api_check_set(kind):
                 return jsonify({"error": i18n.t("server.badRequest")}), 400
     result = progress.set_checks(kind, changes)
     if kind == "added":  # 직접 추가한 퀘스트는 퀘스트 목록 자체가 바뀌므로 다시 계산
-        _cache["data"] = None
+        _invalidate_quests_cache()
     return jsonify(result)
 
 

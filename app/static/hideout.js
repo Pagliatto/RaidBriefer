@@ -135,23 +135,38 @@ document.addEventListener("visibilitychange", () => { resetHideoutHover(); obser
 window.addEventListener("blur", resetHideoutHover);
 
 let hideoutLoadRevision = 0;
-async function loadHideout(notify = false) {
-  const revision = ++hideoutLoadRevision;
-  try {
-    const res = await fetch("/api/hideout");
-    const data = await res.json();
-    if (revision !== hideoutLoadRevision) return false;
-    if (!res.ok) throw new Error(data.error || "");
-    trackHideoutChanges(data, notify);
-    hideout.data = data;
-    renderHideout();
-    // 지도 '먹을 것'·홈 '뭘 모아 올까?' 가 은신처 재료를 같이 쓰게 알림 (4단계에서 연결)
-    document.dispatchEvent(new Event("hideout-changed"));
-    return true;
-  } catch (error) {
-    if (revision !== hideoutLoadRevision) return false;
-    document.getElementById("ho-summary").replaceChildren(el("p", "notice", t("hideout.loadFailed", { error: error.message })));
-    return false;
+let hideoutLoadPromise = null;
+let hideoutLoadNotify = false;
+function loadHideout(notify = false) {
+  ++hideoutLoadRevision;
+  hideoutLoadNotify = notify;
+  // 조회 중 들어온 요청은 마지막 조건으로 한 번 더 읽는다. 호출자는 최신 결과를 함께 기다린다.
+  if (!hideoutLoadPromise) {
+    hideoutLoadPromise = refreshHideout().finally(() => { hideoutLoadPromise = null; });
+  }
+  return hideoutLoadPromise;
+}
+async function refreshHideout() {
+  while (true) {
+    const revision = hideoutLoadRevision;
+    const notify = hideoutLoadNotify;
+    try {
+      const res = await fetch("/api/hideout");
+      const data = await res.json();
+      if (revision !== hideoutLoadRevision) continue;
+      if (!res.ok) throw new Error(data.error || "");
+      trackHideoutChanges(data, notify);
+      hideout.data = data;
+      renderHideout();
+      // 지도 '먹을 것'·홈 '뭘 모아 올까?' 가 은신처 재료를 같이 쓰게 알림 (4단계에서 연결)
+      document.dispatchEvent(new Event("hideout-changed"));
+      if (revision !== hideoutLoadRevision) continue;
+      return true;
+    } catch (error) {
+      if (revision !== hideoutLoadRevision) continue;
+      document.getElementById("ho-summary").replaceChildren(el("p", "notice", t("hideout.loadFailed", { error: error.message })));
+      return false;
+    }
   }
 }
 
