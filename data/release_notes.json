@@ -125,5 +125,16 @@
       "Re-entering the same map is recognized as a new raid, and a failed guide load is retried",
       "Finds the current game log correctly even after copying log folders or changing the PC clock"
     ]
+  },
+  "1.0.14": {
+    "date": "2026-11-22",
+    "ko": [
+      "창 크기 설정 파일이 망가져 있어도 프로그램이 기본 크기로 켜져요",
+      "업데이트 뒤 새 버전 화면이 제대로 뜬 것을 확인한 다음에만 이전 버전 백업을 정리해요"
+    ],
+    "en": [
+      "The program now starts at the default size even if its window size file is damaged",
+      "After an update, the backup of the previous version is cleaned up only once the new version's screen has loaded"
+    ]
   }
 }
