@@ -79,6 +79,7 @@ const editorText = (key) => (EDITOR_TEXT[key] ? EDITOR_TEXT[key]() : key);
 function openMarkerForm(latlng) {
   const options = mapEditor.options;
   const map = mapUI.current.key;
+  const picked = mapEditor.placing; // 막대에서 누른 종류 (cancelMarkerDraft 가 지우기 전에 기억)
   cancelMarkerDraft();
   mapEditor.draft = L.marker(latlng, { icon: markerIcon("lock", "crosshair", 22) }).addTo(mapUI.leaflet);
   const form = el("form", "position-add-form");
@@ -100,6 +101,10 @@ function openMarkerForm(latlng) {
     return input;
   };
   const kind = field(form, "kind", select(Object.keys(options).map((key) => [key, editorText("kind_" + key)])));
+  if (typeof picked === "string" && options[picked]) {
+    kind.value = picked;
+    kind.parentElement.hidden = true; // 막대의 버튼으로 이미 골랐음
+  }
   const details = el("div", "position-add-fields");
   form.append(details);
   let inputs;
@@ -129,7 +134,7 @@ function openMarkerForm(latlng) {
     } else if (kind.value === "story") {
       // 이 맵이 적힌 스토리 단계만 (이미 핀이 있는 단계는 ✓)
       const placed = new Set(options.story.seed.placed || []);
-      choice("step", "storyStep", options.story.seed.steps.map((s) =>
+      choice("step", "storyStep", storyStepsNeedingPlace(options.story.seed.steps).map((s) =>
         [s.id, (placed.has(s.id) ? "✓ " : "") + s.chapter + " · " + s.ko + " / " + s.en]));
       input("candidate", "candidate", "checkbox", false);
     } else {
@@ -197,12 +202,20 @@ async function initializePositionEditor() {
     return node;
   };
   mapEditor.undo = button("editor.undo", undoPositionEdit);
-  mapEditor.add = button("editor.addMarker", () => {
-    if (mapEditor.saving || !mapEditor.options) return;
-    cancelMarkerDraft();
-    mapEditor.placing = true;
-    updatePositionEditor(t("editor.clickMap"));
-  });
+  // 종류별 추가 버튼: 누르고 지도를 클릭하면 그 종류로 바로 (종류 고르기 단계 없음)
+  mapEditor.addButtons = {};
+  for (const key of ["bd", "boss", "extract", "btr", "guide", "story"]) {
+    const node = el("button", "layer-toggle-btn", "+ " + editorText("kind_" + key));
+    node.type = "button";
+    node.addEventListener("click", () => {
+      if (mapEditor.saving || !mapEditor.options?.[key]) return;
+      cancelMarkerDraft();
+      mapEditor.placing = key;
+      updatePositionEditor(t("editor.clickMap"));
+    });
+    banner.append(node);
+    mapEditor.addButtons[key] = node;
+  }
   window.addEventListener("keydown", (event) => { if (event.key === "Escape") cancelMarkerDraft(); });
   mapEditor.cancel = button("editor.cancel", () => {
     if (mapEditor.saving) return;
@@ -245,15 +258,20 @@ function updatePositionEditor(message = "") {
     mapEditor.storyCount.hidden = !storySeed;
     if (storySeed) {
       const placed = new Set(storySeed.placed || []);
-      const missing = storySeed.steps.filter((s) => !placed.has(s.id));
-      mapEditor.storyCount.textContent = t("editor.storyProgress", { n: storySeed.steps.length - missing.length, total: storySeed.steps.length });
+      const need = storyStepsNeedingPlace(storySeed.steps);
+      const missing = need.filter((s) => !placed.has(s.id));
+      mapEditor.storyCount.textContent = t("editor.storyProgress", { n: need.length - missing.length, total: need.length });
       mapEditor.storyCount.title = missing.length ? [t("editor.storyMissing"), ...missing.map((s) => s.chapter + " · " + s.ko)].join(String.fromCharCode(10)) : "";
     }
   }
   mapEditor.undo.disabled = mapEditor.saving || !mapEditor.history.length;
   mapEditor.cancel.disabled = mapEditor.save.disabled = mapEditor.saving || !mapEditor.pending.size;
   mapEditor.status.textContent = message;
-  mapEditor.add.disabled = mapEditor.saving || !mapEditor.options;
+  Object.entries(mapEditor.addButtons || {}).forEach(([key, node]) => {
+    node.hidden = !mapEditor.options?.[key]; // 이 맵에서 쓸 수 없는 종류는 숨김 (공략·스토리)
+    node.disabled = mapEditor.saving;
+    node.classList.toggle("on", mapEditor.placing === key);
+  });
   document.body.classList.toggle("position-saving", mapEditor.saving);
 }
 
@@ -661,6 +679,52 @@ function storyPlaceEntry(id) {
   return null;
 }
 
+// 장소가 필요한 단계만 (장소 불필요 목록·이름 있는 탈출구로 대신하는 단계는 뺌)
+function storyStepsNeedingPlace(steps) {
+  const skip = new Set(story.data?.noPlace || []);
+  const links = story.data?.extractLinks || {};
+  return steps.filter((s) => !skip.has(s.id) && !links[s.id]);
+}
+
+// 이름 있는 탈출구로 대신하는 스토리 단계: 그 단계가 지금 할 일이면 탈출구 표시에 📖 표시·강조·설명을 붙임
+function applyStoryExtractLinks() {
+  // 이전에 연결했던 탈출구는 강조·순서까지 원래대로 (Codex 검수 62 #2)
+  mapStory.markers.filter((item) => item.extract).forEach(({ marker }) => {
+    marker.getElement()?.classList.remove("guide-highlight");
+    marker.setZIndexOffset(0);
+  });
+  mapStory.markers = mapStory.markers.filter((item) => !item.extract);
+  (mapUI.extractMarkers || []).forEach((item) => {
+    item.marker.storyLinked = false;
+    item.marker.getElement()?.classList.remove("story-extract");
+    if (item.baseTip !== undefined) item.marker.setTooltipContent(item.baseTip);
+  });
+  if (!mapUI.current || mapEditor.active) return;
+  const links = story.data?.extractLinks || {};
+  currentStoryChapters().forEach(({ s, entries }) => entries.forEach((entry) => {
+    const link = links[entry.step.id];
+    if (!link || link.map !== mapUI.current.key) return;
+    const item = (mapUI.extractMarkers || []).find((x) => x.name === link.extract);
+    if (!item) return;
+    item.marker.storyLinked = true;
+    item.marker.getElement()?.classList.add("story-extract");
+    if (!item.marker.storyAddHook) {
+      // 표시 켜기/끄기로 아이콘이 새로 만들어져도 📖 표시를 다시 붙임 (Codex 검수 62 #3)
+      item.marker.storyAddHook = true;
+      item.marker.on("add", () => {
+        if (item.marker.storyLinked) item.marker.getElement()?.classList.add("story-extract");
+      });
+    }
+    const tip = item.marker.getTooltip();
+    if (tip) {
+      if (item.baseTip === undefined) item.baseTip = tip.getContent();
+      item.marker.setTooltipContent(item.baseTip + "<br>📖 " + escapeHtml(s.ch.name + " · " + entry.step.ko));
+    }
+    mapStory.markers.push({ marker: item.marker, id: entry.step.id, extract: true });
+  }));
+  highlightStoryStep();
+}
+
 function storyPinEntries() {
   if (mapEditor.active) {
     // 편집 모드: 지금 할 단계가 아니어도 이 맵에 장소가 있는 단계는 모두 (옮기려면 보여야 함)
@@ -669,7 +733,8 @@ function storyPinEntries() {
       .map(storyPlaceEntry).filter(Boolean);
   }
   const entries = currentStoryChapters().flatMap(({ s, entries }) => entries.map((entry) => ({ s, entry })));
-  if (mapStory.explicit?.map === mapUI.current?.key && !entries.some(({ entry }) => entry.step.id === mapStory.explicit.id)) {
+  // explicit 이 없고 맵도 아직 안 골라졌을 때 undefined === undefined 로 통과하지 않게
+  if (mapStory.explicit && mapStory.explicit.map === mapUI.current?.key && !entries.some(({ entry }) => entry.step.id === mapStory.explicit.id)) {
     const found = storyPlaceEntry(mapStory.explicit.id);
     if (found) entries.push(found);
   }
@@ -722,6 +787,7 @@ function drawStoryPins() {
     applyFloor();
     highlightStoryStep();
   }
+  applyStoryExtractLinks();
   renderLayerDrawer();
 }
 
@@ -729,6 +795,13 @@ function focusStoryStep(id, toggle = true) {
   mapStory.focused = toggle && mapStory.focused === id ? null : id;
   const points = storyPlacesFor(id, mapUI.current?.key);
   const leaf = mapUI.leaflet;
+  const linked = mapStory.markers.find((item) => item.id === id && item.extract);
+  if (mapStory.focused && leaf && !points.length && linked) {
+    const group = (mapUI.extractMarkers || []).find((x) => x.marker === linked.marker)?.group;
+    if (group && !layerOn(group)) setLayer(group, true);
+    collapseAll();
+    leaf.setView(linked.marker.getLatLng(), Math.max(leaf.getZoom(), Math.min(4, leaf.getMaxZoom())), { animate: !reducedMotion() });
+  }
   if (mapStory.focused && leaf && points.length) {
     if (!layerOn("story")) setLayer("story", true);
     goToFloorOf(floorOf([points[0].x, points[0].z, points[0].y]));
@@ -1589,7 +1662,7 @@ function renderDrawerStories(list, m) {
         box.checked = isStepDone(step);
         box.title = t("story.stepDone");
         box.addEventListener("change", () => saveStoryChanges({ [`${step.id}!`]: box.checked ? "done" : null }));
-        if (storyPlacesFor(step.id, m.key).length) {
+        if (storyPlacesFor(step.id, m.key).length || story.data?.extractLinks?.[step.id]?.map === m.key) {
           label.append(box);
           const focus = el("button", "story-place-focus", step.ko);
           focus.type = "button";
@@ -1978,6 +2051,7 @@ async function drawFeatures(leaf, m) {
       if (ids.length) showGuidePoint(ids[0]);
     });
   });
+  applyStoryExtractLinks(); // 탈출구 표시가 생긴 뒤 스토리 단계 연결 다시 붙이기
   // 트랜짓: 마우스를 올리면 도착 맵 이름 (2026-11-21 사용자)
   mapUI.transits = data.transits.map((tr) => {
     const target = transitTarget(tr);

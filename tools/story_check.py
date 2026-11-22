@@ -162,6 +162,25 @@ def check_places(chapters, map_keys):
                     report("places", f"{field} 누락: {sid}")
             if not isinstance(p.get("candidate"), bool) or not isinstance(p.get("note"), str):
                 report("places", f"candidate/note 형식 오류: {sid}")
+    # 장소가 필요 없는 단계 목록 / 이름 있는 탈출구로 대신하는 단계
+    for sid in data.get("no_place", []):
+        if sid not in steps:
+            report("places", f"no_place 에 없는 단계: {sid}")
+    for sid, link in (data.get("extract_links") or {}).items():
+        maps = steps.get(sid, [])
+        maps = maps if isinstance(maps, list) else [maps]
+        if sid not in steps:
+            report("places", f"extract_links 에 없는 단계: {sid}")
+        elif not isinstance(link, dict) or link.get("map") not in maps:
+            report("places", f"extract_links 맵이 단계와 다름: {sid}")
+        else:
+            m = next((x for x in tarkov_api.load("maps")["maps"].values() if x["normalizedName"] == link["map"]), None)
+            en = tarkov_api.load("maps_en")
+            names = {en.get(e.get("name"), e.get("name")) for e in (m or {}).get("extracts", [])}
+            if link.get("extract") not in names:
+                report("places", f"extract_links 탈출구 이름이 dev 에 없음: {sid} / {link.get('extract')}")
+        if sid in data.get("no_place", []):
+            report("places", f"no_place 와 extract_links 에 같이 있음: {sid}")
 
 
 def main():

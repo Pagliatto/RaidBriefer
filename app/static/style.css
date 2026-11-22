@@ -2383,3 +2383,9 @@ body.position-edit .position-deleted { display: none; }
 .story-place-focus { min-width: 0; flex: 1; text-align: left; white-space: normal; overflow-wrap: anywhere; font: inherit; padding: 2px 4px; }
 .story-place-focused { background: var(--surface-3); outline: 1px solid #b39ddb; border-radius: 4px; }
 .story-place-focus:focus-visible, .story-places-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* 스토리 단계를 이름 있는 탈출구로 대신할 때: 그 단계가 지금 할 일이면 탈출구에 📖 표시와 빛 */
+.leaflet-marker-icon.story-extract { box-shadow: 0 0 0 3px var(--story, #c9a3ff), 0 0 12px 2px var(--story, #c9a3ff); border-radius: 6px; }
+.leaflet-marker-icon.story-extract::after { content: "📖"; position: absolute; right: -10px; top: -12px; font-size: 13px; }
+/* 편집 막대·추가 창에서 hidden 이 display 규칙에 덮이지 않게 (Codex 검수 62 #1) */
+.position-editor [hidden], .position-add-form [hidden] { display: none !important; }

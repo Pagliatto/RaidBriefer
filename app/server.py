@@ -526,7 +526,7 @@ def api_settings_set():
 def api_story():
     from app import editor
     try:
-        return jsonify({**story.build(), "places": editor.story_keys(story_places.load())})
+        return jsonify({**story.build(), "places": editor.story_keys(story_places.load()), **story_places.extras()})
     except settings.DataReadError:
         raise
     except Exception as error:

@@ -24,6 +24,28 @@ def valid(p) -> bool:
             and isinstance(p.get("candidate", False), bool) and isinstance(p.get("note", ""), str))
 
 
+_extras_cache = [None, {"noPlace": [], "extractLinks": {}}]
+
+
+def _extras(data) -> dict:
+    """장소가 필요 없는 단계 목록과, 이름 있는 탈출구로 대신하는 단계 (잘못된 항목은 뺌)"""
+    data = data if isinstance(data, dict) else {}
+    no_place = [s for s in data.get("no_place", []) if isinstance(s, str) and s] if isinstance(data.get("no_place"), list) else []
+    links = {}
+    raw = data.get("extract_links")
+    if isinstance(raw, dict):
+        for sid, link in raw.items():
+            if (isinstance(sid, str) and isinstance(link, dict) and isinstance(link.get("map"), str) and link["map"]
+                    and isinstance(link.get("extract"), str) and link["extract"]):
+                links[sid] = {"map": link["map"], "extract": link["extract"]}
+    return {"noPlace": no_place, "extractLinks": links}
+
+
+def extras() -> dict:
+    load()  # 파일이 바뀌었으면 같이 다시 읽음
+    return _extras_cache[1] if _extras_cache[0] is not None else {"noPlace": [], "extractLinks": {}}
+
+
 def load() -> dict:
     global _cached
     with _lock:
@@ -42,6 +64,7 @@ def load() -> dict:
                     if good:
                         result[sid] = good
             _cached = (stamp, result)
+            _extras_cache[:] = [stamp, _extras(data)]
             return result
         except (OSError, ValueError, RecursionError):
             _cached = None
