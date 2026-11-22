@@ -2252,7 +2252,7 @@ initializePositionEditor().then(loadMapList);
 
 // ---------- 표시 켜기/끄기 (왼쪽 서랍) ----------
 // 퀘스트·먹을 것·탈출구·트랜짓·열쇠·귀중품. 고른 값은 이 브라우저에 기억 (다음에 켜도 그대로)
-const LAYER_KEYS = ["quests", "loot", "extracts", "scavExtracts", "transits", "btrStops", "keys", "bitcoin", "keySpawns", "valuables", "guide", "story", "blackDivision", "bossZones"];
+const LAYER_KEYS = ["quests", "loot", "extracts", "scavExtracts", "transits", "btrStops", "keys", "bitcoin", "keySpawns", "guide", "story", "blackDivision", "bossZones"];
 const LAYER_INFO = {
   story: { label: t("map.storyLayer"), mark: "mk:story:book-open", on: true },
   blackDivision: { label: t("map.layerBlackDivision"), mark: "mk:enemy:crosshair", on: true },
@@ -2268,24 +2268,12 @@ const LAYER_INFO = {
   keys: { label: t("map.layerLocks"), mark: "mk:lock:lock", on: true },          // 열쇠로 여는 곳
   bitcoin: { label: t("map.layerBitcoin"), mark: "mk:bitcoin:bitcoin", on: true },
   keySpawns: { label: t("map.layerKeySpawns"), mark: "mk:keyspawn:key", on: true },      // 열쇠·키카드가 바닥에 생기는 곳
-  valuables: { label: t("map.layerValuables"), mark: "mk:valuable:gem", on: false }, // 맵마다 수백 곳이라 기본은 끔
 };
 const LAYER_STORAGE = "tarkovhelper.layers";
 const layerState = (() => {
   try { return JSON.parse(localStorage.getItem(LAYER_STORAGE) || "{}"); } catch (e) { return {}; }
 })();
 
-// 기존에 켠 기타 귀중품은 한 번만 끄고, 이후 사용자가 켠 설정은 유지.
-try {
-  const resetKey = "tarkovhelper.valuablesReset2026";
-  if (localStorage.getItem(resetKey) !== "1") {
-    if (layerState.valuables === true) {
-      layerState.valuables = false;
-      localStorage.setItem(LAYER_STORAGE, JSON.stringify(layerState));
-    }
-    localStorage.setItem(resetKey, "1");
-  }
-} catch (e) { /* 저장소를 못 쓰는 창 */ }
 
 function layerOn(key) {
   if (LAYER_INFO[key].always) return true;  // 스위치 없이 항상 보이는 표시
@@ -2437,17 +2425,13 @@ async function drawFeatures(leaf, m) {
     add("keys", lock.pos, markerIcon("lock", "lock", 16),
       `<b>${keyWithWiki(lock.key, lock.wiki)}</b>${where}${power}`, true);
   });
-  // 바닥 아이템 자리: 비트코인 / 열쇠 자리 / 기타 귀중품 (마우스를 올리면 그 자리 아이템)
+  // 바닥 아이템 자리: 비트코인 / 열쇠 자리 (마우스를 올리면 그 자리 열쇠)
   data.loot.forEach((spot) => {
     if (spot.bitcoin) add("bitcoin", spot.pos, markerIcon("bitcoin", "bitcoin", 16), `<b>${t("map.bitcoin")}</b>`);
     if (spot.keys.length) {
       const list = spot.keys.slice(0, 5).map((name, i) => keyWithWiki(name, (spot.keyWikis || [])[i])).join("<br>") +
         (spot.keys.length > 5 ? t("map.andMore", { n: spot.keys.length - 5 }) : "");
       add("keySpawns", spot.pos, markerIcon("keyspawn", "key", 16), `<b>${t("map.keySpawn")}</b><br>${list}`, true);
-    }
-    if (spot.items.length) {
-      const more = spot.more ? t("map.andMore", { n: spot.more }) : "";
-      add("valuables", spot.pos, markerIcon("valuable", "gem", 12), spot.items.map(escapeHtml).join("<br>") + more);
     }
   });
   applyFloor();

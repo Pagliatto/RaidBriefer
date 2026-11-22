@@ -452,21 +452,19 @@ def features(map_key: str) -> dict:
                 "power": bool(lock.get("needsPower")),
                 "pos": _xzy(lock["position"]),
             })
-    # 바닥 아이템 자리를 셋으로 나눔: 비트코인 / 열쇠(키카드 포함) / 기타 귀중품
+    # 바닥 아이템 자리: 비트코인 / 열쇠(키카드 포함)만 (기타 귀중품 표시는 2026-11-23 사용자 결정으로 없앰)
     for loose in m.get("lootLoose") or []:
         if not loose.get("position"):
             continue
         ids = loose.get("items") or []
         key_ids = [i for i in ids if KEY_NAME.search(items.en.get(f"{i} Name", "")) and item_name(i)]
-        others = [item_name(i) for i in ids if i != BITCOIN_ID and not KEY_NAME.search(items.en.get(f"{i} Name", ""))]
-        others = [n for n in others if n]
+        if BITCOIN_ID not in ids and not key_ids:
+            continue
         result["loot"].append({
             "pos": _xzy(loose["position"]),
             "bitcoin": BITCOIN_ID in ids,
             "keys": [item_name(i) for i in key_ids],
             "keyWikis": [tarkov_api.key_wiki(i) for i in key_ids],  # keys 와 같은 순서
-            "items": others[:4],
-            "more": max(0, len(others) - 4),
         })
     from app import editor
     return editor.feature_keys(map_key, result)

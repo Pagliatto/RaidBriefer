@@ -1017,7 +1017,6 @@ body.map-mode .scroll-buttons { display: none; }
 .transit span { border-radius: 50%; background: #c08cf0; border: 2px solid #111; }
 /* 잠긴 문: 자물쇠 (작게) */
 .lock-pin span { font-size: 12px; line-height: 16px; text-align: center; filter: drop-shadow(0 0 2px #000); }
-.valuable span { border-radius: 50%; background: #e3c25a; border: 1px solid #111; }
 .btc-pin span { border-radius: 50%; background: #f2a33a; color: #111; font-size: 11px; font-weight: 800; line-height: 16px; text-align: center; border: 1px solid #111; }
 /* 열쇠 자리: 열쇠 아이콘만 (잠긴 문 자물쇠와 같은 크기) */
 .keyspawn-pin span { font-size: 12px; line-height: 16px; text-align: center; filter: drop-shadow(0 0 2px #000); }
@@ -1440,7 +1439,6 @@ body.map-mode .scroll-buttons { display: none; }
 .legend-extract { transform: rotate(45deg); background: #7fd16b; border-radius: 2px; }
 .legend-scav { transform: rotate(45deg); background: #6fb3ec; border-radius: 2px; }
 .legend-transit { border-radius: 50%; background: #c08cf0; }
-.legend-valuable { width: 8px; height: 8px; border-radius: 50%; background: #e3c25a; border-width: 1px; }
 .layer-count { color: var(--text-faint); font-weight: 600; }
 
 /* 전술 HUD — 화면 공통 토큰과 덮어쓰기 */
@@ -1980,16 +1978,15 @@ button.home-map, button.home-story-row, button.choice-option, button.prep-item, 
 .mk-keyspawn { --mk: #ff8a70; }  /* 산호색: BTR 청록·비트코인 주황·먹을 것 분홍과 구분 */
 .mk-bitcoin { --mk: #f2a33a; }
 .mk-loot { --mk: #ee9fc0; }
-.mk-valuable { --mk: #e3c25a; }
-.mk-valuable span { border-radius: 3px; }
 /* 공략: 종류별 기호, 후보는 옅은 바탕·점선. 층 투명도는 Leaflet이 따로 적용한다. */
-.mk-guide-key_spawn { --mk: #ff8a70; }
-.mk-guide-panel { --mk: #e3c25a; }
-.mk-guide-toolset { --mk: #72c8ed; }
-.mk-guide-explosive { --mk: #ef919b; }
-.mk-guide-door { --mk: #c8b4f3; }
-.mk-guide-building { --mk: #9dc58a; }
-.mk-guide-start { --mk: #72e4d3; }
+/* 공략 핀은 같은 뜻의 색을 빌려 씀 (색 규칙: docs/notes/map-screen.md '지도 표시 색 규칙') */
+.mk-guide-key_spawn { --mk: #ff8a70; }   /* 물건: 열쇠 = 열쇠 자리 */
+.mk-guide-panel { --mk: #e3c25a; }       /* 작동 장치: 금 (귀중품 표시 없앤 뒤 이 뜻만) */
+.mk-guide-toolset { --mk: #c9a46e; }     /* 물건: 황갈 */
+.mk-guide-explosive { --mk: #e5603f; }   /* 물건: 진한 주홍 */
+.mk-guide-door { --mk: #c9cfd3; }        /* 잠김: 잠긴 문 회색 */
+.mk-guide-building { --mk: #f4f4f4; }    /* 장소: 흰색 */
+.mk-guide-start { --mk: #c08cf0; }       /* 이동: 트랜짓 보라 (입장 시작점) */
 .guide-candidate > span { opacity: 0.72; border: 2px dashed #182126; }
 .guide-highlight > span { opacity: 1; box-shadow: 0 0 0 2px #111, 0 0 0 4px var(--accent); }
 /* 잠긴 문·열쇠 자리 마우스 올림 창 */
@@ -2362,7 +2359,7 @@ body.position-saving #map-view { pointer-events: none; }
   padding: 1px 4px; border-radius: 3px; background: #f1cf53; color: #171710;
   font-size: 10px; line-height: 1.3; white-space: nowrap; pointer-events: none;
 }
-.mk-guide-extract { background: var(--ok); }
+.mk-guide-extract { --mk: #7fd16b; }      /* 이동: PMC 탈출구 초록 */
 .position-add-form {
   position: fixed; z-index: 2000; top: 50%; left: 50%; transform: translate(-50%, -50%);
   width: min(420px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow: auto;
@@ -2377,7 +2374,10 @@ body.position-saving #map-view { pointer-events: none; }
 body.position-edit .position-deleted { display: none; }
 
 /* Story place controls: normal buttons centered; drawer prose is a list row. */
-.mk-story { --mk: #b39ddb; }
+/* 스토리 장소: 모양으로 구분 (마름모, 크림색 하나) — 트랜짓 보라와 겹치지 않게 (2026-11-23 사용자) */
+.mk-story { --mk: #f4ecd8; }
+.mk-story > span { transform: rotate(45deg) scale(0.8); border-radius: 3px; }
+.mk-story > span > svg { transform: rotate(-45deg) scale(1.15); }
 .story-places-button { display: block; margin: 5px 0 5px 26px; max-width: calc(100% - 26px); text-align: center; white-space: normal; overflow-wrap: anywhere; font-size: 12px; }
 .drawer-story-steps li:has(.story-place-focus) { display: flex; align-items: flex-start; gap: 6px; }
 .story-place-focus { min-width: 0; flex: 1; text-align: left; white-space: normal; overflow-wrap: anywhere; font: inherit; padding: 2px 4px; }
