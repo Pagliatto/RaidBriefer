@@ -1287,6 +1287,8 @@ async function drawMap() {
           mapUI.svgGroups[g.id] = g;
         });
         rotateMapSvg(svg, inner, displayRotation);
+        // 그림이 늦게 와도 그사이 고른 층(예: 스토리 '지도에서 보기')을 그대로 보여 줌
+        if (mapUI.floor != null) setFloor(mapUI.floor);
       }
     } catch (error) {
       if (generation !== mapGeneration) return;
