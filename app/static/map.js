@@ -50,7 +50,7 @@ function refreshNewMarkers() {
   for (const [id, pending] of mapEditor.pending) {
     if (!pending.fields || pending.map !== mapUI.current?.key) continue;
     const kind = pending.edit.seed.add;
-    if (kind === "noplace" || kind === "maps") continue; // 위치 없는 항목 (스토리 연속 입력의 '장소 불필요'·맵 고치기)
+    if (kind === "noplace" || kind === "maps" || kind === "unnoplace") continue; // 위치 없는 항목 (스토리 연속 입력의 '장소 불필요'·맵 고치기)
     const pin = pending.fields.kind;
     const icons = { bd: ["enemy", "crosshair"], boss: ["boss", "skull"], extract: [`extract-${pending.fields.faction}`, "door-open"], btr: ["btr", "bus"], story: ["story", "book-open"], guide: [pin === "lock" ? "lock" : "guide-" + pin, GUIDE_ICONS[pin] || "door-open"] };
     const marker = L.marker(gamePos(pending.pos), { icon: markerIcon(...icons[kind], 22) });
@@ -101,7 +101,7 @@ function openMarkerForm(latlng) {
     }
     return input;
   };
-  const kind = field(form, "kind", select(Object.keys(options).filter((key) => key !== "noplace" && key !== "maps")
+  const kind = field(form, "kind", select(Object.keys(options).filter((key) => !["noplace", "maps", "unnoplace"].includes(key))
     .map((key) => [key, editorText("kind_" + key)])));
   if (typeof picked === "string" && options[picked]) {
     kind.value = picked;
@@ -220,6 +220,7 @@ async function initializePositionEditor() {
     mapEditor.addButtons[key] = node;
   }
   mapEditor.walkButton = button("editor.walk", () => (mapEditor.walk ? stopStoryWalk() : startStoryWalk()));
+  mapEditor.reviewButton = button("editor.review", () => (mapEditor.walk ? stopStoryWalk() : startStoryReview()));
   window.addEventListener("keydown", (event) => { if (event.key === "Escape") cancelMarkerDraft(); });
   mapEditor.cancel = button("editor.cancel", () => {
     if (mapEditor.saving) return;
@@ -273,8 +274,15 @@ function updatePositionEditor(message = "") {
   mapEditor.cancel.disabled = mapEditor.save.disabled = mapEditor.saving || !mapEditor.pending.size;
   mapEditor.status.textContent = message;
   if (mapEditor.walkButton) {
-    mapEditor.walkButton.classList.toggle("on", Boolean(mapEditor.walk));
+    mapEditor.walkButton.classList.toggle("on", Boolean(mapEditor.walk && !mapEditor.walk.review));
     mapEditor.walkButton.disabled = mapEditor.saving || !story.data;
+  }
+  if (mapEditor.reviewButton) { // 모순(장소도 있고 '장소 불필요'에도 있음) 검토: 있을 때만
+    const n = storyConflicts().length;
+    mapEditor.reviewButton.hidden = !n && !mapEditor.walk?.review;
+    mapEditor.reviewButton.textContent = t("editor.review") + (n ? ` (${n})` : "");
+    mapEditor.reviewButton.classList.toggle("on", Boolean(mapEditor.walk?.review));
+    mapEditor.reviewButton.disabled = mapEditor.saving || !story.data;
   }
   Object.entries(mapEditor.addButtons || {}).forEach(([key, node]) => {
     node.hidden = !mapEditor.options?.[key]; // 이 맵에서 쓸 수 없는 종류는 숨김 (공략·스토리)
@@ -703,7 +711,7 @@ function storyPlaceEntry(id) {
 function storyWalkQueue() {
   const skip = new Set(story.data?.noPlace || []);
   const links = story.data?.extractLinks || {};
-  const waiting = new Set([...mapEditor.pending.values()].filter((p) => p.fields?.step && p.edit?.seed?.add !== "maps")
+  const waiting = new Set([...mapEditor.pending.values()].filter((p) => p.fields?.step && !["maps", "unnoplace"].includes(p.edit?.seed?.add))
     .flatMap((p) => [p.fields.step, ...(p.twins || [])]));
   const chapters = story.data?.chapters || [];
   const ordered = [...chapters.filter((ch) => isChapterStarted(ch)), ...chapters.filter((ch) => !isChapterStarted(ch))];
@@ -725,6 +733,99 @@ function storyWalkQueue() {
     }
   }
   return queue;
+}
+
+// 장소가 있는데 '장소 불필요'에도 들어간 단계 (예전에 둘 다 저장된 것)
+function storyConflicts() {
+  return (story.data?.noPlace || []).filter((id) => storyPlacesFor(id).length);
+}
+
+function startStoryReview() {
+  cancelMarkerDraft();
+  const queue = [];
+  for (const id of storyConflicts()) {
+    for (const ch of story.data?.chapters || []) {
+      for (const section of ch.sections || []) {
+        const step = (section.steps || []).find((st) => st.id === id);
+        if (!step) continue;
+        const maps = [...new Set(storyPlacesFor(id).map((p) => p.map))].filter((key) => mapUI.maps.some((m) => m.key === key));
+        if (maps.length) queue.push({ ch, section, step, map: maps[0], maps, twins: [], review: true });
+      }
+    }
+  }
+  mapEditor.walk = { queue, index: 0, review: true };
+  showStoryWalk();
+}
+
+// 검토 카드: 핀을 보여 주고 [장소 맞음]/[장소 불필요 맞음]
+function showStoryReview(card, item, act) {
+  const walk = mapEditor.walk;
+  const decided = mapEditor.pending.get("unnoplace:" + item.step.id) ? "place"
+    : storyPlacesFor(item.step.id).some((p) => p.edit && mapEditor.pending.get(editIdentity(p.edit))?.delete) ? "none" : null;
+  card.append(el("div", "story-walk-head", `${walk.index + 1} / ${walk.queue.length} · ${item.ch.name} · ` +
+    item.maps.map((key) => mapUI.maps.find((m) => m.key === key)?.name || key).join(" / ")));
+  card.append(el("strong", "", item.step.ko));
+  if (item.step.en && item.step.en !== item.step.ko) card.append(el("small", "", item.step.en));
+  card.append(el("p", "story-walk-hint", decided ? t(decided === "place" ? "editor.reviewPlaceDone" : "editor.reviewNoneDone")
+    : t("editor.reviewHint", { n: storyPlacesFor(item.step.id).length })));
+  const row = el("div", "story-walk-actions");
+  row.append(
+    act("editor.walkPrev", () => { walk.index = Math.max(0, walk.index - 1); showStoryWalk(); }),
+    act("editor.reviewPlace", () => storyReviewDecide(item, "place"), decided === "place" ? "on" : ""),
+    act("editor.reviewNone", () => storyReviewDecide(item, "none"), decided === "none" ? "on" : ""),
+    act("editor.walkNext", () => advanceStoryWalk()),
+    act("editor.walkStop", stopStoryWalk),
+  );
+  card.append(row);
+  if (item.maps.length > 1) {
+    const pick = el("div", "story-walk-actions");
+    item.maps.forEach((key) => pick.append(act("", () => storyReviewFocus(item, key),
+      key === mapUI.current?.key ? "on" : "", mapUI.maps.find((m) => m.key === key)?.name || key)));
+    card.append(pick);
+  }
+  if (!item.maps.includes(mapUI.current?.key)) storyReviewFocus(item, item.map);
+  else if (walk.focused !== item.step.id) storyReviewFocus(item, mapUI.current.key);
+}
+
+// 그 맵으로 가서 이 단계 핀을 보여 줌 (맵이 바뀌는 동안 잠깐 기다림)
+function storyReviewFocus(item, key) {
+  const walk = mapEditor.walk;
+  walk.focused = item.step.id;
+  if (mapUI.current?.key !== key) chooseMap(key, false);
+  let tries = 0;
+  const wait = () => {
+    if (mapEditor.walk !== walk) return;
+    if (mapUI.current?.key === key && mapUI.leaflet && mapEditor.options?.story?.seed?.map === key) focusStoryStep(item.step.id, false);
+    else if (++tries < 40) setTimeout(wait, 150);
+  };
+  wait();
+}
+
+// 결정: place = 장소 맞음('장소 불필요'에서 빼기), none = 장소 불필요 맞음(이 단계 핀 모두 지우기). 다시 누르면 취소
+function storyReviewDecide(item, choice) {
+  if (mapEditor.saving) return;
+  const id = item.step.id;
+  const unId = "unnoplace:" + id;
+  const pins = storyPlacesFor(id).filter((p) => p.edit);
+  const current = mapEditor.pending.get(unId) ? "place" : pins.some((p) => mapEditor.pending.get(editIdentity(p.edit))?.delete) ? "none" : null;
+  // 먼저 이 단계의 이전 결정을 지움
+  mapEditor.pending.delete(unId);
+  pins.forEach((p) => { if (mapEditor.pending.get(editIdentity(p.edit))?.delete) mapEditor.pending.delete(editIdentity(p.edit)); });
+  if (current !== choice) {
+    if (choice === "place" && mapEditor.options?.unnoplace) {
+      mapEditor.pending.set(unId, { edit: mapEditor.options.unnoplace, fields: { step: id }, pos: [0, 0, 0], base: [0, 0, 0],
+        map: mapUI.current?.key, label: item.step.ko });
+    }
+    if (choice === "none") {
+      pins.forEach((p) => mapEditor.pending.set(editIdentity(p.edit), { edit: p.edit, pos: [p.x, p.z, p.y], delete: true }));
+    }
+  }
+  mapEditor.history = mapEditor.history.filter((h) => h.id !== unId && !pins.some((p) => h.id === editIdentity(p.edit)));
+  refreshPositionEdits();
+  refreshNewMarkers();
+  drawStoryPins();
+  if (current !== choice) advanceStoryWalk();
+  else showStoryWalk();
 }
 
 function startStoryWalk() {
@@ -762,9 +863,10 @@ function showStoryWalk() {
     return node;
   };
   if (!item) {
-    card.append(el("p", "", t("editor.walkDone")), act("editor.walkStop", stopStoryWalk));
+    card.append(el("p", "", t(walk.review ? "editor.reviewDone" : "editor.walkDone")), act("editor.walkStop", stopStoryWalk));
     return;
   }
+  if (walk.review) return showStoryReview(card, item, act);
   const mapName = walkMaps(item).map((key) => mapUI.maps.find((m) => m.key === key)?.name || key).join(" / ");
   card.append(el("div", "story-walk-head", `${walk.index + 1} / ${walk.queue.length} · ${item.ch.name} · ${mapName}`));
   card.append(el("strong", "", item.step.ko));

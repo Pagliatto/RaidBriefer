@@ -138,7 +138,8 @@ def _attach(item, file, route, snapshot, seed=None):
         if not isinstance(entry, dict) or not all(_number(entry.get(k)) for k in ("x", "z")) or not _number(entry.get("y", 0)):
             return
         item["pos"] = [entry["x"], entry["z"], entry.get("y", 0)]
-        seed = {"created": True} if _identity(file, route, entry) in _created else None
+        # 스토리 장소는 우리 데이터 전체를 편집 도구로 고침 → 모두 삭제 가능
+        seed = {"created": True} if file == "story/places.json" or _identity(file, route, entry) in _created else None
     elif seed is None:
         return
     key = {"file": file, "path": route, "revision": hashlib.sha256(raw).hexdigest(), "seed": seed}
@@ -276,18 +277,20 @@ def _add_keys(map_key, result, snapshot):
     except (OSError, ValueError):
         story = None
     story_steps = _story_steps(map_key) if story is not None else []
-    for kind in ("bd", "boss", "extract", "btr", "guide", "story", "noplace", "maps"):
+    for kind in ("bd", "boss", "extract", "btr", "guide", "story", "noplace", "maps", "unnoplace"):
         if kind == "guide" and guide is None:
             continue
         if kind in ("story", "noplace") and not story_steps:
             continue
-        if kind == "maps" and story is None:
+        if kind in ("maps", "unnoplace") and story is None:
             continue
         file = {"guide": "guides/" + map_key + ".json", "story": "story/places.json",
-                "noplace": "story/places.json", "maps": "story/places.json"}.get(kind, "corrections.json")
-        raw, data = {"guide": guide, "story": story, "noplace": story, "maps": story}.get(kind) or snapshot
+                "noplace": "story/places.json", "maps": "story/places.json",
+                "unnoplace": "story/places.json"}.get(kind, "corrections.json")
+        raw, data = {"guide": guide, "story": story, "noplace": story, "maps": story, "unnoplace": story}.get(kind) or snapshot
         route = {"guide": ["points", "_"], "story": ["places", "x", 0],
-                 "noplace": ["no_place", 0], "maps": ["step_maps", "x"]}.get(kind, ["enemy_spawns", map_key, "Editor"])
+                 "noplace": ["no_place", 0], "maps": ["step_maps", "x"],
+                 "unnoplace": ["no_place", 0]}.get(kind, ["enemy_spawns", map_key, "Editor"])
         context = hashlib.sha256(json.dumps([map_key, heights], separators=(",", ":")).encode()).hexdigest()
         _add_context[context] = heights
         # Keep old tabs usable without unbounded growth in long editing sessions.
@@ -478,7 +481,7 @@ def _add_change(plan, key, change, today):
     allowed = {"note"} | {"bd": {"count"}, "boss": {"bosses"}, "extract": {"name", "faction"},
                           "btr": {"name"}, "guide": {"kind", "label_ko", "label_en", "candidate", "steps"},
                           "story": {"step", "candidate", "y"}, "noplace": {"step"},
-                          "maps": {"step", "maps"}}[kind]
+                          "maps": {"step", "maps"}, "unnoplace": {"step"}}[kind]
     if set(fields) - allowed:
         raise ValueError("fields")
     def text(field, required=True):
@@ -492,7 +495,17 @@ def _add_change(plan, key, change, today):
     near = min(_add_context[seed["context"]], key=lambda p: (p[0] - x)**2 + (p[1] - z)**2, default=[0, 0, 0])
     entry = {"x": x, "y": near[2], "z": z, "note": text("note", False), "from": "game", "checked": today}
     data = plan["data"]
-    index = _step_index() if kind in ("story", "noplace", "maps") else {}
+    index = _step_index() if kind in ("story", "noplace", "maps", "unnoplace") else {}
+    if kind == "unnoplace":
+        # '장소 불필요'에서 빼기 (장소가 맞는 단계). 원래 파일의 순번으로 지움
+        step = fields.get("step")
+        rows = data.get("no_place")
+        removed = plan.setdefault("unnoplace", set())
+        if not isinstance(step, str) or not isinstance(rows, list) or step not in rows or step in removed:
+            raise ValueError("unnoplace")
+        removed.add(step)
+        plan["updates"].append((("no_place", rows.index(step)), _DELETE))
+        return
     overrides = data.get("step_maps") if isinstance(data.get("step_maps"), dict) else {}
     if kind == "maps":
         # 단계가 쓰는 맵 목록 바꾸기 (편집자가 여러 맵 체크). 이미 장소가 있는 맵은 뺄 수 없음
@@ -532,7 +545,7 @@ def _add_change(plan, key, change, today):
         maps = overrides.get(step) if isinstance(step, str) and isinstance(overrides.get(step), list) else index.get(step, {}).get("maps")
         if not isinstance(step, str) or step not in index or map_key not in (maps or []):
             raise ValueError("step")
-        if step in (data.get("no_place") or []):
+        if step in (data.get("no_place") or []) and step not in plan.get("unnoplace", ()):
             raise ValueError("no-place")  # '장소 불필요' 단계에는 장소를 못 넣음 (모순)
         if type(fields.get("candidate", False)) is not bool:
             raise ValueError("candidate")
@@ -657,7 +670,8 @@ def save(changes):
                 raise ValueError("operation")
             entry = _entry(plan["data"], key["path"])
             if "delete" in change:
-                if change["delete"] is not True or not isinstance(entry, dict) or key["seed"] != {"created": True} or _identity(key["file"], key["path"], entry) not in _created:
+                if (change["delete"] is not True or not isinstance(entry, dict) or key["seed"] != {"created": True}
+                        or (key["file"] != "story/places.json" and _identity(key["file"], key["path"], entry) not in _created)):
                     raise ValueError("delete")
                 plan["updates"].append((tuple(key["path"]), _DELETE))
                 if key["file"].startswith("guides/"):

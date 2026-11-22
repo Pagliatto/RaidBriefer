@@ -474,6 +474,13 @@
     "Vitality": "Vitality"
   },
   "editor": {
+    "review": "Review conflicts",
+    "reviewHint": "The map shows {n} pin(s) for this step. Correct spot: Place is right. Otherwise: No place is right. Then Save.",
+    "reviewPlace": "Place is right",
+    "reviewNone": "No place is right",
+    "reviewPlaceDone": "Place is right: saving removes it from the no-place list. Press again to undo.",
+    "reviewNoneDone": "No place is right: saving deletes this step's pins. Press again to undo.",
+    "reviewDone": "All conflicts reviewed. Press Save.",
     "walkMaps": "Edit this step's maps",
     "walkTwins": "Applies to {n} steps with the same text (same action on each branch)",
     "walkNext": "Next",
