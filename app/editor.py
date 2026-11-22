@@ -59,6 +59,9 @@ def _target(file, route):
                 raise ValueError("index")
         elif route[0] != "enemy_spawns" or len(route) != 3 or not isinstance(route[2], str) or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*", route[2]):
             raise ValueError("spawn")
+    elif file == "story/places.json" and route[:1] == ["no_place"]:
+        if len(route) != 2 or type(route[1]) is not int or route[1] < 0:
+            raise ValueError("no_place")
     elif file == "story/places.json":
         if (len(route) != 3 or route[0] != "places" or not isinstance(route[1], str)
                 or not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,99}", route[1]) or type(route[2]) is not int or route[2] < 0):
@@ -162,19 +165,20 @@ def _story_steps(map_key):
             chapter = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, ValueError):
             continue
-        name = chapter.get("name", path.stem) if isinstance(chapter, dict) else path.stem
-        def walk(node):
-            if isinstance(node, dict):
-                maps = node.get("map")
+        if not isinstance(chapter, dict) or not isinstance(chapter.get("sections"), list):
+            continue
+        name = chapter.get("name", path.stem)
+        # 화면(스토리 탭)과 같은 규칙: 단계에 맵이 없으면 그 구간의 맵을 물려받음
+        for section in chapter["sections"]:
+            if not isinstance(section, dict) or not isinstance(section.get("steps"), list):
+                continue
+            for step in section["steps"]:
+                if not isinstance(step, dict) or not isinstance(step.get("id"), str):
+                    continue
+                maps = step.get("map") or section.get("map")
                 maps = maps if isinstance(maps, list) else [maps]
-                if isinstance(node.get("id"), str) and map_key in maps:
-                    steps.append({"id": node["id"], "chapter": name, "ko": node.get("ko", ""), "en": node.get("en", "")})
-                for value in node.values():
-                    walk(value)
-            elif isinstance(node, list):
-                for value in node:
-                    walk(value)
-        walk(chapter)
+                if map_key in maps:
+                    steps.append({"id": step["id"], "chapter": name, "ko": step.get("ko", ""), "en": step.get("en", "")})
     return steps
 
 
@@ -262,14 +266,16 @@ def _add_keys(map_key, result, snapshot):
     except (OSError, ValueError):
         story = None
     story_steps = _story_steps(map_key) if story is not None else []
-    for kind in ("bd", "boss", "extract", "btr", "guide", "story"):
+    for kind in ("bd", "boss", "extract", "btr", "guide", "story", "noplace"):
         if kind == "guide" and guide is None:
             continue
-        if kind == "story" and not story_steps:
+        if kind in ("story", "noplace") and not story_steps:
             continue
-        file = {"guide": "guides/" + map_key + ".json", "story": "story/places.json"}.get(kind, "corrections.json")
-        raw, data = {"guide": guide, "story": story}.get(kind) or snapshot
-        route = {"guide": ["points", "_"], "story": ["places", "x", 0]}.get(kind, ["enemy_spawns", map_key, "Editor"])
+        file = {"guide": "guides/" + map_key + ".json", "story": "story/places.json",
+                "noplace": "story/places.json"}.get(kind, "corrections.json")
+        raw, data = {"guide": guide, "story": story, "noplace": story}.get(kind) or snapshot
+        route = {"guide": ["points", "_"], "story": ["places", "x", 0],
+                 "noplace": ["no_place", 0]}.get(kind, ["enemy_spawns", map_key, "Editor"])
         context = hashlib.sha256(json.dumps([map_key, heights], separators=(",", ":")).encode()).hexdigest()
         _add_context[context] = heights
         # Keep old tabs usable without unbounded growth in long editing sessions.
@@ -278,6 +284,8 @@ def _add_keys(map_key, result, snapshot):
         seed = {"add": kind, "map": map_key, "bosses": bosses, "context": context}
         if kind in ("extract", "btr"):
             seed["names"] = [item.get("name") for item in result.get("extracts" if kind == "extract" else "btrStops", [])]
+        if kind == "noplace":
+            seed["steps"] = [s["id"] for s in story_steps]
         if kind == "story":
             seed["steps"] = story_steps
             seed["placed"] = sorted(sid for sid, rows in (data.get("places") or {}).items()
@@ -457,7 +465,7 @@ def _add_change(plan, key, change, today):
         raise ValueError("fields")
     allowed = {"note"} | {"bd": {"count"}, "boss": {"bosses"}, "extract": {"name", "faction"},
                           "btr": {"name"}, "guide": {"kind", "label_ko", "label_en", "candidate", "steps"},
-                          "story": {"step", "candidate"}}[kind]
+                          "story": {"step", "candidate"}, "noplace": {"step"}}[kind]
     if set(fields) - allowed:
         raise ValueError("fields")
     def text(field, required=True):
@@ -471,6 +479,18 @@ def _add_change(plan, key, change, today):
     near = min(_add_context[seed["context"]], key=lambda p: (p[0] - x)**2 + (p[1] - z)**2, default=[0, 0, 0])
     entry = {"x": x, "y": near[2], "z": z, "note": text("note", False), "from": "game", "checked": today}
     data = plan["data"]
+    if kind == "noplace":
+        # 연속 입력에서 '장소 불필요' (자동 분류가 틀렸을 때 바로잡기)
+        step = fields.get("step")
+        if not isinstance(step, str) or step not in seed.get("steps", []):
+            raise ValueError("step")
+        rows = data.setdefault("no_place", [])
+        if not isinstance(rows, list) or step in rows:
+            raise ValueError("duplicate-no-place")
+        route = ["no_place", len(rows)]
+        rows.append(step)
+        plan["updates"].append((tuple(route), step))
+        return
     if kind == "story":
         step = fields.get("step")
         if not isinstance(step, str) or step not in {s["id"] for s in seed.get("steps", [])}:

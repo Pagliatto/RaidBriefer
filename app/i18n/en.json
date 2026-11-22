@@ -474,6 +474,15 @@
     "Vitality": "Vitality"
   },
   "editor": {
+    "walk": "Story walk",
+    "walkDone": "No more steps need a place. Press Save.",
+    "walkStop": "Stop",
+    "walkHint": "Click the map to place this step and move to the next one.",
+    "walkMoreHint": "One more: each click adds another place and stays on this step.",
+    "walkPrev": "Back",
+    "walkSkip": "Skip",
+    "walkNoPlace": "No place needed",
+    "walkMore": "One more",
     "title": "Position editor",
     "changed": "{n} changed",
     "undo": "Undo",

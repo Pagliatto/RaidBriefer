@@ -50,6 +50,7 @@ function refreshNewMarkers() {
   for (const [id, pending] of mapEditor.pending) {
     if (!pending.fields || pending.map !== mapUI.current?.key) continue;
     const kind = pending.edit.seed.add;
+    if (kind === "noplace") continue; // 위치 없는 항목 (스토리 연속 입력의 '장소 불필요')
     const pin = pending.fields.kind;
     const icons = { bd: ["enemy", "crosshair"], boss: ["boss", "skull"], extract: [`extract-${pending.fields.faction}`, "door-open"], btr: ["btr", "bus"], story: ["story", "book-open"], guide: [pin === "lock" ? "lock" : "guide-" + pin, GUIDE_ICONS[pin] || "door-open"] };
     const marker = L.marker(gamePos(pending.pos), { icon: markerIcon(...icons[kind], 22) });
@@ -100,7 +101,8 @@ function openMarkerForm(latlng) {
     }
     return input;
   };
-  const kind = field(form, "kind", select(Object.keys(options).map((key) => [key, editorText("kind_" + key)])));
+  const kind = field(form, "kind", select(Object.keys(options).filter((key) => key !== "noplace")
+    .map((key) => [key, editorText("kind_" + key)])));
   if (typeof picked === "string" && options[picked]) {
     kind.value = picked;
     kind.parentElement.hidden = true; // 막대의 버튼으로 이미 골랐음
@@ -209,6 +211,7 @@ async function initializePositionEditor() {
     node.type = "button";
     node.addEventListener("click", () => {
       if (mapEditor.saving || !mapEditor.options?.[key]) return;
+      if (mapEditor.walk) stopStoryWalk(); // 연속 입력 중이면 끝내고 일반 추가로
       cancelMarkerDraft();
       mapEditor.placing = key;
       updatePositionEditor(t("editor.clickMap"));
@@ -216,6 +219,7 @@ async function initializePositionEditor() {
     banner.append(node);
     mapEditor.addButtons[key] = node;
   }
+  mapEditor.walkButton = button("editor.walk", () => (mapEditor.walk ? stopStoryWalk() : startStoryWalk()));
   window.addEventListener("keydown", (event) => { if (event.key === "Escape") cancelMarkerDraft(); });
   mapEditor.cancel = button("editor.cancel", () => {
     if (mapEditor.saving) return;
@@ -223,6 +227,7 @@ async function initializePositionEditor() {
     mapEditor.history = [];
     cancelMarkerDraft();
     refreshPositionEdits();
+    if (mapEditor.walk) startStoryWalk(); // 연속 입력: 취소한 단계까지 다시 목록에
   });
   mapEditor.save = button("editor.save", savePositionEdits);
   mapEditor.status = el("span", "position-editor-status");
@@ -267,6 +272,10 @@ function updatePositionEditor(message = "") {
   mapEditor.undo.disabled = mapEditor.saving || !mapEditor.history.length;
   mapEditor.cancel.disabled = mapEditor.save.disabled = mapEditor.saving || !mapEditor.pending.size;
   mapEditor.status.textContent = message;
+  if (mapEditor.walkButton) {
+    mapEditor.walkButton.classList.toggle("on", Boolean(mapEditor.walk));
+    mapEditor.walkButton.disabled = mapEditor.saving || !story.data;
+  }
   Object.entries(mapEditor.addButtons || {}).forEach(([key, node]) => {
     node.hidden = !mapEditor.options?.[key]; // 이 맵에서 쓸 수 없는 종류는 숨김 (공략·스토리)
     node.disabled = mapEditor.saving;
@@ -286,9 +295,12 @@ function undoPositionEdit() {
   if (mapEditor.saving) return;
   const previous = mapEditor.history.pop();
   if (!previous) return;
+  const step = mapEditor.pending.get(previous.id)?.fields?.step;
   if (previous.before) mapEditor.pending.set(previous.id, previous.before);
   else mapEditor.pending.delete(previous.id);
   refreshPositionEdits();
+  const back = mapEditor.walk && !previous.before && step ? mapEditor.walk.queue.findIndex((i) => i.step.id === step) : -1;
+  if (back >= 0) { mapEditor.walk.index = back; mapEditor.walk.more = false; showStoryWalk(); } // 연속 입력: 되돌린 단계로
 }
 
 function bindPositionEditor(marker, item, label, guide = false) {
@@ -677,6 +689,139 @@ function storyPlaceEntry(id) {
     }
   }
   return null;
+}
+
+// ---------- 스토리 장소 연속 입력 (편집 모드) ----------
+// 장소가 필요한 단계를 차례로 보여 주고, 지도를 한 번 클릭하면 그 단계 장소로 넣고 다음으로 넘어감.
+// 진행 중인 챕터 먼저. 이미 장소가 있거나 대기 중인 단계, 장소 불필요 단계는 뺌.
+function storyWalkQueue() {
+  const skip = new Set(story.data?.noPlace || []);
+  const links = story.data?.extractLinks || {};
+  const waiting = new Set([...mapEditor.pending.values()].filter((p) => p.fields?.step).map((p) => p.fields.step));
+  const chapters = story.data?.chapters || [];
+  const ordered = [...chapters.filter((ch) => isChapterStarted(ch)), ...chapters.filter((ch) => !isChapterStarted(ch))];
+  const queue = [];
+  for (const ch of ordered) {
+    for (const section of ch.sections || []) {
+      for (const step of section.steps || []) {
+        const raw = step.map || section.map;
+        const keys = (Array.isArray(raw) ? raw : [raw]).filter(Boolean);
+        const map = keys.find((key) => mapUI.maps.some((m) => m.key === key));
+        if (!map || skip.has(step.id) || links[step.id] || waiting.has(step.id) || storyPlacesFor(step.id).length) continue;
+        queue.push({ ch, section, step, map });
+      }
+    }
+  }
+  return queue;
+}
+
+function startStoryWalk() {
+  cancelMarkerDraft();
+  mapEditor.walk = { queue: storyWalkQueue(), index: 0, more: false };
+  showStoryWalk();
+}
+
+function stopStoryWalk() {
+  mapEditor.walk = null;
+  mapEditor.walkCard?.remove();
+  mapEditor.walkCard = null;
+  updatePositionEditor();
+}
+
+function storyWalkItem() {
+  const walk = mapEditor.walk;
+  return walk && walk.queue[walk.index];
+}
+
+function showStoryWalk() {
+  const walk = mapEditor.walk;
+  if (!walk) return;
+  if (!mapEditor.walkCard) {
+    mapEditor.walkCard = el("div", "story-walk");
+    document.getElementById("tab-map").append(mapEditor.walkCard);
+  }
+  const card = mapEditor.walkCard;
+  card.replaceChildren();
+  const item = storyWalkItem();
+  const act = (key, handler, extra = "") => {
+    const node = el("button", "layer-toggle-btn " + extra, t(key));
+    node.type = "button";
+    node.addEventListener("click", handler);
+    return node;
+  };
+  if (!item) {
+    card.append(el("p", "", t("editor.walkDone")), act("editor.walkStop", stopStoryWalk));
+    return;
+  }
+  const mapName = mapUI.maps.find((m) => m.key === item.map)?.name || item.map;
+  card.append(el("div", "story-walk-head", `${walk.index + 1} / ${walk.queue.length} · ${item.ch.name} · ${mapName}`));
+  card.append(el("strong", "", item.step.ko));
+  if (item.step.en && item.step.en !== item.step.ko) card.append(el("small", "", item.step.en));
+  const pics = el("div", "story-walk-pics");
+  (item.section.images || []).forEach((img) => {
+    const link = el("a");
+    link.href = img.full || img.thumb;
+    link.target = "_blank";
+    link.rel = "noopener";
+    link.title = img.caption || "";
+    const pic = el("img");
+    pic.src = img.thumb || img.full;
+    pic.alt = img.caption || "";
+    pic.loading = "lazy";
+    link.append(pic);
+    pics.append(link);
+  });
+  if (pics.childElementCount) card.append(pics);
+  card.append(el("p", "story-walk-hint", walk.more ? t("editor.walkMoreHint") : t("editor.walkHint")));
+  const row = el("div", "story-walk-actions");
+  row.append(
+    act("editor.walkPrev", () => { walk.index = Math.max(0, walk.index - 1); walk.more = false; showStoryWalk(); }),
+    act("editor.walkSkip", () => advanceStoryWalk()),
+    act("editor.walkNoPlace", storyWalkNoPlace),
+    act("editor.walkMore", () => { walk.more = !walk.more; showStoryWalk(); }, walk.more ? "on" : ""),
+    act("editor.walkStop", stopStoryWalk),
+  );
+  card.append(row);
+  if (mapUI.current?.key !== item.map) chooseMap(item.map, false); // 그 단계의 맵으로
+}
+
+function advanceStoryWalk() {
+  const walk = mapEditor.walk;
+  if (!walk) return;
+  walk.index = Math.min(walk.queue.length, walk.index + 1);
+  walk.more = false;
+  showStoryWalk();
+}
+
+function storyWalkPlace(latlng) {
+  if (mapEditor.saving) return;
+  const item = storyWalkItem();
+  const edit = mapEditor.options?.story;
+  if (!item || !edit || mapUI.current?.key !== item.map || edit.seed?.map !== item.map) return; // 맵이 바뀌는 중이면 무시 (옛 맵 열쇠로 넣지 않기)
+  const near = (mapEditor.heights || []).reduce((best, p) =>
+    !best || Math.hypot(p[0] - latlng.lng, p[1] - latlng.lat) < Math.hypot(best[0] - latlng.lng, best[1] - latlng.lat) ? p : best, null);
+  const pos = [Math.round(latlng.lng * 10) / 10, Math.round(latlng.lat * 10) / 10, near?.[2] || 0];
+  mapEditor.serial = (mapEditor.serial || 0) + 1;
+  const id = "draft:" + mapEditor.serial;
+  mapEditor.pending.set(id, { edit, fields: { step: item.step.id, candidate: false, note: "" }, pos, base: pos.slice(), map: item.map, label: item.step.ko });
+  mapEditor.history.push({ id });
+  refreshPositionEdits();
+  if (!mapEditor.walk.more) advanceStoryWalk();
+}
+
+function storyWalkNoPlace() {
+  if (mapEditor.saving) return; // 저장 중에 넣으면 저장 결과 처리에서 같이 지워짐
+  const item = storyWalkItem();
+  const edit = mapEditor.options?.noplace;
+  if (!item || !edit || mapUI.current?.key !== item.map || edit.seed?.map !== item.map) return;
+  const already = [...mapEditor.pending.values()].some((p) => p.edit?.seed?.add === "noplace" && p.fields?.step === item.step.id);
+  if (already) { advanceStoryWalk(); return; } // 이미 '장소 불필요'로 넣은 단계 (이전으로 돌아온 경우)
+  mapEditor.serial = (mapEditor.serial || 0) + 1;
+  const id = "draft:" + mapEditor.serial;
+  mapEditor.pending.set(id, { edit, fields: { step: item.step.id }, pos: [0, 0, 0], base: [0, 0, 0], map: item.map, label: item.step.ko });
+  mapEditor.history.push({ id });
+  refreshPositionEdits();
+  advanceStoryWalk();
 }
 
 // 장소가 필요한 단계만 (장소 불필요 목록·이름 있는 탈출구로 대신하는 단계는 뺌)
@@ -2020,7 +2165,8 @@ async function drawFeatures(leaf, m) {
     mapEditor.options = data.editorAdd || null;
     mapEditor.heights = data.editorHeights || [];
     leaf.on("click", (event) => {
-      if (mapEditor.placing && !mapEditor.saving && mapEditor.options) openMarkerForm(event.latlng);
+      if (mapEditor.walk && !mapEditor.saving) storyWalkPlace(event.latlng);
+      else if (mapEditor.placing && !mapEditor.saving && mapEditor.options) openMarkerForm(event.latlng);
     });
     refreshNewMarkers();
     updatePositionEditor(mapEditor.status?.textContent || "");

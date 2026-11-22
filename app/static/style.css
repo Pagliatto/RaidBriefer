@@ -2389,3 +2389,16 @@ body.position-edit .position-deleted { display: none; }
 .leaflet-marker-icon.story-extract::after { content: "📖"; position: absolute; right: -10px; top: -12px; font-size: 13px; }
 /* 편집 막대·추가 창에서 hidden 이 display 규칙에 덮이지 않게 (Codex 검수 62 #1) */
 .position-editor [hidden], .position-add-form [hidden] { display: none !important; }
+
+/* 스토리 연속 입력 카드 (편집 모드 전용) */
+.story-walk { position: absolute; left: 12px; bottom: 12px; z-index: 1200; width: 340px; max-width: calc(100% - 24px);
+  max-height: 60%; overflow-y: auto; padding: 10px 12px; border-radius: 8px; background: rgba(15, 18, 22, 0.94);
+  border: 1px solid #fff; color: #eee; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.story-walk-head { font-size: 12px; color: #aaa; }
+.story-walk small { color: #aaa; }
+.story-walk-pics { display: flex; flex-wrap: wrap; gap: 4px; }
+.story-walk-pics img { width: 96px; height: 64px; object-fit: cover; border-radius: 4px; display: block; }
+.story-walk-hint { margin: 0; font-size: 12px; color: #9cf; }
+.story-walk-actions { display: flex; flex-wrap: wrap; gap: 4px; }
+.story-walk-actions .layer-toggle-btn { justify-content: center; }
+.story-walk-actions .on, .position-editor .on { outline: 2px solid #9cf; }
