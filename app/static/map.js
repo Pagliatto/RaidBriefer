@@ -1934,12 +1934,11 @@ function renderDrawer() {
   };
 
   // 스토리: 목록 맨 위에 구분해서 (2026-11-21 사용자: 지도 한 화면에서 스토리도)
-  renderDrawerGuide(list, m);
+  const guideCount = renderDrawerGuide(list, m);
   const storyCount = renderDrawerStories(list, m);
   // '할 일' 버튼 숫자 = 퀘스트 + 서랍에 보이는 스토리 단계
   document.getElementById("drawer-count").textContent = here.length + anywhere.length + storyCount;
-  // 퀘스트 제목은 항상 (접기 버튼이 맵마다 사라지지 않게 — Codex 65)
-  list.append(foldKey(el("li", "drawer-divider drawer-section-title", t("map.drawerQuests")), "quests"));
+  if (guideCount || storyCount) list.append(foldKey(el("li", "drawer-divider drawer-section-title", t("map.drawerQuests")), "quests"));
   if (!here.length && !anywhere.length) list.append(el("li", "empty", t("map.noQuests")));
   here.forEach(addQuest);
   if (anywhere.length) {
