@@ -76,10 +76,7 @@ def _read(prestige=_AUTO_PRESTIGE) -> dict:
 
 
 def _write(data: dict) -> None:
-    USER_DIR.mkdir(exist_ok=True)
-    temp = PROGRESS_FILE.with_suffix(".tmp")
-    temp.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
-    temp.replace(PROGRESS_FILE)
+    settings.write_saved(PROGRESS_FILE, data)  # 순간 잠금 재시도·실패 알림(SAVE-02)
 
 
 def get_many(kinds, *, prestige=_AUTO_PRESTIGE) -> dict:
@@ -116,5 +113,25 @@ def set_checks(kind: str, changes: dict) -> dict:
 def reset_all() -> None:
     """전체 초기화: 사용자가 체크한 모든 기록을 비움 (숨김·제출·스토리·직접 추가·은신처 등)"""
     with _lock:
-        _read()  # 읽을 수 없는 원본은 명시적 초기화에서도 덮지 않는다.
-        _write({"prestige": _prestige_mark(), **{kind: {} for kind in KINDS}})
+        # 손상 파일은 broken 백업이 있을 때만 새로 쓴다. 잠김·백업 실패는 지금처럼 덮지 않는다.
+        # 손상(백업 있음)이면 None → 이전 기록 없이. 정상이면 그대로 읽은 값 (_read 는 로그 조회까지 해서 쓰지 않음)
+        old = settings.read_for_reset(PROGRESS_FILE, _valid_saved) or {}
+        # 프레스티지 기준은 완전한 조회로 확인한 값만 쓴다. 로그를 못 읽은 때 "none" 을 쓰면
+        # 나중에 옛 프레스티지를 '새 회차'로 착각해 초기화 뒤의 체크를 지우게 된다.
+        mark = old.get("prestige") if isinstance(old.get("prestige"), str) else None
+        try:
+            confirmed, complete = quest_log.prestige_status()
+        except settings.DataReadError:
+            # 설정 파일이 손상돼 로그 위치를 모름 → 불완전 조회와 같게 (기존 기준 보존, 초기화는 계속)
+            confirmed, complete = None, False
+        if complete and confirmed is not None:
+            try:  # 이미 더 최근 기준이 있으면 그대로 둔다 (지워진 로그로 기준이 뒤로 가지 않게)
+                keep_old = mark not in (None, "none") and datetime.fromisoformat(mark) >= confirmed
+            except (ValueError, TypeError):
+                keep_old = False
+            if not keep_old:
+                mark = _prestige_mark(confirmed)
+        fresh = {kind: {} for kind in KINDS}
+        if mark is not None:
+            fresh["prestige"] = mark
+        _write(fresh)

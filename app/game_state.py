@@ -5,6 +5,7 @@ app/map_watch.py 로 게임 로그를 1초마다 확인하고 최신 상태를 �
 화면은 /api/state 로 그 값을 물어본다.
 """
 
+import os
 import subprocess
 import threading
 import time
@@ -65,27 +66,38 @@ def _run() -> None:
         delay = min(delay * 2, 60)
 
 
-def is_game_running() -> bool:
-    """작업 관리자처럼 '실행 중인 프로그램 이름'만 확인 (게임 메모리·파일은 건드리지 않음)"""
+def _tasklist() -> str:
+    """시스템 도구는 전체 경로로 (같은 이름의 다른 프로그램·PATH 문제를 피함). SystemRoot 가 없으면 이름만"""
+    root = os.environ.get("SystemRoot")
+    return os.path.join(root, "System32", "tasklist.exe") if root else "tasklist"
+
+
+def is_game_running() -> bool | None:
+    """작업 관리자처럼 '실행 중인 프로그램 이름'만 확인 (게임 메모리·파일은 건드리지 않음)
+    True/False = 확인함, None = 확인 실패 (못 켬·시간 초과·오류 코드) → 부르는 쪽이 직전 결과를 유지"""
     try:
-        out = subprocess.run(
-            ["tasklist", "/FI", f"IMAGENAME eq {GAME_EXE}", "/NH", "/FO", "CSV"],
+        result = subprocess.run(
+            [_tasklist(), "/FI", f"IMAGENAME eq {GAME_EXE}", "/NH", "/FO", "CSV"],
             capture_output=True, timeout=10,
             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),  # 검은 창이 번쩍이지 않게
-        ).stdout
-        # 한국어 윈도우는 cp949 글자로 답함. 찾는 이름은 영어라 깨진 글자는 무시
-        return GAME_EXE.lower() in out.decode("ascii", errors="ignore").lower()
+        )
     except (OSError, subprocess.SubprocessError):
-        return False
+        return None
+    if result.returncode != 0:  # 못 찾음은 0 으로 끝남 (안내 글만 나옴) → 0 이 아니면 확인 실패
+        return None
+    # 한국어 윈도우는 cp949 글자로 답함. 찾는 이름은 영어라 깨진 글자는 무시
+    return GAME_EXE.lower() in result.stdout.decode("ascii", errors="ignore").lower()
 
 
 def _watch_process() -> None:
     global _game_running
     while True:
         running = is_game_running()
-        if running != _game_running:
-            report_log.add("game_on" if running else "game_off")
-        _game_running = running
+        # 확인 실패는 '게임 꺼짐'이 아님 → 직전 결과 유지 (처음부터 실패면 직전 값이 꺼짐이라 그대로 꺼짐)
+        if running is not None:
+            if running != _game_running:
+                report_log.add("game_on" if running else "game_off")
+            _game_running = running
         time.sleep(3)
 
 

@@ -52,11 +52,10 @@ body:
       label: Screenshot (화면 사진)
       description: Drag and drop an image here. (사진을 끌어다 놓으면 올라가요)
   - type: textarea
-    id: errorlog
+    id: report
     attributes:
-      label: Error log, if any (오류 기록)
-      description: If `user_data/error.log` exists in your RaidBriefer folder, paste its contents. (`user_data/error.log` 내용)
-      render: text
+      label: report.txt (신고용 기록)
+      description: Drag `report.txt` here (🔔 → Show file location), or paste from 🔔 Copy report. It has no personal info. (🔔 → [파일 위치 열기] 로 고른 `report.txt` 를 끌어다 놓거나, 🔔 [내용 복사] 를 붙여 넣어 주세요. 개인 정보는 없어요)
   - type: input
     id: version
     attributes:

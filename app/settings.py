@@ -41,6 +41,46 @@ def saved_read_failed() -> bool:
     return bool(_failed_reads)
 
 
+class SaveWriteError(OSError):
+    """기록·설정 파일을 저장하지 못함 (폴더 권한·읽기 전용 등). 예상한 오류라
+    ERR 기록(report.txt)에는 남기지 않고 알림함 SAVE-02 로만 알린다. OSError 를 이어받으므로 기존 except OSError 도 그대로 받음."""
+    def __str__(self):
+        return i18n.t("server.savedWriteFailed", lang=i18n.system_lang())
+
+
+_failed_writes = set()  # 저장하지 못한 파일 (알림 SAVE-02). 그 파일 저장이 다시 성공하면 빠짐
+
+
+def saved_write_failed() -> bool:
+    return bool(_failed_writes)
+
+
+def write_saved(path: Path, data: dict) -> None:
+    """임시 파일에 쓰고 바꿔치기. 백신 등의 순간 잠금은 0.2초 × 5번 다시 시도한다.
+    그래도 실패하면(폴더 권한·읽기 전용 파일 등) 임시 파일을 지우고 SAVE-02 를 켠 뒤 오류를 그대로 올린다."""
+    temp = path.with_suffix(".tmp")
+    try:
+        path.parent.mkdir(exist_ok=True)
+        temp.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+        for attempt in range(5):
+            try:
+                temp.replace(path)
+                break
+            except PermissionError:
+                if attempt == 4:
+                    raise
+                time.sleep(0.2)
+    except OSError as error:
+        _failed_writes.add(path)
+        try:
+            temp.unlink(missing_ok=True)
+        except OSError:
+            pass  # 지우지 못한 임시 파일은 다음 저장 때 덮어쓴다.
+        raise SaveWriteError() from error
+    _failed_writes.discard(path)
+    _failed_reads.discard(path)  # 새로 쓴 파일은 읽을 수 있는 상태 (전체 초기화로 손상 파일을 바꾼 경우 SAVE-01 끔)
+
+
 def read_saved(path: Path, validate) -> dict:
     """없는 파일만 새 기록으로 취급한다. 손상 원본은 보존하고 쓰기를 막는다."""
     try:
@@ -69,6 +109,23 @@ def read_saved(path: Path, validate) -> dict:
             except OSError:
                 pass  # 복사도 실패하면 원본을 그대로 두고 저장을 거절한다.
         raise DataReadError() from error
+
+
+def read_for_reset(path: Path, validate) -> dict | None:
+    """전체 초기화 전용 읽기. 손상(내용을 해석할 수 없음)이고 broken 백업이 이미 있으면 None
+    → 새로 써도 됨. 잠김 등 읽기 자체가 안 되거나 백업을 못 만든 손상 파일은 지금처럼 거절한다."""
+    try:
+        return read_saved(path, validate)
+    except DataReadError as error:
+        if not isinstance(error.__cause__, (ValueError, UnicodeError)):
+            raise
+        try:
+            raw = path.read_bytes()
+        except OSError:
+            raise error
+        if (path, hashlib.sha256(raw).hexdigest()) not in _broken_copies:
+            raise
+        return None
 
 
 def _valid_saved(data: dict) -> bool:
@@ -116,10 +173,26 @@ def save(changes: dict) -> dict:
         current = {**DEFAULTS, **saved, **updates}
         if not _valid_saved(current):
             raise ValueError("settings-schema")
-        USER_DIR.mkdir(exist_ok=True)
-        temp = SETTINGS_FILE.with_suffix(".tmp")
-        temp.write_text(json.dumps(current, ensure_ascii=False, indent=2), encoding="utf-8")
-        temp.replace(SETTINGS_FILE)
+        write_saved(SETTINGS_FILE, current)
+        _cache = current
+    return dict(current)
+
+
+def can_reset() -> None:
+    """전체 초기화 전에 확인: 설정 파일을 덮어도 되는지 (안 되면 DataReadError). 아무것도 쓰지 않는다."""
+    with _lock:
+        read_for_reset(SETTINGS_FILE, _valid_saved)
+
+
+def reset() -> dict:
+    """전체 초기화: 설정을 처음 상태로, 게임 설치 위치만 남김.
+    손상된 설정 파일은 broken 백업을 남긴 뒤 기본값으로 새로 씀 (이때 설치 위치는 기본값, 처음 설정에서 다시 고름)."""
+    global _cache
+    with _lock:
+        saved = read_for_reset(SETTINGS_FILE, _valid_saved)
+        game_dir = saved.get("game_dir", DEFAULT_GAME_DIR) if saved is not None else DEFAULT_GAME_DIR
+        current = {**DEFAULTS, "game_dir": game_dir}
+        write_saved(SETTINGS_FILE, current)
         _cache = current
     return dict(current)
 

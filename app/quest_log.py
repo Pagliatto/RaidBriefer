@@ -43,6 +43,8 @@ _revision_snapshot = ""
 _LOG_TIME = re.compile(r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:\.\d+)?)")
 _MODE_REQUEST = re.compile(r"https://(gw-pv[ep][^/.:]*)\.escapefromtarkov\.com(?::\d+)?(/client/[^\s|?]*)")
 SEALED_AFTER_NS = 3600 * 10**9
+# 색인 형식 번호: 2 = 알림마다 로그 줄 시각(log_time) 추가 (2026-11-23). 옛 번호 색인은 버리고 다시 만든다
+INDEX_VERSION = 2
 REVALIDATE_SECONDS = 600  # 종료 폴더의 외부 수정은 요청을 막지 않고 10분마다 확인한다.
 
 
@@ -180,7 +182,7 @@ def _read_index(root):
     try:
         with (paths.CACHE_DIR / "log_index.json").open(encoding="utf-8") as stream:
             data = json.load(stream)
-        if (type(data) is not dict or type(data.get("v")) is not int or data.get("v") != 1 or data.get("root") != root
+        if (type(data) is not dict or type(data.get("v")) is not int or data.get("v") != INDEX_VERSION or data.get("root") != root
                 or data.get("timezone") != _timezone_key() or type(data.get("folders")) is not dict):
             return {}
         return data["folders"]
@@ -210,15 +212,16 @@ def _restore_folder(cache, saved, signature, backend_signature):
             return False
         events = []
         for row in saved["events"]:
-            message_id, quest_id, kind, stamp, trader, mode = row
+            message_id, quest_id, kind, stamp, log_stamp, trader, mode = row
             when = datetime.fromisoformat(stamp)
+            log_when = datetime.fromisoformat(log_stamp)
             if (message_id is not None and not isinstance(message_id, str)
                     or not isinstance(quest_id, str) or type(kind) is not int or kind not in STATUS_NAMES
                     or trader is not None and not isinstance(trader, str)
-                    or type(mode) is not bool or when.tzinfo is not None):
+                    or type(mode) is not bool or when.tzinfo is not None or log_when.tzinfo is not None):
                 return False
             events.append((message_id, {"quest_id": quest_id, "type": kind, "time": when,
-                                        "trader_id": trader}, mode))
+                                        "log_time": log_when, "trader_id": trader}, mode))
         bad_blocks = saved.get("bad_blocks", 0)
         if type(bad_blocks) is not int or bad_blocks < 0:
             return False
@@ -242,7 +245,7 @@ def _save_index(state):
     temporary = None
     try:
         paths.CACHE_DIR.mkdir(parents=True, exist_ok=True)
-        data = {"v": 1, "root": state.root, "timezone": state.timezone,
+        data = {"v": INDEX_VERSION, "root": state.root, "timezone": state.timezone,
                 "folders": {os.path.basename(folder): cache.saved for folder, cache in state.sealed.items()}}
         with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=paths.CACHE_DIR,
                                          prefix="log_index-", suffix=".tmp", delete=False) as stream:
@@ -563,7 +566,7 @@ def _refresh_folder(folder, cache, files, signature):
             continue
         for batch in (parsed, (last,) if last is not None else ()):
             for message_id, event in batch:
-                events.append((message_id, event, is_pve(timeline, event["time"])))
+                events.append((message_id, event, is_pve(timeline, _log_time(event))))
     if not complete:
         # 읽기 실패는 삭제가 아니다. 마지막으로 확인한 결과를 유지하고 다시 시도한다.
         cache.complete = False
@@ -581,7 +584,8 @@ def _sealed_data(cache):
         "bad_blocks": cache.bad_blocks,
         "prestige": [when.isoformat() for when in cache.prestige_times],
         "events": [[message_id, event["quest_id"], event["type"], event["time"].isoformat(),
-                    event["trader_id"], mode] for message_id, event, mode in cache.events],
+                    _log_time(event).isoformat(), event["trader_id"], mode]
+                   for message_id, event, mode in cache.events],
         "mode": [[when.isoformat() for when in cache.mode["timeline"][0]], cache.mode["timeline"][1]],
     }
 
@@ -685,7 +689,9 @@ def quest_name_en(quest_id: str, tasks: dict, tr, manual: dict) -> str | None:
 LINE_START = re.compile(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}")
 
 
-def _quest_event(note):
+def _quest_event(note, log_time=None):
+    """log_time: 알림 머리 줄의 로그 시각 (PC 시계). 프레스티지·모드 줄과 같은 시계라 그 비교에 쓴다.
+    dt(서버 시각)는 순서·표시용. PC 시계가 틀려도 경계가 어긋나지 않게 (2026-11-23 점검)"""
     if not isinstance(note, dict) or not isinstance(note.get("message"), dict):
         raise ValueError("notification-shape")
     message = note["message"]
@@ -716,8 +722,14 @@ def _quest_event(note):
         "quest_id": parts[0],
         "type": kind,
         "time": when,
+        "log_time": log_time or when,  # 머리 줄 시각을 못 읽으면 dt 로 (전과 같은 동작)
         "trader_id": note.get("dialogId"),
     })
+
+
+def _log_time(event) -> datetime:
+    """프레스티지 경계·PvE/PvP 판단에 쓰는 시각 (로그 줄 시각, 없으면 dt)"""
+    return event.get("log_time") or event["time"]
 
 
 def _read_notifications(log_file: str | Path, files: dict, signature):
@@ -734,12 +746,13 @@ def _read_notifications(log_file: str | Path, files: dict, signature):
             cached = {"events": [], "offset": 0, "bad_blocks": 0}
         fh.seek(cached["offset"])
         block, block_start, last = [], None, None
+        header_time = None
         new_events = []
         offset = cached["offset"]
 
         def parsed_block(final=False):
             try:
-                return _quest_event(json.loads("\n".join(block)))
+                return _quest_event(json.loads("\n".join(block)), header_time)
             except (ValueError, RecursionError):
                 # 마지막 블록은 다음 추가 읽기에서 다시 검사하므로 중복 집계하지 않는다.
                 if final:
@@ -762,6 +775,7 @@ def _read_notifications(log_file: str | Path, files: dict, signature):
             if block_start is None:
                 if "Got notification | ChatMessageReceived" in line:
                     block_start = line_start
+                    header_time = line_time(line)
                 # 쓰는 도중 잘린 헤더·UTF-8 문자는 다음에 같은 바이트부터 다시 읽는다.
                 offset = position if raw.endswith(b"\n") else line_start
             else:
@@ -806,7 +820,7 @@ def read_quest_events(since: datetime | None = None) -> list[dict]:
         active.sort(key=lambda item: item[0])
         events = {}
         for _, message_id, event in heapq.merge(state.sealed_events, active, key=lambda item: item[0]):
-            if event["time"] >= since:
+            if _log_time(event) >= since:  # 프레스티지 시각(로그 줄)과 같은 시계로 비교
                 events[message_id] = dict(event)
         return sorted(events.values(), key=lambda event: event["time"])
 

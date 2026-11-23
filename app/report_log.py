@@ -337,7 +337,9 @@ def open_folder() -> bool:
         if not target.exists():
             return False
         if target == TEXT_FILE:
-            subprocess.Popen(f'explorer /select,"{target}"')  # 목록으로 넘기면 따옴표 위치가 달라져 다른 폴더가 열림
+            # 이름만 쓰면 프로그램·작업 폴더의 같은 이름 파일이 먼저 실행될 수 있어 전체 경로로 (updater 와 같은 방식)
+            explorer = os.path.join(os.environ.get("SystemRoot") or r"C:\Windows", "explorer.exe")
+            subprocess.Popen(f'"{explorer}" /select,"{target}"')  # 목록으로 넘기면 따옴표 위치가 달라져 다른 폴더가 열림
         else:
             os.startfile(target)  # type: ignore[attr-defined]
         return True

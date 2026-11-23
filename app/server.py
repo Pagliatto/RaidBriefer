@@ -168,16 +168,26 @@ def _quests_data():
         return data
 
 
+LOCAL_HOSTS = ("127.0.0.1", "localhost")
+
+
+@app.before_request
+def require_local_page():
+    """이 PC 의 우리 화면에서 온 요청만 받는다 (모든 주소).
+    다른 웹사이트가 자기 도메인을 127.0.0.1 로 바꿔(DNS 리바인딩) 설정·기록을 읽거나 지우지 못하게
+    Host 는 127.0.0.1·localhost 만(포트는 상관없음), Origin 은 없거나 자기 주소만"""
+    if request.remote_addr not in ("127.0.0.1", "::1") or request.host.split(":")[0].lower() not in LOCAL_HOSTS:
+        abort(403)
+    if request.headers.get("Origin") not in (None, request.host_url.rstrip("/")):
+        abort(403)
+
+
 @app.before_request
 def require_json_object():
     if request.path == "/api/editor":
         from app import editor
         if not editor.enabled():
             abort(404)
-        if request.remote_addr not in ("127.0.0.1", "::1") or request.host.split(":")[0] not in ("127.0.0.1", "localhost"):
-            abort(403)
-        if request.headers.get("Origin") not in (None, request.host_url.rstrip("/")):
-            abort(403)
         if request.content_length and request.content_length > 1024 * 1024:
             abort(413)
     if request.method == "POST" and not isinstance(request.get_json(silent=True), dict):
@@ -189,11 +199,28 @@ def saved_data_error(error):
     return jsonify({"error": str(error)}), 503
 
 
+@app.errorhandler(settings.SaveWriteError)
+def saved_write_error(error):
+    """저장 실패(권한·읽기 전용 등)는 예상한 오류: 알림함 SAVE-02 로만 알리고 ERR 기록에는 남기지 않음"""
+    return jsonify({"error": str(error)}), 503
+
+
+def _safe_lang() -> str:
+    """오류 안내용 언어. 설정 파일이 손상돼도 오류 처리 중에 또 오류가 나지 않게 윈도우 언어로"""
+    try:
+        return i18n.current_lang()
+    except settings.DataReadError:
+        return i18n.system_lang()
+
+
 def _failed(key: str, error: Exception):
     """API 실패 안내. tarkov.dev 못 받음(DataError)은 이미 안내 문장이 있어 그대로, 나머지는 오류 코드로"""
     if isinstance(error, tarkov_api.DataError):
         return jsonify({"error": str(error)}), 500
-    return jsonify({"error": i18n.t(key, code=report_log.record_error(error))}), 500
+    if isinstance(error, settings.SaveWriteError):  # SAVE-02 로 알림, ERR 기록 안 함
+        return jsonify({"error": str(error)}), 503
+    code = report_log.record_error(error)
+    return jsonify({"error": i18n.t(key, _safe_lang(), code=code)}), 500
 
 
 @app.errorhandler(Exception)
@@ -202,7 +229,7 @@ def unexpected_error(error):
     if isinstance(error, HTTPException):
         return error
     code = report_log.record_error(error)
-    return jsonify({"error": i18n.t("server.unexpected", code=code)}), 500
+    return jsonify({"error": i18n.t("server.unexpected", _safe_lang(), code=code)}), 500
 
 
 @app.route("/")
@@ -360,9 +387,11 @@ def api_reset():
     body = request.get_json(silent=True) or {}
     if body.get("confirm") is not True:  # 실수로 지우지 않게 확인 값이 있어야 함
         return jsonify({"error": i18n.t("server.badRequest")}), 400
-    game_dir = settings.load()["game_dir"]
+    # 설정 파일을 덮을 수 있는지 먼저 확인해 진행 기록만 지워지고 멈추지 않게 한다.
+    # 손상 파일(broken 백업 있음)은 새로 씀, 잠김·백업 실패는 지금처럼 503.
+    settings.can_reset()
     progress.reset_all()
-    settings.save({**settings.DEFAULTS, "game_dir": game_dir})
+    settings.reset()
     _invalidate_quests_cache()
     return jsonify({"ok": True})
 

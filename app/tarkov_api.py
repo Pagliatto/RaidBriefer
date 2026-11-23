@@ -275,7 +275,8 @@ def update_spt_names() -> None:
 
         def due(key: str) -> bool:
             checked_at = saved.get(key, 0)
-            if not isinstance(checked_at, (int, float)):
+            # 시계가 뒤로 바뀌어 미래 시각이 남아 있어도 확인을 영구히 건너뛰지 않는다.
+            if not isinstance(checked_at, (int, float)) or checked_at > now:
                 return True
             return now - checked_at >= SPT_CHECK_SECONDS
 
@@ -466,7 +467,8 @@ def _usable(name: str) -> bool:
 
 
 def _validate_data(name: str, data) -> None:
-    if not isinstance(data, dict):
+    # 빈 목록·빈 사전도 실패로 본다 (서버 장애 때 빈 응답이 좋은 저장본을 덮지 않게)
+    if not isinstance(data, dict) or not data:
         raise ValueError(i18n.t("data.notSaved", name=name))
     if name in ("tasks", "maps"):
         entries = data.get(name)
@@ -476,7 +478,7 @@ def _validate_data(name: str, data) -> None:
         if not all(value is None or isinstance(value, str) for value in data.values()):
             raise ValueError(i18n.t("data.notSaved", name=name))
         return
-    if not isinstance(entries, dict) or not all(isinstance(value, dict) for value in entries.values()):
+    if not isinstance(entries, dict) or not entries or not all(isinstance(value, dict) for value in entries.values()):
         raise ValueError(i18n.t("data.notSaved", name=name))
 
 
@@ -562,8 +564,10 @@ def update_all(force: bool = False) -> str:
     try:
         meta = _read_meta()
         if not force:
+            # 저장본이 없으면 이번 실행의 첫 시도는 파일의 next_try 를 따르지 않는다
+            # (인터넷을 고치고 다시 켰는데 최대 60분 빈 화면이 되지 않게). 실행 중 대기는 _retry_after.
             retry_pending = (time.monotonic() < _retry_after if _retry_after
-                             else time.time() < meta["next_try"])
+                             else time.time() < meta["next_try"] and _all_saved())
             if retry_pending:
                 return data_message()
             if 0 <= time.time() - meta["checked_at"] < CHECK_HOURS * 3600 and _all_saved():

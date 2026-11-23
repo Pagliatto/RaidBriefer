@@ -419,6 +419,7 @@
       "LOG-03": { "title": "Can't read the quest records", "body": "A game update may have changed the quest record format. Quest starts and completions may not show up." },
       "DATA-01": { "title": "Couldn't download new game data", "body": "Using the saved data for now. It downloads again automatically when the internet is back." },
       "SAVE-01": { "title": "Couldn't read your saved records", "body": "A record or settings file is damaged or locked by another program. Saving is paused to protect your records." },
+      "SAVE-02": { "title": "Couldn't save your records", "body": "This may be caused by folder permissions or a read-only file. Your latest change was not saved." },
       "UPD-01": { "title": "Couldn't check for updates", "body": "Couldn't reach GitHub. Please check GitHub Releases for a new version yourself." },
       "ERR": { "title": "Unexpected error", "body": "Something went wrong that the app couldn't handle. Report it with [Copy report] or report.txt so it can be fixed. Press [Got it] once reported or if it's fine." }
     }
@@ -449,6 +450,7 @@
   },
   "server": {
     "savedDataFailed": "Could not read existing progress or settings. Saving was stopped and the original was preserved. Restore the file and try again.",
+    "savedWriteFailed": "Couldn't save your records. This may be caused by folder permissions or a read-only file.",
     "badRequest": "Invalid request.",
     "questsFailed": "Couldn't load quests ({code})",
     "catalogFailed": "Couldn't load the quest list ({code})",

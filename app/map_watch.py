@@ -4,6 +4,7 @@
 - application 로그 `scene preset path:maps/customs_preset.bundle ...` → 맵 로딩 시작 (어느 맵인지 여기서 앎)
 - application 로그 `GameStarted`                                  → 레이드 시작
 - backend 로그   `/client/match/local/end` 요청                    → 레이드 끝 (로비로 돌아옴)
+- application 로그 `totalMemoryBeforeCleanUp` (레이드 중일 때만)    → 다인큐 레이드 끝 (local/end 가 없음)
 
 맵 이름은 tarkov.dev 지도 정보의 scenePath(예: maps/customs_preset.bundle)와
 로그의 경로가 똑같아서 그대로 연결한다. → 새 맵이 나와도 따로 고칠 필요 없음
@@ -176,6 +177,14 @@ def apply_line(state: MapState, line: str, lookup: MapLookup) -> bool:
         state.cancelled = False
         return True
 
+    # 다인큐(그룹) 레이드는 서버에서 돌아가서 local/end 를 보내지 않음 (2026-11-23 로그 확인: 그룹 86판 모두 없음)
+    # → 레이드 중(GameStarted 뒤)에 나오는 메모리 정리 줄을 레이드 끝으로 본다.
+    #   이 줄은 맵 로딩 중·로비에서도 나오므로 레이드 중일 때만. 혼자 레이드는 local/end 2~9초 뒤라 이미 로비 → 무시됨
+    if "|application|totalMemoryBeforeCleanUp" in line and state.status == IN_RAID:
+        state.status, state.map_id, state.map_name, state.since = LOBBY, None, None, when
+        state.cancelled = False
+        return True
+
     # 매칭 중 취소 → 바로 로비 (2026-11-18 인게임 확인: 이 줄이 없으면 '맵 로딩 중'에 멈춰 있었음)
     if "Local game matching cancelled" in line and state.status == LOADING:
         state.status, state.map_id, state.map_name, state.since = LOBBY, None, None, when
@@ -230,7 +239,10 @@ class LogTail:
                     fh.seek(start)
                     chunk = fh.read()
                     self.positions[path] = fh.tell()
-                    self.file_stats[path] = (self.positions[path], stat.st_mtime_ns)
+                    # 읽는 사이에 게임이 쓴 부분까지 읽었을 수 있음 → 수정 시각은 읽은 '뒤'에 다시 잰다
+                    # (읽기 전 시각을 저장하면 다음 확인에서 '같은 크기 덮어쓰기'로 오해해 처음부터 다시 읽음)
+                    after = os.fstat(fh.fileno())
+                    self.file_stats[path] = (self.positions[path], after.st_mtime_ns)
             except OSError:
                 self.read_errors.add(path)
                 continue  # 게임이 파일을 쓰는 중이면 다음에 다시

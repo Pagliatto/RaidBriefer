@@ -6,6 +6,7 @@
 - LOG-03 퀘스트 기록을 못 읽음           (map_watch.notification_problem, 게임 켜져 있을 때)
 - DATA-01 tarkov.dev 새로 받기 실패      (저장본으로 동작 중)
 - SAVE-01 내 기록·설정 파일 손상         (settings.read_saved)
+- SAVE-02 내 기록·설정 파일 저장 실패    (settings.write_saved, 권한·읽기 전용 등)
 - UPD-01 업데이트 확인 실패              (다시 시도까지 모두 실패했을 때만)
 개발용(소스 실행일 때만): 번역 필요 개수 (tools/ko_missing.py --all 과 같은 기준)
 """
@@ -37,6 +38,8 @@ def collect(log_problem: str | None, game_running: bool) -> list[str]:
         codes.append("DATA-01")
     if settings.saved_read_failed():
         codes.append("SAVE-01")
+    if settings.saved_write_failed():
+        codes.append("SAVE-02")
     update = updater.state()
     if update.get("check_finished") and update.get("check_error") and not update.get("latest"):
         codes.append("UPD-01")

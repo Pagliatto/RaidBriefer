@@ -8,7 +8,7 @@
 // 신고 주소 (공개 링크, 비밀 아님. docs/notes/discord.md)
 const REPORT_DISCORD = "https://discord.gg/8MYr8QABYU";
 const REPORT_GITHUB = "https://github.com/Pagliatto/RaidBriefer/issues/new";
-const ALERT_LEVEL = { "LOG-01": "bad", "LOG-02": "bad", "LOG-03": "bad", "SAVE-01": "bad", "DATA-01": "warn", "UPD-01": "warn" };
+const ALERT_LEVEL = { "LOG-01": "bad", "LOG-02": "bad", "LOG-03": "bad", "SAVE-01": "bad", "SAVE-02": "bad", "DATA-01": "warn", "UPD-01": "warn" };
 
 const alertsBox = (() => {
   const get = (id) => document.getElementById(id);
