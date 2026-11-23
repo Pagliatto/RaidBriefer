@@ -513,6 +513,13 @@ def _fetch_if_changed(name: str, etag: str | None):
             profile_event("data_parse", file=name, duration_ms=(time.perf_counter() - started) * 1000)
 
 
+def _error_summary(error: Exception) -> str:
+    """화면·신고에 보일 실패 이유: 오류 종류 + HTTP 번호만 (원문에는 경로·프록시 주소가 섞일 수 있음)"""
+    status = getattr(getattr(error, "response", None), "status_code", None)
+    name = type(error).__name__
+    return f"{name} {status}" if isinstance(status, int) else name
+
+
 _last_error = None
 _retry_after = 0.0  # 실행 중 재시도 간격은 PC 시계 변경의 영향을 받지 않는다.
 _data_revision = 0
@@ -576,7 +583,7 @@ def update_all(force: bool = False) -> str:
             threading.Thread(target=_refresh_worker, name="tarkov-data", daemon=True).start()
         except Exception as error:
             _data_activity(-1)
-            _last_error = str(error)
+            _last_error = _error_summary(error)
             _retry_after = time.monotonic() + RETRY_START_SECONDS
             return data_message()
         handed_off = True
@@ -634,7 +641,7 @@ def _update_all(force: bool) -> str:
         _retry_after = 0.0
         return i18n.t("data.updated", names=", ".join(changed)) if changed else i18n.t("data.upToDate")
     except Exception as error:  # 인터넷 끊김, 서버 장애 등
-        _last_error = str(error)
+        _last_error = _error_summary(error)
         meta["retry_wait"] = min(max(meta["retry_wait"] * 2, RETRY_START_SECONDS), RETRY_MAX_SECONDS)
         meta["next_try"] = time.time() + meta["retry_wait"]
         _retry_after = time.monotonic() + meta["retry_wait"]
@@ -644,7 +651,7 @@ def _update_all(force: bool) -> str:
             pass  # 쓰기 금지/잠금이어도 기존 저장본은 계속 제공한다.
         if _all_saved():
             return data_message()
-        raise DataError(i18n.t("data.noData", error=error)) from error
+        raise DataError(i18n.t("data.noData", error=_last_error)) from error
     finally:
         _data_activity(-1)
         _data_revision += 1  # 304와 실패 안내도 퀘스트 응답 cache에 반영한다.

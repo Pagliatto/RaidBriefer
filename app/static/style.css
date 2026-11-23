@@ -2454,6 +2454,9 @@ body.position-edit .position-deleted { display: none; }
 .alert-row.warn { border-color: color-mix(in srgb, var(--warn) 45%, transparent); background: var(--warn-bg); }
 .alert-row.warn .alert-mark { color: var(--warn); }
 .alert-row.dev { border-style: dashed; }
+/* 예상 못 한 오류(방법 B): 종류·시각 줄 + [확인했어요] */
+.alert-row .alert-meta { color: var(--text-faint); font-size: 12px; }
+.alert-row .alert-ack { grid-column: 2; justify-self: end; margin-top: 4px; text-align: center; }
 .alert-row.dev .alert-mark { color: var(--text-faint); }
 .alert-code {
   display: inline-block; padding: 2px 6px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
@@ -2470,7 +2473,7 @@ body.position-edit .position-deleted { display: none; }
 .alerts-report { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); }
 .alerts-help { margin: 0 0 8px; color: var(--text-faint); font-size: 12px; text-align: center; }
 .alerts-help[hidden] { display: none; }
-.alerts-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 0; }
+.alerts-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin: 0; }
 /* 좁은 칸이라 두 줄까지 허용 (공통 버튼 규칙은 한 줄·높이 32 고정이라 덮어씀) */
 .alerts-popup .alerts-actions button {
   display: inline-flex; align-items: center; justify-content: center; min-width: 0; height: auto; min-height: 40px;

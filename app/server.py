@@ -16,8 +16,9 @@ from concurrent.futures import Future
 from pathlib import Path
 
 from flask import Flask, abort, jsonify, render_template, request, send_file
+from werkzeug.exceptions import HTTPException
 
-from app import alerts, brightness, game_state, hideout, i18n, updater, map_views, paths, progress, quest_log, quests, settings, story, story_places, tarkov_api
+from app import alerts, brightness, game_state, hideout, i18n, updater, map_views, paths, progress, quest_log, quests, report_log, settings, story, story_places, tarkov_api
 
 from app.version import VERSION
 
@@ -188,6 +189,22 @@ def saved_data_error(error):
     return jsonify({"error": str(error)}), 503
 
 
+def _failed(key: str, error: Exception):
+    """API 실패 안내. tarkov.dev 못 받음(DataError)은 이미 안내 문장이 있어 그대로, 나머지는 오류 코드로"""
+    if isinstance(error, tarkov_api.DataError):
+        return jsonify({"error": str(error)}), 500
+    return jsonify({"error": i18n.t(key, code=report_log.record_error(error))}), 500
+
+
+@app.errorhandler(Exception)
+def unexpected_error(error):
+    """예상 못 한 오류: 원문 대신 코드만 화면에 (report_log, 2026-11-23 사용자 방법 B)"""
+    if isinstance(error, HTTPException):
+        return error
+    code = report_log.record_error(error)
+    return jsonify({"error": i18n.t("server.unexpected", code=code)}), 500
+
+
 @app.route("/")
 def home():
     try:
@@ -213,7 +230,7 @@ def api_quests():
     except settings.DataReadError:
         raise
     except Exception as error:  # 화면에 오류 안내를 보여주기 위해
-        return jsonify({"error": i18n.t("server.questsFailed", error=error)}), 500
+        return _failed("server.questsFailed", error)
     return jsonify({**data, "data_message": tarkov_api.data_message()})
 
 
@@ -225,7 +242,7 @@ def api_quest_catalog():
     except settings.DataReadError:
         raise
     except Exception as error:
-        return jsonify({"error": i18n.t("server.catalogFailed", error=error)}), 500
+        return _failed("server.catalogFailed", error)
 
 
 @app.route("/api/log-gap/ok", methods=["POST"])
@@ -252,7 +269,7 @@ def api_maps():
     except settings.DataReadError:
         raise
     except Exception as error:
-        return jsonify({"error": i18n.t("server.mapsFailed", error=error)}), 500
+        return _failed("server.mapsFailed", error)
 
 
 @app.route("/api/map-features/<map_key>")
@@ -265,7 +282,7 @@ def api_map_features(map_key):
     except settings.DataReadError:
         raise
     except Exception as error:
-        return jsonify({"error": i18n.t("server.featuresFailed", error=error)}), 500
+        return _failed("server.featuresFailed", error)
 
 
 @app.route("/api/guide/<map_key>")
@@ -280,7 +297,7 @@ def api_guide(map_key):
     except settings.DataReadError:
         raise
     except Exception as error:
-        return jsonify({"error": i18n.t("server.featuresFailed", error=error)}), 500
+        return _failed("server.featuresFailed", error)
 
 
 @app.route("/api/editor", methods=["GET", "POST"])
@@ -311,7 +328,7 @@ def api_loot(map_key):
     except settings.DataReadError:
         raise
     except Exception as error:
-        return jsonify({"error": i18n.t("server.lootFailed", error=error)}), 500
+        return _failed("server.lootFailed", error)
 
 
 @app.route("/map-svg/<name>")
@@ -334,7 +351,7 @@ def api_hideout():
     except settings.DataReadError:
         raise
     except Exception as error:
-        return jsonify({"error": i18n.t("server.hideoutFailed", error=error)}), 500
+        return _failed("server.hideoutFailed", error)
 
 
 @app.route("/api/reset", methods=["POST"])
@@ -376,6 +393,8 @@ def api_state():
     state["log_reading"] = quest_log.log_reading()
     # 알림함: 코드만 (alerts.py). 개발용 정보는 소스 실행일 때만
     state["alerts"] = alerts.collect(state.get("log_problem"), state.get("status") != game_state.GAME_OFF)
+    report_log.note_alerts(state["alerts"])
+    state["errors"] = report_log.unacked_errors()  # 예상 못 한 오류 (지난 실행 것도, [확인했어요] 전까지)
     dev = alerts.dev_info()
     if dev is not None:
         state["dev"] = dev
@@ -388,7 +407,23 @@ def api_state():
 @app.get("/api/report-info")
 def api_report_info():
     """알림함 신고 버튼용: 앱·Windows·게임 버전만 (보내는 건 화면이 링크 열기·복사로만)"""
-    return jsonify(alerts.report_info())
+    return jsonify({**alerts.report_info(), "recent": report_log.render(limit=RECENT_LINES)})
+
+
+RECENT_LINES = 30  # [내용 복사]에 붙이는 최근 기록 줄 수 (파일에는 200줄)
+
+
+@app.post("/api/report/ack")
+def api_report_ack():
+    """알림함 [확인했어요]: 지금까지의 예상 못 한 오류를 알림함에서 지움 (report.txt 기록은 남김)"""
+    report_log.ack()
+    return jsonify({"ok": True})
+
+
+@app.post("/api/report/open-folder")
+def api_report_open_folder():
+    """알림함 [파일 위치 열기]: 탐색기에서 report.txt 를 골라 둔 채로 연다"""
+    return jsonify({"ok": report_log.open_folder()})
 
 
 @app.get("/api/brightness")
@@ -541,7 +576,7 @@ def api_story():
     except settings.DataReadError:
         raise
     except Exception as error:
-        return jsonify({"error": i18n.t("server.storyFailed", error=error)}), 500
+        return _failed("server.storyFailed", error)
 
 
 # 체크 저장: kind = handed(제출) 또는 story(스토리 단계)
@@ -588,6 +623,9 @@ def serve(port: int = PORT) -> None:
     """서버 켜기 (브라우저 방식·프로그램 창 방식이 같이 씀). 끝날 때까지 돌아오지 않음"""
     tarkov_api.profile_event("server_start")
     atexit.register(brightness.shutdown)
+    report_log.install_hooks()
+    report_log.started()
+    atexit.register(report_log.stopped)
     brightness.init()
     game_state.start()  # 게임 로그를 뒤에서 계속 지켜보기 (상단바 상태)
     updater.check_in_background()  # 새 버전이 있는지 깃허브에 한 번 물어봄

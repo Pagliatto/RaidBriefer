@@ -1,6 +1,7 @@
 // 알림함 (상단바 🔔, 2026-11-23 사용자 안 A)
 // - 서버 /api/state 의 alerts(코드 목록) → 숫자 배지 + 펼침 창 목록. 뜻·문장은 사전 alerts.codes.<코드>
 // - dev(소스 실행일 때만 서버가 보냄) → 번역 필요 줄. 배지 숫자에는 넣지 않음
+// - errors = 예상 못 한 오류 ERR-<파일>-<줄> (방법 B, report_log.py). 지난 실행 것도 [확인했어요] 전까지 보임
 // - 신고 버튼 3개는 링크 열기·복사만 (자동으로 보내는 것 없음)
 
 // 빨강 = 기능이 멈춤 / 노랑 = 저장본·옛 정보로 계속 동작
@@ -17,10 +18,51 @@ const alertsBox = (() => {
   const list = get("alerts-list");
   const badge = get("alerts-badge");
   let drawnKey = null;
-  let current = { codes: [], dev: null };
+  let current = { codes: [], errors: [], dev: null };
 
   function codesOf(s) {
     return (Array.isArray(s.alerts) ? s.alerts : []).filter((code) => ALERT_LEVEL[code]);
+  }
+
+  // 서버가 준 값도 모양을 확인하고 쓴다 (코드·종류는 영문 이름만)
+  function errorsOf(s) {
+    return (Array.isArray(s.errors) ? s.errors : [])
+      .filter((e) => e && typeof e.code === "string" && /^ERR-\w+-\d+$/.test(e.code))
+      .map((e) => ({ code: e.code, type: /^[A-Za-z_]\w*$/.test(e.type || "") ? e.type : "", t: Number(e.t) || 0 }));
+  }
+
+  // 신고에 넣을 코드: 예상 못 한 오류 먼저, 그다음 정해 둔 문제
+  function allCodes() {
+    return [...current.errors.map((e) => e.code), ...current.codes];
+  }
+
+  function errorRow(error, withAck) {
+    const row = el("div", "alert-row bad");
+    const mark = el("span", "alert-mark");
+    mark.innerHTML = iconSvg("triangle-alert", 16);
+    const title = el("b", "", t("alerts.codes.ERR.title"));
+    title.append(" ", el("span", "alert-code", error.code));
+    const meta = [error.type ? t("alerts.errorType", { type: error.type }) : "",
+      error.t ? new Date(error.t).toLocaleString(document.documentElement.lang || undefined) : ""].filter(Boolean).join(" · ");
+    row.append(mark, title, el("p", "", t("alerts.codes.ERR.body")));
+    if (meta) row.append(el("p", "alert-meta", meta));
+    if (withAck) {
+      const ack = el("button", "alert-ack", t("alerts.ack"));
+      ack.type = "button";
+      ack.addEventListener("click", acknowledge);
+      row.append(ack);
+    }
+    return row;
+  }
+
+  async function acknowledge() {
+    try {
+      const res = await fetch("/api/report/ack", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+      if (!res.ok) return;
+    } catch (error) {
+      return; // 서버가 잠깐 안 되면 다음에 다시 누르면 됨
+    }
+    draw({ alerts: current.codes, errors: [], dev: current.dev });
   }
 
   function alertRow(code) {
@@ -45,10 +87,10 @@ const alertsBox = (() => {
   }
 
   function render() {
-    const rows = current.codes.map(alertRow);
+    const rows = [...current.errors.map((e, i) => errorRow(e, i === current.errors.length - 1)), ...current.codes.map(alertRow)];
     const devCount = current.dev?.translation_needed;
     if (Number.isInteger(devCount) && devCount > 0) rows.push(devRow(devCount));
-    if (!current.codes.length) {
+    if (!current.codes.length && !current.errors.length) {
       const empty = el("div", "alerts-empty");
       const mark = el("span", "alert-mark");
       mark.innerHTML = iconSvg("circle-check", 22);
@@ -56,22 +98,24 @@ const alertsBox = (() => {
       rows.unshift(empty);
     }
     list.replaceChildren(...rows);
-    get("alerts-help").hidden = !current.codes.length;
+    get("alerts-help").hidden = !allCodes().length;
   }
 
   // drawTopbar 가 1초마다 부름 → 바뀌었을 때만 다시 그림
   function draw(s) {
     const codes = codesOf(s);
+    const errors = errorsOf(s);
     const dev = s.dev && typeof s.dev === "object" ? s.dev : null;
-    const key = JSON.stringify([codes, dev?.translation_needed ?? null]);
+    const key = JSON.stringify([codes, errors, dev?.translation_needed ?? null]);
     if (key === drawnKey) return;
     drawnKey = key;
-    current = { codes, dev };
-    const level = codes.some((code) => ALERT_LEVEL[code] === "bad") ? "bad" : codes.length ? "warn" : "none";
-    button.dataset.level = level;
-    badge.hidden = !codes.length;
-    badge.textContent = codes.length ? String(codes.length) : "";
-    const label = codes.length ? t("alerts.countLabel", { count: codes.length }) : t("alerts.title");
+    current = { codes, errors, dev };
+    const count = codes.length + errors.length;
+    const bad = errors.length || codes.some((code) => ALERT_LEVEL[code] === "bad");
+    button.dataset.level = bad ? "bad" : count ? "warn" : "none";
+    badge.hidden = !count;
+    badge.textContent = count ? String(count) : "";
+    const label = count ? t("alerts.countLabel", { count }) : t("alerts.title");
     button.setAttribute("aria-label", label);
     button.title = label;
     render();
@@ -150,7 +194,7 @@ const alertsBox = (() => {
 
   get("alerts-github").addEventListener("click", async () => {
     const info = await reportInfo();
-    const codes = current.codes;
+    const codes = allCodes();
     const params = new URLSearchParams({ template: "bug_report.yml", title: `[Bug] ${codes.join(" ")}`.trim() }); // i18n-ok 이슈 제목 머리말 (양식과 같음)
     if (info.version) params.set("version", info.version);
     if (info.windows) params.set("windows", info.windows);
@@ -188,7 +232,8 @@ const alertsBox = (() => {
       version: info.version || t("alerts.unknown"),
       game: info.game_version || t("alerts.unknown"),
       windows: info.windows || t("alerts.unknown"),
-      codes: current.codes.length ? current.codes.join(", ") : t("alerts.noCodes"),
+      codes: allCodes().length ? allCodes().join(", ") : t("alerts.noCodes"),
+      recent: typeof info.recent === "string" ? info.recent.trim() : t("alerts.unknown"),
     });
     const ok = await copyText(text);
     copyButton.textContent = t(ok ? "alerts.copied" : "alerts.copyFailed");
@@ -196,7 +241,24 @@ const alertsBox = (() => {
     copyTimer = setTimeout(() => { copyButton.textContent = t("alerts.copy"); }, 2000);
   });
 
-  return { draw, codes: () => current.codes.slice() };
+  // [파일 위치 열기]: 탐색기에서 report.txt 를 골라 둔 채로 (끌어다 올리기 쉽게)
+  const fileButton = get("alerts-file");
+  let fileTimer = null;
+  fileButton.addEventListener("click", async () => {
+    let ok = false;
+    try {
+      const res = await fetch("/api/report/open-folder", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+      ok = res.ok && (await res.json()).ok === true;
+    } catch (error) {
+      ok = false;
+    }
+    if (ok) return;
+    fileButton.textContent = t("alerts.openFailed");
+    clearTimeout(fileTimer);
+    fileTimer = setTimeout(() => { fileButton.textContent = t("alerts.openFile"); }, 2000);
+  });
+
+  return { draw, codes: allCodes };
 })();
 
 function drawAlerts(state) { alertsBox.draw(state); }

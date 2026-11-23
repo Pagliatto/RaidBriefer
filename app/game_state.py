@@ -9,7 +9,7 @@ import subprocess
 import threading
 import time
 
-from app import map_watch, tarkov_api
+from app import map_watch, report_log, tarkov_api
 
 GAME_OFF = "off"  # 게임 꺼짐 (화면 글자는 사전)
 GAME_EXE = "EscapeFromTarkov.exe"
@@ -21,8 +21,18 @@ _raid_minutes = {}  # 지도 id → 레이드 제한 시간(분), tarkov.dev 맵
 _started = False
 
 
+def _map_label(map_id: str | None) -> str | None:
+    """신고용 기록의 맵 이름: tarkov.dev 영어 이름 (언어와 무관하게 같게)"""
+    try:
+        info = tarkov_api.load("maps")["maps"].get(map_id) if map_id else None
+        return info.get("normalizedName") or info.get("name") if info else map_id
+    except Exception:
+        return map_id
+
+
 def _on_change(s: map_watch.MapState) -> None:
     with _lock:
+        was_raid = _state["status"] == map_watch.IN_RAID
         _state.update(
             status=s.status,
             map_id=s.map_id,
@@ -32,6 +42,11 @@ def _on_change(s: map_watch.MapState) -> None:
             raid_minutes=_raid_minutes.get(s.map_id),
             cancelled=s.cancelled,
         )
+    # 신고용 기록 (흐름): 레이드에 들어감/나옴만
+    if s.status == map_watch.IN_RAID and not was_raid:
+        report_log.add("map_in", map=_map_label(s.map_id))
+    elif was_raid and s.status != map_watch.IN_RAID:
+        report_log.add("map_out")
 
 
 def _run() -> None:
@@ -67,7 +82,10 @@ def is_game_running() -> bool:
 def _watch_process() -> None:
     global _game_running
     while True:
-        _game_running = is_game_running()
+        running = is_game_running()
+        if running != _game_running:
+            report_log.add("game_on" if running else "game_off")
+        _game_running = running
         time.sleep(3)
 
 

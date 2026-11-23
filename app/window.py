@@ -164,6 +164,11 @@ def run() -> None:
         # 검은 창 없이(pythonw·exe) 켜면 오류가 안 보이므로 파일로 남김
         USER_DIR.mkdir(exist_ok=True)
         (USER_DIR / "error.log").write_text(traceback.format_exc(), encoding="utf-8")
+        try:  # 신고용 기록에는 코드만 (error.log 원문에는 경로가 들어 있음)
+            from app import report_log
+            report_log.record_error(sys.exc_info()[1])
+        except Exception:
+            pass
         raise
     sys.exit(0)
 
