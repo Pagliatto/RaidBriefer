@@ -25,11 +25,12 @@ MAX_ENTRIES = 200
 JSON_FILE = USER_DIR / "report.json"
 TEXT_FILE = USER_DIR / "report.txt"
 APP_DIR = Path(__file__).resolve().parent
+JS_FILES = frozenset(p.stem for p in (APP_DIR / "static").glob("*.js"))  # 화면 오류 코드에 쓸 수 있는 우리 화면 파일
 KINDS = {"start", "stop", "unclean", "game_on", "game_off", "map_in", "map_out", "alert_on", "alert_off", "error"}
 
 # 파일에서 다시 읽을 때 칸마다 허용하는 모양 (손상·손으로 고친 파일의 경로·원문이 report.txt 로 나가지 않게)
 FIELD_RULES = {
-    "code": re.compile(r"(ERR-\w{1,40}-\d{1,6}|[A-Z]{2,8}-\d{1,3})"),
+    "code": re.compile(r"(ERR-(?:js-)?\w{1,40}-\d{1,6}|[A-Z]{2,8}-\d{1,3})"),  # js- = 화면 오류
     "type": re.compile(r"[A-Za-z_]\w{0,59}"),
     "version": re.compile(r"[\w.+-]{1,30}"),
     "map": re.compile(r"[\w -]{1,40}"),  # normalizedName, 없으면 이름(띄어쓰기 가능)
@@ -226,6 +227,29 @@ def add(kind: str, **fields) -> None:
 def record_error(error: BaseException) -> str:
     """예상 못 한 오류를 기록하고 코드를 돌려준다 (화면 오류 문장에 원문 대신 넣음)"""
     code, name = error_code(error)
+    _record(code, name)
+    if not getattr(sys, "frozen", False):
+        try:
+            traceback.print_exception(type(error), error, error.__traceback__)  # 개발 중에는 원문을 콘솔에만
+        except Exception:
+            pass
+    return code
+
+
+def record_js_error(file: str, line: int, name: str) -> str | None:
+    """화면(자바스크립트) 오류: 우리 화면 파일 이름·줄·오류 종류만 받는다 (원문·주소는 받지 않음)"""
+    if not (isinstance(file, str) and (file in JS_FILES or file == "unknown")):
+        return None
+    if not (isinstance(line, int) and not isinstance(line, bool) and 0 <= line <= 999999):
+        return None
+    if not (isinstance(name, str) and FIELD_RULES["type"].fullmatch(name)):
+        return None
+    code = f"ERR-js-{file}-{line if file != 'unknown' else 0}"
+    _record(code, name)
+    return code
+
+
+def _record(code: str, name: str) -> None:
     try:
         # 같은 오류가 계속 나면(1초마다 도는 일꾼 등) 1분에 한 번만 적는다
         with _lock:
@@ -234,11 +258,8 @@ def record_error(error: BaseException) -> str:
         if not recent:
             add("error", code=code, type=name)
         print(f"[report] {code} ({name})", file=sys.stderr)  # i18n-ok 개발용 콘솔
-        if not getattr(sys, "frozen", False):
-            traceback.print_exception(type(error), error, error.__traceback__)  # 개발 중에는 원문을 콘솔에만
     except Exception:
         pass
-    return code
 
 
 # ---------- 알림함용 ----------

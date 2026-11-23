@@ -1,7 +1,7 @@
 // 알림함 (상단바 🔔, 2026-11-23 사용자 안 A)
 // - 서버 /api/state 의 alerts(코드 목록) → 숫자 배지 + 펼침 창 목록. 뜻·문장은 사전 alerts.codes.<코드>
 // - dev(소스 실행일 때만 서버가 보냄) → 번역 필요 줄. 배지 숫자에는 넣지 않음
-// - errors = 예상 못 한 오류 ERR-<파일>-<줄> (방법 B, report_log.py). 지난 실행 것도 [확인했어요] 전까지 보임
+// - errors = 예상 못 한 오류 ERR-<파일>-<줄>, 화면 오류는 ERR-js-<파일>-<줄> (방법 B, report_log.py·errors.js). 지난 실행 것도 [확인했어요] 전까지 보임
 // - 신고 버튼 3개는 링크 열기·복사만 (자동으로 보내는 것 없음)
 
 // 빨강 = 기능이 멈춤 / 노랑 = 저장본·옛 정보로 계속 동작
@@ -27,7 +27,7 @@ const alertsBox = (() => {
   // 서버가 준 값도 모양을 확인하고 쓴다 (코드·종류는 영문 이름만)
   function errorsOf(s) {
     return (Array.isArray(s.errors) ? s.errors : [])
-      .filter((e) => e && typeof e.code === "string" && /^ERR-\w+-\d+$/.test(e.code))
+      .filter((e) => e && typeof e.code === "string" && /^ERR-(js-)?\w+-\d+$/.test(e.code))
       .map((e) => ({ code: e.code, type: /^[A-Za-z_]\w*$/.test(e.type || "") ? e.type : "", t: Number(e.t) || 0 }));
   }
 

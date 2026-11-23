@@ -420,6 +420,16 @@ def api_report_ack():
     return jsonify({"ok": True})
 
 
+@app.post("/api/report/js-error")
+def api_report_js_error():
+    """화면 오류 기록 (errors.js): {"file": 화면 파일 이름, "line": 줄, "type": 오류 종류} 만"""
+    body = request.get_json(silent=True) or {}
+    code = report_log.record_js_error(body.get("file"), body.get("line"), body.get("type"))
+    if code is None:
+        return jsonify({"error": i18n.t("server.badRequest")}), 400
+    return jsonify({"code": code})
+
+
 @app.post("/api/report/open-folder")
 def api_report_open_folder():
     """알림함 [파일 위치 열기]: 탐색기에서 report.txt 를 골라 둔 채로 연다"""
