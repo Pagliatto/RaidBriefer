@@ -58,6 +58,7 @@ The goal is that you barely have to touch it.
 - **Prestige** is detected automatically and progress starts fresh.
 - **English and Korean.** It follows your Windows language at first; change it in ⚙ Settings.
 - **Game brightness**: the monitor icon in the top bar lets you brighten the game during raids in borderless window mode.
+- **🔔 Alerts menu**: tells you about problems such as unreadable game logs or failed data downloads, with a code. Unexpected errors are logged in `report.txt`, and the Discord / GitHub report buttons fill in the codes for you.
 - **Tells you when a new version is out** and updates with one click. Your records are kept; a What's new popup includes skipped versions, and Settings → About has the full update history.
 
 ## Is it safe?
