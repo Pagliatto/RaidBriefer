@@ -15,6 +15,7 @@
   <a href="https://github.com/Pagliatto/RaidBriefer/releases/latest"><b>⬇ Download the latest version (Windows)</b></a>
   &nbsp;·&nbsp; <a href="#install">How to install</a>
   &nbsp;·&nbsp; <a href="https://github.com/Pagliatto/RaidBriefer/releases">All releases</a>
+  &nbsp;·&nbsp; <a href="https://discord.gg/8MYr8QABYU">💬 Discord</a>
 </p>
 
 > RaidBriefer is an **unofficial** fan-made tool. It is not affiliated with or endorsed by Battlestate Games (BSG).
@@ -151,16 +152,31 @@ If you only want to use the program, the [download](#install) zip is all you nee
 
 `user_data/` (your records and settings) and `cache/` (downloaded data), created when you run it, are never uploaded to the repository.
 
-## Bugs and feature requests
+## Bugs, questions and feature requests
 
-Please use this repository's **[Issues](../../issues)**.
-For errors, these help a lot:
+| For | Go to |
+|---|---|
+| Questions, small problems | 💬 **[Discord](https://discord.gg/8MYr8QABYU)** |
+| Bug reports, feature requests | 🐞 **[GitHub Issues](../../issues)** |
 
-- Which screen, and what you did
+The **[Ask or report on Discord]** and **[Report on GitHub]** buttons in the 🔔 (alerts) menu at the top right fill in your version and error codes for you.
+
+### If something went wrong, please attach `report.txt`
+
+`report.txt` is **the most useful file** for finding the cause. It lists, in time order, when the program started and stopped, game and map changes, and any errors (e.g. `ERR-quests-412`).
+
+**Where to find it**
+- If the program opens: 🔔 → **[Show file location]** → drag the selected `report.txt` into your Discord or GitHub post
+- If the program won't open: the folder with `RaidBriefer.exe` → `user_data` → `report.txt`
+
+**It is safe to upload as is.** It only holds times, versions, error codes and map names — never your account, nickname, folder paths or game log contents.
+If you can't attach a file, 🔔 → **[Copy report]** copies the recent lines so you can paste them.
+
+Also helpful
+- Which screen, and what you were doing
 - A screenshot
-- The contents of `user_data/error.log` (if it exists)
 
-⚠ **Don't upload game log files.** They contain your login information.
+⚠ **Don't upload game log files (the `Logs` folder in the game folder).** They contain your login information.
 
 ## License and credits
 
