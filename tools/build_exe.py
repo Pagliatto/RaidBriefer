@@ -32,6 +32,7 @@ README_TXT = """RaidBriefer — Escape from Tarkov PvE 비공식 도우미
 
 기록 저장 위치: 이 폴더 안의 user_data 폴더 (폴더째로 옮기면 기록도 같이 옮겨져요)
 새 버전으로 바꿀 때: 새 폴더의 내용을 덮어쓰되 user_data 폴더는 그대로 두세요.
+업데이트 뒤 프로그램이 안 켜지면: 새로 받아서 이 폴더에 덮어쓰세요. user_data(기록)는 그대로 남아요.
 
 설명·문제 신고: https://github.com/Pagliatto/RaidBriefer
 비공식 팬 도구이며 Battlestate Games 와 관련이 없습니다.
@@ -43,6 +44,7 @@ Run: double-click RaidBriefer.exe.
   - A first-time setup appears once. Language: Settings (gear icon) -> Language.
 Records: the user_data folder in this folder (move the whole folder to keep them).
 Updates: a notice appears in the program; click "Update now". Keep the user_data folder.
+If it won't start after an update: download it again and overwrite this folder. user_data (your records) stays.
 Info and bug reports: https://github.com/Pagliatto/RaidBriefer
 Unofficial fan tool, not affiliated with Battlestate Games.
 """

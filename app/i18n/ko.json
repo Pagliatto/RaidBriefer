@@ -58,6 +58,8 @@
     "downloading": "새 버전을 받는 중이에요… 끝나면 프로그램이 잠깐 꺼졌다가 다시 켜져요.",
     "installing": "새 버전으로 바꾸는 중이에요. 곧 다시 켜져요.",
     "failed": "업데이트하지 못했어요. 받기 페이지에서 직접 받아 주세요.",
+    "failedRetry": "새 버전을 받지 못했어요. 인터넷 연결을 확인하고 다시 시도해 주세요.",
+    "retry": "다시 시도",
     "settingsTitle": "버전",
     "settingsCurrent": "RaidBriefer {current}",
     "settingsLatest": "최신 버전이에요.",

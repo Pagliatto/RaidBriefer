@@ -58,6 +58,8 @@
     "downloading": "Downloading the new version… The program will close briefly and restart.",
     "installing": "Installing the new version. Restarting shortly.",
     "failed": "Couldn't update. Please download it from the download page.",
+    "failedRetry": "Couldn't download the new version. Check your internet connection and try again.",
+    "retry": "Try again",
     "settingsTitle": "Version",
     "settingsCurrent": "RaidBriefer {current}",
     "settingsLatest": "You're on the latest version.",

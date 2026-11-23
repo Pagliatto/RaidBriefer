@@ -80,8 +80,9 @@ function drawUpdate() {
       : icon(s.status === "failed" ? "triangle-alert" : "package", 16));
   }
   if (s.status === "failed") {
-    updateUI.text.textContent = t("update.failed");
-    updateUI.apply.textContent = t("update.openPage");
+    // retry: 받기·확인 단계 실패 (프로그램 파일은 그대로) → 바로 다시 시도. 그 밖의 실패는 받기 페이지로
+    updateUI.text.textContent = t(s.retry ? "update.failedRetry" : "update.failed");
+    updateUI.apply.textContent = t(s.retry ? "update.retry" : "update.openPage");
     updateUI.apply.disabled = false;
   } else if (busy) {
     updateUI.text.textContent = t(s.status === "installing" ? "update.installing" : "update.downloading");
@@ -118,7 +119,8 @@ function loadUpdate() {
     clearTimeout(timeout);
     updatePollPromise = null;
     const busy = ["downloading", "installing"].includes(updateUI.info?.status);
-    if (++updatePollAttempts < 240 && (busy || !updateUI.info?.check_finished)) {
+    // 받는 중·바꾸는 중에는 횟수 제한 없이 계속 확인 (느린 인터넷에서 실패해도 안내가 바뀌게)
+    if (busy || (++updatePollAttempts < 240 && !updateUI.info?.check_finished)) {
       updatePollTimer = setTimeout(loadUpdate, busy ? 1500 : 3000);
     }
   });
@@ -128,7 +130,7 @@ function loadUpdate() {
 updateUI.apply.addEventListener("click", async () => {
   const s = updateUI.info;
   if (!s) return;
-  if (!s.can_apply || s.status === "failed") {
+  if (!s.can_apply || (s.status === "failed" && !s.retry)) {
     window.open(s.page, "_blank", "noopener");
     return;
   }

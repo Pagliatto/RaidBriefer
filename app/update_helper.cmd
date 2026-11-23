@@ -6,27 +6,29 @@ set "NEW=%~2"
 set "DEST=%~3"
 set "BAK=%~4"
 set "WORK=%~dp0"
+rem PATH 에 다른 find 등이 먼저 있어도 Windows 것을 쓰도록 전체 경로로 부른다.
+set "SYS=%SystemRoot%\System32"
 set "INTERNAL_MOVED="
 set "EXE_MOVED="
 set "REASON=wait-timeout"
 set /a N=0
 :wait
-tasklist /FI "PID eq %PID%" 2>nul | find "%PID%" >nul
+"%SYS%\tasklist.exe" /FI "PID eq %PID%" 2>nul | "%SYS%\find.exe" "%PID%" >nul
 if errorlevel 1 goto closed
 set /a N+=1
 if %N% GEQ 30 goto fail_old
-ping -n 2 127.0.0.1 >nul
+"%SYS%\ping.exe" -n 2 127.0.0.1 >nul
 goto wait
 
 :closed
 set "REASON=backup-create-failed"
 if exist "%BAK%" goto rollback_failed
 mkdir "%BAK%" 2>nul
-if errorlevel 1 goto rollback_failed
+if errorlevel 1 goto fail_old
 set "REASON=backup-internal-failed"
 if not exist "%DEST%\_internal" goto fail_old
 move "%DEST%\_internal" "%BAK%\_internal" >nul
-if errorlevel 1 goto rollback_failed
+if errorlevel 1 goto internal_not_moved
 set "INTERNAL_MOVED=1"
 set "REASON=backup-exe-failed"
 if not exist "%DEST%\RaidBriefer.exe" goto restore
@@ -35,7 +37,7 @@ if errorlevel 1 goto restore
 set "EXE_MOVED=1"
 
 set "REASON=install-copy-failed"
-robocopy "%NEW%" "%DEST%" /E /XD user_data cache _update /NFL /NDL /NJH /NJS /NP /R:2 /W:1 >nul
+"%SYS%\robocopy.exe" "%NEW%" "%DEST%" /E /XD user_data cache _update /NFL /NDL /NJH /NJS /NP /R:2 /W:1 >nul
 if errorlevel 8 goto restore
 if not exist "%DEST%\RaidBriefer.exe" goto restore
 if not exist "%DEST%\_internal" goto restore
@@ -53,7 +55,7 @@ set "REASON=rollback-internal-remove-failed"
 if exist "%DEST%\_internal" rmdir /s /q "%DEST%\_internal"
 if exist "%DEST%\_internal" goto rollback_failed
 set "REASON=rollback-internal-copy-failed"
-robocopy "%BAK%\_internal" "%DEST%\_internal" /E /NFL /NDL /NJH /NJS /NP /R:2 /W:1 >nul
+"%SYS%\robocopy.exe" "%BAK%\_internal" "%DEST%\_internal" /E /NFL /NDL /NJH /NJS /NP /R:2 /W:1 >nul
 if errorlevel 8 goto rollback_failed
 if not exist "%DEST%\_internal" goto rollback_failed
 :restore_exe
@@ -63,7 +65,7 @@ if not exist "%BAK%\RaidBriefer.exe" goto rollback_failed
 set "REASON=rollback-exe-copy-failed"
 copy /y "%BAK%\RaidBriefer.exe" "%DEST%\RaidBriefer.exe" >nul
 if errorlevel 1 goto rollback_failed
-fc /b "%BAK%\RaidBriefer.exe" "%DEST%\RaidBriefer.exe" >nul
+"%SYS%\fc.exe" /b "%BAK%\RaidBriefer.exe" "%DEST%\RaidBriefer.exe" >nul
 if errorlevel 1 goto rollback_failed
 :verify_restore
 set "REASON=rollback-incomplete"
@@ -83,6 +85,12 @@ rem 검증되지 않은 조합은 실행하지 않는다. 백업과 실패 이�
 if not exist "%DEST%\user_data" mkdir "%DEST%\user_data" 2>nul
 > "%DEST%\user_data\update_failed.txt" echo %REASON%
 exit /b 2
+
+:internal_not_moved
+rem 옮기기 실패: 원본이 제자리에 그대로면 바뀐 것이 없으므로 예전 프로그램을 다시 켠다.
+if exist "%BAK%\_internal" goto rollback_failed
+if not exist "%DEST%\_internal" goto rollback_failed
+goto fail_old
 
 :done
 cd /d "%DEST%"

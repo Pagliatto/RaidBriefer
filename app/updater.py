@@ -39,8 +39,11 @@ _cleanup_verified = False
 _cleanup_retry_at = 0.0
 _started_ok = False
 _state = {"current": VERSION, "latest": None, "available": False, "page": f"https://github.com/{REPO}/releases/latest",
-          "can_apply": bool(getattr(sys, "frozen", False)), "status": "idle", "error": None, "check_error": None, "check_finished": False}
+          "can_apply": bool(getattr(sys, "frozen", False)), "status": "idle", "error": None, "check_error": None, "check_finished": False,
+          "retry": False}  # retry: 도우미가 켜지기 전 실패 → 화면에서 바로 다시 시도할 수 있음
 _asset = None
+# 도우미가 프로그램 파일을 하나도 바꾸기 전에 그만둔 실패 이유 (update_helper.cmd 의 REASON)
+_UNTOUCHED_REASONS = ("wait-timeout", "backup-create-failed", "backup-internal-failed")
 _on_exit = None  # 프로그램 창을 닫는 함수 (window.py 가 넣어 줌)
 
 
@@ -50,6 +53,12 @@ def _ver(text: str) -> tuple:
         digits = "".join(ch for ch in part if ch.isdigit())
         nums.append(int(digits or 0))
     return tuple(nums)
+
+
+def _installed_manually(started: bool, target: str) -> bool:
+    """업데이트하려던 버전(target)을 사용자가 직접 설치해서 정상으로 켜졌는지.
+    표식이 손상돼 '1' 처럼 남으면 판별할 수 없으므로 아니라고 본다 (백업 보존)"""
+    return bool(started and re.fullmatch(r"\d+\.\d+\.\d+", target or "") and _ver(VERSION) >= _ver(target))
 
 
 def set_exit_handler(fn) -> None:
@@ -115,10 +124,16 @@ def _cleanup_work(started: bool) -> bool:
             reason = ""
         target = marker("target_version.txt")
         # 실패 뒤 사용자가 새 버전을 직접 설치함 (지금 버전 ≥ 업데이트하려던 버전) → 실패 표시가 남을 이유 없음
-        manual = bool(started and target and _ver(VERSION) >= _ver(target))
+        manual = _installed_manually(started, target)
         # 원래 버전으로 되돌린 것이 확인됨 → 프로그램은 온전. 이번 실행에서만 알리고 다음에는 다시 시도할 수 있게
         rolled_back = bool(started and reason == "install-failed-rollback-verified"
                            and marker("rollback.ok") == "verified")
+        # 도우미가 아무것도 바꾸기 전에 그만둠 (안 꺼짐·백업 폴더 못 만듦·_internal 못 옮김) + 백업 폴더에 옮겨진 파일 없음
+        # → 프로그램은 온전. 되돌림 확인과 같이 이번 실행에서만 알리고 정리
+        untouched = bool(started and reason in _UNTOUCHED_REASONS
+                         and not (WORK_DIR / "old" / "_internal").exists()
+                         and not (WORK_DIR / "old" / "RaidBriefer.exe").exists())
+        rolled_back = rolled_back or untouched
         if not manual:
             _set(status="failed", error="install")
         if not (manual or rolled_back):
@@ -138,7 +153,11 @@ def _cleanup_work(started: bool) -> bool:
               and (WORK_DIR / "new" / "RaidBriefer" / "RaidBriefer.exe").is_file()
               and (WORK_DIR / "new" / "RaidBriefer" / "_internal").is_dir()
               and (WORK_DIR / "update_helper.cmd").is_file())
-    verified = (_cleanup_verified or marker("rollback.ok") == "verified"
+    # 교체 도중 도우미가 죽어(전원 꺼짐 등) 표식이 없는데, 사용자가 새 버전을 직접 설치해서 정상으로 켜짐
+    # (지금 버전 ≥ 업데이트하려던 버전) → 남은 백업 때문에 다음 업데이트가 막히지 않게 정리
+    target = marker("target_version.txt")
+    manual = _installed_manually(started, target)
+    verified = (_cleanup_verified or marker("rollback.ok") == "verified" or manual
                 or started and (legacy or marker("installed.ok") == "installed"
                                 and marker("target_version.txt") == VERSION))
     if not verified or failed.exists():
@@ -208,7 +227,7 @@ def apply() -> dict:
         # 이 API까지 정상 실행된 경우도 성공 기동으로 취급한다.
         _started_ok = True
         _cleanup_done = False
-        _state.update(status="downloading", error=None)
+        _state.update(status="downloading", error=None, retry=False)
     threading.Thread(target=_run, name="update", daemon=True).start()
     return state()
 
@@ -277,7 +296,9 @@ def _run_locked() -> None:
         else:
             os._exit(0)
     except Exception as error:
-        _set(status="failed", error=str(error))
-        if (not helper_started and not (paths.USER_DIR / "update_failed.txt").exists()
-                and not (WORK_DIR / "old").exists() and not (WORK_DIR / "installed.ok").exists()):
+        # 도우미가 켜지기 전 실패(받기·지문·풀기·폴더 만들기)는 프로그램 파일을 건드리지 않았으므로 바로 다시 시도 가능
+        clean = (not helper_started and not (paths.USER_DIR / "update_failed.txt").exists()
+                 and not (WORK_DIR / "old").exists() and not (WORK_DIR / "installed.ok").exists())
+        _set(status="failed", error=str(error), retry=clean)
+        if clean:
             shutil.rmtree(WORK_DIR, ignore_errors=True)
