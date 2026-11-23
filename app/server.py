@@ -17,7 +17,7 @@ from pathlib import Path
 
 from flask import Flask, abort, jsonify, render_template, request, send_file
 
-from app import brightness, game_state, hideout, i18n, updater, map_views, paths, progress, quest_log, quests, settings, story, story_places, tarkov_api
+from app import alerts, brightness, game_state, hideout, i18n, updater, map_views, paths, progress, quest_log, quests, settings, story, story_places, tarkov_api
 
 from app.version import VERSION
 
@@ -374,10 +374,21 @@ def api_state():
     state["data_updating"] = tarkov_api.is_updating()
     state["quest_rev"] = quest_log.poll_log_rev()  # 디스크 조회는 별도 스레드에서만
     state["log_reading"] = quest_log.log_reading()
+    # 알림함: 코드만 (alerts.py). 개발용 정보는 소스 실행일 때만
+    state["alerts"] = alerts.collect(state.get("log_problem"), state.get("status") != game_state.GAME_OFF)
+    dev = alerts.dev_info()
+    if dev is not None:
+        state["dev"] = dev
     # 창이 뜨기 전 확인(probe=1)은 정상 시작이 아님. 화면이 실제로 뜬 뒤의 요청만 성공으로 보고 옛 버전 백업을 정리
     if request.args.get("probe") != "1":
         updater.cleanup(started=True)
     return jsonify(state)
+
+
+@app.get("/api/report-info")
+def api_report_info():
+    """알림함 신고 버튼용: 앱·Windows·게임 버전만 (보내는 건 화면이 링크 열기·복사로만)"""
+    return jsonify(alerts.report_info())
 
 
 @app.get("/api/brightness")

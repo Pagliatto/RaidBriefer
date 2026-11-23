@@ -390,8 +390,33 @@
     "tabRecords": "Records",
     "tabAbout": "About"
   },
+  "alerts": {
+    "title": "Alerts",
+    "countLabel": "Alerts: {count}",
+    "empty": "Everything is working fine",
+    "reportHelp": "The codes above are filled in when you report",
+    "discord": "Ask or report\non Discord",
+    "github": "Report on GitHub",
+    "copy": "Copy report",
+    "copied": "Copied",
+    "copyFailed": "Couldn't copy",
+    "noCodes": "없음 / none",
+    "unknown": "모름 / unknown",
+    "reportTemplate": "[RaidBriefer 버그 신고 / Bug report]\n버전 / Version: v{version}\n게임 버전 / Game version: {game}\nWindows: {windows}\n알림 코드 / Alert codes: {codes}\n무엇을 하다가 / What were you doing:\n어떻게 됐나요 / What happened:\n원래는 / Expected:\n다시 해도 생기나요 / Happens again:\n※ 게임 로그 파일은 올리지 마세요 / Do not upload game log files",
+    "noLogFiles": "⚠ Do not upload game log files (they contain login info)",
+    "devTag": "Dev",
+    "translationTitle": "{count} need translation",
+    "translationBody": "Quest objectives with no Korean translation or a changed English original (tools/ko_missing.py --all)",
+    "codes": {
+      "LOG-01": { "title": "Can't read the game logs", "body": "A game update may have changed the log format. Auto map switching, raid time and quest updates may stop." },
+      "LOG-02": { "title": "Can't tell which map you're on", "body": "The raid start shows up, but the map loading line wasn't recognized. A game update may have changed the log format." },
+      "LOG-03": { "title": "Can't read the quest records", "body": "A game update may have changed the quest record format. Quest starts and completions may not show up." },
+      "DATA-01": { "title": "Couldn't download new game data", "body": "Using the saved data for now. It downloads again automatically when the internet is back." },
+      "SAVE-01": { "title": "Couldn't read your saved records", "body": "A record or settings file is damaged or locked by another program. Saving is paused to protect your records." },
+      "UPD-01": { "title": "Couldn't check for updates", "body": "Couldn't reach GitHub. Please check GitHub Releases for a new version yourself." }
+    }
+  },
   "topbar": {
-    "logProblem": "Can't read the game logs (see Home)",
     "clockNight": "Tarkov in-game time (night)",
     "clockDay": "Tarkov in-game time (day)",
     "stateOff": "Game not running",

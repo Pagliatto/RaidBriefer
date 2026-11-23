@@ -522,6 +522,11 @@ def data_revision() -> int:
     return _data_revision
 
 
+def update_failed() -> bool:
+    """마지막 데이터 받기가 실패했는지 (알림 DATA-01). 성공하면 다시 False"""
+    return _last_error is not None
+
+
 def data_message() -> str:
     meta = _read_meta()
     if _last_error:

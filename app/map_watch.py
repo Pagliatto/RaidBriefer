@@ -11,6 +11,7 @@
 
 import re
 import os
+import json
 import time
 import logging
 import threading
@@ -292,6 +293,114 @@ def log_problem() -> str | None:
         return "no_map" if _health["no_map"] else None
 
 
+# ---------- 퀘스트 기록(push-notifications) 점검 (LOG-03, 2026-11-23 사용자) ----------
+# 퀘스트 시작·완료·실패는 이 파일의 'Got notification | ChatMessageReceived' 줄 + 다음 줄들의 JSON 으로 남는다.
+# 게임 업데이트로 모양이 바뀌면 퀘스트 반영이 조용히 멈추므로 알린다.
+# - 머리말 바뀜: 파일이 NOTIF_MIN_BYTES 넘게 쌓이고 JSON 덩어리('{' 줄)도 있는데 'Got notification |' 머리말이 0개
+#   (채팅 머리말만 보면 안 됨: 채팅 없이 거래소 판매·그룹 알림만 있는 세션이 있음, 이 PC 로그 5폴더)
+# - 내용 바뀜: 채팅 머리말이 NOTIF_MIN_BLOCKS 개 이상인데 JSON 으로 읽히는 것이 0개
+# 기준값 이유 (2026-11-23 이 PC 로그 556폴더 확인): 알림 하나가 약 0.8KB 라 4KB ≈ 알림 5개.
+# 알림이 없는 세션은 연결 줄 하나(약 120바이트)뿐이라 걸리지 않음
+NOTIF_MIN_BYTES = 4096
+NOTIF_MIN_BLOCKS = 3
+NOTIF_MAX_BYTES = 16 * 1024 * 1024  # 이보다 크면 읽지 않음 (점검 때문에 느려지지 않게)
+_ANY_HEADER = "Got notification |"
+_CHAT_HEADER = _ANY_HEADER + " ChatMessageReceived"
+_notif_lock = threading.Lock()
+_notif = {"folder": None, "sizes": None, "problem": False}
+
+
+def notification_health(folder: Path) -> dict:
+    """폴더 하나의 push-notifications 를 세어 돌려준다 (시험 도구도 씀).
+    덩어리 경계는 실제 퀘스트 파서(quest_log)와 같게: 날짜 줄이 나오거나 파일 끝에서만 닫는다.
+    못 읽은 파일이 있으면 locked=True (지난 판단을 유지하고 다시 시도하게)"""
+    stats = {"bytes": 0, "json_starts": 0, "any_headers": 0, "headers": 0, "readable": 0, "locked": False}
+    for path in sorted(folder.glob("*push-notifications*.log")):
+        try:
+            raw = path.read_bytes()
+        except OSError:
+            stats["locked"] = True
+            continue
+        stats["bytes"] += len(raw)
+        block = None
+
+        def close(block):
+            try:
+                if isinstance(json.loads("\n".join(block)), dict):
+                    stats["readable"] += 1
+            except (ValueError, RecursionError):
+                pass
+
+        for line in raw.decode("utf-8", errors="replace").splitlines():
+            if block is not None and quest_log.LINE_START.match(line):
+                close(block)
+                block = None
+            if line.strip() == "{":
+                stats["json_starts"] += 1
+            if _ANY_HEADER in line:
+                stats["any_headers"] += 1
+            if _CHAT_HEADER in line:
+                stats["headers"] += 1
+            if block is None:
+                if _CHAT_HEADER in line:
+                    block = []
+            else:
+                block.append(line)  # 날짜 모양이 바뀌면 뒤 머리말까지 합쳐져 못 읽음 (실제 파서와 같음)
+        if block is not None:
+            close(block)
+    return stats
+
+
+def notification_problem_of(stats: dict) -> bool:
+    if stats["any_headers"] == 0:
+        return stats["bytes"] >= NOTIF_MIN_BYTES and stats["json_starts"] > 0
+    return stats["headers"] >= NOTIF_MIN_BLOCKS and stats["readable"] == 0
+
+
+def _check_notifications(folder: Path | None) -> None:
+    """감시 스레드에서 1초마다. 파일 이름·크기·수정 시각·파일 번호가 바뀌었을 때만 다시 센다"""
+    sig = None
+    if folder:
+        try:
+            sig = tuple(sorted((p.name, st.st_size, st.st_mtime_ns, st.st_ino)
+                               for p in folder.glob("*push-notifications*.log") for st in [p.stat()]))
+        except OSError:
+            return  # 잠깐 못 읽으면 지난 판단 유지
+    with _notif_lock:
+        if _notif["folder"] == folder and _notif["sizes"] == sig:
+            return
+        problem = _notif["problem"] if _notif["folder"] == folder else False
+    if not sig:
+        problem = False
+    elif sum(item[1] for item in sig) <= NOTIF_MAX_BYTES:
+        stats = notification_health(folder)
+        if stats["locked"]:
+            with _notif_lock:
+                _notif.update(folder=folder, problem=problem)  # sizes 는 그대로 → 다음 회차에 다시 시도
+            return
+        problem = notification_problem_of(stats)
+    else:
+        problem = False  # 너무 크면 검사하지 않음
+    with _notif_lock:
+        _notif.update(folder=folder, sizes=sig, problem=problem)
+
+
+def notification_problem() -> bool:
+    with _notif_lock:
+        return _notif["problem"]
+
+
+# 게임 버전: 로그 폴더 이름 끝 (예: log_2026.11.22_16-24-50_1.3.0.2.48779 → 1.3.0.2.48779). 경로는 밖으로 내보내지 않음
+_VERSION_RE = re.compile(r"_(\d+(?:\.\d+){2,})$")
+
+
+def game_version() -> str | None:
+    with _notif_lock:
+        folder = _notif["folder"]
+    match = _VERSION_RE.search(folder.name) if folder else None
+    return match.group(1) if match else None
+
+
 def _feed(tail: "LogTail", state: MapState, lookup: MapLookup, on_change=None) -> None:
     lines = tail.new_lines()
     _count_health(tail)
@@ -309,6 +418,7 @@ def watch(interval: float = 1.0, on_change=print) -> None:
     folder = latest_log_folder()
     tail = LogTail(folder) if folder else None
     _reset_health()
+    _check_notifications(folder)
 
     # 처음에는 지금 폴더의 기존 줄을 다 읽어서 현재 상태를 맞춘다
     if tail:
@@ -322,6 +432,7 @@ def watch(interval: float = 1.0, on_change=print) -> None:
             folder, tail, state = newest, LogTail(newest) if newest else None, MapState()
             _reset_health()
             on_change(state)
+        _check_notifications(folder)
         if not tail:
             continue
         _feed(tail, state, lookup, on_change)

@@ -63,6 +63,18 @@ body:
       label: RaidBriefer version (버전)
       description: Shown in Settings → Version. (설정 → 버전)
       placeholder: e.g. 1.0.0
+  - type: input
+    id: game_version
+    attributes:
+      label: Game version (게임 버전)
+      description: Filled in by the "Report on GitHub" button. (프로그램의 '깃허브로 알리기' 버튼이 채워요)
+      placeholder: e.g. 1.3.0.2.48779
+  - type: input
+    id: alert_codes
+    attributes:
+      label: Alert codes (알림 코드)
+      description: Codes shown in the alerts box (bell icon), if any. (알림함 🔔 에 보인 코드)
+      placeholder: e.g. LOG-01
   - type: dropdown
     id: language
     attributes:

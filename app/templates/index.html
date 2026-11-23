@@ -41,7 +41,6 @@
           </g>
         </svg>
         <span id="raid-state-text">{{ t('topbar.stateOff') }}</span>
-        <span class="log-warn" id="log-warn" data-icon="triangle-alert" data-size="13" hidden></span>
       </span>
       <span class="raid-time idle" id="raid-time">
         <span class="label">{{ t('topbar.left') }}</span> <b id="raid-left">-- : --</b>
@@ -51,6 +50,23 @@
         <span id="clock-a">--:--</span>
         <span id="clock-b">--:--</span>
       </span>
+      <!-- 알림함: 문제가 생기면 숫자 배지 + 신고 버튼 3개 (alerts.js, 서버 app/alerts.py) -->
+      <div class="alerts-slot" id="alerts-slot">
+        <button type="button" class="settings-button alerts-button" id="alerts-open" data-level="none" aria-label="{{ t('alerts.title') }}" title="{{ t('alerts.title') }}" aria-haspopup="dialog" aria-controls="alerts-popup" aria-expanded="false"><span data-icon="bell" data-size="17"></span><span class="alerts-badge" id="alerts-badge" aria-hidden="true" hidden></span></button>
+        <section class="alerts-popup" id="alerts-popup" role="dialog" aria-labelledby="alerts-title" tabindex="-1" hidden>
+          <h2 id="alerts-title">{{ t('alerts.title') }}</h2>
+          <div class="alerts-list" id="alerts-list" role="status"></div>
+          <div class="alerts-report">
+            <p class="alerts-help" id="alerts-help" hidden>{{ t('alerts.reportHelp') }}</p>
+            <div class="settings-actions alerts-actions">
+              <button type="button" class="primary" id="alerts-discord">{{ t('alerts.discord') }}</button>
+              <button type="button" id="alerts-github">{{ t('alerts.github') }}</button>
+              <button type="button" id="alerts-copy">{{ t('alerts.copy') }}</button>
+            </div>
+            <p class="alerts-note">{{ t('alerts.noLogFiles') }}</p>
+          </div>
+        </section>
+      </div>
       <div class="brightness-slot" id="brightness-slot">
         <button type="button" class="settings-button brightness-button" id="brightness-open" data-state="off" aria-label="{{ t('brightness.title') }}" title="{{ t('brightness.title') }}" aria-haspopup="dialog" aria-controls="brightness-popup" aria-expanded="false"><span data-icon="monitor-cog" data-size="17"></span><span class="brightness-dot" aria-hidden="true"></span></button>
         <section class="brightness-popup" id="brightness-popup" role="dialog" aria-labelledby="brightness-title" tabindex="-1" hidden>
@@ -119,7 +135,7 @@
       <!-- 게임 로그를 읽지 못할 때만 뜸 (게임 업데이트로 형식이 바뀐 경우 등, map_watch.log_problem) -->
       <div class="gap-banner log-banner" id="log-banner" role="status" hidden>
         <div>
-          <b>{{ t('home.logProblemTitle') }}</b>
+          <b>{{ t('home.logProblemTitle') }} <span class="alert-code" id="log-banner-code"></span></b>
           <p id="log-banner-text"></p>
         </div>
       </div>
@@ -427,6 +443,7 @@
   <script src="{{ url_for('static', filename='home.js') }}"></script>
   <script src="{{ url_for('static', filename='topbar.js') }}"></script>
   <script src="{{ url_for('static', filename='brightness.js') }}"></script>
+  <script src="{{ url_for('static', filename='alerts.js') }}"></script>
   <script src="{{ url_for('static', filename='settings.js') }}"></script>
   <script src="{{ url_for('static', filename='update.js') }}"></script>
   <script src="{{ url_for('static', filename='setup.js') }}"></script>

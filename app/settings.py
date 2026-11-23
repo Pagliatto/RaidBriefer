@@ -34,6 +34,11 @@ class DataReadError(Exception):
 
 
 _broken_copies = set()
+_failed_reads = set()  # 읽지 못한 저장 파일 (알림 SAVE-01). 다시 잘 읽히면 빠짐
+
+
+def saved_read_failed() -> bool:
+    return bool(_failed_reads)
 
 
 def read_saved(path: Path, validate) -> dict:
@@ -41,15 +46,19 @@ def read_saved(path: Path, validate) -> dict:
     try:
         raw = path.read_bytes()
     except FileNotFoundError:
+        _failed_reads.discard(path)
         return {}
     except OSError as error:
+        _failed_reads.add(path)
         raise DataReadError() from error
     try:
         data = json.loads(raw.decode("utf-8"))
         if not isinstance(data, dict) or not validate(data):
             raise ValueError("saved-schema")
+        _failed_reads.discard(path)
         return data
     except (ValueError, UnicodeError) as error:
+        _failed_reads.add(path)
         fingerprint = (path, hashlib.sha256(raw).hexdigest())
         if fingerprint not in _broken_copies:
             backup = path.with_name(f"{path.stem}.broken-{time.time_ns()}.json")
