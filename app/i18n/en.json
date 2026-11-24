@@ -65,7 +65,12 @@
     "settingsLatest": "You're on the latest version.",
     "settingsNew": "New version {latest} is available. You can update from the notice at the top.",
     "settingsUnknown": "Couldn't check for the latest version. (check your internet connection)",
-    "settingsPrivacy": "On startup, it only asks GitHub for the latest version. No records or personal data are sent.",
+    "settingsPrivacy": "On startup and when you press the button below, it only asks GitHub for the latest version. No records or personal data are sent.",
+    "checkNow": "Check for updates",
+    "checking": "Checking…",
+    "checkDone": "Checked just now.",
+    "checkFailed": "Couldn't check. Check your internet connection and try again in a moment.",
+    "checkBusy": "Another check or an update is in progress. Try again in a moment.",
     "unseenAvailable": "A new version is available"
   },
   "tabs": {

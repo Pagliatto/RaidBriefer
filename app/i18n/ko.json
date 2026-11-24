@@ -65,7 +65,12 @@
     "settingsLatest": "최신 버전이에요.",
     "settingsNew": "새 버전 {latest}이 있어요. 위쪽 안내에서 업데이트할 수 있어요.",
     "settingsUnknown": "최신 버전을 확인하지 못했어요. (인터넷 연결 확인)",
-    "settingsPrivacy": "켤 때 깃허브에 최신 버전만 물어봐요. 기록이나 개인 정보는 보내지 않아요.",
+    "settingsPrivacy": "켤 때와 아래 버튼을 누를 때 깃허브에 최신 버전만 물어봐요. 기록이나 개인 정보는 보내지 않아요.",
+    "checkNow": "최신 버전 확인",
+    "checking": "확인하는 중이에요…",
+    "checkDone": "방금 확인했어요.",
+    "checkFailed": "확인하지 못했어요. 인터넷 연결을 확인하고 잠시 뒤 다시 눌러 주세요.",
+    "checkBusy": "지금은 다른 확인이나 업데이트가 진행 중이에요. 잠시 뒤 다시 눌러 주세요.",
     "unseenAvailable": "새 버전이 있어요"
   },
   "tabs": {

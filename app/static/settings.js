@@ -8,13 +8,41 @@ const settingsUI = {
   buttons: [document.getElementById("settings-save"), document.getElementById("settings-find")],
 };
 
-function showSettingsResult(text, ok) {
+function showSettingsResult(text, ok, box = settingsUI.result) {
   const pending = ok === null;
-  settingsUI.result.className = "settings-result " + (pending ? "pending" : ok ? "ok" : "bad");
+  box.className = "settings-result " + (pending ? "pending" : ok ? "ok" : "bad");
   const mark = pending ? el("i", "data-update-arc") : icon(ok ? "check" : "triangle-alert", 14);
   mark.setAttribute("aria-hidden", "true");
-  settingsUI.result.replaceChildren(mark, el("span", "", text));
+  box.replaceChildren(mark, el("span", "", text));
 }
+
+// 정보 탭의 [최신 버전 확인]: 서버가 깃허브에 다시 물어봄 (연타는 서버가 1분 간격으로 막음)
+// 결과 글자(최신·새 버전)는 바로 위 '버전' 칸이 보여 주므로 여기서는 확인했는지·실패했는지만 알림
+const updateCheckUI = {
+  button: document.getElementById("update-check"),
+  result: document.getElementById("update-check-result"),
+};
+updateCheckUI.button.addEventListener("click", async () => {
+  const { button, result } = updateCheckUI;
+  button.disabled = true;
+  showSettingsResult(t("update.checking"), null, result);
+  try {
+    const res = await fetch("/api/update/check", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}",
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error();
+    if (data.result === "busy") showSettingsResult(t("update.checkBusy"), null, result);
+    else showSettingsResult(t(data.result === "ok" ? "update.checkDone" : "update.checkFailed"), data.result === "ok", result);
+    await loadUpdate(); // 버전 칸·탭 아래 안내·⚙ 점을 새 결과로
+  } catch (error) {
+    showSettingsResult(t("update.checkFailed"), false, result);
+  } finally {
+    button.disabled = false;
+  }
+});
 
 async function sendSettings(body) {
   settingsUI.buttons.forEach((b) => (b.disabled = true));
@@ -43,7 +71,10 @@ async function sendSettings(body) {
 
 // 설정 탭 (일반 / 기록 관리 / 정보): 고른 탭의 칸만 보이게
 function showSettingsTab(name) {
-  if (name === "about") loadUpdate();
+  if (name === "about") {
+    loadUpdate();
+    updateCheckUI.result.replaceChildren(); // 지난번 확인 결과는 지우고 시작
+  }
   document.querySelectorAll(".settings-tab").forEach((b) => b.classList.toggle("active", b.dataset.stab === name));
   document.querySelectorAll(".settings-item[data-stab]").forEach((s) => { s.hidden = s.dataset.stab !== name; });
 }

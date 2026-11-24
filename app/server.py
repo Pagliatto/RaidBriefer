@@ -407,10 +407,47 @@ def api_update_apply():
     """[지금 업데이트]: 받아서 확인하고 도우미를 켠 뒤 프로그램을 닫음 (exe 일 때만)"""
     if not (request.get_json(silent=True) or {}).get("confirm"):
         abort(400)
+    # 수동 확인(api_update_check)이 깃허브 답을 기다리는 중이면 끝날 때까지 기다림 (길어야 8초)
+    # → 받기 시작한 뒤에 확인이 받을 파일 정보(_asset)를 바꾸지 못하게
+    with _manual_check_lock:
+        try:
+            return jsonify(updater.apply())
+        except RuntimeError as error:
+            return jsonify({"error": str(error)}), 400
+
+
+MANUAL_CHECK_GAP = 60  # 초. 깃허브는 로그인 없이 시간당 60번만 받아 줌 → 연타해도 1분에 한 번만 물어봄
+MANUAL_CHECK_RETRY_GAP = 10  # 초. 실패했을 때는 인터넷을 고치고 금방 다시 눌러 볼 수 있게 짧게
+_manual_check_lock = threading.Lock()
+_manual_check = {"at": 0.0, "ok": None}
+
+
+@app.post("/api/update/check")
+def api_update_check():
+    """설정 → 정보의 [최신 버전 확인]: 깃허브에 지금 다시 물어봄.
+    result: ok(물어봤고 성공) / failed(인터넷 등으로 못 물어봄) / busy(켤 때 확인·받는 중·바꾸는 중이라 건너뜀)"""
+    current = updater.state()
+    if not current["check_finished"] or current["status"] in ("downloading", "installing"):
+        return jsonify({**current, "result": "busy"})
+    if not _manual_check_lock.acquire(blocking=False):  # 다른 확인이 아직 진행 중
+        return jsonify({**current, "result": "busy"})
     try:
-        return jsonify(updater.apply())
-    except RuntimeError as error:
-        return jsonify({"error": str(error)}), 400
+        # 잠금을 기다리는 사이에 [지금 업데이트]가 시작됐을 수 있으므로 잠금 안에서 다시 확인
+        current = updater.state()
+        if current["status"] in ("downloading", "installing"):
+            return jsonify({**current, "result": "busy"})
+        last_ok = _manual_check["ok"]
+        gap = MANUAL_CHECK_GAP if last_ok else MANUAL_CHECK_RETRY_GAP
+        if last_ok is not None and time.monotonic() - _manual_check["at"] < gap:
+            # 방금 물어본 결과를 그대로 돌려줌 (깃허브에 다시 묻지 않음)
+            return jsonify({**current, "result": "ok" if last_ok else "failed"})
+        updater._set(check_error=None)  # 이번 확인이 실패했는지 알 수 있게 비워 둠
+        current = updater.check()
+        ok = current["check_error"] is None
+        _manual_check.update(at=time.monotonic(), ok=ok)
+        return jsonify({**current, "result": "ok" if ok else "failed"})
+    finally:
+        _manual_check_lock.release()
 
 
 @app.route("/api/state")
@@ -540,8 +577,8 @@ def api_whats_new():
     versions = ([entry for entry in available if updater._ver(entry["version"]) > updater._ver(last_seen)]
                 if last_seen else available[:3])
     show = bool(current["setup_done"] and versions)
-    # history: 설정 정보 탭의 '업데이트 기록' (지금 버전까지 전부, 새 버전부터)
-    return jsonify({"version": VERSION, "show": show, "versions": versions, "notes": notes, "history": available})
+    # history: 설정 정보 탭의 '업데이트 기록' (새 버전부터 최근 5개만, 더 옛 기록은 화면의 깃허브 링크로)
+    return jsonify({"version": VERSION, "show": show, "versions": versions, "notes": notes, "history": available[:5]})
 
 
 @app.route("/api/whats-new/seen", methods=["POST"])
