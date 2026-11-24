@@ -31,8 +31,9 @@ COLOR = 0xE8A33D  # 카드 왼쪽 세로줄 색 (호박색)
 DESC_LIMIT = 4096  # 디스코드 카드 본문 최대 글자 수
 
 
-def logo_url(repo):
-    return f"https://raw.githubusercontent.com/{repo}/main/docs/logo/RaidBriefer-A-1024.png"
+def logo_url(repo, tag=""):
+    # 디스코드는 같은 주소의 그림을 오래 기억해서 로고를 바꿔도 옛 그림이 나옴 → 버전을 붙여 새 주소로
+    return f"https://raw.githubusercontent.com/{repo}/main/docs/logo/RaidBriefer-A-1024.png" + (f"?v={tag}" if tag else "")
 
 
 TAG_RE = re.compile(r"^[vV]?\d+(\.\d+){1,3}$")  # v1.3.0 / 1.3.0 같은 모양만
@@ -101,7 +102,7 @@ def build_payload(env):
         "url": url,
         "description": description,
         "color": COLOR,
-        "thumbnail": {"url": logo_url(repo)},
+        "thumbnail": {"url": logo_url(repo, tag)},
         "footer": {"text": "Pagliatto Lab · RaidBriefer"},
     }
     published = (env.get("PUBLISHED_AT") or "").strip()
@@ -109,7 +110,7 @@ def build_payload(env):
         embed["timestamp"] = published
 
     return {
-        "avatar_url": logo_url(repo),
+        "avatar_url": logo_url(repo, tag),
         "embeds": [embed],
         # 공지에서 @everyone 같은 멘션이 울리지 않게
         "allowed_mentions": {"parse": []},
