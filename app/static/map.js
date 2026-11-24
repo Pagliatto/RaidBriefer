@@ -2345,7 +2345,7 @@ function drawMe(fresh) {
     html: `<span class="me-fade" style="animation-delay:-${Math.round(age)}ms"><i class="me-halo"></i>${wave}${shape}</span>`,
   });
   mapMe.marker = L.marker(latlng, { icon, interactive: false, keyboard: false, zIndexOffset: ME_PIN_Z }).addTo(leaf);
-  mapMe.timer = setTimeout(() => { mapMe.pos = null; clearMe(); }, ME_SHOW_MS - age);
+  mapMe.timer = setTimeout(() => { if (mapMe.pos === pos) mapMe.pos = null; clearMe(); }, ME_SHOW_MS - age);
   if (fresh) goToFloorOf(floorOf([pos.x, pos.z, pos.y])); // 새로 찍은 위치: 층만 맞춤
 }
 
@@ -2389,7 +2389,7 @@ function onPlayerPosition(pos) {
   // 그 맵을 그릴 때(drawMap 끝) 남은 시간만큼 표시 (moveTo = 그때 층 맞춤)
   const here = mapUI.current && mapUI.current.ids.includes(pos.map_id);
   if (here && mapUI.leaflet && !mapUI.dirty) drawMe(true); // 다른 탭을 보는 중이어도 지도에는 찍어 둠
-  else mapMe.moveTo = true;
+  else { clearMe(); mapMe.moveTo = true; } // 옛 표시와 그 만료 타이머를 지움 (옛 타이머가 새 위치까지 지우지 않게)
 }
 window.addEventListener("player-position", (e) => onPlayerPosition(e.detail));
 

@@ -57,9 +57,10 @@ The goal is that you barely have to touch it.
 - **Ending paths**: The Ticket flowchart shows ending choices, your current position and the steps left until the next fork.
 - **Prestige** is detected automatically and progress starts fresh.
 - **English and Korean.** It follows your Windows language at first; change it in ⚙ Settings.
-- **Game brightness**: the monitor icon in the top bar lets you brighten the game during raids in borderless window mode.
+- **My position**: press the in-game screenshot key during a raid and the map shows where you are and which way you're facing for 30 seconds. Only the screenshot's file name is read (the image is never opened or deleted).
+- **Game brightness**: the monitor icon in the top bar lets you brighten the game during raids in borderless window mode. It turns on as soon as loading ends and the map appears.
 - **🔔 Alerts menu**: tells you about problems such as unreadable game logs or failed data downloads, with a code. Unexpected errors are logged in `report.txt`, and the Discord / GitHub report buttons fill in the codes for you.
-- **Tells you when a new version is out** and updates with one click. Your records are kept; a What's new popup includes skipped versions, and Settings → About has the full update history.
+- **Tells you when a new version is out** and updates with one click. Your records are kept; a What's new popup includes skipped versions, and Settings → About shows recent update history with a [Check for updates] button.
 
 ## Is it safe?
 
@@ -70,6 +71,7 @@ RaidBriefer only uses:
    - Bundled storyline, Terminal guide and quest corrections use official wiki summaries. Some positions missing from tarkov.dev (extracts, BTR stops, Terminal guide pins and Black Division spawns) come from official wiki maps or in-game checks.
 2. The game's **log files** — **read only**. That's how it knows which map you're on and which quests you accepted or completed.
 3. Whether the game is running — it only checks the **process name** (`EscapeFromTarkov.exe`), like Task Manager.
+4. The **file names of screenshots** the game takes: only the position the game writes into the name is read. You press the screenshot key yourself; the app never sends key presses to the game.
 
 **It never reads game memory, modifies game files, uses mods, or draws over the game (overlay).**
 That's why it runs in its own window (for example on a second monitor).
