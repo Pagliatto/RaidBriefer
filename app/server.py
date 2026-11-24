@@ -18,7 +18,7 @@ from pathlib import Path
 from flask import Flask, abort, jsonify, render_template, request, send_file
 from werkzeug.exceptions import HTTPException
 
-from app import alerts, brightness, cleanup, game_state, hideout, i18n, updater, map_views, paths, progress, quest_log, quests, report_log, settings, story, story_places, tarkov_api
+from app import alerts, brightness, cleanup, game_state, hideout, i18n, updater, map_views, paths, progress, quest_log, quests, report_log, settings, shot_watch, story, story_places, tarkov_api
 
 from app.version import VERSION
 
@@ -462,6 +462,7 @@ def api_state():
     state["data_updating"] = tarkov_api.is_updating()
     state["quest_rev"] = quest_log.poll_log_rev()  # 디스크 조회는 별도 스레드에서만
     state["log_reading"] = quest_log.log_reading()
+    state["position"] = shot_watch.latest()  # 스크린샷 파일 이름의 내 위치 (레이드 중, 최근 30초 것만)
     # 알림함: 코드만 (alerts.py). 개발용 정보는 소스 실행일 때만
     state["alerts"] = alerts.collect(state.get("log_problem"), state.get("status") != game_state.GAME_OFF)
     report_log.note_alerts(state["alerts"])
@@ -710,6 +711,7 @@ def serve(port: int = PORT) -> None:
     cleanup.clean_all()  # 꺼질 때 남은 임시 파일·오래된 손상 백업 정리
     brightness.init()
     game_state.start()  # 게임 로그를 뒤에서 계속 지켜보기 (상단바 상태)
+    shot_watch.start()  # 레이드 중 스크린샷 파일 이름에서 내 위치 읽기
     updater.check_in_background()  # 새 버전이 있는지 깃허브에 한 번 물어봄
     # 프레스티지 찾기는 처음 한 번 몇 초 걸려서 미리 해 둠 (화면이 기다리지 않게)
     threading.Thread(target=quest_log.last_prestige, daemon=True).start()

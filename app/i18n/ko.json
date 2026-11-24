@@ -294,6 +294,7 @@
     "layerToggle": "표시",
     "selectLabel": "맵 선택",
     "auto": "● 지금 레이드 맵",
+    "shotHint": "게임에서 스크린샷 키를 누르면 지도에 내 위치가 표시돼요",
     "drawer": "할 일",
     "drawerHint": "할 일 목록 (스토리·퀘스트)",
     "foldHide": "접기",

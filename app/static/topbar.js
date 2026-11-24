@@ -168,6 +168,7 @@ const logReadingNotice = (() => {
 let statePollPromise = null;
 let statePollTimer = null;
 let statePollSequence = 0;
+let lastPositionId = null;
 function pollState() {
   if (statePollPromise) return statePollPromise;
   clearTimeout(statePollTimer);
@@ -193,6 +194,13 @@ function pollState() {
         if (questLog) window.dispatchEvent(new CustomEvent("quest-log-changed", { detail: next }));
         // 다른 화면(나중에: 맵에 들어가면 자동 전환)이 쓸 수 있게 알림
         if (changed) window.dispatchEvent(new CustomEvent("game-state", { detail: next }));
+        // 새 스크린샷 = 새 내 위치 (지도 화면이 받아서 표시). 맵 전환 알림 뒤에 보냄
+        // 위치가 없어지면(레이드 끝·30초 지남) null 을 보내 표시를 지움
+        const positionId = next.status === "raid" && next.position ? next.position.id : null;
+        if (positionId !== lastPositionId) {
+          lastPositionId = positionId;
+          window.dispatchEvent(new CustomEvent("player-position", { detail: positionId ? next.position : null }));
+        }
         return true;
       }
     } catch (error) {

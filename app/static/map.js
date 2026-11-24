@@ -1219,6 +1219,7 @@ async function drawMap() {
     updatePositionEditor(mapEditor.status?.textContent || "");
   }
   mapEditor.bindings.clear();
+  clearMe(); // 내 위치 표시는 지도와 함께 사라짐 → 끝에서 다시 그림
   lootRevision++;
   lootController?.abort();
   const m = mapUI.current;
@@ -1343,6 +1344,9 @@ async function drawMap() {
   drawPins();
   drawFeatures(leaf, m);
   drawFloorControl(box, view);
+  drawMe(mapMe.moveTo, 250); // 내 위치 (스크린샷으로 맵이 바뀐 경우에는 그 위치로 이동)
+  if (!mapMe.pos || m.ids.includes(mapMe.pos.map_id)) mapMe.moveTo = false; // 그 맵을 그렸을 때만 '이동' 예약을 끝냄
+  drawShotHint();
   // 출처: 지도 오른쪽 아래에 작게 (CC BY-NC-SA 는 출처 표시가 조건)
   const credit = el("p", "map-credit");
   box.append(credit);
@@ -2250,6 +2254,7 @@ async function showTransition(title, text, action) {
 // ---------- 게임 상태가 바뀌면 자동 전환 (topbar.js 의 game-state 알림) ----------
 function onGameState(s) {
   if (mapEditor.active) return;
+  updateMeForState(s);
   const inRaid = (s.status === "loading" || s.status === "raid") && s.map_id;
   const previousGuideRaid = mapUI.guideRaid;
   updateGuideRaid(s, inRaid);
@@ -2291,6 +2296,140 @@ function onGameState(s) {
   }
 }
 window.addEventListener("game-state", (e) => onGameState(e.detail));
+
+// ---------- 내 위치 (게임 스크린샷 파일 이름의 좌표, 2026-11-24 사용자) ----------
+// 사용자가 게임에서 스크린샷 키를 누르면 서버(shot_watch.py)가 파일 이름의 좌표를 읽어 준다.
+// 표시는 30초: 처음 15초는 진하게, 나머지 15초 동안 천천히 사라짐. 새로 찍으면 옛 표시는 바로 없어짐
+const ME_SHOW_MS = 30000;   // shot_watch.py SHOW_SECONDS 와 같게 (CSS me-fade 도 30s)
+const ME_PIN_Z = 2000;      // 모든 표시 위 (펼친 퀘스트 핀 1000 보다도 위)
+const ME_WAVE_MS = 3000;    // 막 찍은 위치만 파동 (다시 그릴 때는 없음)
+const SHOT_HINT_STORAGE = "tarkovhelper.shotHint";
+const SHOT_HINT_TIMES = 3;  // 안내는 처음 몇 번의 레이드만. 한 번이라도 찍어 봤으면 다시 안 띄움
+const SHOT_HINT_MS = 12000;
+const mapMe = { pos: null, marker: null, timer: null, moveTo: false, hintSince: null, hintUntil: 0, hintTimer: null };
+
+function clearMe() {
+  clearTimeout(mapMe.timer);
+  mapMe.timer = null;
+  mapMe.marker?.remove();
+  mapMe.marker = null;
+}
+
+// 바라보는 방향 → 화면에서의 각도 (0 = 위쪽). 지도가 돌아가 있어도 맞게, 두 점을 화면 좌표로 바꿔서 잼
+function meAngle(leaf, pos) {
+  if (!pos.fx && !pos.fz) return null;
+  const a = leaf.project(L.latLng(gamePos([pos.x, pos.z])), 0);
+  const b = leaf.project(L.latLng(gamePos([pos.x + pos.fx, pos.z + pos.fz])), 0);
+  if (a.distanceTo(b) < 1e-9) return null;
+  return Math.atan2(b.x - a.x, a.y - b.y) * 180 / Math.PI;
+}
+
+function drawMe(move, settle = 0) {
+  clearMe();
+  const pos = mapMe.pos, leaf = mapUI.leaflet, m = mapUI.current;
+  if (!pos || !leaf || !m || mapEditor.active || !m.ids.includes(pos.map_id)) return;
+  const age = Math.max(0, Date.now() - pos.at);
+  if (age >= ME_SHOW_MS) { mapMe.pos = null; return; }
+  const latlng = L.latLng(gamePos([pos.x, pos.z]));
+  // 이 맵의 범위를 한참 벗어난 좌표는 그리지 않음 (다른 맵의 스크린샷 등)
+  if (mapUI.bounds && !mapUI.bounds.pad(0.25).contains(latlng)) return;
+  const angle = meAngle(leaf, pos);
+  const wave = age < ME_WAVE_MS && !reducedMotion() ? '<i class="me-wave"></i>' : "";
+  const shape = angle === null
+    ? '<i class="me-dot"></i>'
+    : `<svg class="me-arrow" viewBox="0 0 24 24" style="transform:rotate(${angle.toFixed(1)}deg)" aria-hidden="true"><path d="M12 2.5 20 21 12 16.8 4 21Z"/></svg>`;
+  const icon = L.divIcon({
+    className: "me-pin", iconSize: [44, 44], iconAnchor: [22, 22],
+    html: `<span class="me-fade" style="animation-delay:-${Math.round(age)}ms"><i class="me-halo"></i>${wave}${shape}</span>`,
+  });
+  mapMe.marker = L.marker(latlng, { icon, interactive: false, keyboard: false, zIndexOffset: ME_PIN_Z }).addTo(leaf);
+  mapMe.timer = setTimeout(() => { mapMe.pos = null; clearMe(); }, ME_SHOW_MS - age);
+  if (!move) return;
+  // 지도를 막 그린 직후(settle)에는 칸 크기가 정해지고 '전체 보기 맞춤'이 끝난 뒤에 이동
+  setTimeout(() => {
+    if (mapUI.leaflet !== leaf || mapMe.pos !== pos) return;
+    goToFloorOf(floorOf([pos.x, pos.z, pos.y]));
+    collapseAll();
+    const zoom = Math.max(leaf.getZoom(), Math.min(leaf.getMinZoom() + 1.5, leaf.getMaxZoom()));
+    leaf.setView(latlng, zoom, { animate: !reducedMotion() });
+  }, settle);
+}
+
+function shotHintState() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(SHOT_HINT_STORAGE) || "{}");
+    return { used: saved.used === true, shown: Number.isInteger(saved.shown) && saved.shown > 0 ? saved.shown : 0 };
+  } catch (e) {
+    return { used: false, shown: 0 };
+  }
+}
+
+function saveShotHint(state) {
+  try { localStorage.setItem(SHOT_HINT_STORAGE, JSON.stringify(state)); } catch (e) { /* 무시 */ }
+}
+
+// 지도 위쪽의 안내 한 줄 (지도를 다시 그려도 남은 시간만큼 다시 보임)
+function drawShotHint() {
+  clearTimeout(mapMe.hintTimer);
+  document.querySelector("#map-view .map-hint")?.remove();
+  const left = mapMe.hintUntil - Date.now();
+  if (left <= 0 || !mapUI.leaflet) return;
+  document.getElementById("map-view").append(el("p", "map-hint", t("map.shotHint")));
+  mapMe.hintTimer = setTimeout(drawShotHint, left);
+}
+
+function onPlayerPosition(pos) {
+  if (mapEditor.active) return;
+  if (!pos) { // 레이드가 끝났거나 30초가 지남
+    mapMe.pos = null;
+    mapMe.moveTo = false;
+    clearMe();
+    return;
+  }
+  mapMe.pos = pos;
+  const hint = shotHintState();
+  if (!hint.used) saveShotHint({ ...hint, used: true });
+  mapMe.hintUntil = 0;
+  drawShotHint();
+  const target = mapUI.maps.find((m) => m.ids.includes(pos.map_id));
+  if (!target) { mapMe.moveTo = true; return; } // 맵 목록을 아직 못 받음 → 그 맵을 그릴 때 이동 (drawMap 끝)
+  const shown = currentTab() === "map";
+  if (mapUI.current !== target) { // 다른 맵을 보고 있었음 → 레이드 맵으로
+    mapMe.moveTo = true;
+    mapUI.current = target;
+    document.getElementById("map-select").value = target.key;
+    drawBtrTrackerLink();
+    if (shown) drawMap();
+    else { mapUI.dirty = true; goTab("map"); }
+    return;
+  }
+  if (shown && mapUI.leaflet && !mapUI.dirty) { drawMe(true); return; }
+  mapMe.moveTo = true;
+  const redraw = mapUI.dirty || !mapUI.leaflet;
+  if (!shown) goTab("map"); // 지도를 새로 그리면 drawMap 끝에서 표시
+  else if (redraw) drawMap();
+  if (!redraw) setTimeout(() => { if (mapMe.moveTo) { mapMe.moveTo = false; drawMe(true, 250); } }, 0);
+}
+window.addEventListener("player-position", (e) => onPlayerPosition(e.detail));
+
+// 레이드가 시작되면 안내 한 줄 (처음 몇 번만), 레이드가 아니면 내 위치를 지움
+function updateMeForState(s) {
+  if (s.status !== "raid") {
+    mapMe.pos = null;
+    mapMe.moveTo = false;
+    mapMe.hintUntil = 0;
+    clearMe();
+    drawShotHint();
+    return;
+  }
+  if (mapMe.hintSince === s.since) return;
+  mapMe.hintSince = s.since;
+  const hint = shotHintState();
+  if (hint.used || hint.shown >= SHOT_HINT_TIMES) return;
+  saveShotHint({ ...hint, shown: hint.shown + 1 });
+  mapMe.hintUntil = Date.now() + SHOT_HINT_MS;
+  drawShotHint();
+}
 
 // ---------- 이벤트 연결 ----------
 document.getElementById("map-select").addEventListener("change", (e) => chooseMap(e.target.value));

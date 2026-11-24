@@ -294,6 +294,7 @@
     "layerToggle": "Layers",
     "selectLabel": "Map",
     "auto": "● Current raid map",
+    "shotHint": "Press the in-game screenshot key to show your position on the map",
     "drawer": "To-do",
     "drawerHint": "To-do list (story and quests)",
     "foldHide": "Collapse",
