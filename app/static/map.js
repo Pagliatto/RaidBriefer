@@ -1220,8 +1220,6 @@ async function drawMap() {
   }
   mapEditor.bindings.clear();
   clearMe(); // 내 위치 표시는 지도와 함께 사라짐 → 끝에서 다시 그림
-  lootRevision++;
-  lootController?.abort();
   const m = mapUI.current;
   if (mapStory.explicit?.map !== m?.key) { mapStory.explicit = null; mapStory.focused = null; }
   mapStory.markers = [];
@@ -1442,8 +1440,7 @@ function renderLootBar() {
   const row = el("div", "loot-items");
   bar.append(row);
   items.forEach((item) => {
-    const chip = el("button", "loot-icon");
-    chip.type = "button";
+    const chip = el("span", "loot-icon"); // 누르는 기능 없음 (지도 표시를 없앰, 2026-11-25 사용자)
     chip.dataset.key = item.text;
     // 마우스를 올리면 전체 이름 + 개수 + 필요한 곳
     chip.title = `${item.text}${item.count > 1 ? ` ×${item.count}` : ""}\n` + t("map.lootNeededBy", { list: item.from.map((f) => f.name).join(", ") });
@@ -1458,7 +1455,6 @@ function renderLootBar() {
       chip.append(el("span", "loot-text", shortItem(item.text))); // 아이콘을 모르면(스토리 아이템 등) 짧은 이름
     }
     if (item.count > 1) chip.append(el("b", "loot-count", `×${item.count}`));
-    chip.addEventListener("click", () => focusLoot(item.text));
     row.append(chip);
   });
   // 두 줄 이상일 때만 보이는 접기/펼치기 (접으면 첫 줄만, 상태는 기억)
@@ -1472,7 +1468,6 @@ function renderLootBar() {
     updateLootToggle();
   });
   bar.append(toggle);
-  markLootChips();
   updateLootToggle();
 }
 
@@ -1495,66 +1490,6 @@ function updateLootToggle() {
   toggle.setAttribute("aria-expanded", String(!collapsed));
 }
 
-// 바닥 생성 위치가 데이터에 있는 아이템만 지도에 ◆ (귀중품 위주. 상자에서 나오는 건 위치 데이터가 없음)
-let lootRevision = 0;
-let lootController = null;
-async function drawLoot() {
-  const revision = ++lootRevision;
-  lootController?.abort();
-  const controller = lootController = new AbortController();
-  if (mapUI.groups?.loot) mapUI.groups.loot.clearLayers();
-  if (mapUI.floorItems) mapUI.floorItems = mapUI.floorItems.filter((x) => !x.lootPin);
-  mapUI.lootLayer = null;
-  mapUI.lootSpots = {};
-  const leaf = mapUI.leaflet;
-  const m = mapUI.current;
-  const items = lootItems();
-  const ids = [...new Set(items.flatMap((i) => i.ids || []))];
-  if (!leaf || !m || !ids.length) return markLootChips();
-  let spots = {};
-  try {
-    const res = await fetch(`/api/loot/${encodeURIComponent(m.key)}?ids=${ids.join(",")}`, { signal: controller.signal });
-    if (res.ok) spots = await res.json();
-  } catch (error) { /* 위치를 못 받아도 목록은 그대로 */ }
-  if (mapUI.leaflet !== leaf || revision !== lootRevision) return;
-  const layers = [];
-  items.forEach((item) => {
-    const points = (item.ids || []).flatMap((id) => spots[id] || []);
-    if (!points.length) return;
-    mapUI.lootSpots[item.text] = points.map((p) => L.latLng(gamePos(p)));
-    points.forEach((p) => {
-      const pin = L.marker(gamePos(p), {
-        icon: markerIcon("loot", "package", 14),
-        keyboard: false,
-        zIndexOffset: LOOT_PIN_Z,
-      }).bindTooltip(shortItem(item.text), { direction: "top", offset: [0, -6] });
-      const floor = floorOf(p);
-      pin.on("click", () => goToFloorOf(floor)); // 누르면 그 층으로
-      mapUI.floorItems.push({ layer: pin, floor, lootPin: true });
-      layers.push(pin);
-    });
-  });
-  mapUI.lootLayer = L.layerGroup(layers).addTo(mapUI.groups.loot);
-  applyFloor();
-  renderLayerDrawer();
-  markLootChips();
-}
-
-// 지도에 위치가 있는 아이템 칩에는 ◆ 표시
-function markLootChips() {
-  document.querySelectorAll("#loot-bar .loot-icon").forEach((chip) => {
-    chip.classList.toggle("on-map", !!(mapUI.lootSpots && mapUI.lootSpots[chip.dataset.key]));
-  });
-}
-
-function focusLoot(key) {
-  const spots = mapUI.lootSpots && mapUI.lootSpots[key];
-  if (spots && spots.length && mapUI.leaflet) {
-    collapseAll();
-    fitArea(mapUI.leaflet, L.latLngBounds(spots), { maxZoom: 4, padding: 60, animate: true });
-  }
-}
-
 // ---------- 겹친 핀: 묶지 않고 그 자리에 겹쳐 둠 (묶음 표시는 지도를 가려서 안 씀) ----------
 // 겹친 핀은 테두리 링으로 '여러 개'임을 알리고, 누르면 그 자리를 확대해서 떨어뜨림.
 // 위치가 완전히 같아서 가장 크게 확대해도 겹치면 그때만 동그랗게 펼침 (지도 빈 곳을 누르면 다시 모임)
@@ -1564,7 +1499,6 @@ const STORY_PIN_Z = 600; // 스토리 핀 높이 (퀘스트 핀보다 위, 겹�
 // 겹쳤을 때 위에 오는 순서 (2026-11-24 사용자: 중요한 표시일수록 위, 규칙 docs/notes/map-screen.md)
 // 할 일(스토리 600 > 퀘스트 500 > 공략 400) > 나가는 길·위험·열쇠 자리 > 참고(잠긴 문·비트코인·BTR·먹을 것)
 const GUIDE_PIN_Z = 400;
-const LOOT_PIN_Z = 40;
 const MARKER_Z = { extracts: 300, scavExtracts: 300, transits: 280, bossZones: 250, blackDivision: 250, keySpawns: 200, keys: 100, bitcoin: 80, btrStops: 60 };
 // 강조(800)가 풀렸을 때 돌아갈 원래 높이
 function baseZ(marker) { return marker.baseZ || 0; }
@@ -2452,7 +2386,6 @@ function scheduleMapRefresh() {
   clearTimeout(mapRefreshTimer);
   mapRefreshTimer = setTimeout(() => {
     renderLootBar();
-    if (mapUI.leaflet) drawLoot();
   }, 0);
 }
 document.addEventListener("hideout-changed", scheduleMapRefresh);
@@ -2488,15 +2421,13 @@ initializePositionEditor().then(loadMapList);
 
 // ---------- 표시 켜기/끄기 (왼쪽 서랍) ----------
 // 퀘스트·먹을 것·탈출구·트랜짓·열쇠·귀중품. 고른 값은 이 브라우저에 기억 (다음에 켜도 그대로)
-const LAYER_KEYS = ["quests", "loot", "extracts", "scavExtracts", "transits", "btrStops", "keys", "bitcoin", "keySpawns", "guide", "story", "blackDivision", "bossZones"];
+const LAYER_KEYS = ["quests", "extracts", "scavExtracts", "transits", "btrStops", "keys", "bitcoin", "keySpawns", "guide", "story", "blackDivision", "bossZones"];
 const LAYER_INFO = {
   story: { label: t("map.storyLayer"), mark: "mk:story:book-open", on: true },
   blackDivision: { label: t("map.layerBlackDivision"), mark: "mk:enemy:crosshair", on: true },
   bossZones: { label: t("map.layerBossZones"), mark: "mk:boss:skull", on: true },
   guide: { label: t("map.guideLayer"), mark: "mk:guide-start:book-open", on: true },
   quests: { label: t("map.layerQuests"), mark: "shape:quest", on: true },
-  // 필요템 바닥 위치: 맵마다 0~몇 개뿐이라 스위치 없이 항상 표시 (위쪽 줄 아이콘을 누르면 그 자리로, 2026-11-20 사용자)
-  loot: { label: t("map.layerLoot"), mark: "mk:loot:package", on: true, always: true },
   extracts: { label: t("map.layerExtracts"), mark: "mk:extract-pmc:door-open", on: true },
   scavExtracts: { label: t("map.layerScavExtracts"), mark: "mk:extract-scav:door-open", on: false },
   transits: { label: t("map.layerTransits"), mark: "mk:transit:arrow-left-right", on: true },
@@ -2565,7 +2496,6 @@ function layerCount(key) {
   if (!mapUI.groups || !mapUI.leaflet) return null;
   if (key === "bossZones") return mapUI.groups.bossZones?.getLayers().filter((layer) => layer instanceof L.Marker).length || 0;
   if (key === "quests") return (mapUI.pinMarkers || []).length;
-  if (key === "loot") return mapUI.lootLayer ? mapUI.lootLayer.getLayers().length : 0;
   return mapUI.groups[key] ? mapUI.groups[key].getLayers().length : 0;
 }
 

@@ -959,17 +959,12 @@ body.map-mode .scroll-buttons { display: none; }
   border: 1px solid var(--border); background: #1a1c1e;
 }
 .loot-icon img { width: 30px; height: 30px; object-fit: contain; }
-.loot-icon:hover { border-color: var(--text-dim); }
 .loot-text { padding: 0 6px; font-size: 11px; color: var(--text-dim); max-width: 7em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .loot-count {
   position: absolute; right: -3px; bottom: -4px; padding: 0 3px; border-radius: 4px;
   font-size: 10px; font-weight: 700; line-height: 14px; background: var(--bg); color: var(--text); border: 1px solid var(--border);
 }
-.loot-icon.on-map { border-color: var(--accent); }
-/* 지도에 위치가 있는 아이템: 지도 표시(먹을 것 분홍 네모)와 같은 색의 작은 네모 */
-.loot-icon.on-map::after { content: ""; position: absolute; left: 2px; top: 2px; width: 6px; height: 6px; border-radius: 2px; background: #c7a5b3; border: 1px solid #111; }
 
-/* 먹을 것 바닥 생성 위치: 작은 마름모 (퀘스트 번호 핀과 모양이 다름) */
 .loot-pin span {
   display: block; width: 10px; height: 10px; transform: rotate(45deg);
   background: var(--accent); border: 1px solid #111; box-shadow: 0 0 3px rgba(0, 0, 0, 0.7);
@@ -1980,7 +1975,6 @@ button.home-map, button.home-story-row, button.choice-option, button.prep-item, 
 .layer-blackDivision .layer-name, .layer-bossZones .layer-name { white-space: normal; }
 .mk-keyspawn { --mk: #ff8a70; }  /* 산호색: BTR 청록·비트코인 주황·먹을 것 분홍과 구분 */
 .mk-bitcoin { --mk: #c9a573; }   /* 참고: 탁한 주황 */
-.mk-loot { --mk: #c7a5b3; }      /* 참고: 탁한 분홍 */
 /* 공략: 종류별 기호, 후보는 옅은 바탕·점선. 층 투명도는 Leaflet이 따로 적용한다. */
 /* 공략 핀은 같은 뜻의 색을 빌려 씀 (색 규칙: docs/notes/map-screen.md '지도 표시 색 규칙') */
 .mk-guide-key_spawn { --mk: #ff8a70; }   /* 물건: 열쇠 = 열쇠 자리 */
@@ -2054,7 +2048,6 @@ button.home-map, button.home-story-row, button.choice-option, button.prep-item, 
 .loot-strip .loot-label { font-size: 13px; font-weight: 600; color: var(--text-dim); margin-right: 2px; }
 .loot-strip .loot-icon { box-sizing: border-box; width: 32px; min-width: 32px; height: 32px; border-radius: 5px; border-color: var(--border-strong); }
 .loot-strip .loot-icon img { width: 28px; height: 28px; }
-.loot-strip .loot-icon.on-map { border-color: #c7a5b3; }  /* 지도에 위치가 있는 필요템 = 지도의 먹을 것 표시와 같은 탁한 분홍 */
 
 /* 맵 전용 색: 색상환을 고르게 나눠 맵끼리 바로 구분되게 (2026-11-21 사용자: 흐리면 구분 안 됨). 모든 태그·필터에서 공유 */
 :root {

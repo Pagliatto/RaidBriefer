@@ -219,6 +219,7 @@ def map_list() -> list[dict]:
     return sorted(result.values(), key=lambda x: x["name"])
 
 
+# 지금은 화면에서 안 씀: 필요템 지도 표시를 없앰 (2026-11-25 사용자). 나중에 다시 쓸 수 있어 남겨 둠
 def loose_spots(map_key: str, item_ids: set[str]) -> dict[str, list]:
     """이 맵에서 그 아이템들이 바닥에 생기는 위치 (tarkov.dev maps 의 lootLoose).
     귀중품 위주 350종만 들어 있고, 상자 안에서 나오는 아이템은 없음.

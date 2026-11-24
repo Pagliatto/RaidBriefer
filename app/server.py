@@ -344,20 +344,6 @@ def api_editor():
         return jsonify({"ok": False, "saved": [], "error": i18n.t("editor.saveFailed")}), 409
 
 
-@app.route("/api/loot/<map_key>")
-def api_loot(map_key):
-    """먹을 아이템이 이 맵 바닥에 생기는 위치. ?ids=아이템id,아이템id"""
-    ids = {i for i in request.args.get("ids", "").split(",") if 0 < len(i) <= 40}
-    if len(ids) > 300 or len(map_key) > 60:
-        return jsonify({"error": i18n.t("server.badRequest")}), 400
-    try:
-        return jsonify(map_views.loose_spots(map_key, ids))
-    except settings.DataReadError:
-        raise
-    except Exception as error:
-        return _failed("server.lootFailed", error)
-
-
 @app.route("/map-svg/<name>")
 def map_svg(name):
     """지도 그림 (처음 한 번 tarkov.dev 에서 받아 cache/map_svg 에 저장)"""
