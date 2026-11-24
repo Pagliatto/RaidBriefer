@@ -407,13 +407,18 @@ def api_update_apply():
     """[지금 업데이트]: 받아서 확인하고 도우미를 켠 뒤 프로그램을 닫음 (exe 일 때만)"""
     if not (request.get_json(silent=True) or {}).get("confirm"):
         abort(400)
-    # 수동 확인(api_update_check)이 깃허브 답을 기다리는 중이면 끝날 때까지 기다림 (길어야 8초)
+    # 수동 확인(api_update_check)이 깃허브 답을 기다리는 중이면 끝날 때까지 기다림
     # → 받기 시작한 뒤에 확인이 받을 파일 정보(_asset)를 바꾸지 못하게
-    with _manual_check_lock:
-        try:
-            return jsonify(updater.apply())
-        except RuntimeError as error:
-            return jsonify({"error": str(error)}), 400
+    # 인터넷이 아주 느리면 확인이 오래 걸릴 수 있어 10초까지만 기다리고, 넘으면 시작하지 않고
+    # 지금 상태를 그대로 돌려줌 (화면에 [지금 업데이트]가 그대로 남아 다시 누를 수 있음)
+    if not _manual_check_lock.acquire(timeout=10):
+        return jsonify(updater.state())
+    try:
+        return jsonify(updater.apply())
+    except RuntimeError as error:
+        return jsonify({"error": str(error)}), 400
+    finally:
+        _manual_check_lock.release()
 
 
 MANUAL_CHECK_GAP = 60  # 초. 깃허브는 로그인 없이 시간당 60번만 받아 줌 → 연타해도 1분에 한 번만 물어봄
