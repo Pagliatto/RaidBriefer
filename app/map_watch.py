@@ -2,6 +2,7 @@
 
 로그에서 보는 줄 (2026-11-16 확인)
 - application 로그 `scene preset path:maps/customs_preset.bundle ...` → 맵 로딩 시작 (어느 맵인지 여기서 앎)
+- application 로그 `GamePooled`                                   → 로딩 끝, 시작 카운트다운 (밝기만 이때 켬)
 - application 로그 `GameStarted`                                  → 레이드 시작
 - backend 로그   `/client/match/local/end` 요청                    → 레이드 끝 (로비로 돌아옴)
 - application 로그 `totalMemoryBeforeCleanUp` (레이드 중일 때만)    → 다인큐 레이드 끝 (local/end 가 없음)
@@ -36,6 +37,7 @@ class MapState:
     map_name: str | None = None  # 한국어 지도 이름
     since: datetime | None = None  # 이 상태가 시작된 시각
     cancelled: bool = False  # 매칭을 취소해서 로비로 온 것 (레이드를 하지 않았음)
+    pooled: bool = False  # 로딩이 끝나 시작 카운트다운 중 (GamePooled 뒤, GameStarted 전). 밝기만 씀
 
     def __str__(self) -> str:
         when = f" ({self.since:%m-%d %H:%M:%S}부터)" if self.since else ""  # i18n-ok: 개발용 콘솔
@@ -163,18 +165,25 @@ def apply_line(state: MapState, line: str, lookup: MapLookup) -> bool:
         map_id, map_name = lookup.find(scene[1])
         # 매칭을 다시 잡으면 같은 줄이 또 나옴 → 같은 맵 로딩 중이면 무시
         if state.status == LOADING and state.map_id == map_id:
-            return False
+            was_pooled, state.pooled = state.pooled, False  # 다시 로딩이면 카운트다운 표시만 지움
+            return was_pooled
         state.status, state.map_id, state.map_name, state.since = LOADING, map_id, map_name, when
-        state.cancelled = False
+        state.cancelled = state.pooled = False
+        return True
+
+    # 로딩 끝 → 화면에 맵이 보이고 시작 카운트다운 (GameStarted 보다 14~18초 먼저, 2026-11-24 로그 확인).
+    # 상태는 그대로 '로딩 중'이고 밝기만 이때부터 켠다. 이 줄이 없어지면 예전처럼 GameStarted 에서 켜짐
+    if "|application|GamePooled:" in line and state.status == LOADING and not state.pooled:
+        state.pooled = True
         return True
 
     if "|application|GameStarted:" in line and state.status == LOADING:
-        state.status, state.since = IN_RAID, when
+        state.status, state.since, state.pooled = IN_RAID, when, False
         return True
 
     if "Request HTTPS" in line and "/client/match/local/end" in line and state.status != LOBBY:
         state.status, state.map_id, state.map_name, state.since = LOBBY, None, None, when
-        state.cancelled = False
+        state.cancelled = state.pooled = False
         return True
 
     # 다인큐(그룹) 레이드는 서버에서 돌아가서 local/end 를 보내지 않음 (2026-11-23 로그 확인: 그룹 86판 모두 없음)
@@ -188,7 +197,7 @@ def apply_line(state: MapState, line: str, lookup: MapLookup) -> bool:
     # 매칭 중 취소 → 바로 로비 (2026-11-18 인게임 확인: 이 줄이 없으면 '맵 로딩 중'에 멈춰 있었음)
     if "Local game matching cancelled" in line and state.status == LOADING:
         state.status, state.map_id, state.map_name, state.since = LOBBY, None, None, when
-        state.cancelled = True
+        state.cancelled, state.pooled = True, False
         return True
 
     return False

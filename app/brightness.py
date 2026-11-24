@@ -440,7 +440,9 @@ def _tick():
     want_on = strength > 0 and mode == "always"
     if strength > 0 and mode == "raid" and not _temporary:
         try:
-            want_on = game_state.get()["status"] == "raid"
+            # 레이드 중 + 로딩이 끝난 시작 카운트다운(화면에 맵이 이미 보임)
+            state = game_state.get()
+            want_on = state["status"] == "raid" or (state["status"] == "loading" and bool(state.get("pooled")))
         except Exception as error:
             _record_error(error)
     decision = (signature, want_on, _temporary)

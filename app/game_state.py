@@ -16,7 +16,7 @@ GAME_OFF = "off"  # 게임 꺼짐 (화면 글자는 사전)
 GAME_EXE = "EscapeFromTarkov.exe"
 
 _lock = threading.Lock()
-_state = {"status": map_watch.LOBBY, "map_id": None, "map_name": None, "since": None, "raid_minutes": None, "cancelled": False}
+_state = {"status": map_watch.LOBBY, "map_id": None, "map_name": None, "since": None, "raid_minutes": None, "cancelled": False, "pooled": False}
 _game_running = False
 _raid_minutes = {}  # 지도 id → 레이드 제한 시간(분), tarkov.dev 맵 정보
 _started = False
@@ -42,6 +42,7 @@ def _on_change(s: map_watch.MapState) -> None:
             since=int(s.since.timestamp() * 1000) if s.since else None,
             raid_minutes=_raid_minutes.get(s.map_id),
             cancelled=s.cancelled,
+            pooled=s.pooled,
         )
     # 신고용 기록 (흐름): 레이드에 들어감/나옴만
     if s.status == map_watch.IN_RAID and not was_raid:
@@ -130,5 +131,5 @@ def get() -> dict:
     # 로그 형식 경고는 게임이 켜져 있을 때만 (map_watch.log_problem)
     state["log_problem"] = map_watch.log_problem() if _game_running else None
     if not _game_running:  # 게임이 꺼져 있으면 로그 상태와 상관없이 '게임 꺼짐'
-        state.update(status=GAME_OFF, map_id=None, map_name=None, since=None, raid_minutes=None, cancelled=False)
+        state.update(status=GAME_OFF, map_id=None, map_name=None, since=None, raid_minutes=None, cancelled=False, pooled=False)
     return state
