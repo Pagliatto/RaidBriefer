@@ -114,13 +114,44 @@ document.getElementById("settings-reset").addEventListener("click", async () => 
 });
 
 // 언어 고르기 (설정 창 + 처음 설정 1단계). 바꾸면 화면을 새로 불러와서 모든 글자를 그 언어로
+// 남은 시간 경고 테두리 (설정 창 일반 탭): 끔 / 얇게 / 보통. 고른 값은 html data-raid-border 에 적어 CSS·상단바가 봄
+const RAID_BORDER_LABELS = { off: "raidBorderOff", thin: "raidBorderThin", normal: "raidBorderNormal" };
+function renderRaidBorderPicker(current) {
+  const mode = RAID_BORDER_LABELS[current] ? current : "normal";
+  document.documentElement.dataset.raidBorder = mode;
+  const box = document.getElementById("settings-raid-border");
+  box.replaceChildren();
+  Object.entries(RAID_BORDER_LABELS).forEach(([value, label]) => {
+    const btn = el("button", value === mode ? "on" : "", t(`settings.${label}`));
+    btn.type = "button";
+    btn.setAttribute("aria-pressed", String(value === mode));
+    btn.addEventListener("click", async () => {
+      if (value === document.documentElement.dataset.raidBorder) return;
+      try {
+        const res = await fetch("/api/settings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ raid_border: value }),
+        });
+        if (!res.ok) throw new Error();
+        renderRaidBorderPicker((await res.json()).raid_border);
+      } catch (error) {
+        alert(t("common.saveFailedShort"));
+      }
+    });
+    box.append(btn);
+  });
+}
+
 async function renderLangPickers() {
   let info;
   try {
     info = await (await fetch("/api/settings")).json();
   } catch (error) {
+    renderRaidBorderPicker("normal"); // 설정을 못 읽어도 경고는 기본값으로 동작
     return;
   }
+  renderRaidBorderPicker(info.raid_border);
   ["settings-lang", "setup-lang"].forEach((id) => {
     const box = document.getElementById(id);
     if (!box) return;

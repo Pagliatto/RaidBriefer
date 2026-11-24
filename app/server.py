@@ -610,6 +610,11 @@ def api_settings_set():
             return jsonify({"error": i18n.t("server.badRequest")}), 400
         saved = settings.save({"edition": body["edition"]})
         return jsonify({**saved, "check": settings.check_game_dir(saved["game_dir"])})
+    if "raid_border" in body:  # 남은 시간 경고 테두리 (끔 / 얇게 / 보통)
+        if body["raid_border"] not in settings.RAID_BORDERS:
+            return jsonify({"error": i18n.t("server.badRequest")}), 400
+        saved = settings.save({"raid_border": body["raid_border"]})
+        return jsonify({**saved, "check": settings.check_game_dir(saved["game_dir"])})
     if "setup_done" in body:  # 처음 설정 화면을 끝냄(true) / 다시 하기(false)
         if not isinstance(body["setup_done"], bool):
             return jsonify({"error": i18n.t("server.badRequest")}), 400
