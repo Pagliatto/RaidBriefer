@@ -482,6 +482,30 @@ def _validate_data(name: str, data) -> None:
         raise ValueError(i18n.t("data.notSaved", name=name))
 
 
+class PartialDataError(ValueError):
+    """받은 데이터 항목 수가 저장본의 절반 미만 (서버 장애로 일부만 온 것으로 보고 받지 않음)."""
+
+
+def _entry_count(name: str, data) -> int:
+    """비교할 항목 수. 저장 모양(_compact_cache 뒤)으로 센다.
+    tasks·maps: 퀘스트·맵 개수 / traders·hideout: 상인·시설 개수 / 번역(_ko·_en): 번역 키 개수
+    (items_ko·items_en 은 저장하는 ' Name' 키만)"""
+    data = _compact_cache(name, data)
+    entries = data.get(name) if name in ("tasks", "maps") else data
+    return len(entries) if isinstance(entries, dict) else 0
+
+
+def _check_not_partial(name: str, data) -> None:
+    """저장본이 있으면 새 항목 수가 절반 미만일 때 거절한다 (정확히 절반은 받음, 기간 제한 없음).
+    저장본이 없으면(첫 실행) 검사하지 않는다 (빈 데이터는 _validate_data 가 이미 거절)."""
+    try:
+        saved = _read_saved(name)
+    except DataError:
+        return
+    if _entry_count(name, data) * 2 < _entry_count(name, saved):
+        raise PartialDataError(i18n.t("data.notSaved", name=name))
+
+
 def _time_text(when: float) -> str:
     try:
         return time.strftime("%Y-%m-%d %H:%M", time.localtime(when))
@@ -619,6 +643,9 @@ def _update_all(force: bool) -> str:
             # 존재 여부만으로 판단하지 않는다. 손상 본문에는 옛 ETag를 보내지 않는다.
             etag = meta["files"].get(name, {}).get("etag") if _usable(name) else None
             results[name] = _fetch_if_changed(name, etag)
+            if results[name][0] is not None:
+                # 일부만 온 데이터는 아무 파일도 쓰기 전에 실패 처리 → 옛 저장본·옛 ETag·확인 시각 유지 (DATA-01)
+                _check_not_partial(name, results[name][0])
         changed = []
         for name, (data, etag) in results.items():
             write_started = time.perf_counter()
