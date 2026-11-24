@@ -876,7 +876,7 @@ body.map-mode .scroll-buttons { display: none; }
 .quest-pin span {
   display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%;
   background: var(--pin); color: #111; font-size: 12px; font-weight: 700;
-  border: 2px solid #111; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  border: 2px solid #111; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.85), 0 1px 4px 1px rgba(0, 0, 0, 0.6);
 }
 /* 다른 핀과 겹쳐 있음: 밝은 링 (마우스를 올리면 펼쳐짐) */
 .quest-pin.stacked span { box-shadow: 0 0 0 2px #111, 0 0 0 4px rgba(232, 228, 216, 0.85); }
@@ -967,7 +967,7 @@ body.map-mode .scroll-buttons { display: none; }
 }
 .loot-icon.on-map { border-color: var(--accent); }
 /* 지도에 위치가 있는 아이템: 지도 표시(먹을 것 분홍 네모)와 같은 색의 작은 네모 */
-.loot-icon.on-map::after { content: ""; position: absolute; left: 2px; top: 2px; width: 6px; height: 6px; border-radius: 2px; background: #ee9fc0; border: 1px solid #111; }
+.loot-icon.on-map::after { content: ""; position: absolute; left: 2px; top: 2px; width: 6px; height: 6px; border-radius: 2px; background: #c7a5b3; border: 1px solid #111; }
 
 /* 먹을 것 바닥 생성 위치: 작은 마름모 (퀘스트 번호 핀과 모양이 다름) */
 .loot-pin span {
@@ -1955,15 +1955,18 @@ button.home-map, button.home-story-row, button.choice-option, button.prep-item, 
 /* 지도 표시 공통: 색 네모 + 아이콘 (퀘스트 목표 번호 동그라미만 따로) — 2026-11-20 사용자 */
 .mk span {
   display: grid; place-items: center; width: 100%; height: 100%; box-sizing: border-box;
-  border-radius: 5px; border: 1px solid #111; color: #111; background: var(--mk, #ccc);
-  box-shadow: 0 0 3px rgba(0, 0, 0, 0.6);
+  border-radius: 5px; border: 2px solid #111; color: #111; background: var(--mk, #ccc);
+  /* 테두리 강화 (2026-11-24 사용자, 모든 표시): 굵은 검은 테두리 + 바깥 얇은 밝은 선
+     → 밝은 돌 바닥에서는 검은 선이, 어두운 바닥에서는 밝은 선이 경계가 됨 */
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.85), 0 0 4px 1px rgba(0, 0, 0, 0.6);
 }
 .mk-extract-pmc { --mk: #7fd16b; }
 .mk-extract-shared { --mk: #f0d470; }
 .mk-extract-scav { --mk: #6fb3ec; }
-.mk-transit { --mk: #c08cf0; }
-.mk-btr { --mk: #5fd0d8; }
-.mk-lock { --mk: #c9cfd3; }
+/* 색 규칙 (2026-11-24 사용자 재정립): 중요한 표시일수록 선명하게, 참고 표시는 같은 색 계열을 탁하게 */
+.mk-transit { --mk: #9d7be6; }   /* 나가는 길: 스토리 연보라와 구분되게 한 톤 진한 보라 */
+.mk-btr { --mk: #8fb7ba; }       /* 참고: 탁한 청록 */
+.mk-lock { --mk: #ebe2cb; }      /* 참고: 크림 (옛 스토리 색과 비슷하게, 2026-11-24 사용자) */
 .mk-enemy { --mk: #542c30; }
 .mk-boss { --mk: #302326; }
 .mk-enemy > span, .mk-boss > span { color: #ffe0d9; border-color: var(--bad); }
@@ -1976,17 +1979,17 @@ button.home-map, button.home-story-row, button.choice-option, button.prep-item, 
 /* 긴 영어 레이어 이름도 176px 서랍 안에서 줄바꿈한다. 목록 행 정렬은 기존대로 유지. */
 .layer-blackDivision .layer-name, .layer-bossZones .layer-name { white-space: normal; }
 .mk-keyspawn { --mk: #ff8a70; }  /* 산호색: BTR 청록·비트코인 주황·먹을 것 분홍과 구분 */
-.mk-bitcoin { --mk: #f2a33a; }
-.mk-loot { --mk: #ee9fc0; }
+.mk-bitcoin { --mk: #c9a573; }   /* 참고: 탁한 주황 */
+.mk-loot { --mk: #c7a5b3; }      /* 참고: 탁한 분홍 */
 /* 공략: 종류별 기호, 후보는 옅은 바탕·점선. 층 투명도는 Leaflet이 따로 적용한다. */
 /* 공략 핀은 같은 뜻의 색을 빌려 씀 (색 규칙: docs/notes/map-screen.md '지도 표시 색 규칙') */
 .mk-guide-key_spawn { --mk: #ff8a70; }   /* 물건: 열쇠 = 열쇠 자리 */
 .mk-guide-panel { --mk: #e3c25a; }       /* 작동 장치: 금 (귀중품 표시 없앤 뒤 이 뜻만) */
 .mk-guide-toolset { --mk: #c9a46e; }     /* 물건: 황갈 */
 .mk-guide-explosive { --mk: #e5603f; }   /* 물건: 진한 주홍 */
-.mk-guide-door { --mk: #c9cfd3; }        /* 잠김: 잠긴 문 회색 */
+.mk-guide-door { --mk: #ebe2cb; }        /* 잠김: 잠긴 문 크림 */
 .mk-guide-building { --mk: #f4f4f4; }    /* 장소: 흰색 */
-.mk-guide-start { --mk: #c08cf0; }       /* 이동: 트랜짓 보라 (입장 시작점) */
+.mk-guide-start { --mk: #9d7be6; }       /* 이동: 트랜짓 보라 (입장 시작점) */
 .guide-candidate > span { opacity: 0.72; border: 2px dashed #182126; }
 .guide-highlight > span { opacity: 1; box-shadow: 0 0 0 2px #111, 0 0 0 4px var(--accent); }
 /* 잠긴 문·열쇠 자리 마우스 올림 창 */
@@ -2051,7 +2054,7 @@ button.home-map, button.home-story-row, button.choice-option, button.prep-item, 
 .loot-strip .loot-label { font-size: 13px; font-weight: 600; color: var(--text-dim); margin-right: 2px; }
 .loot-strip .loot-icon { box-sizing: border-box; width: 32px; min-width: 32px; height: 32px; border-radius: 5px; border-color: var(--border-strong); }
 .loot-strip .loot-icon img { width: 28px; height: 28px; }
-.loot-strip .loot-icon.on-map { border-color: #ee9fc0; }  /* 지도에 위치가 있는 필요템 = 분홍 */
+.loot-strip .loot-icon.on-map { border-color: #c7a5b3; }  /* 지도에 위치가 있는 필요템 = 지도의 먹을 것 표시와 같은 탁한 분홍 */
 
 /* 맵 전용 색: 색상환을 고르게 나눠 맵끼리 바로 구분되게 (2026-11-21 사용자: 흐리면 구분 안 됨). 모든 태그·필터에서 공유 */
 :root {
@@ -2375,7 +2378,7 @@ body.position-edit .position-deleted { display: none; }
 
 /* Story place controls: normal buttons centered; drawer prose is a list row. */
 /* 스토리 장소: 모양으로 구분 (마름모, 크림색 하나) — 트랜짓 보라와 겹치지 않게 (2026-11-23 사용자) */
-.mk-story { --mk: #f4ecd8; }
+.mk-story { --mk: #c9a3ff; }   /* 할 일: 연보라 (스토리 탭·서랍과 같은 색, 2026-11-24 크림에서 바꿈 — 돌 색과 같았음) */
 .mk-story > span { transform: rotate(45deg) scale(0.8); border-radius: 3px; }
 .mk-story > span > svg { transform: rotate(-45deg) scale(1.15); }
 .mk-story.story-later > span { opacity: 0.7; }   /* 같은 구간의 다음 단계들 (현재 단계는 진하게) */

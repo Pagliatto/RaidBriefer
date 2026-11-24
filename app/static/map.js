@@ -53,7 +53,11 @@ function refreshNewMarkers() {
     if (kind === "noplace" || kind === "maps" || kind === "unnoplace") continue; // 위치 없는 항목 (스토리 연속 입력의 '장소 불필요'·맵 고치기)
     const pin = pending.fields.kind;
     const icons = { bd: ["enemy", "crosshair"], boss: ["boss", "skull"], extract: [`extract-${pending.fields.faction}`, "door-open"], btr: ["btr", "bus"], story: ["story", "book-open"], guide: [pin === "lock" ? "lock" : "guide-" + pin, GUIDE_ICONS[pin] || "door-open"] };
-    const marker = L.marker(gamePos(pending.pos), { icon: markerIcon(...icons[kind], 22) });
+    // 저장 전 핀도 저장된 핀과 같은 겹침 순서로 (Codex 검수 76)
+    const z = { bd: MARKER_Z.blackDivision, boss: MARKER_Z.bossZones, extract: MARKER_Z.extracts, btr: MARKER_Z.btrStops,
+      story: STORY_PIN_Z, guide: pin === "lock" ? MARKER_Z.keys : GUIDE_PIN_Z }[kind] || 0;
+    const marker = L.marker(gamePos(pending.pos), { icon: markerIcon(...icons[kind], 22), zIndexOffset: z });
+    marker.baseZ = z;
     bindPositionEditor(marker, { edit: pending.edit, pos: pending.pos, draftId: id }, pending.label);
     mapEditor.bindings.get(id).draft = true;
     marker.addTo(mapEditor.newLayer);
@@ -1067,7 +1071,7 @@ function applyStoryExtractLinks() {
   // 이전에 연결했던 탈출구는 강조·순서까지 원래대로 (Codex 검수 62 #2)
   mapStory.markers.filter((item) => item.extract).forEach(({ marker }) => {
     marker.getElement()?.classList.remove("guide-highlight");
-    marker.setZIndexOffset(0);
+    marker.setZIndexOffset(baseZ(marker));
   });
   mapStory.markers = mapStory.markers.filter((item) => !item.extract);
   (mapUI.extractMarkers || []).forEach((item) => {
@@ -1122,7 +1126,8 @@ function highlightStoryStep() {
   mapStory.markers.forEach(({ marker, id }) => {
     const selected = id === mapStory.focused;
     marker.getElement()?.classList.toggle("guide-highlight", selected);
-    marker.setZIndexOffset(selected ? 800 : 0);
+    // 고르지 않은 표시는 원래 높이로 (스토리 핀은 계속 다른 표시 위, 연결된 탈출구는 탈출구 높이)
+    marker.setZIndexOffset(selected ? 800 : baseZ(marker));
   });
   document.querySelectorAll("#drawer-list [data-story-step]").forEach((row) => {
     const selected = row.dataset.storyStep === mapStory.focused;
@@ -1144,7 +1149,9 @@ function drawStoryPins() {
         if (current === false) icon.options.className += " story-later"; // 현재 단계가 아닌 단계: 조금 흐리게
         const label = [s.ch.name, entry.step.ko, point.note,
           point.candidate ? t("map.guideCandidate") : ""].filter(Boolean).join(" · ");
-        const marker = L.marker(gamePos(pos), { icon, title: label, alt: label });
+        // 스토리 핀은 모든 표시 위 (2026-11-24 사용자: 비트코인 등에 깔려 안 보였음)
+        const marker = L.marker(gamePos(pos), { icon, title: label, alt: label, zIndexOffset: STORY_PIN_Z });
+        marker.baseZ = STORY_PIN_Z;
         marker.bindTooltip(escapeHtml(label), { direction: "top", offset: [0, -10] });
         const floor = floorOf(pos);
         marker.on("click", () => {
@@ -1515,6 +1522,7 @@ async function drawLoot() {
       const pin = L.marker(gamePos(p), {
         icon: markerIcon("loot", "package", 14),
         keyboard: false,
+        zIndexOffset: LOOT_PIN_Z,
       }).bindTooltip(shortItem(item.text), { direction: "top", offset: [0, -6] });
       const floor = floorOf(p);
       pin.on("click", () => goToFloorOf(floor)); // 누르면 그 층으로
@@ -1548,6 +1556,14 @@ function focusLoot(key) {
 // 위치가 완전히 같아서 가장 크게 확대해도 겹치면 그때만 동그랗게 펼침 (지도 빈 곳을 누르면 다시 모임)
 const CLUSTER_PX = 20; // 화면에서 이만큼 가까우면 겹친 것으로 봄
 const QUEST_PIN_Z = 500; // 퀘스트 핀 높이 (표시물 위, 펼친 핀(1000) 아래)
+const STORY_PIN_Z = 600; // 스토리 핀 높이 (퀘스트 핀보다 위, 겹친 핀을 펼쳤을 때(1000)만 그 아래)
+// 겹쳤을 때 위에 오는 순서 (2026-11-24 사용자: 중요한 표시일수록 위, 규칙 docs/notes/map-screen.md)
+// 할 일(스토리 600 > 퀘스트 500 > 공략 400) > 나가는 길·위험·열쇠 자리 > 참고(잠긴 문·비트코인·BTR·먹을 것)
+const GUIDE_PIN_Z = 400;
+const LOOT_PIN_Z = 40;
+const MARKER_Z = { extracts: 300, scavExtracts: 300, transits: 280, bossZones: 250, blackDivision: 250, keySpawns: 200, keys: 100, bitcoin: 80, btrStops: 60 };
+// 강조(800)가 풀렸을 때 돌아갈 원래 높이
+function baseZ(marker) { return marker.baseZ || 0; }
 
 function findClusters() {
   const leaf = mapUI.leaflet;
@@ -1790,7 +1806,9 @@ function drawGuidePins() {
       const icon = markerIcon(point.kind === "lock" ? "lock" : "guide-" + point.kind, (GUIDE_ICONS[point.kind] || "door-open"), point.kind === "lock" ? 16 : 20);
       if (point.candidate) icon.options.className += " guide-candidate";
       const label = guideText(point, "label_") + (point.candidate ? " · " + t("map.guideCandidate") : "");
-      const marker = L.marker(gamePos(point.pos), { icon, title: label, alt: label });
+      const z = point.kind === "lock" ? MARKER_Z.keys : GUIDE_PIN_Z;
+      const marker = L.marker(gamePos(point.pos), { icon, title: label, alt: label, zIndexOffset: z });
+      marker.baseZ = z;
       marker.bindTooltip(escapeHtml(label), { direction: "top", offset: [0, -10] });
       const floor = floorOf(point.pos);
       marker.on("click", () => { if (mapEditor.active) return; goToFloorOf(floor); showGuidePoint(id); });
@@ -1817,7 +1835,7 @@ function highlightGuideStep() {
   const ids = new Set(step?.points || []);
   const mark = (marker, selected) => {
     marker.getElement()?.classList.toggle("guide-highlight", selected);
-    marker.setZIndexOffset(selected ? 800 : 0);
+    marker.setZIndexOffset(selected ? 800 : baseZ(marker));
   };
   Object.entries(mapUI.guideMarkers || {}).forEach(([id, marker]) => mark(marker, ids.has(id)));
   (mapUI.extractMarkers || []).forEach(({ marker, name }) => mark(marker, guideExtractIds(name).some((id) => ids.has(id))));
@@ -2477,7 +2495,9 @@ async function drawFeatures(leaf, m) {
   }
   // card: true 면 링크가 든 '마우스 올림 창' (창 위로 옮겨도 안 사라짐), 아니면 보통 설명
   const add = (groupKey, p, icon, tooltip, card = false, options = {}) => {
-    const marker = L.marker(gamePos(p), { icon, keyboard: false, ...options });
+    const z = MARKER_Z[groupKey] || 0;
+    const marker = L.marker(gamePos(p), { icon, keyboard: false, zIndexOffset: z, ...options });
+    marker.baseZ = z;
     if (tooltip && card) {
       marker.on("mouseover", () => openHoverCard(marker, tooltip));
       marker.on("mouseout", closeHoverCardSoon);
