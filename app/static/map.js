@@ -1344,8 +1344,8 @@ async function drawMap() {
   drawPins();
   drawFeatures(leaf, m);
   drawFloorControl(box, view);
-  drawMe(mapMe.moveTo, 250); // 내 위치 (스크린샷으로 맵이 바뀐 경우에는 그 위치로 이동)
-  if (!mapMe.pos || m.ids.includes(mapMe.pos.map_id)) mapMe.moveTo = false; // 그 맵을 그렸을 때만 '이동' 예약을 끝냄
+  drawMe(mapMe.moveTo); // 내 위치 (지도를 안 보는 동안 찍힌 위치면 층도 맞춤)
+  if (!mapMe.pos || m.ids.includes(mapMe.pos.map_id)) mapMe.moveTo = false; // 그 맵을 그렸을 때만 예약을 끝냄
   drawShotHint();
   // 출처: 지도 오른쪽 아래에 작게 (CC BY-NC-SA 는 출처 표시가 조건)
   const credit = el("p", "map-credit");
@@ -2300,9 +2300,11 @@ window.addEventListener("game-state", (e) => onGameState(e.detail));
 // ---------- 내 위치 (게임 스크린샷 파일 이름의 좌표, 2026-11-24 사용자) ----------
 // 사용자가 게임에서 스크린샷 키를 누르면 서버(shot_watch.py)가 파일 이름의 좌표를 읽어 준다.
 // 표시는 30초: 처음 15초는 진하게, 나머지 15초 동안 천천히 사라짐. 새로 찍으면 옛 표시는 바로 없어짐
+// 지도·탭·확대는 건드리지 않고 표시만 한다 (2026-11-25 사용자). 대신 큰 파동이 내 위치로 세 번 모여듦(갈수록 작게).
+// 내 위치가 다른 층이면 층만 바꿈 (보는 자리는 그대로)
 const ME_SHOW_MS = 30000;   // shot_watch.py SHOW_SECONDS 와 같게 (CSS me-fade 도 30s)
 const ME_PIN_Z = 2000;      // 모든 표시 위 (펼친 퀘스트 핀 1000 보다도 위)
-const ME_WAVE_MS = 3000;    // 막 찍은 위치만 파동 (다시 그릴 때는 없음)
+const ME_WAVE_MS = 3000;    // 막 찍은 위치만 파동 (다시 그릴 때는 없음). 파동 세 번이 약 3초
 const SHOT_HINT_STORAGE = "tarkovhelper.shotHint";
 const SHOT_HINT_TIMES = 3;  // 안내는 처음 몇 번의 레이드만. 한 번이라도 찍어 봤으면 다시 안 띄움
 const SHOT_HINT_MS = 12000;
@@ -2324,7 +2326,7 @@ function meAngle(leaf, pos) {
   return Math.atan2(b.x - a.x, a.y - b.y) * 180 / Math.PI;
 }
 
-function drawMe(move, settle = 0) {
+function drawMe(fresh) {
   clearMe();
   const pos = mapMe.pos, leaf = mapUI.leaflet, m = mapUI.current;
   if (!pos || !leaf || !m || mapEditor.active || !m.ids.includes(pos.map_id)) return;
@@ -2334,7 +2336,7 @@ function drawMe(move, settle = 0) {
   // 이 맵의 범위를 한참 벗어난 좌표는 그리지 않음 (다른 맵의 스크린샷 등)
   if (mapUI.bounds && !mapUI.bounds.pad(0.25).contains(latlng)) return;
   const angle = meAngle(leaf, pos);
-  const wave = age < ME_WAVE_MS && !reducedMotion() ? '<i class="me-wave"></i>' : "";
+  const wave = age < ME_WAVE_MS && !reducedMotion() ? '<i class="me-wave"></i><i class="me-wave"></i><i class="me-wave"></i>' : "";
   const shape = angle === null
     ? '<i class="me-dot"></i>'
     : `<svg class="me-arrow" viewBox="0 0 24 24" style="transform:rotate(${angle.toFixed(1)}deg)" aria-hidden="true"><path d="M12 2.5 20 21 12 16.8 4 21Z"/></svg>`;
@@ -2344,15 +2346,7 @@ function drawMe(move, settle = 0) {
   });
   mapMe.marker = L.marker(latlng, { icon, interactive: false, keyboard: false, zIndexOffset: ME_PIN_Z }).addTo(leaf);
   mapMe.timer = setTimeout(() => { mapMe.pos = null; clearMe(); }, ME_SHOW_MS - age);
-  if (!move) return;
-  // 지도를 막 그린 직후(settle)에는 칸 크기가 정해지고 '전체 보기 맞춤'이 끝난 뒤에 이동
-  setTimeout(() => {
-    if (mapUI.leaflet !== leaf || mapMe.pos !== pos) return;
-    goToFloorOf(floorOf([pos.x, pos.z, pos.y]));
-    collapseAll();
-    const zoom = Math.max(leaf.getZoom(), Math.min(leaf.getMinZoom() + 1.5, leaf.getMaxZoom()));
-    leaf.setView(latlng, zoom, { animate: !reducedMotion() });
-  }, settle);
+  if (fresh) goToFloorOf(floorOf([pos.x, pos.z, pos.y])); // 새로 찍은 위치: 층만 맞춤
 }
 
 function shotHintState() {
@@ -2391,24 +2385,11 @@ function onPlayerPosition(pos) {
   if (!hint.used) saveShotHint({ ...hint, used: true });
   mapMe.hintUntil = 0;
   drawShotHint();
-  const target = mapUI.maps.find((m) => m.ids.includes(pos.map_id));
-  if (!target) { mapMe.moveTo = true; return; } // 맵 목록을 아직 못 받음 → 그 맵을 그릴 때 이동 (drawMap 끝)
-  const shown = currentTab() === "map";
-  if (mapUI.current !== target) { // 다른 맵을 보고 있었음 → 레이드 맵으로
-    mapMe.moveTo = true;
-    mapUI.current = target;
-    document.getElementById("map-select").value = target.key;
-    drawBtrTrackerLink();
-    if (shown) drawMap();
-    else { mapUI.dirty = true; goTab("map"); }
-    return;
-  }
-  if (shown && mapUI.leaflet && !mapUI.dirty) { drawMe(true); return; }
-  mapMe.moveTo = true;
-  const redraw = mapUI.dirty || !mapUI.leaflet;
-  if (!shown) goTab("map"); // 지도를 새로 그리면 drawMap 끝에서 표시
-  else if (redraw) drawMap();
-  if (!redraw) setTimeout(() => { if (mapMe.moveTo) { mapMe.moveTo = false; drawMe(true, 250); } }, 0);
+  // 지금 그 맵의 지도를 보고 있으면 바로 표시. 다른 탭·다른 맵이면 화면은 그대로 두고,
+  // 그 맵을 그릴 때(drawMap 끝) 남은 시간만큼 표시 (moveTo = 그때 층 맞춤)
+  const here = mapUI.current && mapUI.current.ids.includes(pos.map_id);
+  if (here && mapUI.leaflet && !mapUI.dirty) drawMe(true); // 다른 탭을 보는 중이어도 지도에는 찍어 둠
+  else mapMe.moveTo = true;
 }
 window.addEventListener("player-position", (e) => onPlayerPosition(e.detail));
 

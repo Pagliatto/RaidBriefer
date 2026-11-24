@@ -545,6 +545,13 @@ def build() -> dict:
         if details.get("prep") is not None:
             entry["prep"] = [{"count": None, "fir": False, **p, "text": (p.get("text_en") if english else None) or p["text"]}
                              for p in details["prep"]]
+        # prep_add: dev 준비물에 더하는 항목 (dev 가 모르는 필수 준비물, 예: 신호탄을 쏴야 열리는 탈출구).
+        # dev 값을 바꾸지 않고 덧붙이기만 해서 dev 퀘스트에도 적용한다 (2026-11-25 사용자: Cease Fire!)
+        for extra in m.get("prep_add") or []:
+            text = (extra.get("text_en") if english else None) or extra.get("text")
+            if text and extra.get("kind") in ("가져가기", "무기", "착용") and not any(
+                    p["kind"] == extra["kind"] and p["text"] == text for p in entry["prep"]):
+                entry["prep"].append({"kind": extra["kind"], "text": text, "count": extra["count"] if (extra.get("count") or 0) > 1 else None, "fir": False})
         # 직접 보완한 준비물은 문구가 아닌 고정 항목 위치로 구분한다.
         for index, prep in enumerate(entry["prep"]):
             if prep["kind"] == "제출" and "hand_id" not in prep:

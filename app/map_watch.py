@@ -6,6 +6,7 @@
 - application 로그 `GameStarted`                                  → 레이드 시작
 - backend 로그   `/client/match/local/end` 요청                    → 레이드 끝 (로비로 돌아옴)
 - application 로그 `totalMemoryBeforeCleanUp` (레이드 중일 때만)    → 다인큐 레이드 끝 (local/end 가 없음)
+- application 로그 `GC mode switched to Enabled` (레이드 중일 때만) → 온라인 레이드 끝 (1.3.5 부터 위 줄도 없음)
 
 맵 이름은 tarkov.dev 지도 정보의 scenePath(예: maps/customs_preset.bundle)와
 로그의 경로가 똑같아서 그대로 연결한다. → 새 맵이 나와도 따로 고칠 필요 없음
@@ -194,8 +195,17 @@ def apply_line(state: MapState, line: str, lookup: MapLookup) -> bool:
         state.cancelled = False
         return True
 
+    # 온라인 레이드(RaidMode: Online)는 1.3.5 부터 레이드 끝에 위 메모리 정리 줄도 없음 (2026-11-25 사용자 로그:
+    # 시내 탈출 뒤 화면이 안 바뀜). 대신 레이드 동안 꺼 두었던 GC 를 다시 켜는 줄이 레이드가 끝날 때 나온다.
+    # 패치 전 로그 716판에서 레이드 도중에 이 줄이 나온 적 없음. 혼자 레이드는 local/end 1~6초 뒤라 이미 로비 → 무시됨
+    if "|application|GC mode switched to Enabled" in line and state.status == IN_RAID:
+        state.status, state.map_id, state.map_name, state.since = LOBBY, None, None, when
+        state.cancelled = False
+        return True
+
     # 매칭 중 취소 → 바로 로비 (2026-11-18 인게임 확인: 이 줄이 없으면 '맵 로딩 중'에 멈춰 있었음)
-    if "Local game matching cancelled" in line and state.status == LOADING:
+    # 혼자: 'Local game matching cancelled.' / 온라인: 'Network game matching cancelled.' (2026-11-25 로그 확인)
+    if "|application|" in line and " game matching cancelled" in line and state.status == LOADING:
         state.status, state.map_id, state.map_name, state.since = LOBBY, None, None, when
         state.cancelled, state.pooled = True, False
         return True

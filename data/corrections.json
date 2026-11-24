@@ -1,5 +1,5 @@
 {
-  "_about": "퀘스트 id를 키로 적는 보완·수정 이름표이며, 필드별 우선순위는 수동(game: 다른 출처에 없거나 오류를 바로잡는 특수한 경우의 게임 직접 확인값) > tarkov.dev(same_as 포함) > SPT(이름·맵만) > 위키·블로그 > 미확인이다. same_as = 같은 퀘스트인데 tarkov.dev에는 다른 id로 있는 경우 그 id. 선택 항목: maps(맵 구분값 목록), objectives([{text, original, optional?}]), prep([{kind, text, count, fir}]), level. from = 정보 출처(wiki: 공식 위키, blog: 공략 블로그, game: 게임 화면 직접 확인). link_blog = 위키로 출처를 변경하기 전의 블로그 주소. check = 사용자 검토 대기 표시(wiki/blog); 검토 완료 후 제거하며 from은 유지한다. replaced_by / replaced_by_en = 삭제·대체된 퀘스트의 후속 퀘스트 안내(한국어/영어). raid(true/false) = 레이드 안에서 하는 퀘스트인지 직접 지정 (tarkov.dev에 있는 퀘스트에도 쓸 수 있음). 영어 화면용(선택): name_en, objective_en, prep[].text_en (objectives 는 original 이 영어 문장). 필드별 우선순위: game > dev > SPT > wiki > blog > unknown. checked = 마지막 확인 날짜(YYYY-MM-DD). BTR 정류장 보완값은 btr_stops에 기록한다.",
+  "_about": "퀘스트 id를 키로 적는 보완·수정 이름표이며, 필드별 우선순위는 수동(game: 다른 출처에 없거나 오류를 바로잡는 특수한 경우의 게임 직접 확인값) > tarkov.dev(same_as 포함) > SPT(이름·맵만) > 위키·블로그 > 미확인이다. same_as = 같은 퀘스트인데 tarkov.dev에는 다른 id로 있는 경우 그 id. 선택 항목: maps(맵 구분값 목록), objectives([{text, original, optional?}]), prep([{kind, text, count, fir}]), prep_add([{kind, text, text_en, count}] = tarkov.dev 준비물에 '더하는' 항목: dev 퀘스트에도 적용되며 dev 값을 바꾸지 않는다. 예: 신호탄을 쏴야 열리는 탈출구), level. from = 정보 출처(wiki: 공식 위키, blog: 공략 블로그, game: 게임 화면 직접 확인). link_blog = 위키로 출처를 변경하기 전의 블로그 주소. check = 사용자 검토 대기 표시(wiki/blog); 검토 완료 후 제거하며 from은 유지한다. replaced_by / replaced_by_en = 삭제·대체된 퀘스트의 후속 퀘스트 안내(한국어/영어). raid(true/false) = 레이드 안에서 하는 퀘스트인지 직접 지정 (tarkov.dev에 있는 퀘스트에도 쓸 수 있음). 영어 화면용(선택): name_en, objective_en, prep[].text_en (objectives 는 original 이 영어 문장). 필드별 우선순위: game > dev > SPT > wiki > blog > unknown. checked = 마지막 확인 날짜(YYYY-MM-DD). BTR 정류장 보완값은 btr_stops에 기록한다.",
   "quests": {
     "6aba40a15ef26da1360746b8": {
       "same_as": "671a59e43d73dac1360765cc",
@@ -85,6 +85,14 @@
         }
       ],
       "objective_en": "Install four Radio repeaters on Lighthouse: inside the water treatment plant's MI-8, inside the abandoned USEC cottage, on high ground overlooking the lighthouse, and on the coastal sunken building's roof.",
+      "prep": [
+        {
+          "kind": "가져가기",
+          "text": "무선 중계기",
+          "text_en": "Radio repeater",
+          "count": 4
+        }
+      ],
       "link": "https://escapefromtarkov.fandom.com/wiki/Network_Provider_-_Part_2",
       "from": "wiki",
       "link_blog": "https://ytyler.tistory.com/441",
@@ -135,6 +143,14 @@
         }
       ],
       "objective_en": "Locate and mark the first, second, third and fourth bunkers on Woods with MS2000 markers.",
+      "prep": [
+        {
+          "kind": "가져가기",
+          "text": "MS2000 마커",
+          "text_en": "MS2000 Marker",
+          "count": 4
+        }
+      ],
       "link": "https://escapefromtarkov.fandom.com/wiki/Assessment_-_Part_2",
       "from": "wiki",
       "link_blog": "https://ytyler.tistory.com/444",
@@ -350,6 +366,26 @@
         }
       ],
       "objective_en": "Stash one each of Pack of Arseniy buckwheat, Bottle of Tarkovskaya vodka and Iskra ration pack at the Scav house on Woods, guard barrack on Reserve and Path to River shack on Interchange.",
+      "prep": [
+        {
+          "kind": "가져가기",
+          "text": "Pack of Arseniy buckwheat",
+          "text_en": "Pack of Arseniy buckwheat",
+          "count": 3
+        },
+        {
+          "kind": "가져가기",
+          "text": "Vodka 타르코프스카야 보드카",
+          "text_en": "Bottle of Tarkovskaya vodka",
+          "count": 3
+        },
+        {
+          "kind": "가져가기",
+          "text": "Iskra 전투식량",
+          "text_en": "Iskra ration pack",
+          "count": 3
+        }
+      ],
       "link": "https://escapefromtarkov.fandom.com/wiki/Missing_in_Action",
       "from": "wiki",
       "link_blog": "https://ytyler.tistory.com/541",
@@ -404,6 +440,25 @@
         }
       ],
       "objective_en": "Stash 3 Electronic components, 1 Military cable and 3 Capacitors at Prapor's new camp on Lighthouse.",
+      "prep": [
+        {
+          "kind": "가져가기",
+          "text": "전자기기 부품 (Electronic components)",
+          "text_en": "Electronic components",
+          "count": 3
+        },
+        {
+          "kind": "가져가기",
+          "text": "Military cable 군용 케이블",
+          "text_en": "Military cable"
+        },
+        {
+          "kind": "가져가기",
+          "text": "Capacitors 축전기",
+          "text_en": "Capacitors",
+          "count": 3
+        }
+      ],
       "link": "https://escapefromtarkov.fandom.com/wiki/Number_Temporarily_Unavailable",
       "from": "wiki",
       "link_blog": "https://ytyler.tistory.com/631",
@@ -431,10 +486,17 @@
         }
       ],
       "objective_en": "Kill any 15 targets on Lighthouse, fire a red flare at the abandoned mountain lake cabin, and take the Transit to Reserve.",
+      "prep": [
+        {
+          "kind": "가져가기",
+          "text": "RSP-30 반응형 신호탄 (적색) / 26x75mm flare cartridge (Red)",
+          "text_en": "RSP-30 reactive signal cartridge (Red) / 26x75mm flare cartridge (Red)"
+        }
+      ],
       "link": "https://escapefromtarkov.fandom.com/wiki/All-Inclusive_Support",
       "from": "wiki",
       "link_blog": "https://ytyler.tistory.com/636",
-      "checked": "2026-11-20"
+      "checked": "2026-11-25"
     },
     "6a763f35ce9a947b4d0918b6": {
       "name": "공터 정찰",
@@ -458,6 +520,14 @@
         }
       ],
       "objective_en": "Install the first and second Wi-Fi cameras on the smuggler train station platform and the third near the Transit to Woods, all on Lighthouse.",
+      "prep": [
+        {
+          "kind": "가져가기",
+          "text": "WI-FI 카메라",
+          "text_en": "WI-FI Camera",
+          "count": 3
+        }
+      ],
       "link": "https://escapefromtarkov.fandom.com/wiki/Scope_the_Clearing",
       "from": "wiki",
       "link_blog": "https://ytyler.tistory.com/643",
@@ -537,6 +607,13 @@
         }
       ],
       "objective_en": "In one raid, stash the Hard drive with false data in The Lab's server room near the weapon testing area and leave via Ventilation Shaft. Optional: extract through that shaft after stashing the drive.",
+      "prep": [
+        {
+          "kind": "가져가기",
+          "text": "가짜 데이터가 담긴 하드 드라이브",
+          "text_en": "Hard drive with false data"
+        }
+      ],
       "link": "https://escapefromtarkov.fandom.com/wiki/To_the_Light_-_Trust_but_Verify",
       "from": "wiki",
       "link_blog": "https://ytyler.tistory.com/639",
@@ -568,10 +645,22 @@
         }
       ],
       "objective_en": "In one raid on Customs, kill 5 Scavs and 1 PMC between 21:00 and 06:00, hide a Wi-Fi camera at the convenience store's AC unit near the bridge, and fire a yellow flare at the Shoreline Transit.",
+      "prep": [
+        {
+          "kind": "가져가기",
+          "text": "WI-FI 카메라",
+          "text_en": "WI-FI Camera"
+        },
+        {
+          "kind": "가져가기",
+          "text": "RSP-30 반응형 신호탄 (황색) / 26x75mm flare cartridge (Yellow)",
+          "text_en": "RSP-30 reactive signal cartridge (Yellow) / 26x75mm flare cartridge (Yellow)"
+        }
+      ],
       "link": "https://escapefromtarkov.fandom.com/wiki/To_the_Light_-_False_Call",
       "from": "wiki",
       "link_blog": "https://ytyler.tistory.com/641",
-      "checked": "2026-11-20"
+      "checked": "2026-11-25"
     },
     "6a8814d20d25ca7b2908e13e": {
       "name": "빛을 향하여 - 날개 꺾기",
@@ -609,6 +698,14 @@
         }
       ],
       "objective_en": "In one raid, place Signal jammers at Woods' mountain weather station and sawmill guardhouse; Transit to Customs for the roadside construction site's second floor, then to Shoreline for the Health Resort admin building's second-floor archives.",
+      "prep": [
+        {
+          "kind": "가져가기",
+          "text": "Signal Jammer 전파 교란기",
+          "text_en": "Signal Jammer",
+          "count": 4
+        }
+      ],
       "link": "https://escapefromtarkov.fandom.com/wiki/To_the_Light_-_Clip_Their_Wings",
       "from": "wiki",
       "link_blog": "https://ytyler.tistory.com/645",
@@ -868,6 +965,32 @@
       "level": 30,
       "from": "wiki",
       "checked": "2026-11-20"
+    },
+    "639136e84ed9512be67647db": {
+      "prep_add": [
+        {
+          "kind": "가져가기",
+          "text": "RSP-30 반응형 신호탄 (녹색)",
+          "text_en": "RSP-30 reactive signal cartridge (Green)",
+          "count": 1
+        }
+      ],
+      "link": "https://escapefromtarkov.fandom.com/wiki/Cease_Fire!",
+      "from": "wiki",
+      "checked": "2026-11-25"
+    },
+    "675c3507a06634b5110e3c18": {
+      "prep_add": [
+        {
+          "kind": "가져가기",
+          "text": "RSP-30 반응형 신호탄 (녹색)",
+          "text_en": "RSP-30 reactive signal cartridge (Green)",
+          "count": 1
+        }
+      ],
+      "link": "https://escapefromtarkov.fandom.com/wiki/Belka_and_Strelka",
+      "from": "wiki",
+      "checked": "2026-11-25"
     }
   },
   "btr_stops": {

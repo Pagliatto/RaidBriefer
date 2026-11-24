@@ -2490,8 +2490,15 @@ body.position-edit .position-deleted { display: none; }
 @keyframes me-fade { 0%, 50% { opacity: 1; } 100% { opacity: 0; } } /* 15초 진하게 → 15초 동안 사라짐 */
 .me-halo, .me-wave { position: absolute; inset: 5px; border-radius: 50%; }
 .me-halo { background: rgba(47, 123, 255, 0.2); border: 1px solid rgba(47, 123, 255, 0.6); }
-.me-wave { border: 2px solid #2f7bff; opacity: 0; animation: me-wave 1s ease-out 3; } /* 처음에 세 번만 */
-@keyframes me-wave { from { transform: scale(0.5); opacity: 0.9; } to { transform: scale(2.8); opacity: 0; } }
+/* 파동: 큰 원이 내 위치로 모여듦 (눈이 그 자리로 따라가게). 세 번, 갈수록 작게 — 첫 번째를 놓쳐도 다음에 보임 (2026-11-25 사용자) */
+.me-wave {
+  border: 3px solid #2f7bff; background: rgba(47, 123, 255, 0.1); opacity: 0;
+  animation: me-wave 0.9s ease-in var(--me-delay, 0s) 1 both;
+}
+.me-wave:nth-of-type(2) { --me-from: 16; --me-delay: 0s; }
+.me-wave:nth-of-type(3) { --me-from: 10; --me-delay: 1s; }
+.me-wave:nth-of-type(4) { --me-from: 5; --me-delay: 2s; }
+@keyframes me-wave { from { transform: scale(var(--me-from, 8)); opacity: 0; } 25% { opacity: 0.65; } 90% { opacity: 1; } to { transform: scale(1); opacity: 0; } }
 .me-arrow { position: relative; width: 26px; height: 26px; filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.85)); }
 .me-arrow path { fill: #2f7bff; stroke: #fff; stroke-width: 2; stroke-linejoin: round; }
 .me-dot { position: relative; width: 14px; height: 14px; border-radius: 50%; background: #2f7bff; border: 2px solid #fff; box-shadow: 0 0 3px 1px rgba(0, 0, 0, 0.7); }
