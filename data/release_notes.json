@@ -217,5 +217,14 @@
       "Game brightness now turns on as soon as loading ends and the map appears (about 15 seconds earlier)",
       "Quests that were missing flares or plantable items in their prep list are filled in, and Settings → About has a [Check for updates] button"
     ]
+  },
+  "1.4.1": {
+    "date": "2026-11-25",
+    "ko": [
+      "지도에서 필요템 바닥 위치 표시(분홍 네모)를 없앴어요. 표시 목록에 없는데 지도에 나와서 헷갈렸어요. 위쪽 필요템 줄은 그대로예요"
+    ],
+    "en": [
+      "Removed the needed-item floor spawn markers (pink squares) from the map. They showed up without an entry in the marker list. The needed-items strip above the map stays"
+    ]
   }
 }
