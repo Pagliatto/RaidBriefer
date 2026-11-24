@@ -1435,7 +1435,47 @@ function highlightQuestPin() {
 // 주운 퀘스트 아이템 등 '이번 레이드에서 해 둔' 목표의 핀을 잠깐 치운다 (핀이 커서 한곳에 겹침).
 // 완료 표시가 아님: 진행 기록에는 아무것도 쓰지 않고 화면에만 둔다. 진짜 완료는 게임 로그가 알려 줌
 // 열쇠 = 퀘스트 id + 목표 순서 (목표에는 따로 id 가 없음. 레이드 중에는 퀘스트 목록을 다시 읽지 않아 순서가 안 바뀜)
-const mapHide = { keys: new Set() };
+// 풀리는 때 (2026-11-25 사용자): 로비로 돌아오면 모두 풀림 (죽어서 잃었을 수 있음). 트랜짓(다른 맵으로 바로 이어지는 레이드)은 유지.
+// 레이드 중에 프로그램을 껐다 켜도 같은 레이드면 유지 → 이 PC 의 화면 저장소에 '레이드 시작 시각 + 열쇠'만 적어 둠
+const GOAL_HIDE_STORAGE = "tarkovhelper.goalHides";
+const mapHide = { keys: new Set(), raid: null, mapId: null, restored: false };
+function saveGoalHides() {
+  try {
+    if (mapHide.keys.size) localStorage.setItem(GOAL_HIDE_STORAGE, JSON.stringify({ raid: mapHide.raid, keys: [...mapHide.keys] }));
+    else localStorage.removeItem(GOAL_HIDE_STORAGE);
+  } catch (e) { /* 저장소를 못 써도 이번 실행 동안은 동작 */ }
+}
+function redrawGoalHides() {
+  if (!mapUI.leaflet || mapEditor.active) return;
+  drawPins();
+  renderDrawer();
+}
+function clearGoalHides() {
+  const had = mapHide.keys.size > 0;
+  mapHide.keys.clear();
+  saveGoalHides();
+  if (had) redrawGoalHides();
+}
+// 게임 상태가 바뀔 때마다: 새 레이드가 트랜짓인지(유지) 같은 맵 재입장인지(풂) 가르고, 껐다 켠 뒤 첫 레이드 상태에서 되살림
+function updateGoalHidesForState(s) {
+  if (s.status !== "raid" || !s.since) return; // 로비로 돌아온 것은 onGameState 의 로비 대기(LOBBY_WAIT_MS)가 끝날 때 clearGoalHides
+  if (!mapHide.restored) {
+    mapHide.restored = true;
+    try {
+      const saved = JSON.parse(localStorage.getItem(GOAL_HIDE_STORAGE) || "null");
+      if (saved && saved.raid === s.since && Array.isArray(saved.keys)) {
+        saved.keys.forEach((key) => { if (typeof key === "string") mapHide.keys.add(key); });
+        if (mapHide.keys.size) redrawGoalHides();
+      }
+    } catch (e) { /* 깨진 저장 값은 버림 (아래에서 지워짐) */ }
+  } else if (mapHide.raid !== s.since && mapHide.mapId === s.map_id) {
+    // 직전 레이드와 같은 맵에 새로 들어옴 = 트랜짓이 아니라 죽거나 나온 뒤 재입장 (로비 대기가 끝나기 전에 들어온 경우) → 풂
+    clearGoalHides();
+  }
+  mapHide.raid = s.since;
+  mapHide.mapId = s.map_id;
+  saveGoalHides();
+}
 function goalHideKey(quest, objective) { return `${quest.id}:${quest.objectives.indexOf(objective)}`; }
 function isGoalHidden(quest, objective) { return mapHide.keys.has(goalHideKey(quest, objective)); }
 // 숨기기 버튼은 레이드 중에, 지금 보는 지도가 그 레이드 맵일 때만
@@ -1450,6 +1490,7 @@ function toggleGoalHidden(quest, objective, n) {
     mapHide.keys.add(key);
     if (mapUI.focusedPin === n) mapUI.focusedPin = null; // 숨긴 목표는 고른 상태도 풂
   }
+  saveGoalHides();
   drawPins();
   renderDrawer();
 }
@@ -2269,6 +2310,7 @@ function onGameState(s) {
     mapUI.lobbyTimer = setTimeout(() => {
       mapUI.lobbyTimer = null;
       mapUI.autoMapId = null;
+      clearGoalHides(); // 로비로 돌아옴 (트랜짓이 아님) → 임시로 숨긴 목표를 모두 다시 보이게
       document.getElementById("map-auto").hidden = true;
       if (currentTab() !== "map") return; // 사용자가 다른 화면을 보고 있으면 그대로
       showTransition(t("map.lobby"), t("map.returning"), async () => goTab("home"));
@@ -2276,6 +2318,7 @@ function onGameState(s) {
   }
 }
 window.addEventListener("game-state", (e) => {
+  updateGoalHidesForState(e.detail);
   onGameState(e.detail);
   // 레이드에 들어가거나 나오면 서랍의 숨기기 버튼이 생기거나 없어짐 (지도를 새로 그리는 경우는 drawMap 이 다시 그림)
   if (mapUI.leaflet && !mapEditor.active) renderDrawer();
