@@ -1,0 +1,9 @@
+# 깃허브 Actions 에서 쓰는 도구(checkout 등)의 새 버전을 한 달에 한 번 PR 로 알려 줌.
+# 파이썬 라이브러리는 보안 문제가 있을 때만 (저장소 설정의 Dependabot security updates).
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 3

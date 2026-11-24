@@ -38,6 +38,8 @@ def check_guides() -> int:
 
     story_ids = set()
     for path in sorted((ROOT / "data" / "story").glob("*.json")):
+        if path.name == "places.json":
+            continue  # 스토리 장소 핀 파일 (챕터가 아님, story_check.py 가 검사)
         story = read_json(path)
         if not isinstance(story, dict) or not isinstance(story.get("sections"), list):
             problems.append(f"{path.relative_to(ROOT)}: sections 목록 없음")
@@ -368,8 +370,26 @@ def main() -> int:
         print("\n은퇴 가능 (dev 가 따라잡음)")
         kept = []
         retired = []
+        supplements = []
+        supplement_problems = []
         for quest_id, entry in manual.items():
             task = tasks.get(quest_id) or tasks.get(entry.get("same_as"))
+            # prep_add: dev 준비물에 덧붙이기만 하는 칸 (dev 가 모르는 필수 준비물). dev 가 따라잡는 칸이 아니라 은퇴 대상이 아니다.
+            adds = entry.get("prep_add")
+            if adds is not None:
+                dev_name = next((bundle[task["name"]] for bundle in reversed(names)
+                                 if task and isinstance(bundle.get(task.get("name")), str)), None)
+                items = []
+                for index, extra in enumerate(adds if isinstance(adds, list) else [None]):
+                    # quests.py 는 형식이 틀린 항목을 말없이 건너뛰므로 여기서 잡는다.
+                    if (not isinstance(extra, dict) or extra.get("kind") not in ("가져가기", "무기", "착용")
+                            or not isinstance(extra.get("text"), str) or not extra["text"].strip()):
+                        supplement_problems.append(f"  quests/{quest_id}/prep_add/{index}: kind(가져가기·무기·착용)와 text 필요")
+                    else:
+                        items.append(extra["text"])
+                supplements.append(f"  {quest_id}: {dev_name or quest_id} — {', '.join(items) or '없음'}")
+                if set(entry) <= {"prep_add", "link", "from", "checked", "same_as"}:
+                    continue  # 덧붙이기만 있는 항목: 뺄 칸이 없음
             fields = []
             if task:
                 if (entry.get("name") or entry.get("name_en")) and any(bundle.get(task.get("name")) for bundle in names):
@@ -379,6 +399,8 @@ def main() -> int:
                 if quests._has_manual_objectives(entry) and task.get("objectives"):
                     fields.append("objectives")
             row = f"  {quest_id}: {entry.get('name_en') or entry.get('name') or quest_id} — dev 공통 필드: {', '.join(fields) or '없음'}"
+            if adds is not None:
+                row += " (prep_add 는 남김)"
             if set(entry) <= {"same_as", "checked"}:
                 continue  # 이미 연결만 남긴 항목 (은퇴 끝남)
             if entry.get("from") == "game":
@@ -394,6 +416,11 @@ def main() -> int:
         print("\n".join(retired) or "  없음")
         print("직접 확인값 — 유지")
         print("\n".join(kept) or "  없음")
+        print("준비물 덧붙이기 (prep_add) — 유지")
+        print("\n".join(supplements) or "  없음")
+        if supplement_problems:
+            print(f"준비물 덧붙이기 문제 {len(supplement_problems)}개")
+            print("\n".join(supplement_problems))
 
         print("\n확인 필요")
         pending = [qid for qid in ids if qid not in tasks and qid not in manual
@@ -422,7 +449,7 @@ def main() -> int:
                 if flags:
                     warnings.append(f"  {section}/{key}: {', '.join(flags)}")
         print("\n".join(warnings) or "  없음")
-        return int(bool(guide_problems or boss_problems or enemy_problems))  # 기존 검토 항목은 오류가 아니다.
+        return int(bool(guide_problems or boss_problems or enemy_problems or supplement_problems))  # 기존 검토 항목은 오류가 아니다.
     except (OSError, ValueError, KeyError, TypeError, AttributeError, tarkov_api.DataError) as error:
         print(f"파일/캐시를 읽지 못했습니다: {error}")
         return 1
