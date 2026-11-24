@@ -24,6 +24,11 @@ jobs:
           python-version: "3.12"
           cache: pip
 
+      - name: Forbidden files
+        env:
+          PRIVATE_PATHS: ${{ secrets.PRIVATE_PATHS }}
+        run: python .github/scripts/forbidden_files.py
+
       - name: Install requirements
         run: python -m pip install -r requirements.txt
 
