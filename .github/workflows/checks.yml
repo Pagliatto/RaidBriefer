@@ -51,8 +51,16 @@ jobs:
       - name: Guide data
         run: python tools/data_check.py --guides-only
 
+      # tarkov.dev 에서 맵 목록을 받아 오므로 인터넷이 잠깐 끊기면 실패할 수 있음 → 30초 뒤 최대 3번
       - name: Story data
-        run: python tools/story_check.py
+        shell: pwsh
+        run: |
+          for ($try = 1; $try -le 3; $try++) {
+            python tools/story_check.py
+            if ($LASTEXITCODE -eq 0) { exit 0 }
+            if ($try -lt 3) { Write-Host "retry $try/3 in 30s"; Start-Sleep -Seconds 30 }
+          }
+          exit 1
 
       - name: Story English
         run: python tools/story_en_check.py
