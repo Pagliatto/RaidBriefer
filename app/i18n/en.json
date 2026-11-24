@@ -265,6 +265,8 @@
     "noQuests": "No quests to do on this map.",
     "drawerStory": "Storyline",
     "drawerQuests": "Quests",
+    "goalHide": "Hide on the map for this raid (doesn't mark it done)",
+    "goalShow": "Show on the map again",
     "drawerTransits": "Maps reachable by transit",
     "transitTo": "Transit → {map}",
     "transitQuests": "Quests {n}",

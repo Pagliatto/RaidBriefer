@@ -1222,6 +1222,7 @@ async function drawMap() {
   clearMe(); // 내 위치 표시는 지도와 함께 사라짐 → 끝에서 다시 그림
   const m = mapUI.current;
   if (mapStory.explicit?.map !== m?.key) { mapStory.explicit = null; mapStory.focused = null; }
+  if (mapUI.focusedPinMap !== m?.key) mapUI.focusedPin = null; // 고른 목표 번호는 그 맵에서만 (다른 맵의 같은 번호가 강조되지 않게)
   mapStory.markers = [];
   const box = document.getElementById("map-view");
   if (mapUI.leaflet) {
@@ -1372,6 +1373,11 @@ function drawPins() {
   mapUI.pinMarkers = [];
   mapUI.floorItems = (mapUI.floorItems || []).filter((x) => !x.quest);
   numberedObjectives().forEach(({ n, quest, objective, spots }) => {
+    // 레이드 중 임시로 숨긴 목표: 핀·구역을 그리지 않음. 번호는 그대로 (남은 핀 번호가 바뀌지 않게)
+    if (isGoalHidden(quest, objective)) {
+      delete mapUI.pins[n];
+      return;
+    }
     const color = traderColor(quest.trader_key);
     const layers = [];
     spots.forEach((spot) => {
@@ -1395,12 +1401,13 @@ function drawPins() {
         const item = { marker, home: L.latLng(gamePos(p)), n, cluster: null, floor: floorOf(p) };
         mapUI.pinMarkers.push(item);
         mapUI.floorItems.push({ layer: marker, floor: item.floor, quest: true });
-        // 누르기: 겹친 핀이면 그 자리를 확대해서 떨어뜨림, 혼자 있는 핀이면 서랍을 열고 그 목표로
+        // 누르기: 겹친 핀이면 확대 없이 그 자리에서 바로 펼침(2026-11-25 사용자: 끝까지 확대해야 갈라지던 것),
+        // 혼자 있는 핀·펼친 핀이면 서랍을 열고 그 목표로. 빈 지도를 누르면 다시 모임
         marker.on("click", (e) => {
           L.DomEvent.stopPropagation(e);
           if (item.floor !== mapUI.floor) setFloor(item.floor); // 다른 층 핀 → 그 층으로
           const c = item.cluster;
-          if (c && c.items.length > 1 && !c.open) zoomIntoCluster(c);
+          if (c && c.items.length > 1 && !c.open) openCluster(c);
           else showInDrawer(n);
         });
         layers.push(marker);
@@ -1409,8 +1416,42 @@ function drawPins() {
     mapUI.pins[n] = L.featureGroup(layers).addTo(mapUI.groups.quests);
   });
   findClusters();
+  highlightQuestPin();
   applyFloor();
   scheduleMapRefresh();
+}
+
+// 고른 목표의 번호 핀에 강조 테두리 (서랍 줄만 강조되던 것, 2026-11-25 사용자). 스토리·공략 핀과 같은 모양(.guide-highlight)
+function highlightQuestPin() {
+  (mapUI.pinMarkers || []).forEach((item) => {
+    const selected = item.n === mapUI.focusedPin;
+    item.marker.getElement()?.classList.toggle("guide-highlight", selected);
+    // 펼친 겹친 핀(1000)은 그대로 두고, 나머지만 고른 핀을 위로
+    if (!item.cluster || !item.cluster.open) item.marker.setZIndexOffset(selected ? 800 : QUEST_PIN_Z);
+  });
+}
+
+// ---------- 레이드 중 목표 임시 숨기기 (2026-11-25 사용자) ----------
+// 주운 퀘스트 아이템 등 '이번 레이드에서 해 둔' 목표의 핀을 잠깐 치운다 (핀이 커서 한곳에 겹침).
+// 완료 표시가 아님: 진행 기록에는 아무것도 쓰지 않고 화면에만 둔다. 진짜 완료는 게임 로그가 알려 줌
+// 열쇠 = 퀘스트 id + 목표 순서 (목표에는 따로 id 가 없음. 레이드 중에는 퀘스트 목록을 다시 읽지 않아 순서가 안 바뀜)
+const mapHide = { keys: new Set() };
+function goalHideKey(quest, objective) { return `${quest.id}:${quest.objectives.indexOf(objective)}`; }
+function isGoalHidden(quest, objective) { return mapHide.keys.has(goalHideKey(quest, objective)); }
+// 숨기기 버튼은 레이드 중에, 지금 보는 지도가 그 레이드 맵일 때만
+function canHideGoals() {
+  const s = topbar.state;
+  return s.status === "raid" && !!mapUI.current && mapUI.current.ids.includes(s.map_id);
+}
+function toggleGoalHidden(quest, objective, n) {
+  const key = goalHideKey(quest, objective);
+  if (mapHide.keys.has(key)) mapHide.keys.delete(key);
+  else {
+    mapHide.keys.add(key);
+    if (mapUI.focusedPin === n) mapUI.focusedPin = null; // 숨긴 목표는 고른 상태도 풂
+  }
+  drawPins();
+  renderDrawer();
 }
 
 // ---------- 먹을 것 (지도 위쪽 줄에 아이콘 + 바닥 생성 위치가 있으면 지도에 ◆) ----------
@@ -1546,27 +1587,13 @@ function openCluster(c) {
   });
 }
 
-function zoomIntoCluster(c) {
-  const leaf = mapUI.leaflet;
-  if (!leaf) return;
-  const max = leaf.getMaxZoom();
-  if (leaf.getZoom() >= max - 0.05) {
-    openCluster(c); // 더 확대할 수 없음 → 펼쳐서 보여줌
-    return;
-  }
-  const center = L.latLngBounds(c.items.map((item) => item.home)).getCenter();
-  const zoom = Math.min(max, leaf.getZoom() + 2);
-  if (reducedMotion()) leaf.setView(center, zoom, { animate: false });
-  else leaf.flyTo(center, zoom, { duration: 0.5 });
-}
-
 function closeCluster(c) {
   clearTimeout(c.timer);
   if (!c.open) return;
   c.open = false;
   c.items.forEach((item) => {
     item.marker.setLatLng(item.home);
-    item.marker.setZIndexOffset(QUEST_PIN_Z);
+    item.marker.setZIndexOffset(item.n === mapUI.focusedPin ? 800 : QUEST_PIN_Z);
   });
   c.legs.forEach((leg) => leg.remove());
   c.legs = [];
@@ -1853,6 +1880,7 @@ function renderDrawer() {
     if (scroller) scroller.scrollTop = scrollTop;
   };
   const numbers = new Map(numberedObjectives().map((x) => [x.objective, x.n]));
+  const hideable = canHideGoals();
   const here = mapQuests(m.name);
   const anywhere = anywhereQuests(activeQuests()).filter((q) => !here.includes(q));
   document.getElementById("drawer-count").textContent = here.length + anywhere.length;
@@ -1875,14 +1903,30 @@ function renderDrawer() {
     q.objectives.forEach((o) => {
       const n = numbers.get(o);
       const goal = el("li", o.optional ? "optional" : "");
+      const hidden = n && isGoalHidden(q, o);
       if (n) {
-        // 위치가 있는 목표: 지도와 같은 번호, 누르면 지도에서 그 위치로
+        // 위치가 있는 목표: 지도와 같은 번호, 누르면 지도에서 그 위치로 (숨긴 목표는 핀이 없으니 그대로)
         goal.append(el("span", "goal-num", String(n)));
         goal.classList.add("has-pin");
+        goal.classList.toggle("goal-hidden", hidden);
         goal.dataset.pin = n;
-        goal.addEventListener("click", () => focusPin(n));
+        goal.addEventListener("click", () => { if (!isGoalHidden(q, o)) focusPin(n); });
       }
-      goal.append(el("span", "", o.text + (o.optional ? t("map.optional") : "")));
+      goal.append(el("span", "goal-text", o.text + (o.optional ? t("map.optional") : "")));
+      // 레이드 중 임시 숨기기: 줄 오른쪽 끝의 눈 아이콘 (체크가 아님 — 완료 표시로 오해하지 않게)
+      if (n && (hideable || hidden)) {
+        const eye = el("button", "goal-hide");
+        eye.type = "button";
+        eye.innerHTML = iconSvg(hidden ? "eye-off" : "eye", 15);
+        eye.title = t(hidden ? "map.goalShow" : "map.goalHide");
+        eye.setAttribute("aria-label", eye.title);
+        eye.setAttribute("aria-pressed", String(hidden));
+        eye.addEventListener("click", (e) => {
+          e.stopPropagation(); // 줄 누르기(지도 이동)로 번지지 않게
+          toggleGoalHidden(q, o, n);
+        });
+        goal.append(eye);
+      }
       goals.append(goal);
     });
     li.append(goals);
@@ -2123,6 +2167,8 @@ function showInDrawer(n) {
 
 function highlightDrawer(n, flash = false) {
   mapUI.focusedPin = n;
+  mapUI.focusedPinMap = mapUI.current?.key; // 다른 맵으로 가면 고른 번호를 잊음 (drawMap)
+  highlightQuestPin();
   document.querySelectorAll("#drawer-list .has-pin").forEach((g) => g.classList.toggle("focused", g.dataset.pin === String(n)));
   const target = document.querySelector(`#drawer-list .has-pin[data-pin="${n}"]`);
   if (!target) return;
@@ -2229,7 +2275,11 @@ function onGameState(s) {
     }, s.cancelled ? 0 : LOBBY_WAIT_MS);
   }
 }
-window.addEventListener("game-state", (e) => onGameState(e.detail));
+window.addEventListener("game-state", (e) => {
+  onGameState(e.detail);
+  // 레이드에 들어가거나 나오면 서랍의 숨기기 버튼이 생기거나 없어짐 (지도를 새로 그리는 경우는 drawMap 이 다시 그림)
+  if (mapUI.leaflet && !mapEditor.active) renderDrawer();
+});
 
 // ---------- 내 위치 (게임 스크린샷 파일 이름의 좌표, 2026-11-24 사용자) ----------
 // 사용자가 게임에서 스크린샷 키를 누르면 서버(shot_watch.py)가 파일 이름의 좌표를 읽어 준다.
