@@ -12,7 +12,7 @@ import string
 import threading
 from pathlib import Path
 
-from app import i18n, paths
+from app import cleanup, i18n, paths
 
 USER_DIR = paths.USER_DIR
 SETTINGS_FILE = USER_DIR / "settings.json"
@@ -106,6 +106,7 @@ def read_saved(path: Path, validate) -> dict:
                 with backup.open("xb") as fh:
                     fh.write(raw)
                 _broken_copies.add(fingerprint)
+                cleanup.prune_broken(path.stem, path.parent, keep=backup)  # 손상이 계속돼도 백업은 최근 3개만
             except OSError:
                 pass  # 복사도 실패하면 원본을 그대로 두고 저장을 거절한다.
         raise DataReadError() from error
@@ -123,8 +124,16 @@ def read_for_reset(path: Path, validate) -> dict | None:
             raw = path.read_bytes()
         except OSError:
             raise error
-        if (path, hashlib.sha256(raw).hexdigest()) not in _broken_copies:
-            raise
+        # 기억만 믿지 않고 같은 내용의 백업이 실제로 남아 있는지 확인한다 (정리·사용자가 지웠을 수 있음).
+        # 없으면 한 번 다시 만들어 보고, 그래도 없으면 덮어쓰지 않는다.
+        if not cleanup.has_backup(path, raw):
+            _broken_copies.discard((path, hashlib.sha256(raw).hexdigest()))
+            try:
+                read_saved(path, validate)
+            except DataReadError:
+                pass
+            if not cleanup.has_backup(path, raw):
+                raise error
         return None
 
 

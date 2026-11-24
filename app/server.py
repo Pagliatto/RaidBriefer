@@ -18,7 +18,7 @@ from pathlib import Path
 from flask import Flask, abort, jsonify, render_template, request, send_file
 from werkzeug.exceptions import HTTPException
 
-from app import alerts, brightness, game_state, hideout, i18n, updater, map_views, paths, progress, quest_log, quests, report_log, settings, story, story_places, tarkov_api
+from app import alerts, brightness, cleanup, game_state, hideout, i18n, updater, map_views, paths, progress, quest_log, quests, report_log, settings, story, story_places, tarkov_api
 
 from app.version import VERSION
 
@@ -665,6 +665,7 @@ def serve(port: int = PORT) -> None:
     report_log.install_hooks()
     report_log.started()
     atexit.register(report_log.stopped)
+    cleanup.clean_all()  # 꺼질 때 남은 임시 파일·오래된 손상 백업 정리
     brightness.init()
     game_state.start()  # 게임 로그를 뒤에서 계속 지켜보기 (상단바 상태)
     updater.check_in_background()  # 새 버전이 있는지 깃허브에 한 번 물어봄
