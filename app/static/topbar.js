@@ -100,6 +100,17 @@ function drawTopbar() {
     time.classList.toggle("low-2", urgency === 2);
     time.classList.toggle("low-3", urgency === 3);
     bar.classList.toggle("low", urgency > 0);
+    // 지도 둘레 경고 테두리 (style.css '남은 시간 경고 테두리')가 같은 단계를 씀
+    if (urgency) document.documentElement.dataset.raidLow = String(urgency);
+    else delete document.documentElement.dataset.raidLow;
+  }
+  // 경고 테두리가 이번 레이드에서 처음 켜질 때 한 번만 지도 탭으로 (2026-11-25 사용자: 다른 화면을 보다가 놓치지 않게).
+  // 그 뒤에는 다른 탭으로 가도 다시 끌고 오지 않음. 설정이 '끔'이면 옮기지 않음. 설정 값을 아직 못 받았으면 받을 때까지 기다림
+  const borderMode = document.documentElement.dataset.raidBorder;
+  if (urgency && borderMode && topbar.borderMovedFor !== s.since) {
+    topbar.borderMovedFor = s.since;
+    const editing = typeof mapEditor !== "undefined" && mapEditor.active; // 위치 편집 도구(개발용)는 건드리지 않음
+    if (borderMode !== "off" && !editing && currentTab() !== "map") goTab("map");
   }
   // 고정된 높이를 알려줘서, 카드로 이동할 때 상단바 밑에 숨지 않게
   document.documentElement.style.setProperty("--sticky-h", `${topbar.get("sticky-top").offsetHeight + 8}px`);
