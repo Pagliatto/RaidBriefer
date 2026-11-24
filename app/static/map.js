@@ -1372,7 +1372,9 @@ function drawPins() {
   if (mapUI.groups && mapUI.groups.quests) mapUI.groups.quests.clearLayers(); // 옛 핀 비우기
   mapUI.pinMarkers = [];
   mapUI.floorItems = (mapUI.floorItems || []).filter((x) => !x.quest);
-  numberedObjectives().forEach(({ n, quest, objective, spots }) => {
+  const numbered = numberedObjectives();
+  syncFocusedPin(numbered);
+  numbered.forEach(({ n, quest, objective, spots }) => {
     // 레이드 중 임시로 숨긴 목표: 핀·구역을 그리지 않음. 번호는 그대로 (남은 핀 번호가 바뀌지 않게)
     if (isGoalHidden(quest, objective)) {
       delete mapUI.pins[n];
@@ -1419,6 +1421,15 @@ function drawPins() {
   highlightQuestPin();
   applyFloor();
   scheduleMapRefresh();
+}
+
+// 퀘스트가 완료·숨김으로 빠지면 번호가 다시 매겨짐 → 고른 목표를 번호가 아니라 목표(퀘스트 id + 순서)로 기억했다가
+// 새 번호를 찾아 줌. 그 목표가 없어졌으면 고른 상태를 풂 (엉뚱한 목표에 강조가 붙지 않게)
+function syncFocusedPin(numbered) {
+  if (mapUI.focusedPin == null) return;
+  const found = mapUI.focusedGoal && numbered.find((x) => goalHideKey(x.quest, x.objective) === mapUI.focusedGoal);
+  mapUI.focusedPin = found ? found.n : null;
+  if (!found) mapUI.focusedGoal = null;
 }
 
 // 고른 목표의 번호 핀에 강조 테두리 (서랍 줄만 강조되던 것, 2026-11-25 사용자). 스토리·공략 핀과 같은 모양(.guide-highlight)
@@ -2209,6 +2220,8 @@ function showInDrawer(n) {
 function highlightDrawer(n, flash = false) {
   mapUI.focusedPin = n;
   mapUI.focusedPinMap = mapUI.current?.key; // 다른 맵으로 가면 고른 번호를 잊음 (drawMap)
+  const picked = numberedObjectives().find((x) => x.n === n);
+  mapUI.focusedGoal = picked ? goalHideKey(picked.quest, picked.objective) : null; // 번호가 바뀌어도 따라가게 (syncFocusedPin)
   highlightQuestPin();
   document.querySelectorAll("#drawer-list .has-pin").forEach((g) => g.classList.toggle("focused", g.dataset.pin === String(n)));
   const target = document.querySelector(`#drawer-list .has-pin[data-pin="${n}"]`);
