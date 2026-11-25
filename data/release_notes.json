@@ -243,5 +243,20 @@
       "Stacked numbered pins now spread out with a single click, without zooming",
       "Pressing the screenshot key while on another screen now switches to the map so you see your position right away"
     ]
+  },
+  "1.6.0": {
+    "date": "2026-11-25",
+    "ko": [
+      "트랜짓 이용 목표에 번호 핀: \"A에서 B로 트랜짓 이용\" 목표도 지도의 그 트랜짓 자리에 번호 핀으로 보여요",
+      "Paramedic: 구급대원 스마트폰이 나올 수 있는 구급차 8곳이 모두 지도에 나와요 (전에는 3곳)",
+      "스크린샷 정리: 설정 → 기록 관리에서 쌓인 게임 스크린샷을 휴지통으로 보낼 수 있어요. 게임이 찍은 스크린샷만 보내고, 휴지통에서 되살릴 수 있어요",
+      "스크린샷 폴더 열기 버튼이 생겼어요 (설정 → 기록 관리)"
+    ],
+    "en": [
+      "Numbered pins for transit objectives: \"Use the transit from A to B\" objectives now show a numbered pin at that transit on the map",
+      "Paramedic: all 8 ambulances where the paramedic's smartphone can spawn are on the map (3 before)",
+      "Clean up screenshots: in Settings → Records you can send piled-up game screenshots to the Recycle Bin. Only screenshots made by the game are sent, and you can restore them from the Recycle Bin",
+      "New button to open the screenshot folder (Settings → Records)"
+    ]
   }
 }
