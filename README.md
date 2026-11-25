@@ -57,7 +57,8 @@ The goal is that you barely have to touch it.
 - **Ending paths**: The Ticket flowchart shows ending choices, your current position and the steps left until the next fork.
 - **Prestige** is detected automatically and progress starts fresh.
 - **English and Korean.** It follows your Windows language at first; change it in ⚙ Settings.
-- **My position**: press the in-game screenshot key during a raid and the map shows where you are and which way you're facing for 30 seconds. Only the screenshot's file name is read (the image is never opened or deleted).
+- **My position**: press the in-game screenshot key during a raid and the map shows where you are and which way you're facing for 30 seconds. Only the screenshot's file name is read (the image is never opened).
+- **Clean up screenshots**: piled-up game screenshots go to the Recycle Bin only when you press the button in ⚙ Settings → Records. Only screenshots made by the game are sent; the app never deletes them on its own.
 - **Low-time warning**: the edge of the map glows red when 10, 5 and 2 minutes of the raid are left, and the app switches to the map once. It can be turned off in Settings.
 - **Hide an objective for the raid**: the eye icon in the to-do list removes that objective's pins from the map until you return to the lobby. It doesn't mark the objective done.
 - **Game brightness**: the monitor icon in the top bar lets you brighten the game during raids in borderless window mode. It turns on as soon as loading ends and the map appears.
@@ -73,7 +74,7 @@ RaidBriefer only uses:
    - Bundled storyline, Terminal guide and quest corrections use official wiki summaries. Some positions missing from tarkov.dev (extracts, BTR stops, Terminal guide pins and Black Division spawns) come from official wiki maps or in-game checks.
 2. The game's **log files** — **read only**. That's how it knows which map you're on and which quests you accepted or completed.
 3. Whether the game is running — it only checks the **process name** (`EscapeFromTarkov.exe`), like Task Manager.
-4. The **file names of screenshots** the game takes: only the position the game writes into the name is read. You press the screenshot key yourself; the app never sends key presses to the game.
+4. The **file names of screenshots** the game takes: only the position the game writes into the name is read. You press the screenshot key yourself; the app never sends key presses to the game. Screenshot files are moved to the Recycle Bin only when you press [Send to Recycle Bin] in Settings.
 
 **It never reads game memory, modifies game files, uses mods, or draws over the game (overlay).**
 That's why it runs in its own window (for example on a second monitor).
