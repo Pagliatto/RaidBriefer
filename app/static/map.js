@@ -54,7 +54,10 @@ function refreshNewMarkers() {
     const kind = pending.edit.seed.add;
     if (kind === "noplace" || kind === "maps" || kind === "unnoplace") continue; // 위치 없는 항목 (스토리 연속 입력의 '장소 불필요'·맵 고치기)
     const pin = pending.fields.kind;
-    const icons = { quest: ["quest-spot", "check"], bd: ["enemy", "crosshair"], boss: ["boss", "skull"], extract: [`extract-${pending.fields.faction}`, "door-open"], btr: ["btr", "bus"], story: ["story", "book-open"], guide: [pin === "lock" ? "lock" : "guide-" + pin, GUIDE_ICONS[pin] || "door-open"] };
+    // 저장 전 보스 표시도 저장한 뒤와 같은 모양으로 (군즈 = 사람들, 컬티스트 = 달)
+    const firstBoss = (pending.fields.bosses || [])[0];
+    const bossMark = BOSS_ZONE_KINDS[firstBoss === "bossKnight" ? "goons" : firstBoss === "sectantPriest" ? "cultist" : "boss"];
+    const icons = { quest: ["quest-spot", "check"], bd: ["enemy", "crosshair"], boss: [bossMark[1], bossMark[2]], extract: [`extract-${pending.fields.faction}`, "door-open"], btr: ["btr", "bus"], story: ["story", "book-open"], guide: [pin === "lock" ? "lock" : "guide-" + pin, GUIDE_ICONS[pin] || "door-open"] };
     // 저장 전 핀도 저장된 핀과 같은 겹침 순서로 (Codex 검수 76)
     const z = { quest: QUEST_SPOT_Z, bd: MARKER_Z.blackDivision, boss: MARKER_Z.bossZones, extract: MARKER_Z.extracts, btr: MARKER_Z.btrStops,
       story: STORY_PIN_Z, guide: pin === "lock" ? MARKER_Z.keys : GUIDE_PIN_Z }[kind] || 0;
