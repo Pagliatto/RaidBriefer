@@ -383,7 +383,7 @@ def _enemy_features(map_key: str, bosses, translate) -> dict:
         center = _spawn_center(positions)
         # dev 좌표 전체를 감싸는 반경 (한 지점이면 원 대신 핀만 표시).
         radius = max(math.hypot(p[0] - center[0], p[1] - center[1]) for p in positions)
-        zones.append(({"name": name, "pos": center, "radius": round(radius, 2)}, group["bosses"]))
+        zones.append(({"name": name, "pos": center, "radius": round(radius, 2), "dev": True}, group["bosses"]))
     valid_bosses = {b.get("mob") for b in _rows(bosses) if isinstance(b, dict) and _is_zone_boss(b.get("mob"))}
     filled = set()   # 우리가 자리를 채운 dev 구역 이름 (위키로 잰 터미널 구역)
     extra = {}       # 보스 → 직접 찍은 자리 수 (편집 도구의 manual_N)
@@ -403,6 +403,8 @@ def _enemy_features(map_key: str, bosses, translate) -> dict:
         zones.append(({"name": zone["spawn_location"], "pos": _xzy(zone), "radius": zone["radius"],
                        "source": zone["source"]}, remaining))
 
+    moves = corrections.boss_zone_moves(map_key)
+
     def complete(mob):
         # dev 가 자리를 안 적은 구역 수만큼 직접 찍은 자리가 있어야 그 보스를 지도에 보인다
         missing = [name for name in mob_zones.get(mob, ()) if not dev_zones[name]["positions"] and name not in filled]
@@ -416,8 +418,16 @@ def _enemy_features(map_key: str, bosses, translate) -> dict:
             mine = [mob for mob in mobs if _zone_kind(mob) == kind]
             shown = [label(mob) for mob in mine if complete(mob)]
             pending = [label(mob) for mob in mine if not complete(mob)]
-            if shown or pending:
-                result["bossZones"].append({**base, "kind": kind, "bosses": shown, "pending": pending})
+            if not (shown or pending):
+                continue
+            item = {**base, "kind": kind, "bosses": shown, "pending": pending}
+            # dev 구역을 게임에서 확인한 자리로 옮겼거나 숨긴 보정 (dev 는 좌표 여러 개의 가운데라 엉뚱한 곳일 수 있음: 삼림 ZoneWoodCutter)
+            move = moves.get(f"{base['name']}_{kind}") if base.get("dev") else None
+            if move:
+                item.update(pos=[move["x"], move["z"], move["y"]], moved=True)
+                if move["hidden"]:
+                    item["hidden"] = True  # 화면은 편집 도구에서만 보임 (다시 보이게 할 수 있게)
+            result["bossZones"].append(item)
     return result
 
 

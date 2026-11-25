@@ -120,7 +120,7 @@ function openMarkerForm(latlng) {
     }
     return input;
   };
-  const kind = field(form, "kind", select(Object.keys(options).filter((key) => !["noplace", "maps", "unnoplace", "quest"].includes(key))
+  const kind = field(form, "kind", select(Object.keys(options).filter((key) => !["noplace", "maps", "unnoplace", "quest", "story"].includes(key))
     .map((key) => [key, editorText("kind_" + key)])));
   if (typeof picked === "string" && options[picked]) {
     kind.value = picked;
@@ -252,7 +252,8 @@ async function initializePositionEditor() {
   // 종류별 추가 버튼: 누르고 지도를 클릭하면 그 종류로 바로 (종류 고르기 단계 없음)
   const marks = group("editor.groupMarks");
   mapEditor.addButtons = {};
-  for (const key of ["bd", "boss", "extract", "btr", "guide", "story"]) {
+  // 스토리 장소는 [퀘스트·스토리 자리 찍기]·[스토리 연속 입력]으로만 (같은 일을 하는 버튼이 둘이라 뺌, 2026-11-26 사용자)
+  for (const key of ["bd", "boss", "extract", "btr", "guide"]) {
     mapEditor.addButtons[key] = button(marks, "", () => {
       if (mapEditor.saving || !mapEditor.options?.[key]) return;
       if (mapEditor.walk) stopStoryWalk(); // 연속 입력 중이면 끝내고 일반 추가로
@@ -579,6 +580,33 @@ function bindPositionEditor(marker, item, label, guide = false) {
     });
     content.append(remove);
     marker.bindPopup(content);
+  } else if (item.hideable) {
+    // dev 가 준 보스 구역: 지울 수는 없고 숨기기만 (저장하면 보정으로 기록, 다시 보이게 할 수 있음)
+    const content = el("div");
+    content.append(el("div", "", label));
+    const toggle = el("button", "layer-toggle-btn");
+    toggle.type = "button";
+    const hiddenNow = () => { const p = mapEditor.pending.get(id); return p && "hide" in p ? p.hide : !!item.hidden; };
+    const paint = () => { toggle.textContent = t(hiddenNow() ? "editor.unhide" : "editor.hide"); };
+    toggle.addEventListener("click", () => {
+      if (mapEditor.saving) return;
+      const before = mapEditor.pending.get(id);
+      const next = !hiddenNow();
+      mapEditor.history.push({ id, before });
+      const rest = { ...before, edit: before?.edit || item.edit, pos: position().slice(), base: before?.base || binding.base };
+      delete rest.hide;
+      const base = rest.base;
+      const near = (a, b) => Math.round(a * 10) === Math.round(b * 10);
+      const unmoved = near(rest.pos[0], base[0]) && near(rest.pos[1], base[1]);
+      if (next === !!item.hidden && unmoved) mapEditor.pending.delete(id); // 원래대로 돌아옴
+      else mapEditor.pending.set(id, next === !!item.hidden ? rest : { ...rest, hide: next });
+      marker.closePopup();
+      refreshPositionEdits();
+    });
+    marker.on("popupopen", paint);
+    binding.hiddenNow = hiddenNow;
+    content.append(toggle);
+    marker.bindPopup(content);
   }
   marker.options.draggable = true;
   marker.options.icon.options.className += " position-editable";
@@ -596,6 +624,7 @@ function bindPositionEditor(marker, item, label, guide = false) {
     if (node) {
       node.classList.add("position-editable");
       node.classList.toggle("position-deleted", !!mapEditor.pending.get(id)?.delete);
+      node.classList.toggle("position-hidden", binding.hiddenNow ? binding.hiddenNow() : !!item.hidden);
       let badge = node.querySelector(".position-moved");
       const fresh = item.draftId || item.edit.seed?.created;
       if ((mapEditor.pending.has(id) || fresh) && !badge) {
@@ -628,7 +657,7 @@ function bindPositionEditor(marker, item, label, guide = false) {
     if (pos[0] === old[0] && pos[1] === old[1]) { binding.refresh(); return; }
     mapEditor.history.push({ id, before });
     const base = before?.base || binding.base;
-    if (!before?.fields && pos[0] === Math.round(base[0] * 10) / 10 && pos[1] === Math.round(base[1] * 10) / 10) mapEditor.pending.delete(id);
+    if (!before?.fields && !(before && "hide" in before) && pos[0] === Math.round(base[0] * 10) / 10 && pos[1] === Math.round(base[1] * 10) / 10) mapEditor.pending.delete(id);
     else mapEditor.pending.set(id, { ...before, edit: before?.edit || item.edit, pos, base });
     refreshPositionEdits();
   });
@@ -645,9 +674,10 @@ async function savePositionEdits() {
     // 같은 글 단계(twins)는 같은 장소·같은 열쇠로 한 번씩 더 넣음
     const ordered = [...mapEditor.pending.values()].sort((a, b) =>
       (b.edit?.seed?.add === "maps") - (a.edit?.seed?.add === "maps")); // 맵 고치기 먼저
-    const changes = ordered.flatMap(({ edit, pos, fields, delete: removed, twins }) =>
+    const changes = ordered.flatMap(({ edit, pos, fields, delete: removed, twins, hide }) =>
       [fields?.step, ...(fields && twins ? twins : [])].map((step, i) => ({ edit, x: pos[0], z: pos[1],
-        ...(fields ? { fields: i ? { ...fields, step } : fields } : {}), ...(removed ? { delete: true } : {}) })));
+        ...(fields ? { fields: i ? { ...fields, step } : fields } : {}), ...(removed ? { delete: true } : {}),
+        ...(typeof hide === "boolean" ? { hide } : {}) })));
     const response = await fetch("/api/editor", {
       method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ changes }),
     });
@@ -3057,6 +3087,7 @@ function drawEnemyFeatures(data, add) {
   });
   (Array.isArray(data.bossZones) ? data.bossZones : []).forEach((zone) => {
     if (!zone || !validPos(zone.pos) || !Array.isArray(zone.bosses)) return;
+    if (zone.hidden && !mapEditor.active) return; // 숨긴 구역은 편집 도구에서만 (흐리게)
     const [layer, color, glyph, shift] = BOSS_ZONE_KINDS[zone.kind] || BOSS_ZONE_KINDS.boss;
     const text = (list) => (Array.isArray(list) ? list : []).filter((name) => typeof name === "string" && name);
     // 자리를 다 모르는 보스(pending)는 평소에는 안 보이고, 편집 도구에서만 '빈 구역 남음'을 붙여 보인다

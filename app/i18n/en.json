@@ -608,6 +608,8 @@
     "add": "Add",
     "dismiss": "Cancel",
     "delete": "Delete",
+    "hide": "Hide",
+    "unhide": "Show again",
     "new": "New",
     "pin_key_spawn": "Key spawn",
     "pin_panel": "Panel",

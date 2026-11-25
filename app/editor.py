@@ -257,6 +257,16 @@ def feature_keys(map_key, result):
                 _attach(item, "corrections.json", ["quest_spots", objective_id, "spots", index], snapshot)
                 if "edit" in item:
                     result["questSpots"].append(item)
+        for item in result.get("bossZones", []):
+            # dev 가 준 보스 구역: 끌어 옮기거나 숨기면 enemy_spawns/<맵>/<구역>_<종류> 보정이 생김 (블랙 디비전과 같은 방식)
+            if not item.get("dev") or "edit" in item or item.get("kind") not in ("boss", "goons", "cultist"):
+                continue
+            try:
+                _attach(item, "corrections.json", ["enemy_spawns", map_key, f"{item['name']}_{item['kind']}"], snapshot,
+                        {"y": item["pos"][2], "zone": item["name"], "kind": item["kind"], "note": "position set in editor"})
+                item["hideable"] = "edit" in item
+            except ValueError:
+                continue  # 구역 이름이 저장할 수 없는 모양이면 그 구역만 읽기 전용
         for item in result.get("blackDivision", []):
             counts = item.get("count")
             seed = None
@@ -743,7 +753,7 @@ def save(changes):
         seen = set()
         today = date.today().isoformat()
         for change in changes:
-            if not isinstance(change, dict) or set(change) not in ({"edit", "x", "z"}, {"edit", "x", "z", "fields"}, {"edit", "x", "z", "delete"}):
+            if not isinstance(change, dict) or set(change) not in ({"edit", "x", "z"}, {"edit", "x", "z", "fields"}, {"edit", "x", "z", "delete"}, {"edit", "x", "z", "hide"}):
                 raise ValueError("change")
             key = change["edit"]
             if not isinstance(key, dict) or set(key) != {"file", "path", "revision", "seed", "signature"}:
@@ -772,6 +782,23 @@ def save(changes):
             if "fields" in change:
                 raise ValueError("operation")
             entry = _entry(plan["data"], key["path"])
+            if "hide" in change:
+                # dev 보스 구역 숨기기·다시 보이기: 보정 항목의 hidden 만 바꿈 (자리는 지금 자리 그대로 적음)
+                zone = entry if entry is not None else key["seed"]
+                if (type(change["hide"]) is not bool or key["file"] != "corrections.json" or key["path"][0] != "enemy_spawns"
+                        or not isinstance(zone, dict) or not isinstance(zone.get("zone"), str)
+                        or zone.get("kind") not in ("boss", "goons", "cultist")
+                        or key["path"][2] != f"{zone['zone']}_{zone['kind']}"):
+                    raise ValueError("hide")
+                updates = {"x": round(change["x"], 1), "z": round(change["z"], 1), "hidden": change["hide"],
+                           "from": "game", "checked": today}
+                if entry is None:
+                    updates = {**key["seed"], **updates}
+                elif not all(_number(entry.get(k)) for k in ("x", "y", "z")):
+                    raise ValueError("position")
+                plan["updates"].extend((tuple(key["path"]) + (field,), value) for field, value in updates.items())
+                plan["keys"].append(key)
+                continue
             if "delete" in change:
                 if (change["delete"] is not True or not isinstance(entry, dict) or key["seed"] != {"created": True}
                         or (not _ours(key["file"], key["path"]) and _identity(key["file"], key["path"], entry) not in _created)):
