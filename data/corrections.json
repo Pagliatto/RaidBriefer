@@ -1058,6 +1058,140 @@
           "checked": "2026-11-22"
         }
       ]
+    },
+    "shoreline": {
+      "source": "game",
+      "checked": "2026-11-26",
+      "zones": [
+        {
+          "x": -323.1,
+          "y": -60.64,
+          "z": 504,
+          "note": "",
+          "from": "game",
+          "checked": "2026-11-26",
+          "radius": 10,
+          "bosses": [
+            "bossSanitar"
+          ],
+          "spawn_location": "manual_1"
+        },
+        {
+          "x": -252.3,
+          "y": -4.32,
+          "z": -82.8,
+          "note": "",
+          "from": "game",
+          "checked": "2026-11-26",
+          "radius": 10,
+          "bosses": [
+            "bossSanitar"
+          ],
+          "spawn_location": "manual_2"
+        }
+      ]
+    },
+    "customs": {
+      "source": "game",
+      "checked": "2026-11-26",
+      "zones": [
+        {
+          "x": 412.7,
+          "y": 1.97,
+          "z": 28.8,
+          "note": "",
+          "from": "game",
+          "checked": "2026-11-26",
+          "radius": 10,
+          "bosses": [
+            "bossBully"
+          ],
+          "spawn_location": "manual_1"
+        },
+        {
+          "x": 203.1,
+          "y": 1.38,
+          "z": 148.9,
+          "note": "",
+          "from": "game",
+          "checked": "2026-11-26",
+          "radius": 10,
+          "bosses": [
+            "bossBully"
+          ],
+          "spawn_location": "manual_2"
+        },
+        {
+          "x": 59.5,
+          "y": 2.71,
+          "z": -153.1,
+          "note": "",
+          "from": "game",
+          "checked": "2026-11-26",
+          "radius": 10,
+          "bosses": [
+            "bossKnight"
+          ],
+          "spawn_location": "manual_3"
+        }
+      ]
+    },
+    "lighthouse": {
+      "source": "game",
+      "checked": "2026-11-26",
+      "zones": [
+        {
+          "x": -95.4,
+          "y": 14.55,
+          "z": -740.6,
+          "note": "",
+          "from": "game",
+          "checked": "2026-11-26",
+          "radius": 10,
+          "bosses": [
+            "bossKnight"
+          ],
+          "spawn_location": "manual_1"
+        }
+      ]
+    },
+    "interchange": {
+      "source": "game",
+      "checked": "2026-11-26",
+      "zones": [
+        {
+          "x": -134.9,
+          "y": 22.34,
+          "z": -354.4,
+          "note": "",
+          "from": "game",
+          "checked": "2026-11-26",
+          "radius": 10,
+          "bosses": [
+            "bossKilla"
+          ],
+          "spawn_location": "manual_1"
+        }
+      ]
+    },
+    "reserve": {
+      "source": "game",
+      "checked": "2026-11-26",
+      "zones": [
+        {
+          "x": -113,
+          "y": -14.22,
+          "z": 37.6,
+          "note": "",
+          "from": "game",
+          "checked": "2026-11-26",
+          "radius": 10,
+          "bosses": [
+            "bossGluhar"
+          ],
+          "spawn_location": "manual_1"
+        }
+      ]
     }
   },
   "enemy_spawns": {
@@ -1197,6 +1331,198 @@
         "z": -179.7,
         "from": "game",
         "checked": "2026-11-22"
+      }
+    },
+    "shoreline": {
+      "ZoneGreenHouses_boss": {
+        "kind": "boss",
+        "note": "position set in editor",
+        "y": -41.24,
+        "zone": "ZoneGreenHouses",
+        "x": 143.4,
+        "z": 95.5,
+        "from": "game",
+        "checked": "2026-11-26"
+      },
+      "ZoneMeteoStation_goons": {
+        "kind": "goons",
+        "note": "position set in editor",
+        "y": -51.88,
+        "zone": "ZoneMeteoStation",
+        "x": -464,
+        "z": 160.6,
+        "from": "game",
+        "checked": "2026-11-26"
+      },
+      "ZoneSanatorium1_cultist": {
+        "kind": "cultist",
+        "note": "position set in editor",
+        "y": -3.71,
+        "zone": "ZoneSanatorium1",
+        "x": -177.9,
+        "z": -131.5,
+        "from": "game",
+        "checked": "2026-11-26"
+      },
+      "ZoneSanatorium2_cultist": {
+        "kind": "cultist",
+        "note": "position set in editor",
+        "y": -4.43,
+        "zone": "ZoneSanatorium2",
+        "x": 135.2,
+        "z": -264.5,
+        "from": "game",
+        "checked": "2026-11-26"
+      }
+    },
+    "woods": {
+      "ZoneScavBase2_goons": {
+        "kind": "goons",
+        "note": "position set in editor",
+        "y": 16.83,
+        "zone": "ZoneScavBase2",
+        "x": 202.8,
+        "z": -726.5,
+        "from": "game",
+        "checked": "2026-11-26"
+      },
+      "ZoneBrokenVill_cultist": {
+        "kind": "cultist",
+        "note": "position set in editor",
+        "y": 9.36,
+        "zone": "ZoneBrokenVill",
+        "x": -87.6,
+        "z": -681.3,
+        "from": "game",
+        "checked": "2026-11-26"
+      },
+      "ZoneWoodCutter_boss": {
+        "kind": "boss",
+        "note": "position set in editor",
+        "y": 14.09,
+        "zone": "ZoneWoodCutter",
+        "x": 7.8,
+        "z": -20.8,
+        "from": "game",
+        "checked": "2026-11-26"
+      }
+    },
+    "customs": {
+      "ZoneScavBase_cultist": {
+        "kind": "cultist",
+        "note": "position set in editor",
+        "y": 1.28,
+        "zone": "ZoneScavBase",
+        "x": 165.4,
+        "z": -124.2,
+        "from": "game",
+        "checked": "2026-11-26"
+      },
+      "ZoneScavBase_goons": {
+        "kind": "goons",
+        "note": "position set in editor",
+        "y": 1.28,
+        "zone": "ZoneScavBase",
+        "x": 233.8,
+        "z": -132.8,
+        "from": "game",
+        "checked": "2026-11-26"
+      },
+      "ZoneScavBase_boss": {
+        "kind": "boss",
+        "note": "position set in editor",
+        "y": 1.28,
+        "zone": "ZoneScavBase",
+        "x": 195.7,
+        "z": -124,
+        "from": "game",
+        "checked": "2026-11-26"
+      }
+    },
+    "reserve": {
+      "ZoneBarrack_boss": {
+        "kind": "boss",
+        "note": "position set in editor",
+        "y": -5.97,
+        "zone": "ZoneBarrack",
+        "x": -129.7,
+        "z": 12.9,
+        "from": "game",
+        "checked": "2026-11-26"
+      },
+      "ZonePTOR2_boss": {
+        "kind": "boss",
+        "note": "position set in editor",
+        "y": -6.75,
+        "zone": "ZonePTOR2",
+        "x": 61.5,
+        "z": -25.6,
+        "from": "game",
+        "checked": "2026-11-26"
+      },
+      "ZoneRailStrorage_boss": {
+        "kind": "boss",
+        "note": "position set in editor",
+        "y": -0.75,
+        "zone": "ZoneRailStrorage",
+        "x": 88.8,
+        "z": -148,
+        "from": "game",
+        "checked": "2026-11-26"
+      }
+    },
+    "interchange": {
+      "ZoneTagilla_boss": {
+        "kind": "boss",
+        "note": "position set in editor",
+        "y": 22.65,
+        "zone": "ZoneTagilla",
+        "x": -165.5,
+        "z": -135.7,
+        "from": "game",
+        "checked": "2026-11-26"
+      },
+      "ZoneIDEA_boss": {
+        "kind": "boss",
+        "note": "position set in editor",
+        "y": 28.58,
+        "zone": "ZoneIDEA",
+        "x": 7.4,
+        "z": -190.1,
+        "from": "game",
+        "checked": "2026-11-26"
+      },
+      "ZoneGoshan_boss": {
+        "kind": "boss",
+        "note": "position set in editor",
+        "y": 27.12,
+        "zone": "ZoneGoshan",
+        "x": -2.5,
+        "z": -5.3,
+        "from": "game",
+        "checked": "2026-11-26"
+      },
+      "ZoneOLI_boss": {
+        "kind": "boss",
+        "note": "position set in editor",
+        "y": 28.09,
+        "zone": "ZoneOLI",
+        "x": 29.5,
+        "z": 88.3,
+        "from": "game",
+        "checked": "2026-11-26"
+      }
+    },
+    "streets-of-tarkov": {
+      "ZoneClimova_boss": {
+        "kind": "boss",
+        "note": "position set in editor",
+        "y": 1.98,
+        "zone": "ZoneClimova",
+        "x": -141,
+        "z": -14.6,
+        "from": "game",
+        "checked": "2026-11-26"
       }
     }
   },
