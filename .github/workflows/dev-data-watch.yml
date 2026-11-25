@@ -1,0 +1,81 @@
+# 하루 한 번 tarkov.dev 데이터(퀘스트·지도 표시)를 지난번과 비교해서, 바뀌었으면 디스코드 관리자 채널에 알린다.
+# 지난 상태(요약본)는 dev-data-snapshot 가지의 snapshot.json 에 둔다 (main 과 섞이지 않음, 가지 기록이 곧 변경 이력).
+# 손으로 실행(Run workflow)하면 기본은 미리 보기: 디스코드로 보내지 않고 기준도 바꾸지 않고, 보낼 내용만 실행 기록에 찍는다.
+name: Dev data watch
+
+on:
+  schedule:
+    - cron: "17 21 * * *" # 매일 06:17 (한국 시간). 정각은 깃허브가 붐벼서 피함
+  workflow_dispatch:
+    inputs:
+      preview:
+        description: "Preview only: print the message, do not send or save"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write # dev-data-snapshot 가지에 요약본을 올리기 위해
+
+concurrency:
+  group: dev-data-watch
+  cancel-in-progress: false
+
+env:
+  SNAPSHOT_BRANCH: dev-data-snapshot
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Get the last snapshot
+        id: last
+        run: |
+          mkdir -p "$RUNNER_TEMP/snap"
+          # 가지가 없는 것(2)과 인터넷 문제(그 밖)를 구분: 인터넷 문제를 '처음'으로 보면 알림 없이 기준이 바뀜
+          code=0
+          git ls-remote --exit-code --heads origin "$SNAPSHOT_BRANCH" > /dev/null || code=$?
+          if [ "$code" = "0" ]; then
+            git fetch --depth=1 origin "$SNAPSHOT_BRANCH"
+            git show FETCH_HEAD:snapshot.json > "$RUNNER_TEMP/snap/snapshot.json" || rm -f "$RUNNER_TEMP/snap/snapshot.json"
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          elif [ "$code" = "2" ]; then
+            echo "No snapshot branch yet: this run only creates the baseline."
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Could not reach the repository (git ls-remote exit $code)."
+            exit 1
+          fi
+
+      - name: Compare with tarkov.dev
+        id: watch
+        env:
+          WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_DEV_DATA }}
+          PREVIEW: ${{ github.event_name == 'workflow_dispatch' && inputs.preview }}
+        run: |
+          set -o pipefail
+          flags=""
+          if [ "$PREVIEW" = "true" ]; then flags="--dry-run"; fi
+          python3 .github/scripts/dev_data_watch.py --snapshot "$RUNNER_TEMP/snap/snapshot.json" $flags | tee "$RUNNER_TEMP/watch.log"
+          tail -n 1 "$RUNNER_TEMP/watch.log" >> "$GITHUB_OUTPUT"
+
+      - name: Save the new snapshot
+        if: steps.watch.outputs.changed == 'true' && !(github.event_name == 'workflow_dispatch' && inputs.preview)
+        run: |
+          dir="$RUNNER_TEMP/branch"
+          if [ "${{ steps.last.outputs.exists }}" = "true" ]; then
+            git fetch --depth=1 origin "$SNAPSHOT_BRANCH"
+            git worktree add -B "$SNAPSHOT_BRANCH" "$dir" FETCH_HEAD
+          else
+            git worktree add --orphan -b "$SNAPSHOT_BRANCH" "$dir"
+            printf '%s\n' "Daily summary of tarkov.dev PvE data (quests, extracts, transits, BTR stops)." \
+              "Written by the Dev data watch workflow on main. Do not edit by hand." > "$dir/README.md"
+          fi
+          cp "$RUNNER_TEMP/snap/snapshot.json" "$dir/snapshot.json"
+          cd "$dir"
+          git add -A
+          if git diff --cached --quiet; then echo "Nothing to save."; exit 0; fi
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -q -m "Update tarkov.dev snapshot ($(date -u +%Y-%m-%d))"
+          git push origin "HEAD:$SNAPSHOT_BRANCH"
