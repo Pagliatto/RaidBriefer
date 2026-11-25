@@ -2570,3 +2570,15 @@ html[data-raid-border="off"][data-raid-low] .map-view::after { display: none; }
 .drawer-goals li.goal-hidden .goal-hide { color: var(--accent); border-color: var(--accent); }
 /* 고른 목표의 번호 핀: 겹친 핀 표시(.stacked)보다 강조 테두리가 먼저 보이게 */
 .quest-pin.guide-highlight span { box-shadow: 0 0 0 2px #111, 0 0 0 4px var(--accent); }
+
+/* ---------- 지도 서랍 정리 (v1.7.0): 이 맵에서 할 줄만 보이고 나머지는 '다른 목표 N개' 한 줄로 ---------- */
+.drawer-goals li.goal-away { display: none; color: var(--text-faint); }
+.drawer-quest.away-open .drawer-goals li.goal-away { display: flex; }
+.drawer-goals li.goal-away-toggle { padding: 0; }
+/* 목록 행이라 왼쪽 정렬 */
+.goal-away-button {
+  display: flex; align-items: center; gap: 4px; padding: 2px 4px; border: 0; border-radius: var(--radius-sm);
+  background: none; color: var(--text-faint); font: inherit; font-size: 12px; text-align: left; cursor: pointer;
+}
+.goal-away-button:hover { color: var(--text); background: var(--surface-2); }
+.goal-away-button svg { flex: none; }
