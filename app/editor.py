@@ -267,6 +267,8 @@ def feature_keys(map_key, result):
                 item["hideable"] = "edit" in item
             except ValueError:
                 continue  # 구역 이름이 저장할 수 없는 모양이면 그 구역만 읽기 전용
+        for item in result.get("bossZones", []):
+            item["floorEdit"] = "edit" in item  # 편집할 수 있는 보스 구역은 층(높이)도 바꿀 수 있음
         for item in result.get("blackDivision", []):
             counts = item.get("count")
             seed = None
@@ -753,8 +755,11 @@ def save(changes):
         seen = set()
         today = date.today().isoformat()
         for change in changes:
-            if not isinstance(change, dict) or set(change) not in ({"edit", "x", "z"}, {"edit", "x", "z", "fields"}, {"edit", "x", "z", "delete"}, {"edit", "x", "z", "hide"}):
+            # y(높이)는 보스 구역의 층을 바꿀 때만 같이 옴 (옮기기·숨기기에만 붙을 수 있음)
+            if not isinstance(change, dict) or set(change) - {"y"} not in ({"edit", "x", "z"}, {"edit", "x", "z", "fields"}, {"edit", "x", "z", "delete"}, {"edit", "x", "z", "hide"}):
                 raise ValueError("change")
+            if "y" in change and (not _number(change["y"]) or abs(change["y"]) > 100000 or "fields" in change or "delete" in change):
+                raise ValueError("height")
             key = change["edit"]
             if not isinstance(key, dict) or set(key) != {"file", "path", "revision", "seed", "signature"}:
                 raise ValueError("key")
@@ -792,6 +797,8 @@ def save(changes):
                     raise ValueError("hide")
                 updates = {"x": round(change["x"], 1), "z": round(change["z"], 1), "hidden": change["hide"],
                            "from": "game", "checked": today}
+                if "y" in change:
+                    updates["y"] = round(change["y"], 2)
                 if entry is None:
                     updates = {**key["seed"], **updates}
                 elif not all(_number(entry.get(k)) for k in ("x", "y", "z")):
@@ -815,6 +822,13 @@ def save(changes):
                 plan["keys"].append(key)
                 continue
             updates = {"x": round(change["x"], 1), "z": round(change["z"], 1), "from": "game", "checked": today}
+            if "y" in change:
+                # 높이는 보스 구역만: 우리가 넣은 구역(boss_zones) 또는 dev 구역을 옮긴 보정(enemy_spawns 의 zone 항목)
+                zone = entry if entry is not None else key["seed"]
+                if key["file"] != "corrections.json" or not (key["path"][0] == "boss_zones" or (
+                        key["path"][0] == "enemy_spawns" and isinstance(zone, dict) and isinstance(zone.get("zone"), str))):
+                    raise ValueError("height")
+                updates["y"] = round(change["y"], 2)
             if key["path"][:1] == ["quest_spots"]:
                 del updates["from"]  # 위키에서 읽은 자리를 조금 옮겨도 출처(wiki·link)는 그대로
             if entry is None:

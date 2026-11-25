@@ -2364,6 +2364,7 @@ body.position-saving #map-view { pointer-events: none; }
 .position-add-actions { display: flex; justify-content: center; gap: 8px; }
 .position-add-form button, body.position-edit .leaflet-popup button { text-align: center; justify-content: center; }
 body.position-edit .position-deleted { display: none; }
+.position-floor { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 12px; }
 body.position-edit .position-hidden { opacity: 0.35; filter: grayscale(1); }  /* 숨긴 dev 표시: 편집 도구에서만 흐리게 보임 */
 
 /* 퀘스트 목표에 더한 자리 (편집 도구에서만 보임): 퀘스트 번호 핀과 같은 계열의 밝은 노랑 */

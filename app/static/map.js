@@ -597,7 +597,7 @@ function bindPositionEditor(marker, item, label, guide = false) {
       delete rest.hide;
       const base = rest.base;
       const near = (a, b) => Math.round(a * 10) === Math.round(b * 10);
-      const unmoved = near(rest.pos[0], base[0]) && near(rest.pos[1], base[1]);
+      const unmoved = near(rest.pos[0], base[0]) && near(rest.pos[1], base[1]) && rest.pos[2] === base[2];
       if (next === !!item.hidden && unmoved) mapEditor.pending.delete(id); // 원래대로 돌아옴
       else mapEditor.pending.set(id, next === !!item.hidden ? rest : { ...rest, hide: next });
       marker.closePopup();
@@ -607,6 +607,45 @@ function bindPositionEditor(marker, item, label, guide = false) {
     binding.hiddenNow = hiddenNow;
     content.append(toggle);
     marker.bindPopup(content);
+  }
+  // 보스 구역: 층 바꾸기 (자리는 그대로, 높이만 그 층 높이로). 층이 여러 개인 맵에서만
+  if (item.floorEdit && !item.draftId && (mapUI.floorRows || []).length > 1) {
+    let content = marker.getPopup()?.getContent();
+    if (!content) {
+      content = el("div");
+      content.append(el("div", "", label));
+      marker.bindPopup(content);
+    }
+    const row = el("label", "position-floor");
+    row.append(el("span", "", t("editor.floor")));
+    const pick = el("select");
+    row.append(pick);
+    content.append(row);
+    const fill = () => {
+      const pos = position();
+      pick.replaceChildren();
+      mapUI.floorRows.forEach((r) => {
+        if (heightForFloor(pos[0], pos[1], r.index, pos[2]) === null) return; // 이 자리에는 없는 층
+        const option = el("option", "", floorLabel(r.name));
+        option.value = String(r.index);
+        option.selected = r.index === floorOf(pos);
+        pick.append(option);
+      });
+    };
+    marker.on("popupopen", fill);
+    pick.addEventListener("change", () => {
+      if (mapEditor.saving) return;
+      const index = pick.value === "null" ? null : Number(pick.value);
+      const old = position();
+      const y = heightForFloor(old[0], old[1], index, old[2]);
+      if (y === null || y === old[2]) return;
+      const before = mapEditor.pending.get(id);
+      mapEditor.history.push({ id, before });
+      mapEditor.pending.set(id, { ...before, edit: before?.edit || item.edit, pos: [old[0], old[1], y], base: before?.base || binding.base });
+      marker.closePopup();
+      refreshPositionEdits();
+      goToFloorOf(index);
+    });
   }
   marker.options.draggable = true;
   marker.options.icon.options.className += " position-editable";
@@ -650,14 +689,14 @@ function bindPositionEditor(marker, item, label, guide = false) {
     // Leaflet already used tdCRS.unproject, including Terminal's display rotation.
     // lng is game x, lat is game z. Applying another inverse rotation would be wrong.
     const ll = marker.getLatLng();
-    const pos = [Math.round(ll.lng * 10) / 10, Math.round(ll.lat * 10) / 10, binding.base[2]];
+    const pos = [Math.round(ll.lng * 10) / 10, Math.round(ll.lat * 10) / 10, position()[2]];
     if (!pos.every(Number.isFinite)) { binding.refresh(); return; }
     const before = mapEditor.pending.get(id);
     const old = position();
     if (pos[0] === old[0] && pos[1] === old[1]) { binding.refresh(); return; }
     mapEditor.history.push({ id, before });
     const base = before?.base || binding.base;
-    if (!before?.fields && !(before && "hide" in before) && pos[0] === Math.round(base[0] * 10) / 10 && pos[1] === Math.round(base[1] * 10) / 10) mapEditor.pending.delete(id);
+    if (!before?.fields && !(before && "hide" in before) && pos[2] === base[2] && pos[0] === Math.round(base[0] * 10) / 10 && pos[1] === Math.round(base[1] * 10) / 10) mapEditor.pending.delete(id);
     else mapEditor.pending.set(id, { ...before, edit: before?.edit || item.edit, pos, base });
     refreshPositionEdits();
   });
@@ -674,8 +713,9 @@ async function savePositionEdits() {
     // 같은 글 단계(twins)는 같은 장소·같은 열쇠로 한 번씩 더 넣음
     const ordered = [...mapEditor.pending.values()].sort((a, b) =>
       (b.edit?.seed?.add === "maps") - (a.edit?.seed?.add === "maps")); // 맵 고치기 먼저
-    const changes = ordered.flatMap(({ edit, pos, fields, delete: removed, twins, hide }) =>
+    const changes = ordered.flatMap(({ edit, pos, fields, delete: removed, twins, hide, base }) =>
       [fields?.step, ...(fields && twins ? twins : [])].map((step, i) => ({ edit, x: pos[0], z: pos[1],
+        ...(!fields && !removed && base && pos[2] !== base[2] ? { y: pos[2] } : {}), // 층을 바꾼 보스 구역만 높이를 같이 보냄
         ...(fields ? { fields: i ? { ...fields, step } : fields } : {}), ...(removed ? { delete: true } : {}),
         ...(typeof hide === "boolean" ? { hide } : {}) })));
     const response = await fetch("/api/editor", {
@@ -1304,6 +1344,24 @@ function storyWalkPlace(latlng) {
 }
 
 // 지금 보고 있는 층의 높이: 그 층에 있는 가장 가까운 표시의 높이, 없으면 그 층 범위의 가운데
+// 이 자리(x, z)에서 고른 층에 해당하는 높이. 그 층의 가까운 표시 높이 → 없으면 지금 높이에서 가장 가까운 그 층 높이. 못 찾으면 null
+function heightForFloor(x, z, index, fromY) {
+  const onFloor = (mapEditor.heights || []).filter((p) => floorOf([x, z, p[2]]) === index);
+  if (onFloor.length) {
+    return onFloor.reduce((best, p) => (Math.hypot(p[0] - x, p[1] - z) < Math.hypot(best[0] - x, best[1] - z) ? p : best))[2];
+  }
+  const start = Number.isFinite(fromY) ? fromY : 0;
+  for (let step = 0; step <= 240; step++) {
+    for (const sign of step ? [1, -1] : [1]) {
+      const y = start + sign * step * 0.5;
+      if (floorOf([x, z, y]) !== index) continue;
+      const deeper = y + sign * 1.5; // 층 경계에 걸치지 않게 조금 더 안쪽으로
+      return Math.round((floorOf([x, z, deeper]) === index ? deeper : y) * 100) / 100;
+    }
+  }
+  return null;
+}
+
 function floorHeight(x, z) {
   const heights = mapEditor.heights || [];
   const nearest = (list) => list.reduce((best, p) =>
