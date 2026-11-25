@@ -104,6 +104,7 @@ function drawTopbar() {
     if (urgency) document.documentElement.dataset.raidLow = String(urgency);
     else delete document.documentElement.dataset.raidLow;
   }
+  syncRaidGlow(urgency);
   // 경고 테두리가 이번 레이드에서 처음 켜질 때 한 번만 지도 탭으로 (2026-11-25 사용자: 다른 화면을 보다가 놓치지 않게).
   // 그 뒤에는 다른 탭으로 가도 다시 끌고 오지 않음. 설정이 '끔'이면 옮기지 않음. 설정 값을 아직 못 받았으면 받을 때까지 기다림
   const borderMode = document.documentElement.dataset.raidBorder;
@@ -114,6 +115,30 @@ function drawTopbar() {
   }
   // 고정된 높이를 알려줘서, 카드로 이동할 때 상단바 밑에 숨지 않게
   document.documentElement.style.setProperty("--sticky-h", `${topbar.get("sticky-top").offsetHeight + 8}px`);
+}
+
+// 지도 둘레 경고 테두리의 숨쉬기 (style.css '남은 시간 경고 테두리'). 단계가 바뀌면 박자만 바꿈:
+// 움직임을 새로 시작하지 않고 속도만 바꿔서, 10분 → 5분 → 2분에 끊기지 않고 이어짐 (2026-11-25 사용자)
+// 지도 칸(#map-view) 안은 지도를 그릴 때마다 비워지므로, 칸 자체의 ::after 에 움직임을 단다
+const RAID_GLOW_MS = [0, 2800, 1800, 1200]; // 상단바 남은 시간과 같은 박자
+function syncRaidGlow(urgency) {
+  const view = document.getElementById("map-view");
+  if (!urgency || reducedMotion() || !view || !view.animate) { // 움직임 줄이기: 깜빡임 없이 고정 (단계는 진하기로만)
+    topbar.glow?.cancel();
+    topbar.glow = null;
+    topbar.glowStage = 0;
+    return;
+  }
+  if (!topbar.glow) {
+    const ease = "ease-in-out";
+    topbar.glow = view.animate(
+      [{ opacity: 0.3, easing: ease }, { opacity: 1, easing: ease }, { opacity: 0.3 }],
+      { pseudoElement: "::after", duration: RAID_GLOW_MS[1], iterations: Infinity });
+  }
+  if (topbar.glowStage !== urgency) { // 새로 만든 움직임은 glowStage 가 0 이라 항상 한 번 맞춤
+    topbar.glowStage = urgency;
+    topbar.glow.updatePlaybackRate(RAID_GLOW_MS[1] / RAID_GLOW_MS[urgency]);
+  }
 }
 
 // 첫 기록 읽기 안내: 서버가 확인한 경과 시간만 사용해 끝난 작업이 뒤늦게 뜨지 않게 한다.

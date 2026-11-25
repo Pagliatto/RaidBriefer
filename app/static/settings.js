@@ -114,33 +114,34 @@ document.getElementById("settings-reset").addEventListener("click", async () => 
 });
 
 // 언어 고르기 (설정 창 + 처음 설정 1단계). 바꾸면 화면을 새로 불러와서 모든 글자를 그 언어로
-// 남은 시간 경고 테두리 (설정 창 일반 탭): 끔 / 얇게 / 보통. 고른 값은 html data-raid-border 에 적어 CSS·상단바가 봄
-const RAID_BORDER_LABELS = { off: "raidBorderOff", thin: "raidBorderThin", normal: "raidBorderNormal" };
+// 남은 시간 경고 테두리 (설정 창 일반 탭): 켬 / 끔 스위치. 값은 html data-raid-border 에 적어 CSS·상단바가 봄
 function renderRaidBorderPicker(current) {
-  const mode = RAID_BORDER_LABELS[current] ? current : "normal";
-  document.documentElement.dataset.raidBorder = mode;
+  const on = current !== "off"; // 모르는 값·옛 값(얇게·보통)은 켬
+  document.documentElement.dataset.raidBorder = on ? "on" : "off";
   const box = document.getElementById("settings-raid-border");
-  box.replaceChildren();
-  Object.entries(RAID_BORDER_LABELS).forEach(([value, label]) => {
-    const btn = el("button", value === mode ? "on" : "", t(`settings.${label}`));
-    btn.type = "button";
-    btn.setAttribute("aria-pressed", String(value === mode));
-    btn.addEventListener("click", async () => {
-      if (value === document.documentElement.dataset.raidBorder) return;
-      try {
-        const res = await fetch("/api/settings", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ raid_border: value }),
-        });
-        if (!res.ok) throw new Error();
-        renderRaidBorderPicker((await res.json()).raid_border);
-      } catch (error) {
-        alert(t("common.saveFailedShort"));
-      }
-    });
-    box.append(btn);
+  const toggle = el("label", "ho-switch settings-switch");
+  const input = el("input");
+  input.type = "checkbox";
+  input.setAttribute("role", "switch");
+  input.checked = on;
+  input.setAttribute("aria-label", t("settings.raidBorderTitle"));
+  input.addEventListener("change", async () => {
+    input.disabled = true;
+    try {
+      const res = await fetch("/api/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ raid_border: input.checked ? "on" : "off" }),
+      });
+      if (!res.ok) throw new Error();
+      renderRaidBorderPicker((await res.json()).raid_border);
+    } catch (error) {
+      renderRaidBorderPicker(on ? "on" : "off"); // 저장 못 했으면 스위치를 원래대로
+      alert(t("common.saveFailedShort"));
+    }
   });
+  toggle.append(input, el("span", "ho-switch-track"), el("span", "ho-switch-text", t(on ? "settings.raidBorderOn" : "settings.raidBorderOff")));
+  box.replaceChildren(toggle);
 }
 
 async function renderLangPickers() {
@@ -148,7 +149,7 @@ async function renderLangPickers() {
   try {
     info = await (await fetch("/api/settings")).json();
   } catch (error) {
-    renderRaidBorderPicker("normal"); // 설정을 못 읽어도 경고는 기본값으로 동작
+    renderRaidBorderPicker("on"); // 설정을 못 읽어도 경고는 기본값으로 동작
     return;
   }
   renderRaidBorderPicker(info.raid_border);

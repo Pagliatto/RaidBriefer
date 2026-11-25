@@ -387,6 +387,8 @@ def features(map_key: str) -> dict:
     - locks    : 열쇠로 여는 문·트렁크 (필요한 열쇠 한국어 이름)
     - loot     : 귀중품이 바닥에 생기는 곳 (그 자리 아이템 이름 몇 개)
     합친 맵(야간 공장 등)은 기본 맵(낮) 것만 씀"""
+    from app.quests import MERGED_MAPS
+
     maps = tarkov_api.load("maps")["maps"]
     m = next((x for x in maps.values() if x["normalizedName"] == map_key), None)
     if not m:
@@ -440,7 +442,9 @@ def features(map_key: str) -> dict:
             result["transits"].append({
                 "name": en.get(tr.get("description"), tr.get("description")),
                 "to": tr.get("map") or "",
-                "to_name": map_names(target["name"]) if target and target.get("name") else "",
+                # 변형 맵의 정확한 이름 (연구소 (Dark) 등). PvE 에서 합친 맵(그라운드 제로 21+ 등)은 보내지 않음 → 합친 맵 이름으로 보임
+                "to_name": map_names(target["name"]) if target and target.get("name")
+                and target.get("normalizedName") not in MERGED_MAPS else "",
                 "pos": _xzy(tr["position"]),
             })
     for lock in m.get("locks") or []:

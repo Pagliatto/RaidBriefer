@@ -182,7 +182,6 @@
       <div class="map-bar">
         <button type="button" class="layer-toggle-btn" id="layer-toggle-btn" aria-expanded="false" title="{{ t('map.layerToggleHint') }}"><span data-icon="layers" data-size="15"></span> {{ t('map.layerToggle') }}</button>
         <select id="map-select" aria-label="{{ t('map.selectLabel') }}"></select>
-        <span class="map-auto" id="map-auto" hidden>{{ t('map.auto') }}</span>
         <!-- BTR 트래커(외부 사이트, tarkovbtr.com): BTR 이 다니는 맵에서만 보임 -->
         <a class="btr-tracker-link" id="btr-tracker-link" href="#" target="_blank" rel="noopener" title="{{ t('map.btrTrackerHint') }}" hidden><span data-icon="bus" data-size="14"></span> {{ t('map.btrTracker') }} <span data-icon="external-link" data-size="12"></span></a>
         <a class="btr-tracker-link" id="wiki-map-link" href="#" target="_blank" rel="noopener" title="{{ t('map.wikiMapHint') }}" hidden><span data-icon="book-open" data-size="14"></span> {{ t('map.wikiMap') }} <span data-icon="external-link" data-size="12"></span></a>
@@ -378,7 +377,7 @@
     <section class="settings-item" data-stab="general">
       <h3>{{ t('settings.raidBorderTitle') }}</h3>
       <p class="settings-help">{{ t('settings.raidBorderHelp') }}</p>
-      <div class="edition-pick" id="settings-raid-border"></div>
+      <div id="settings-raid-border"></div>
     </section>
 
     <section class="settings-item" data-stab="general">
