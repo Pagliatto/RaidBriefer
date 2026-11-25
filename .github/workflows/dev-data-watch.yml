@@ -1,6 +1,7 @@
 # 하루 한 번 tarkov.dev 데이터(퀘스트·지도 표시)를 지난번과 비교해서, 바뀌었으면 디스코드 관리자 채널에 알린다.
 # 지난 상태(요약본)는 dev-data-snapshot 가지의 snapshot.json 에 둔다 (main 과 섞이지 않음, 가지 기록이 곧 변경 이력).
 # 손으로 실행(Run workflow)하면 기본은 미리 보기: 디스코드로 보내지 않고 기준도 바꾸지 않고, 보낼 내용만 실행 기록에 찍는다.
+# 'test_card' 를 켜면 연결 확인용 시험 카드 한 장만 보낸다 (기준은 그대로).
 name: Dev data watch
 
 on:
@@ -12,6 +13,10 @@ on:
         description: "Preview only: print the message, do not send or save"
         type: boolean
         default: true
+      test_card:
+        description: "Send one test card to check the webhook (ignores Preview, changes nothing)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write # dev-data-snapshot 가지에 요약본을 올리기 위해
@@ -53,8 +58,15 @@ jobs:
         env:
           WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_DEV_DATA }}
           PREVIEW: ${{ github.event_name == 'workflow_dispatch' && inputs.preview }}
+          TEST_CARD: ${{ github.event_name == 'workflow_dispatch' && inputs.test_card }}
         run: |
           set -o pipefail
+          # 시험 카드: 웹훅 주소가 맞는지만 봄. dev 데이터를 받지 않고 기준도 그대로 (마지막 줄 changed=false)
+          if [ "$TEST_CARD" = "true" ]; then
+            python3 .github/scripts/dev_data_watch.py --test | tee "$RUNNER_TEMP/watch.log"
+            tail -n 1 "$RUNNER_TEMP/watch.log" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           flags=""
           if [ "$PREVIEW" = "true" ]; then flags="--dry-run"; fi
           python3 .github/scripts/dev_data_watch.py --snapshot "$RUNNER_TEMP/snap/snapshot.json" $flags | tee "$RUNNER_TEMP/watch.log"
