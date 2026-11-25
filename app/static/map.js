@@ -147,7 +147,7 @@ function openMarkerForm(latlng) {
       const count = input("count", "count", "number");
       count.min = 1; count.max = 20; count.step = 1; count.value = 1;
     } else if (kind.value === "boss") {
-      choice("bosses", "bosses", options.boss.seed.bosses.map((id) => [id, id]), true);
+      choice("bosses", "bosses", options.boss.seed.bosses.map((id) => [id, mapEditor.bossNames?.[id] || id]), true);
       inputs.bosses.required = true;
     } else if (kind.value === "extract" || kind.value === "btr") {
       input("name", kind.value === "extract" ? "nameEn" : "name");
@@ -2941,6 +2941,7 @@ async function drawFeatures(leaf, m) {
   if (mapEditor.active) {
     mapEditor.options = data.editorAdd || null;
     mapEditor.heights = data.editorHeights || [];
+    mapEditor.bossNames = data.editorBossNames || {};
     mapEditor.goals = data.editorQuestGoals || [];
     leaf.on("click", (event) => {
       if (!mapEditor.walk && mapEditor.placing && !mapEditor.saving && mapEditor.options) openMarkerForm(event.latlng);

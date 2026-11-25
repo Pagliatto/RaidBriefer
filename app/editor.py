@@ -330,6 +330,13 @@ def _add_keys(map_key, result, snapshot):
         guide = None
     result_keys = {}
     result["editorHeights"] = heights
+    # 보스 선택 목록에 보일 이름 (지도 표시와 같은 이름. 저장은 그대로 내부 이름으로)
+    try:
+        from app import i18n
+        names = tarkov_api.Translator("maps")
+        result["editorBossNames"] = {mob: i18n.t("home.goons") if mob == "bossKnight" else names(mob) for mob in bosses}
+    except Exception:
+        result["editorBossNames"] = {}
     story = None
     try:
         story = _read(_target("story/places.json", ["places", "x", 0]))
