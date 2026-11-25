@@ -1201,6 +1201,57 @@
     }
   },
   "quest_spots": {
-    "_note": "Extra map positions for quest objectives that tarkov.dev lists incompletely (example: Paramedic has 8 ambulances on the wiki, dev has 3). Key = tarkov.dev objective id. quest = quest id, name = quest name for readers. spots = [{map (map key), x, y, z, note, from (wiki/game), link (source page when from is wiki), checked}]. Positions are added to the dev positions, never replace them. Edited with the position editor (edit-positions.bat)."
+    "_note": "Extra map positions for quest objectives that tarkov.dev lists incompletely (example: Paramedic has 8 ambulances on the wiki, dev has 3). Key = tarkov.dev objective id. quest = quest id, name = quest name for readers. spots = [{map (map key), x, y, z, note, from (wiki/game), link (source page when from is wiki), checked}]. Positions are added to the dev positions, never replace them. Edited with the position editor (edit-positions.bat).",
+    "64f3176921045e77405d63ba": {
+      "quest": "64f3176921045e77405d63b5",
+      "name": "Paramedic",
+      "spots": [
+        {
+          "map": "streets-of-tarkov",
+          "x": 92.2,
+          "y": 5.89,
+          "z": -8.9,
+          "note": "ambulance on the wiki map (Paramedic page), checked in game",
+          "from": "game",
+          "checked": "2026-11-25"
+        },
+        {
+          "map": "streets-of-tarkov",
+          "x": 109,
+          "y": -1.05,
+          "z": 55.9,
+          "note": "ambulance on the wiki map (Paramedic page), checked in game",
+          "from": "game",
+          "checked": "2026-11-25"
+        },
+        {
+          "map": "streets-of-tarkov",
+          "x": -68,
+          "y": 2.19,
+          "z": 202.4,
+          "note": "ambulance on the wiki map (Paramedic page), checked in game",
+          "from": "game",
+          "checked": "2026-11-25"
+        },
+        {
+          "map": "streets-of-tarkov",
+          "x": 109.2,
+          "y": 6.96,
+          "z": 241.6,
+          "note": "ambulance on the wiki map (Paramedic page), checked in game",
+          "from": "game",
+          "checked": "2026-11-25"
+        },
+        {
+          "map": "streets-of-tarkov",
+          "x": -10.2,
+          "y": 3.92,
+          "z": 340.5,
+          "note": "ambulance on the wiki map (Paramedic page), checked in game",
+          "from": "game",
+          "checked": "2026-11-25"
+        }
+      ]
+    }
   }
 }
