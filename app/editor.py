@@ -300,7 +300,8 @@ def _quest_goals(map_key):
                 name = tr(task.get("name", "")) or quest_id
                 text = quests._objective_text(o.get("description", ""), tr, overrides).get("text", "")
                 points = [p for spot in quests._where(o, map_names, extract_zones) if spot["map"] == here for p in spot["points"]]
-                goals.append({"id": o["id"], "quest": quest_id, "name": name, "label": name + " · " + text, "points": points})
+                goals.append({"id": o["id"], "quest": quest_id, "name": name, "text": text,
+                              "label": name + " · " + text, "points": points})
             except Exception:
                 continue
     goals.sort(key=lambda g: g["label"].lower())

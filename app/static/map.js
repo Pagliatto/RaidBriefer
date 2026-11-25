@@ -205,46 +205,28 @@ async function initializePositionEditor() {
   mapEditor.active = true;
   clearTimeout(mapUI.lobbyTimer);
   document.body.classList.add("position-edit");
+  // 위쪽 막대: 하는 일에 따라 세 줄로 나눔 (2026-11-25 사용자)
+  // ① 편집 전체(되돌리기·취소·저장) ② 퀘스트·스토리 자리 찍기 ③ 지도 표시 추가
   const banner = el("div", "position-editor");
-  banner.append(el("strong", "", t("editor.title")));
-  mapEditor.counter = el("span");
-  banner.append(mapEditor.counter);
-  mapEditor.storyCount = el("span", "position-story-count"); // 이 맵 스토리 장소 N/M (마우스를 올리면 핀 없는 단계)
-  mapEditor.storyCount.hidden = true;
-  banner.append(mapEditor.storyCount);
-  const button = (key, action) => {
-    const node = el("button", "layer-toggle-btn", t(key));
+  const group = (labelKey) => {
+    const row = el("div", "position-group");
+    if (labelKey) row.append(el("span", "position-group-label", t(labelKey)));
+    banner.append(row);
+    return row;
+  };
+  const button = (parent, key, action, text = t(key)) => {
+    const node = el("button", "layer-toggle-btn", text);
     node.type = "button";
     node.addEventListener("click", action);
-    banner.append(node);
+    parent.append(node);
     return node;
   };
-  mapEditor.undo = button("editor.undo", undoPositionEdit);
-  // 종류별 추가 버튼: 누르고 지도를 클릭하면 그 종류로 바로 (종류 고르기 단계 없음)
-  mapEditor.addButtons = {};
-  mapEditor.targetButton = button("editor.target", openTargetPicker);
-  for (const key of ["bd", "boss", "extract", "btr", "guide", "story"]) {
-    const node = el("button", "layer-toggle-btn", "+ " + editorText("kind_" + key));
-    node.type = "button";
-    node.addEventListener("click", () => {
-      if (mapEditor.saving || !mapEditor.options?.[key]) return;
-      if (mapEditor.walk) stopStoryWalk(); // 연속 입력 중이면 끝내고 일반 추가로
-      setEditorTarget(null); // 대상을 고정해 둔 상태도 끝냄
-      cancelMarkerDraft();
-      mapEditor.placing = key;
-      updatePositionEditor(t("editor.clickMap"));
-    });
-    banner.append(node);
-    mapEditor.addButtons[key] = node;
-  }
-  mapEditor.walkButton = button("editor.walk", () => (mapEditor.walk ? stopStoryWalk() : startStoryWalk()));
-  mapEditor.reviewButton = button("editor.review", () => (mapEditor.walk ? stopStoryWalk() : startStoryReview()));
-  window.addEventListener("keydown", (event) => {
-    if (event.key !== "Escape") return;
-    if (mapEditor.form || mapEditor.placing) cancelMarkerDraft(); // 열린 창·추가 대기부터 닫고
-    else setEditorTarget(null);                                  // 그다음 Esc 는 고정한 대상 끝내기
-  });
-  mapEditor.cancel = button("editor.cancel", () => {
+  const head = group();
+  head.append(el("strong", "", t("editor.title")));
+  mapEditor.counter = el("span");
+  head.append(mapEditor.counter);
+  mapEditor.undo = button(head, "editor.undo", undoPositionEdit);
+  mapEditor.cancel = button(head, "editor.cancel", () => {
     if (mapEditor.saving) return;
     mapEditor.pending.clear();
     mapEditor.history = [];
@@ -252,7 +234,35 @@ async function initializePositionEditor() {
     refreshPositionEdits();
     if (mapEditor.walk) startStoryWalk(); // 연속 입력: 취소한 단계까지 다시 목록에
   });
-  mapEditor.save = button("editor.save", savePositionEdits);
+  mapEditor.save = button(head, "editor.save", savePositionEdits);
+  mapEditor.save.classList.add("position-save");
+
+  const spots = group("editor.groupSpots");
+  mapEditor.targetButton = button(spots, "editor.target", openTargetPicker);
+  mapEditor.walkButton = button(spots, "editor.walk", () => (mapEditor.walk ? stopStoryWalk() : startStoryWalk()));
+  mapEditor.reviewButton = button(spots, "editor.review", () => (mapEditor.walk ? stopStoryWalk() : startStoryReview()));
+  mapEditor.storyCount = el("span", "position-story-count"); // 이 맵 스토리 장소 N/M (마우스를 올리면 핀 없는 단계)
+  mapEditor.storyCount.hidden = true;
+  spots.append(mapEditor.storyCount);
+
+  // 종류별 추가 버튼: 누르고 지도를 클릭하면 그 종류로 바로 (종류 고르기 단계 없음)
+  const marks = group("editor.groupMarks");
+  mapEditor.addButtons = {};
+  for (const key of ["bd", "boss", "extract", "btr", "guide", "story"]) {
+    mapEditor.addButtons[key] = button(marks, "", () => {
+      if (mapEditor.saving || !mapEditor.options?.[key]) return;
+      if (mapEditor.walk) stopStoryWalk(); // 연속 입력 중이면 끝내고 일반 추가로
+      setEditorTarget(null); // 대상을 고정해 둔 상태도 끝냄
+      cancelMarkerDraft();
+      mapEditor.placing = key;
+      updatePositionEditor(t("editor.clickMap"));
+    }, "+ " + editorText("kind_" + key));
+  }
+  window.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    if (mapEditor.form || mapEditor.placing) cancelMarkerDraft(); // 열린 창·추가 대기부터 닫고
+    else setEditorTarget(null);                                  // 그다음 Esc 는 고정한 대상 끝내기
+  });
   mapEditor.targetBar = el("div", "position-target");
   mapEditor.targetBar.hidden = true;
   banner.append(mapEditor.targetBar);
@@ -337,10 +347,12 @@ function refreshPositionEdits(message = "") {
 // 이 맵에서 고를 수 있는 대상: 퀘스트 목표(레이드에서 하는 것 전부) + 장소가 필요한 스토리 단계
 function editorTargets() {
   const map = mapUI.current?.key;
+  // title = 퀘스트·챕터 이름, text = 목표·단계 글 (목록에서 따로 보여 줌), label = 둘을 이은 한 줄 (검색·막대·핀 이름)
   const quests = (mapEditor.options?.quest ? mapEditor.goals || [] : []).map((goal) =>
-    ({ type: "quest", id: goal.id, label: goal.label, goal }));
+    ({ type: "quest", id: goal.id, label: goal.label, title: goal.name, text: goal.text, goal }));
   const steps = storyStepsNeedingPlace(mapEditor.options?.story?.seed?.steps || []).map((step) =>
-    ({ type: "story", id: step.id, label: step.chapter + " · " + step.ko + " / " + step.en }));
+    ({ type: "story", id: step.id, label: step.chapter + " · " + step.ko + " / " + step.en,
+      title: step.chapter, text: step.ko + " / " + step.en }));
   return [...quests, ...steps].map((item) => ({ ...item, map }));
 }
 
@@ -370,50 +382,45 @@ function openTargetPicker() {
   const targets = editorTargets();
   const form = el("form", "position-add-form position-target-picker");
   mapEditor.form = form;
+  form.append(el("strong", "position-picker-title", t("editor.pickerTitle")), el("p", "position-picker-help", t("editor.pickerHelp")));
   const search = el("input");
   search.type = "search";
   search.maxLength = 100;
-  const searchLabel = el("label", "", editorText("questSearch"));
-  searchLabel.append(search);
-  const list = el("select");
-  list.size = 12;
-  list.required = true;
-  list.setAttribute("aria-label", t("editor.target"));
-  const full = el("p", "position-goal-full"); // 목록에서는 긴 글이 잘리므로 고른 줄을 전체로 한 번 더
+  search.placeholder = t("editor.questSearch");
+  search.setAttribute("aria-label", t("editor.questSearch"));
+  // 목록: 한 줄에 종류·자리 수·이름(굵게)·목표 글 전체 (잘리지 않게 줄바꿈). 줄을 누르면 바로 고름
+  const list = el("div", "position-target-list");
+  list.setAttribute("role", "listbox");
+  const empty = el("p", "position-picker-help", t("editor.pickerEmpty"));
+  const choose = (item) => { cancelMarkerDraft(); setEditorTarget(item); };
+  let shown = [];
   const fill = () => {
     const words = search.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
-    const kept = list.value;
+    shown = targets.filter((item) => words.every((w) => item.label.toLowerCase().includes(w)));
     list.replaceChildren();
-    targets.filter((item) => words.every((w) => item.label.toLowerCase().includes(w))).forEach((item) => {
-      const tag = t(item.type === "quest" ? "editor.targetQuest" : "editor.targetStory");
-      const option = el("option", "", `[${tag}] (${targetSpotCount(item)}) ${item.label}`);
-      option.value = item.type + ":" + item.id;
-      option.title = item.label;
-      list.append(option);
+    shown.forEach((item) => {
+      const row = el("button", "position-target-row");
+      row.type = "button";
+      row.setAttribute("role", "option");
+      const tag = el("span", "position-target-tag " + item.type, t(item.type === "quest" ? "editor.targetQuest" : "editor.targetStory"));
+      const text = el("span", "position-target-text");
+      text.append(el("b", "", item.title), el("span", "", item.text));
+      row.append(tag, text, el("small", "", t("editor.targetSpots", { n: targetSpotCount(item) })));
+      row.addEventListener("click", () => choose(item));
+      list.append(row);
     });
-    list.value = kept;
-    if (!list.value && list.options.length === 1) list.selectedIndex = 0;
-    show();
+    empty.hidden = shown.length > 0;
   };
-  const picked = () => targets.find((item) => item.type + ":" + item.id === list.value) || null;
-  const show = () => { full.textContent = picked()?.label || ""; };
   search.addEventListener("input", fill);
-  list.addEventListener("change", show);
-  list.addEventListener("dblclick", () => form.requestSubmit());
   const actions = el("div", "position-add-actions");
-  const submit = el("button", "layer-toggle-btn", t("editor.targetPick"));
-  submit.type = "submit";
   const cancel = el("button", "layer-toggle-btn", t("editor.dismiss"));
   cancel.type = "button";
   cancel.addEventListener("click", cancelMarkerDraft);
-  actions.append(submit, cancel);
-  form.append(searchLabel, list, full, actions);
-  form.addEventListener("submit", (event) => {
+  actions.append(cancel);
+  form.append(search, list, empty, actions);
+  form.addEventListener("submit", (event) => { // 검색 칸에서 Enter: 하나만 남았으면 그것으로
     event.preventDefault();
-    const item = picked();
-    if (!item || !form.reportValidity()) return;
-    cancelMarkerDraft();
-    setEditorTarget(item);
+    if (shown.length === 1) choose(shown[0]);
   });
   fill();
   document.getElementById("tab-map").append(form);
