@@ -80,6 +80,10 @@ RAID_OBJECTIVES = {
     "plantItem", "plantQuestItem", "experience",
 }
 
+# 맵이 안 적혀 있어도 '지금 들어간 맵에서 할 수 있는 일'로 보는 종류 (예: 아무 맵에서 PMC 사살).
+# findItem(아무 데서나 줍기)은 뺌: 찾아갈 곳이 아니라서 서랍에서 접는다
+HERE_OBJECTIVES = RAID_OBJECTIVES - {"findItem"}
+
 
 def _map_names() -> dict:
     """지도 id → (한국어 이름, 야간 맵인가). 합치는 맵은 원래 맵 이름, 빼는 맵은 (None, False)"""
@@ -238,6 +242,13 @@ def _objectives_and_prep(task: dict, task_tr, item_tr, quest_items: dict, overri
         objective["optional"] = o.get("optional", False)
         objectives.append(objective)
         kind = o["type"]
+        # 지도 서랍이 '지금 맵에서 할 줄'만 보이게 (v1.7.0):
+        # 목표에 맵이 적혀 있으면 그 맵들(maps), 맵이 없고 레이드에서 직접 하는 일도 아니면 away (건네주기·아무 데서나 줍기·레이드 밖)
+        here_maps = map_display_names(o.get("maps"))
+        if here_maps:
+            objective["maps"] = here_maps
+        elif kind not in HERE_OBJECTIVES:
+            objective["away"] = True
         count = o.get("count") or 1
 
         if kind == "plantItem":

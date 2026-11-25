@@ -13,6 +13,8 @@ const mapUI = {
   guideRaid: null,   // 이번 레이드의 공략 서랍 자동 열기 상태
   lobbyTimer: null,  // 로비로 돌아갈 때 잠깐 기다리는 타이머 (트랜짓 대비)
   dirty: true,       // 퀘스트가 바뀌어서 다시 그려야 함
+  awayOpen: new Set(), // '다른 목표 N개'를 펼쳐 둔 퀘스트 id (그 맵을 보는 동안만, 저장 안 함)
+  awayOpenMap: null,   // 위 기록이 어느 맵 것인지
 };
 const MAP_KEY_STORAGE = "tarkovhelper.map";
 const TRANSITION_MS = 1600;   // 전환 안내를 최소한 보여주는 시간
@@ -2179,6 +2181,14 @@ function renderDrawer() {
   const numbers = new Map(numberedObjectives().map((x) => [x.objective, x.n]));
   const hideable = canHideGoals();
   const here = mapQuests(m.name);
+  // 펼쳐 둔 '다른 목표'는 그 맵을 보는 동안만 (맵을 바꾸거나 다시 켜면 접힌 채로 시작)
+  if (mapUI.awayOpenMap !== m.key) { mapUI.awayOpen.clear(); mapUI.awayOpenMap = m.key; }
+  // 이 맵에서 할 줄: 번호 핀이 있거나, 이 맵(또는 아무 맵)에서 하는 일.
+  // 서버가 종류를 모르는 목표(직접 적은 퀘스트)는 가리지 않고 보인다
+  const isHere = (o) => numbers.has(o) || (!o.away && (!o.maps || o.maps.includes(m.name)));
+  // 번호 핀이 있는 퀘스트를 위로, 자리 없는 퀘스트는 아래 칸으로 (받은 순서는 칸 안에서 그대로 → 번호는 여전히 위에서부터)
+  const pinned = here.filter((q) => q.objectives.some((o) => numbers.has(o)));
+  const unpinned = here.filter((q) => !pinned.includes(q));
   const anywhere = anywhereQuests(activeQuests()).filter((q) => !here.includes(q));
   document.getElementById("drawer-count").textContent = here.length + anywhere.length;
   renderLootBar();
@@ -2197,9 +2207,11 @@ function renderDrawer() {
     if (wiki) heading.append(wiki);
     li.append(heading);
     const goals = el("ul", "drawer-goals");
+    const away = [];
     q.objectives.forEach((o) => {
       const n = numbers.get(o);
       const goal = el("li", o.optional ? "optional" : "");
+      if (!isHere(o)) { goal.classList.add("goal-away"); away.push(goal); }
       const hidden = n && isGoalHidden(q, o);
       if (n) {
         // 위치가 있는 목표: 지도와 같은 번호, 누르면 지도에서 그 위치로 (숨긴 목표는 핀이 없으니 그대로)
@@ -2224,8 +2236,31 @@ function renderDrawer() {
         });
         goal.append(eye);
       }
-      goals.append(goal);
+      if (!away.includes(goal)) goals.append(goal);
     });
+    // 이 맵에서 할 줄이 아닌 목표는 '다른 목표 N개' 한 줄로 접음 (누르면 그 아래에 펼침)
+    if (away.length) {
+      const open = mapUI.awayOpen.has(q.id);
+      li.classList.toggle("away-open", open);
+      const row = el("li", "goal-away-toggle");
+      const more = el("button", "goal-away-button");
+      more.type = "button";
+      const paint = (isOpen) => {
+        more.setAttribute("aria-expanded", String(isOpen));
+        more.title = t(isOpen ? "map.foldHide" : "map.foldShow");
+        more.innerHTML = iconSvg(isOpen ? "chevron-down" : "chevron-right", 12);
+        more.append(" " + t("map.awayGoals", { n: away.length }));
+      };
+      paint(open);
+      more.addEventListener("click", () => {
+        const isOpen = !mapUI.awayOpen.has(q.id);
+        if (isOpen) mapUI.awayOpen.add(q.id); else mapUI.awayOpen.delete(q.id);
+        li.classList.toggle("away-open", isOpen);
+        paint(isOpen);
+      });
+      row.append(more);
+      goals.append(row, ...away);
+    }
     li.append(goals);
     list.append(li);
   };
@@ -2236,9 +2271,14 @@ function renderDrawer() {
   // '할 일' 버튼 숫자 = 퀘스트 + 서랍에 보이는 스토리 단계
   document.getElementById("drawer-count").textContent = here.length + anywhere.length + storyCount;
   // 큰 칸은 내용이 있으면 항상 제목 줄 + 접기 (다른 칸이 있든 없든). 퀘스트가 하나도 없으면 제목 없이 안내 문구만 (2026-11-23 사용자)
-  if (here.length) list.append(foldKey(el("li", "drawer-divider drawer-section-title", t("map.drawerQuests")), "quests"));
+  if (pinned.length) list.append(foldKey(el("li", "drawer-divider drawer-section-title", t("map.drawerQuests")), "quests"));
   if (!here.length && !anywhere.length) list.append(el("li", "empty", t("map.noQuests")));
-  here.forEach(addQuest);
+  pinned.forEach(addQuest);
+  if (unpinned.length) {
+    list.append(foldKey(el("li", "drawer-divider" + (pinned.length ? "" : " drawer-section-title"),
+      t("map.drawerNoSpot", { n: unpinned.length })), "nospot"));
+    unpinned.forEach(addQuest);
+  }
   if (anywhere.length) {
     list.append(foldKey(el("li", "drawer-divider", `${mapLabel(ALL_MAPS)} (${anywhere.length})`), "anywhere"));
     anywhere.forEach(addQuest);
