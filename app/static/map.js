@@ -1915,7 +1915,11 @@ function numberedObjectives() {
   const m = mapUI.current;
   const result = [];
   let n = 0;
-  mapQuests(m.name).forEach((quest) => {
+  // '모든 맵' 퀘스트도 이 맵에 자리가 있는 목표는 번호 핀 (서랍과 같은 순서: 이 맵 퀘스트 → 모든 맵).
+  // 예: dev 에 없는 퀘스트의 트랜짓 이용 목표
+  const here = mapQuests(m.name);
+  const anywhere = anywhereQuests(activeQuests()).filter((q) => !here.includes(q));
+  [...here, ...anywhere].forEach((quest) => {
     quest.objectives.forEach((objective) => {
       const spots = (objective.where || []).filter((w) => w.map === m.name);
       if (spots.length) result.push({ n: ++n, quest, objective, spots });
