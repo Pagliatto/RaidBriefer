@@ -833,8 +833,6 @@ body.map-mode .scroll-buttons { display: none; }
   font: inherit; font-size: 15px; font-weight: 600; padding: 3px 8px;
   background: var(--surface-2); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);
 }
-.map-auto { font-size: 13px; color: var(--ok); }
-.map-auto[hidden] { display: none; }
 .drawer-toggle {
   margin-left: auto; padding: 3px 12px; border-radius: var(--radius); white-space: nowrap;
   border: 1px solid var(--border); background: var(--surface-2); color: var(--text-dim); font-weight: 600;
@@ -904,7 +902,6 @@ body.map-mode .scroll-buttons { display: none; }
 }
 @media (max-width: 620px) {
   .map-drawer { width: 70%; }
-  .map-auto { display: none; }
 }
 
 /* ---------- 화면 전환 안내 ---------- */
@@ -2331,7 +2328,6 @@ body.position-edit #tab-map:not([hidden]) {
 body.position-edit .map-drawer,
 body.position-edit #drawer-toggle,
 body.position-edit #loot-bar,
-body.position-edit #map-auto,
 body.position-edit #btr-tracker-link, body.position-edit #wiki-map-link { display: none !important; }
 body.position-edit .map-bar { flex-wrap: wrap; }
 body.position-edit .map-bar select { max-width: 100%; min-width: 0; }
@@ -2485,7 +2481,7 @@ body.position-edit .position-deleted { display: none; }
 .me-halo { background: rgba(47, 123, 255, 0.2); border: 1px solid rgba(47, 123, 255, 0.6); }
 /* 파동: 큰 원이 내 위치로 모여듦 (눈이 그 자리로 따라가게). 세 번, 갈수록 작게 — 첫 번째를 놓쳐도 다음에 보임 (2026-11-25 사용자) */
 .me-wave {
-  border: 3px solid #2f7bff; background: rgba(47, 123, 255, 0.1); opacity: 0;
+  border: 1.5px solid #2f7bff; background: rgba(47, 123, 255, 0.1); opacity: 0;
   animation: me-wave 0.9s ease-in var(--me-delay, 0s) 1 both;
 }
 .me-wave:nth-of-type(2) { --me-from: 16; --me-delay: 0s; }
@@ -2505,21 +2501,23 @@ body.position-edit .position-deleted { display: none; }
 
 /* ---------- 남은 시간 경고 테두리 (2026-11-25 사용자): 10분 남으면 지도 둘레에 빨간 빛 ---------- */
 /* 단계는 상단바 남은 시간과 같음 (topbar.js 가 html data-raid-low = 1·2·3): 10분 이하 · 5분 이하 · 2분 미만.
-   선이 아니라 가장자리에서 안쪽으로 번지는 빛, 눌러지지 않음(지도 조작을 막지 않음). 투명도만 움직여서 지도를 다시 그리지 않음 */
+   선이 아니라 가장자리에서 안쪽으로 번지는 빛, 눌러지지 않음(지도 조작을 막지 않음).
+   숨쉬기(투명도)는 topbar.js syncRaidGlow 가 움직임 — 단계가 바뀌어도 처음부터 다시 시작하지 않고 박자만 빨라짐.
+   단계의 진하기는 빛의 색 투명도로, 1.5초에 걸쳐 천천히 바뀜 */
 .map-view::after {
   content: ""; position: absolute; inset: 0; z-index: 1100; pointer-events: none; border-radius: inherit;
-  display: none; opacity: var(--raid-glow-alpha, .5);
-  box-shadow: inset 0 0 var(--raid-glow-size, 52px) calc(var(--raid-glow-size, 52px) / 4) rgb(235, 52, 42);
+  display: none;
+  box-shadow: inset 0 0 26px 6.5px rgb(235 52 42 / var(--raid-glow-alpha, .5));
+  transition: box-shadow 1.5s ease;
 }
-html[data-raid-low] .map-view::after { display: block; animation: raid-border-breathe 2.8s ease-in-out infinite; }
-html[data-raid-low="2"] .map-view::after { --raid-glow-alpha: .7; animation-duration: 1.8s; }
-html[data-raid-low="3"] .map-view::after { --raid-glow-alpha: .92; animation-duration: 1.2s; }
-@keyframes raid-border-breathe { 0%, 100% { opacity: calc(var(--raid-glow-alpha, .5) * .3); } 50% { opacity: var(--raid-glow-alpha, .5); } }
-/* 설정 (settings.js 가 html data-raid-border 에 적음): 끔 / 얇게 / 보통(기본) */
-html[data-raid-border="thin"] .map-view::after { --raid-glow-size: 26px; }
+html[data-raid-low] .map-view::after { display: block; }
+html[data-raid-low="2"] .map-view::after { --raid-glow-alpha: .7; }
+html[data-raid-low="3"] .map-view::after { --raid-glow-alpha: .92; }
+/* 설정 (settings.js 가 html data-raid-border 에 적음): 켬(기본) / 끔 */
 html[data-raid-border="off"][data-raid-low] .map-view::after { display: none; }
-/* 움직임 줄이기: 깜빡임 없이 고정, 단계는 진하기로만 (상단바 남은 시간과 같은 규칙) */
-@media (prefers-reduced-motion: reduce) { html[data-raid-low] .map-view::after { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .map-view::after { transition: none; } }
+/* 설정 창의 켬/끔 스위치 (은신처 스위치 모양을 같이 씀) */
+.settings-switch { margin-left: 0; margin-bottom: 12px; font-size: 14px; }
 
 /* ---------- 레이드 중 목표 임시 숨기기 (2026-11-25 사용자): 서랍 목표 줄 오른쪽 끝의 눈 아이콘 ---------- */
 .goal-text { flex: 1; min-width: 0; }

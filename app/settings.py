@@ -22,10 +22,12 @@ DEFAULT_GAME_DIR = r"C:\Battlestate Games\Escape from Tarkov"
 # hideout_all: 은신처 재료 합계에 조건이 남은 시설(지금 못 짓는 시설)까지 합칠지 (기본: 지을 수 있는 시설만)
 DEFAULTS = {"game_dir": DEFAULT_GAME_DIR, "setup_done": False, "edition": "standard", "hideout_all": False, "lang": "",
             "last_seen_version": "", "brightness_mode": "off", "brightness_strength": 35, "brightness_monitor": "",
-            "raid_border": "normal"}  # lang 비어 있음 = 윈도우 언어를 따름
+            "raid_border": "on"}  # lang 비어 있음 = 윈도우 언어를 따름
 EDITIONS = ("standard", "left_behind", "prepare_for_escape", "edge_of_darkness", "unheard")
-# raid_border: 남은 시간 10분 경고 테두리 (지도 둘레 빨간 빛). 끔 / 얇게 / 보통(기본)
-RAID_BORDERS = ("off", "thin", "normal")
+# raid_border: 남은 시간 10분 경고 테두리 (지도 둘레 빨간 빛). 끔 / 켬(기본)
+RAID_BORDERS = ("off", "on")
+# 개발 중에 쓰던 옛 값 (얇게 / 보통) → 켬으로 읽음. 설정 파일을 '잘못된 파일'로 보지 않게 받아 줌
+OLD_RAID_BORDERS = ("thin", "normal")
 
 _lock = threading.Lock()
 _cache: dict | None = None
@@ -147,7 +149,7 @@ def _valid_saved(data: dict) -> bool:
     return (data.get("edition", "standard") in EDITIONS
             and data.get("lang", "") in ("", *i18n.LANGS)
             and data.get("brightness_mode", "off") in ("off", "raid", "always")
-            and data.get("raid_border", "normal") in RAID_BORDERS
+            and data.get("raid_border", "on") in (*RAID_BORDERS, *OLD_RAID_BORDERS)
             and 0 <= data.get("brightness_strength", 35) <= 60)
 
 
@@ -157,6 +159,8 @@ def load() -> dict:
         # 저장할 때도 디스크를 다시 확인해 이전 캐시로 손상 파일을 덮지 않는다.
         saved = read_saved(SETTINGS_FILE, _valid_saved)
         _cache = {**DEFAULTS, **saved}
+        if _cache["raid_border"] in OLD_RAID_BORDERS:
+            _cache["raid_border"] = "on"
         return dict(_cache)
 
 

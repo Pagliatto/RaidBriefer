@@ -294,7 +294,6 @@
     "layerToggleHint": "Choose what to show on the map",
     "layerToggle": "Layers",
     "selectLabel": "Map",
-    "auto": "● Current raid map",
     "shotHint": "Press the in-game screenshot key to show your position on the map",
     "drawer": "To-do",
     "drawerHint": "To-do list (story and quests)",
@@ -398,8 +397,7 @@
     "raidBorderTitle": "Low-time warning border",
     "raidBorderHelp": "When 10 minutes are left in the raid, a red glow pulses around the map and gets stronger and faster as time runs out. The first time it turns on, the view switches to the map once.",
     "raidBorderOff": "Off",
-    "raidBorderThin": "Thin",
-    "raidBorderNormal": "Normal",
+    "raidBorderOn": "On",
     "tabGeneral": "General",
     "tabRecords": "Records",
     "tabAbout": "About"

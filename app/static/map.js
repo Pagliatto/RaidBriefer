@@ -1241,7 +1241,6 @@ async function drawMap() {
   mapUI.transits = []; // 이 맵의 트랜짓 표시 (서랍 '트랜짓으로 갈 수 있는 맵'이 씀)
   mapUI.dirty = false;
   renderLayerDrawer(); // 그림이 없거나 요청에 실패해도 이전 맵의 적 레이어를 지움
-  document.getElementById("map-auto").hidden = !(mapUI.autoMapId && m && m.ids.includes(mapUI.autoMapId));
   if (!m) return;
 
   loadMapGuide(m); // 지도 그림과 독립적으로 표시, 같은 맵 재표시에는 다시 요청하지 않음
@@ -2324,7 +2323,6 @@ function onGameState(s) {
       mapUI.lobbyTimer = null;
       mapUI.autoMapId = null;
       clearGoalHides(); // 로비로 돌아옴 (트랜짓이 아님) → 임시로 숨긴 목표를 모두 다시 보이게
-      document.getElementById("map-auto").hidden = true;
       if (currentTab() !== "map") return; // 사용자가 다른 화면을 보고 있으면 그대로
       showTransition(t("map.lobby"), t("map.returning"), async () => goTab("home"));
     }, s.cancelled ? 0 : LOBBY_WAIT_MS);
@@ -2340,8 +2338,9 @@ window.addEventListener("game-state", (e) => {
 // ---------- 내 위치 (게임 스크린샷 파일 이름의 좌표, 2026-11-24 사용자) ----------
 // 사용자가 게임에서 스크린샷 키를 누르면 서버(shot_watch.py)가 파일 이름의 좌표를 읽어 준다.
 // 표시는 30초: 처음 15초는 진하게, 나머지 15초 동안 천천히 사라짐. 새로 찍으면 옛 표시는 바로 없어짐
-// 지도·탭·확대는 건드리지 않고 표시만 한다 (2026-11-25 사용자). 대신 큰 파동이 내 위치로 세 번 모여듦(갈수록 작게).
+// 확대·보는 자리는 건드리지 않고 표시만 한다. 대신 큰 파동이 내 위치로 세 번 모여듦(갈수록 작게).
 // 내 위치가 다른 층이면 층만 바꿈 (보는 자리는 그대로)
+// 다른 탭을 보다가 찍으면 지도 탭의 그 맵으로 옮김 (2026-11-25 사용자: 찍은 게 확실히 보이게). 지도 탭에서 다른 맵을 보는 중이면 그대로
 const ME_SHOW_MS = 30000;   // shot_watch.py SHOW_SECONDS 와 같게 (CSS me-fade 도 30s)
 const ME_PIN_Z = 2000;      // 모든 표시 위 (펼친 퀘스트 핀 1000 보다도 위)
 const ME_WAVE_MS = 3000;    // 막 찍은 위치만 파동 (다시 그릴 때는 없음). 파동 세 번이 약 3초
@@ -2425,11 +2424,22 @@ function onPlayerPosition(pos) {
   if (!hint.used) saveShotHint({ ...hint, used: true });
   mapMe.hintUntil = 0;
   drawShotHint();
-  // 지금 그 맵의 지도를 보고 있으면 바로 표시. 다른 탭·다른 맵이면 화면은 그대로 두고,
-  // 그 맵을 그릴 때(drawMap 끝) 남은 시간만큼 표시 (moveTo = 그때 층 맞춤)
+  // 다른 탭을 보는 중이면 지도 탭으로 (그 맵이 아니면 맵도 바꿈, 고른 맵 기억은 안 바꿈)
+  const away = currentTab() !== "map";
+  const mine = away && (mapUI.maps || []).find((x) => x.ids.includes(pos.map_id));
+  if (mine && mapUI.current !== mine) {
+    clearMe();
+    mapMe.moveTo = true;
+    mapUI.dirty = true; // 숨은 탭에서 그리지 않고, 지도 탭이 보일 때 그림
+    mapUI.current = mine;
+    document.getElementById("map-select").value = mine.key;
+    drawBtrTrackerLink();
+  }
+  // 지금 그 맵의 지도가 그려져 있으면 바로 표시. 아니면 그 맵을 그릴 때(drawMap 끝) 남은 시간만큼 표시 (moveTo = 그때 층 맞춤)
   const here = mapUI.current && mapUI.current.ids.includes(pos.map_id);
-  if (here && mapUI.leaflet && !mapUI.dirty) drawMe(true); // 다른 탭을 보는 중이어도 지도에는 찍어 둠
+  if (here && mapUI.leaflet && !mapUI.dirty) drawMe(true);
   else { clearMe(); mapMe.moveTo = true; } // 옛 표시와 그 만료 타이머를 지움 (옛 타이머가 새 위치까지 지우지 않게)
+  if (away) goTab("map");
 }
 window.addEventListener("player-position", (e) => onPlayerPosition(e.detail));
 
