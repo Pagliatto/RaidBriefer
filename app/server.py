@@ -337,6 +337,8 @@ def api_editor():
         return response
     try:
         result = editor.save(request.get_json()["changes"])
+        if result.get("saved"):
+            _invalidate_quests_cache()  # 퀘스트 목표에 더한 위치가 바로 보이게
         if not result["ok"]:
             result["error"] = i18n.t("editor.saveFailed")
         return jsonify(result), 200 if result["ok"] else 409

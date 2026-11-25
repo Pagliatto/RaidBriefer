@@ -31,6 +31,7 @@ function cancelMarkerDraft() {
   mapEditor.draft?.remove();
   mapEditor.form?.remove();
   mapEditor.draft = mapEditor.form = null;
+  showGoalDevSpots(null);
   if (wasPlacing && mapEditor.status) updatePositionEditor();
 }
 
@@ -52,9 +53,9 @@ function refreshNewMarkers() {
     const kind = pending.edit.seed.add;
     if (kind === "noplace" || kind === "maps" || kind === "unnoplace") continue; // 위치 없는 항목 (스토리 연속 입력의 '장소 불필요'·맵 고치기)
     const pin = pending.fields.kind;
-    const icons = { bd: ["enemy", "crosshair"], boss: ["boss", "skull"], extract: [`extract-${pending.fields.faction}`, "door-open"], btr: ["btr", "bus"], story: ["story", "book-open"], guide: [pin === "lock" ? "lock" : "guide-" + pin, GUIDE_ICONS[pin] || "door-open"] };
+    const icons = { quest: ["quest-spot", "check"], bd: ["enemy", "crosshair"], boss: ["boss", "skull"], extract: [`extract-${pending.fields.faction}`, "door-open"], btr: ["btr", "bus"], story: ["story", "book-open"], guide: [pin === "lock" ? "lock" : "guide-" + pin, GUIDE_ICONS[pin] || "door-open"] };
     // 저장 전 핀도 저장된 핀과 같은 겹침 순서로 (Codex 검수 76)
-    const z = { bd: MARKER_Z.blackDivision, boss: MARKER_Z.bossZones, extract: MARKER_Z.extracts, btr: MARKER_Z.btrStops,
+    const z = { quest: QUEST_SPOT_Z, bd: MARKER_Z.blackDivision, boss: MARKER_Z.bossZones, extract: MARKER_Z.extracts, btr: MARKER_Z.btrStops,
       story: STORY_PIN_Z, guide: pin === "lock" ? MARKER_Z.keys : GUIDE_PIN_Z }[kind] || 0;
     const marker = L.marker(gamePos(pending.pos), { icon: markerIcon(...icons[kind], 22), zIndexOffset: z });
     marker.baseZ = z;
@@ -74,12 +75,25 @@ const EDITOR_TEXT = {
   kind_bd: () => t("editor.kind_bd"), kind_boss: () => t("editor.kind_boss"), kind_extract: () => t("editor.kind_extract"),
   kind_btr: () => t("editor.kind_btr"), kind_guide: () => t("editor.kind_guide"), kind_story: () => t("editor.kind_story"),
   storyStep: () => t("editor.storyStep"),
+  kind_quest: () => t("editor.kind_quest"), questGoal: () => t("editor.questGoal"), questSearch: () => t("editor.questSearch"),
+  link: () => t("editor.link"),
   faction_pmc: () => t("editor.faction_pmc"), faction_scav: () => t("editor.faction_scav"), faction_shared: () => t("editor.faction_shared"),
   pin_key_spawn: () => t("editor.pin_key_spawn"), pin_panel: () => t("editor.pin_panel"), pin_toolset: () => t("editor.pin_toolset"),
   pin_explosive: () => t("editor.pin_explosive"), pin_door: () => t("editor.pin_door"), pin_lock: () => t("editor.pin_lock"),
   pin_building: () => t("editor.pin_building"), pin_start: () => t("editor.pin_start"),
 };
 const editorText = (key) => (EDITOR_TEXT[key] ? EDITOR_TEXT[key]() : key);
+const QUEST_SPOT_Z = 600; // 퀘스트 목표에 더한 자리 (편집 도구에서만 보이는 표시)
+
+// 고른 목표에 dev 가 이미 적어 둔 자리를 회색 동그라미로 (어디가 빠졌는지 보면서 찍게). null 이면 지움
+function showGoalDevSpots(goal) {
+  mapEditor.goalLayer?.remove();
+  mapEditor.goalLayer = null;
+  if (!goal || !mapUI.leaflet) return;
+  mapEditor.goalLayer = L.layerGroup(goal.points.map((p) =>
+    L.circleMarker(gamePos(p), { radius: 9, color: "#d8d4c8", weight: 2, fillColor: "#8a8a8a", fillOpacity: 0.55, interactive: false })
+  )).addTo(mapUI.leaflet);
+}
 
 function openMarkerForm(latlng) {
   const options = mapEditor.options;
@@ -137,6 +151,47 @@ function openMarkerForm(latlng) {
     } else if (kind.value === "extract" || kind.value === "btr") {
       input("name", kind.value === "extract" ? "nameEn" : "name");
       if (kind.value === "extract") choice("faction", "faction", ["pmc", "scav", "shared"].map((id) => [id, editorText("faction_" + id)]));
+    } else if (kind.value === "quest") {
+      // 퀘스트 목표 고르기: 이름·목표 글로 찾기 (한 글자 칠 때마다 목록을 걸러 줌). 검색 칸은 저장 값이 아님
+      const goals = mapEditor.goals || [];
+      const search = el("input");
+      search.type = "search";
+      search.maxLength = 100;
+      field(details, "questSearch", search);
+      choice("objective", "questGoal", []);
+      inputs.objective.required = true;
+      inputs.objective.size = 8;
+      const full = el("p", "position-goal-full"); // 목록에서는 긴 글이 잘리므로 고른 목표를 전체로 한 번 더
+      details.append(full);
+      const pick = () => {
+        const goal = goals.find((g) => g.id === inputs.objective.value) || null;
+        full.textContent = goal ? goal.label : "";
+        showGoalDevSpots(goal);
+      };
+      const fill = () => {
+        const words = search.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+        const kept = inputs.objective.value;
+        inputs.objective.replaceChildren();
+        goals.filter((g) => words.every((w) => g.label.toLowerCase().includes(w))).forEach((g) => {
+          const option = el("option", "", (g.points.length ? `(${g.points.length}) ` : "") + g.label);
+          option.value = g.id;
+          option.title = g.label;
+          inputs.objective.append(option);
+        });
+        inputs.objective.value = kept;
+        if (!inputs.objective.value && inputs.objective.options.length === 1) inputs.objective.selectedIndex = 0;
+        pick();
+      };
+      search.addEventListener("input", fill);
+      inputs.objective.addEventListener("change", pick);
+      if (mapEditor.lastGoal && goals.some((g) => g.id === mapEditor.lastGoal)) { // 같은 목표의 자리를 이어서 찍기 쉽게
+        fill();
+        inputs.objective.value = mapEditor.lastGoal;
+        pick();
+      } else fill();
+      const link = input("link", "link", "url", false);
+      link.pattern = "https://.+";
+      link.value = mapEditor.lastGoalLink || "";
     } else if (kind.value === "story") {
       // 이 맵이 적힌 스토리 단계만 (이미 핀이 있는 단계는 ✓)
       const placed = new Set(options.story.seed.placed || []);
@@ -174,7 +229,14 @@ function openMarkerForm(latlng) {
     const pos = [Math.round(latlng.lng * 10) / 10, Math.round(latlng.lat * 10) / 10, near?.[2] || 0];
     mapEditor.serial = (mapEditor.serial || 0) + 1;
     const id = "draft:" + mapEditor.serial;
-    const label = fields.name || fields.label_ko || editorText("kind_" + kind.value);
+    if (kind.value === "quest") {
+      fields.y = floorHeight(pos[0], pos[1]); // 지금 보는 층의 높이 (스토리 장소와 같은 방식)
+      pos[2] = fields.y;
+      mapEditor.lastGoal = fields.objective;
+      mapEditor.lastGoalLink = fields.link;
+    }
+    const label = (kind.value === "quest" && (mapEditor.goals || []).find((g) => g.id === fields.objective)?.label)
+      || fields.name || fields.label_ko || editorText("kind_" + kind.value);
     mapEditor.pending.set(id, { edit, fields, pos, base: pos.slice(), map, label });
     mapEditor.history.push({ id });
     cancelMarkerDraft();
@@ -210,7 +272,7 @@ async function initializePositionEditor() {
   mapEditor.undo = button("editor.undo", undoPositionEdit);
   // 종류별 추가 버튼: 누르고 지도를 클릭하면 그 종류로 바로 (종류 고르기 단계 없음)
   mapEditor.addButtons = {};
-  for (const key of ["bd", "boss", "extract", "btr", "guide", "story"]) {
+  for (const key of ["quest", "bd", "boss", "extract", "btr", "guide", "story"]) {
     const node = el("button", "layer-toggle-btn", "+ " + editorText("kind_" + key));
     node.type = "button";
     node.addEventListener("click", () => {
@@ -2642,6 +2704,7 @@ async function drawFeatures(leaf, m) {
   if (mapEditor.active) {
     mapEditor.options = data.editorAdd || null;
     mapEditor.heights = data.editorHeights || [];
+    mapEditor.goals = data.editorQuestGoals || [];
     leaf.on("click", (event) => {
       if (!mapEditor.walk && mapEditor.placing && !mapEditor.saving && mapEditor.options) openMarkerForm(event.latlng);
     });
@@ -2700,6 +2763,15 @@ async function drawFeatures(leaf, m) {
   (data.btrStops || []).forEach((stop) => {
     const marker = add("btrStops", stop.pos, markerIcon("btr", "bus", 18), escapeHtml(stop.name));
     bindPositionEditor(marker, stop, stop.name);
+  });
+  // 퀘스트 목표에 더한 자리 (편집 도구에서만 옴): 끌어서 옮기거나 눌러서 지움
+  // 퀘스트 번호 핀 묶음(quests)은 퀘스트가 갱신될 때마다 비워지므로 따로 둔 묶음에 넣음
+  if ((data.questSpots || []).length) mapUI.groups.questSpots = L.layerGroup().addTo(mapUI.leaflet);
+  (data.questSpots || []).forEach((spot) => {
+    const marker = add("questSpots", spot.pos, markerIcon("quest-spot", "check", 20), escapeHtml(spot.name));
+    marker.setZIndexOffset(QUEST_SPOT_Z);
+    marker.baseZ = QUEST_SPOT_Z;
+    bindPositionEditor(marker, spot, spot.name);
   });
   drawEnemyFeatures(data, add);
   // 열쇠 문: 마우스를 올리면 필요한 열쇠

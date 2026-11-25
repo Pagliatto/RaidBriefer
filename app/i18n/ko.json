@@ -599,6 +599,10 @@
     "pin_start": "시작 위치",
     "kind_story": "스토리 장소",
     "storyStep": "스토리 단계",
+    "kind_quest": "퀘스트 목표 자리",
+    "questGoal": "퀘스트 목표 (앞의 숫자 = 이미 있는 자리 수)",
+    "questSearch": "퀘스트·목표 찾기",
+    "link": "출처 주소 (위키 등, 직접 확인했으면 비움)",
     "storyProgress": "스토리 장소 {n}/{total}",
     "storyMissing": "아직 장소가 없는 단계:"
   }

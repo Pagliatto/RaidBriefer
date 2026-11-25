@@ -33,6 +33,11 @@ def _identity(file, route, entry):
     return (file, tuple(route[:-1]), name)
 
 
+def _ours(file, route):
+    """통째로 우리가 적은 데이터 (스토리 장소·퀘스트 목표에 더한 위치) → 편집 도구에서 언제든 지울 수 있음"""
+    return file == "story/places.json" or (file == "corrections.json" and route[:1] == ["quest_spots"])
+
+
 def enable():
     global _enabled
     _enabled = not getattr(sys, "frozen", False)
@@ -53,7 +58,7 @@ def _target(file, route):
     if file == "corrections.json":
         if len(route) < 3 or not isinstance(route[1], str) or not _MAP.fullmatch(route[1]):
             raise ValueError("map")
-        sections = {"extracts": "extracts", "btr_stops": "stops", "boss_zones": "zones"}
+        sections = {"extracts": "extracts", "btr_stops": "stops", "boss_zones": "zones", "quest_spots": "spots"}
         if route[0] in sections:
             if len(route) != 4 or route[2] != sections[route[0]] or type(route[3]) is not int or route[3] < 0:
                 raise ValueError("index")
@@ -139,7 +144,7 @@ def _attach(item, file, route, snapshot, seed=None):
             return
         item["pos"] = [entry["x"], entry["z"], entry.get("y", 0)]
         # 스토리 장소는 우리 데이터 전체를 편집 도구로 고침 → 모두 삭제 가능
-        seed = {"created": True} if file == "story/places.json" or _identity(file, route, entry) in _created else None
+        seed = {"created": True} if _ours(file, route) or _identity(file, route, entry) in _created else None
     elif seed is None:
         return
     key = {"file": file, "path": route, "revision": hashlib.sha256(raw).hexdigest(), "seed": seed}
@@ -223,6 +228,8 @@ def feature_keys(map_key, result):
     try:
         snapshot = _read(_target("corrections.json", ["enemy_spawns", map_key, "Editor"]))
         data = snapshot[1]
+        goals = _quest_goals(map_key)
+        result["editorQuestGoals"] = goals
         result["editorAdd"] = _add_keys(map_key, result, snapshot)
         for group, section, rows, name_field in (
                 ("extracts", "extracts", "extracts", "name_en"),
@@ -238,6 +245,18 @@ def feature_keys(map_key, result):
                            and (row.get(name_field) or row.get("name")) == item.get("name")]
                 if len(matches) == 1:
                     _attach(item, "corrections.json", [section, map_key, rows, matches[0]], snapshot)
+        result["questSpots"] = []
+        labels = {g["id"]: g["label"] for g in goals}
+        spots = data.get("quest_spots") if isinstance(data.get("quest_spots"), dict) else {}
+        for objective_id, entry in spots.items():
+            rows = entry.get("spots") if isinstance(entry, dict) else None
+            for index, row in enumerate(rows if isinstance(rows, list) else []):
+                if not isinstance(row, dict) or row.get("map") != map_key:
+                    continue
+                item = {"name": labels.get(objective_id) or str(entry.get("name") or objective_id), "objective": objective_id}
+                _attach(item, "corrections.json", ["quest_spots", objective_id, "spots", index], snapshot)
+                if "edit" in item:
+                    result["questSpots"].append(item)
         for item in result.get("blackDivision", []):
             counts = item.get("count")
             seed = None
@@ -247,6 +266,45 @@ def feature_keys(map_key, result):
     except (OSError, ValueError, RecursionError):
         pass
     return result
+
+
+def _quest_goals(map_key):
+    """이 맵에서 하는 퀘스트 목표 전부 (진행 여부와 무관). [{id, quest, name, label, points: dev 가 적은 자리}]
+    label = 퀘스트 이름(게임 그대로) · 목표 글. 합친 맵(야간 공장 등)의 목표는 원래 맵에 같이 나옴"""
+    from app import quests, tarkov_api
+    try:
+        tasks, tr = tarkov_api.get_tasks()
+        maps = tarkov_api.load("maps").get("maps", {})
+        map_names = quests._map_names()
+        extract_zones = quests._extract_zones()
+        overrides = quests._load_overrides()
+    except Exception:
+        return []
+    try:
+        key_of = {m["id"]: quests.MERGED_MAPS.get(m["normalizedName"], m["normalizedName"])
+                  for m in maps.values() if isinstance(m, dict) and m.get("id") and m.get("normalizedName")}
+        here = next((names[0] for map_id, names in map_names.items() if key_of.get(map_id) == map_key and names[0]), None)
+    except Exception:
+        return []
+    goals = []
+    for quest_id, task in tasks.items():
+        if not isinstance(task, dict) or not isinstance(task.get("objectives"), list):
+            continue
+        for o in task["objectives"]:
+            try:  # 모양이 이상한 목표 하나 때문에 지도 데이터 전체가 죽지 않게 그 목표만 건너뜀
+                if not isinstance(o, dict) or not re.fullmatch(r"[0-9a-f]{24}", str(o.get("id", ""))):
+                    continue
+                on_maps = {key_of.get(m) for m in o.get("maps") or [] if isinstance(m, str)}
+                if o.get("type") not in quests.RAID_OBJECTIVES or map_key not in on_maps:
+                    continue
+                name = tr(task.get("name", "")) or quest_id
+                text = quests._objective_text(o.get("description", ""), tr, overrides).get("text", "")
+                points = [p for spot in quests._where(o, map_names, extract_zones) if spot["map"] == here for p in spot["points"]]
+                goals.append({"id": o["id"], "quest": quest_id, "name": name, "label": name + " · " + text, "points": points})
+            except Exception:
+                continue
+    goals.sort(key=lambda g: g["label"].lower())
+    return goals
 
 
 def _add_keys(map_key, result, snapshot):
@@ -277,7 +335,10 @@ def _add_keys(map_key, result, snapshot):
     except (OSError, ValueError):
         story = None
     story_steps = _story_steps(map_key) if story is not None else []
-    for kind in ("bd", "boss", "extract", "btr", "guide", "story", "noplace", "maps", "unnoplace"):
+    goals = {g["id"]: [g["quest"], g["name"]] for g in result.get("editorQuestGoals", [])}
+    for kind in ("bd", "boss", "extract", "btr", "guide", "story", "noplace", "maps", "unnoplace", "quest"):
+        if kind == "quest" and not goals:
+            continue
         if kind == "guide" and guide is None:
             continue
         if kind in ("story", "noplace") and not story_steps:
@@ -297,6 +358,9 @@ def _add_keys(map_key, result, snapshot):
         while len(_add_context) > 128:
             del _add_context[next(iter(_add_context))]
         seed = {"add": kind, "map": map_key, "bosses": bosses, "context": context}
+        if kind == "quest":
+            route = ["quest_spots", "0" * 24, "spots", 0]
+            seed["goals"] = goals
         if kind in ("extract", "btr"):
             seed["names"] = [item.get("name") for item in result.get("extracts" if kind == "extract" else "btrStops", [])]
         if kind == "noplace":
@@ -481,6 +545,7 @@ def _add_change(plan, key, change, today):
     allowed = {"note"} | {"bd": {"count"}, "boss": {"bosses"}, "extract": {"name", "faction"},
                           "btr": {"name"}, "guide": {"kind", "label_ko", "label_en", "candidate", "steps"},
                           "story": {"step", "candidate", "y"}, "noplace": {"step"},
+                          "quest": {"objective", "link", "y"},
                           "maps": {"step", "maps"}, "unnoplace": {"step"}}[kind]
     if set(fields) - allowed:
         raise ValueError("fields")
@@ -495,6 +560,36 @@ def _add_change(plan, key, change, today):
     near = min(_add_context[seed["context"]], key=lambda p: (p[0] - x)**2 + (p[1] - z)**2, default=[0, 0, 0])
     entry = {"x": x, "y": near[2], "z": z, "note": text("note", False), "from": "game", "checked": today}
     data = plan["data"]
+    if kind == "quest":
+        # 퀘스트 목표에 위치 더하기 (dev 위치는 그대로). 출처: 주소를 적으면 wiki, 없으면 game(직접 확인)
+        objective = fields.get("objective")
+        if not isinstance(objective, str) or objective not in seed.get("goals", {}):
+            raise ValueError("objective")
+        link = text("link", False)
+        if link and not re.fullmatch(r"https://[^\s\"<>]{1,500}", link):
+            raise ValueError("link")
+        y = fields.get("y", near[2])
+        if not _number(y) or abs(y) > 10000:
+            raise ValueError("y")
+        spot = {"map": map_key, "x": x, "y": round(y, 2), "z": z, "note": entry["note"],
+                "from": "wiki" if link else "game", **({"link": link} if link else {}), "checked": today}
+        section = data.setdefault("quest_spots", {})
+        if not isinstance(section, dict):
+            raise ValueError("quest_spots")
+        quest_id, quest_name = seed["goals"][objective]
+        if objective not in section:
+            section[objective] = {"quest": quest_id, "name": quest_name, "spots": []}
+            plan["updates"].extend([(("quest_spots", objective, "quest"), quest_id), (("quest_spots", objective, "name"), quest_name)])
+        rows = section[objective].get("spots") if isinstance(section[objective], dict) else None
+        if not isinstance(rows, list):
+            raise ValueError("spots")
+        if any(isinstance(r, dict) and (r.get("map"), r.get("x"), r.get("z")) == (map_key, x, z) for r in rows):
+            raise ValueError("duplicate-spot")
+        route = ["quest_spots", objective, "spots", len(rows)]
+        rows.append(spot)
+        plan["updates"].append((tuple(route), spot))
+        plan["created"].append(_identity(key["file"], route, spot))
+        return
     index = _step_index() if kind in ("story", "noplace", "maps", "unnoplace") else {}
     if kind == "unnoplace":
         # '장소 불필요'에서 빼기 (장소가 맞는 단계). 원래 파일의 순번으로 지움
@@ -671,9 +766,11 @@ def save(changes):
             entry = _entry(plan["data"], key["path"])
             if "delete" in change:
                 if (change["delete"] is not True or not isinstance(entry, dict) or key["seed"] != {"created": True}
-                        or (key["file"] != "story/places.json" and _identity(key["file"], key["path"], entry) not in _created)):
+                        or (not _ours(key["file"], key["path"]) and _identity(key["file"], key["path"], entry) not in _created)):
                     raise ValueError("delete")
                 plan["updates"].append((tuple(key["path"]), _DELETE))
+                if key["path"][:1] == ["quest_spots"]:
+                    plan.setdefault("spot_deletes", {}).setdefault(key["path"][1], set()).add(key["path"][3])
                 if key["file"].startswith("guides/"):
                     for section in ("prep", "steps"):
                         for index, step in enumerate(plan["data"].get(section, [])):
@@ -683,6 +780,8 @@ def save(changes):
                 plan["keys"].append(key)
                 continue
             updates = {"x": round(change["x"], 1), "z": round(change["z"], 1), "from": "game", "checked": today}
+            if key["path"][:1] == ["quest_spots"]:
+                del updates["from"]  # 위키에서 읽은 자리를 조금 옮겨도 출처(wiki·link)는 그대로
             if entry is None:
                 if key["file"] != "corrections.json" or key["path"][0] != "enemy_spawns" or not isinstance(key["seed"], dict):
                     raise ValueError("missing")
@@ -698,6 +797,13 @@ def save(changes):
                         (old_identity, _identity(key["file"], key["path"], {**entry, **updates})))
             plan["keys"].append(key)
         for plan in plans.values():
+            # 한 목표의 자리를 모두 지우면 빈 목표 칸을 남기지 않고 통째로 지움
+            for objective, indexes in plan.get("spot_deletes", {}).items():
+                rows = plan["data"]["quest_spots"][objective]["spots"]
+                if len(indexes) == len(rows):
+                    plan["updates"] = [(route, value) for route, value in plan["updates"]
+                                       if route[:2] != ("quest_spots", objective)]
+                    plan["updates"].append((("quest_spots", objective), _DELETE))
             plan["new"] = _patch(plan["raw"], plan["updates"])
         backup = paths.USER_DIR / "_edit_backup"
         backup.mkdir(parents=True, exist_ok=True)
