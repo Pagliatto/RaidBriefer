@@ -9,8 +9,10 @@
 
 쓰는 법
   python .github/scripts/dev_data_watch.py --snapshot <요약본 경로> [--dry-run] [--from-dir <폴더>]
+  python .github/scripts/dev_data_watch.py --test [--dry-run]
     --snapshot   지난 요약본을 읽고, 끝나면 새 요약본으로 덮어씀 (없으면 새로 만들고 알림은 안 보냄)
     --dry-run    디스코드로 보내지 않고 보낼 내용만 출력 (요약본은 덮어씀)
+    --test       연결 확인용 시험 카드 한 장만 보냄 (dev 데이터를 받지 않고 요약본도 건드리지 않음)
     --from-dir   인터넷 대신 폴더의 pve_tasks.json·pve_tasks_en.json·pve_maps.json·pve_maps_en.json 을 읽음 (내 PC 시험용)
 
 환경 변수
@@ -242,6 +244,29 @@ def build_payload(groups, warning=""):
     }
 
 
+def test_payload():
+    """웹훅 주소가 맞는지 보는 시험 카드 (손으로 실행할 때만)."""
+    return {
+        "embeds": [{
+            "title": "연결 확인 (시험 카드)",
+            "description": "tarkov.dev 데이터가 바뀌면 이 채널에 알림이 와요. 지금은 바뀐 것이 없어도 보낸 시험이에요.",
+            "color": COLOR,
+            "footer": {"text": "RaidBriefer · dev data watch (PvE)"},
+        }],
+        "allowed_mentions": {"parse": []},
+    }
+
+
+def deliver(payload, dry_run):
+    if dry_run:
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+        return
+    webhook = (os.environ.get("WEBHOOK") or "").strip()
+    if not webhook:
+        raise SystemExit("WEBHOOK 이 비어 있음 (깃허브 Secrets 확인)")
+    send(webhook, payload)
+
+
 def send(webhook, payload):
     req = urllib.request.Request(
         webhook,
@@ -291,11 +316,19 @@ def _valid(snapshot):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--snapshot", required=True)
+    parser.add_argument("--snapshot")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--from-dir")
+    parser.add_argument("--test", action="store_true")
     args = parser.parse_args()
     sys.stdout.reconfigure(encoding="utf-8")
+
+    if args.test:
+        deliver(test_payload(), args.dry_run)
+        print("changed=false")
+        return
+    if not args.snapshot:
+        parser.error("--snapshot 이 필요함")
 
     path = Path(args.snapshot)
     new = build_snapshot(load_all(args.from_dir))
@@ -319,14 +352,7 @@ def main():
         print("changed=false")
         return
 
-    payload = build_payload(groups, warning)
-    if args.dry_run:
-        print(json.dumps(payload, ensure_ascii=False, indent=2))
-    else:
-        webhook = (os.environ.get("WEBHOOK") or "").strip()
-        if not webhook:
-            raise SystemExit("WEBHOOK 이 비어 있음 (깃허브 Secrets 확인)")
-        send(webhook, payload)
+    deliver(build_payload(groups, warning), args.dry_run)
     # 알림을 보낸 뒤에만 기준을 바꿈 (보내기에 실패하면 내일 다시 알림). 고장으로 보이는 날은 기준을 그대로
     if warning:
         print("changed=false")
