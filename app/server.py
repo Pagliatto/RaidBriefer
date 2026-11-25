@@ -18,7 +18,7 @@ from pathlib import Path
 from flask import Flask, abort, jsonify, render_template, request, send_file
 from werkzeug.exceptions import HTTPException
 
-from app import alerts, brightness, cleanup, game_state, hideout, i18n, updater, map_views, paths, progress, quest_log, quests, report_log, settings, shot_watch, story, story_places, tarkov_api
+from app import alerts, brightness, cleanup, game_state, hideout, i18n, updater, map_views, paths, progress, quest_log, quests, report_log, settings, shot_clean, shot_watch, story, story_places, tarkov_api
 
 from app.version import VERSION
 
@@ -494,6 +494,28 @@ def api_report_js_error():
 def api_report_open_folder():
     """알림함 [파일 위치 열기]: 탐색기에서 report.txt 를 골라 둔 채로 연다"""
     return jsonify({"ok": report_log.open_folder()})
+
+
+@app.get("/api/screenshots")
+def api_screenshots():
+    """설정 창 '스크린샷 정리': 지금 치울 수 있는 게임 스크린샷 개수·용량 (파일 이름·경로는 내보내지 않음)"""
+    return jsonify(shot_clean.scan())
+
+
+@app.post("/api/screenshots/clean")
+def api_screenshots_clean():
+    """게임 스크린샷을 휴지통으로. 화면이 개수를 본 시각(as_of)까지만, 확인 값이 있어야 함"""
+    body = request.get_json(silent=True) or {}
+    as_of = body.get("as_of")
+    if body.get("confirm") is not True or type(as_of) not in (int, float) or not 0 < as_of < 1e11:
+        return jsonify({"error": i18n.t("server.badRequest")}), 400
+    return jsonify(shot_clean.clean(as_of))
+
+
+@app.post("/api/screenshots/open-folder")
+def api_screenshots_open_folder():
+    """설정 창 [폴더 열기]: 탐색기로 스크린샷 폴더를 연다"""
+    return jsonify({"ok": shot_clean.open_folder()})
 
 
 @app.get("/api/brightness")
