@@ -89,7 +89,8 @@ function showGoalDevSpots(goal) {
   mapEditor.goalLayer = null;
   if (!goal || !mapUI.leaflet) return;
   mapEditor.goalLayer = L.layerGroup(goal.points.map((p) =>
-    L.circleMarker(gamePos(p), { radius: 10, color: "#ffffff", weight: 2.5, fillColor: "#9aa3ad", fillOpacity: 0.6, interactive: false })
+    L.circleMarker(gamePos(p), { radius: 10, color: "#ffffff", weight: 2.5, fillColor: "#9aa3ad", fillOpacity: 0.6, interactive: false,
+      className: "goal-dev-spot" })
   )).addTo(mapUI.leaflet);
 }
 
@@ -203,6 +204,7 @@ async function initializePositionEditor() {
     if (!response.ok || !(await response.json()).enabled) return;
   } catch (error) { return; }
   mapEditor.active = true;
+  layerState = readLayerState(EDIT_LAYER_STORAGE); // 편집 도구의 표시 켬/끔 (기본 모두 끔)
   clearTimeout(mapUI.lobbyTimer);
   document.body.classList.add("position-edit");
   // 위쪽 막대: 하는 일에 따라 세 줄로 나눔 (2026-11-25 사용자)
@@ -431,6 +433,7 @@ function openTargetPicker() {
 function setEditorTarget(item) {
   if (!item && !mapEditor.target) return;
   mapEditor.target = item ? { ...item, link: "", note: "", candidate: false } : null;
+  if (item?.type === "story" && !layerOn("story")) setLayer("story", true); // 그 단계의 저장된 자리가 보이게
   renderTargetBar();
   applyEditorTarget();
   updatePositionEditor(item ? t("editor.targetHint") : "");
@@ -489,7 +492,7 @@ function renderTargetBar() {
   button("editor.targetEnd", () => setEditorTarget(null));
 }
 
-// 고정한 대상의 표시만 또렷하게 (나머지는 CSS 가 흐리게), 퀘스트 목표면 dev 자리를 회색 동그라미로
+// 고정한 대상의 자리만 보이게 (나머지 표시·구역은 CSS 가 숨김, 2026-11-25 사용자), 퀘스트 목표면 dev 자리를 회색 동그라미로
 function applyEditorTarget() {
   const target = mapEditor.target;
   document.body.classList.toggle("position-targeting", Boolean(target));
@@ -1109,6 +1112,7 @@ function storyReviewDecide(item, choice) {
 function startStoryWalk() {
   cancelMarkerDraft();
   setEditorTarget(null); // 대상 고정과 연속 입력은 한 번에 하나만
+  if (!layerOn("story")) setLayer("story", true); // 이미 넣은 스토리 장소가 보여야 함
   mapEditor.walk = { queue: storyWalkQueue(), index: 0 };
   showStoryWalk();
 }
@@ -2791,19 +2795,23 @@ const LAYER_INFO = {
   keySpawns: { label: t("map.layerKeySpawns"), mark: "mk:keyspawn:key", on: true },      // 열쇠·키카드가 바닥에 생기는 곳
 };
 const LAYER_STORAGE = "tarkovhelper.layers";
-const layerState = (() => {
-  try { return JSON.parse(localStorage.getItem(LAYER_STORAGE) || "{}"); } catch (e) { return {}; }
-})();
+// 위치 편집 도구는 표시 켬/끔을 따로 기억하고, 기본은 모두 끔 (2026-11-25 사용자: 필요한 것만 꺼내 쓰게)
+const EDIT_LAYER_STORAGE = "tarkovhelper.layers.edit";
+const readLayerState = (name) => {
+  try { return JSON.parse(localStorage.getItem(name) || "{}"); } catch (e) { return {}; }
+};
+let layerState = readLayerState(LAYER_STORAGE);
 
 
 function layerOn(key) {
   if (LAYER_INFO[key].always) return true;  // 스위치 없이 항상 보이는 표시
-  return key in layerState ? layerState[key] : LAYER_INFO[key].on;
+  if (key in layerState) return layerState[key];
+  return mapEditor.active ? false : LAYER_INFO[key].on;
 }
 
 function setLayer(key, on) {
   layerState[key] = on;
-  try { localStorage.setItem(LAYER_STORAGE, JSON.stringify(layerState)); } catch (e) { /* 무시 */ }
+  try { localStorage.setItem(mapEditor.active ? EDIT_LAYER_STORAGE : LAYER_STORAGE, JSON.stringify(layerState)); } catch (e) { /* 무시 */ }
   const group = mapUI.groups && mapUI.groups[key];
   if (group && mapUI.leaflet) {
     if (on) group.addTo(mapUI.leaflet);
