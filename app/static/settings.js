@@ -71,6 +71,7 @@ async function sendSettings(body) {
 
 // 설정 탭 (일반 / 기록 관리 / 정보): 고른 탭의 칸만 보이게
 function showSettingsTab(name) {
+  if (name === "records") loadShots();
   if (name === "about") {
     loadUpdate();
     updateCheckUI.result.replaceChildren(); // 지난번 확인 결과는 지우고 시작
@@ -110,6 +111,74 @@ document.getElementById("settings-reset").addEventListener("click", async () => 
     location.reload();
   } catch (error) {
     showSettingsResult(t("settings.resetFailed"), false);
+  }
+});
+
+// 스크린샷 정리 (기록 관리 탭): 게임이 찍은 스크린샷만, 누를 때만, 휴지통으로
+const shotsUI = {
+  open: document.getElementById("settings-shots-open"),
+  clean: document.getElementById("settings-shots-clean"),
+  result: document.getElementById("settings-shots-result"),
+  info: null, // 서버가 마지막으로 알려 준 {found, count, bytes, as_of}
+};
+
+function shotSize(bytes) {
+  const mb = bytes / (1024 * 1024);
+  return mb >= 1024 ? `${(mb / 1024).toFixed(1)} GB` : `${mb >= 10 ? Math.round(mb) : mb.toFixed(1)} MB`;
+}
+
+function showShots(info) {
+  shotsUI.info = info;
+  shotsUI.open.disabled = !info.found;
+  shotsUI.clean.disabled = !info.count;
+  const text = !info.found ? t("settings.shotsNoFolder")
+    : info.count ? t("settings.shotsCount", { count: info.count, size: shotSize(info.bytes) }) : t("settings.shotsNone");
+  shotsUI.result.className = "settings-result";
+  shotsUI.result.textContent = text;
+}
+
+async function loadShots() {
+  shotsUI.clean.disabled = true;
+  try {
+    const res = await fetch("/api/screenshots");
+    if (!res.ok) throw new Error();
+    showShots(await res.json());
+  } catch (error) {
+    shotsUI.result.replaceChildren();
+  }
+}
+
+shotsUI.open.addEventListener("click", async () => {
+  try {
+    const res = await fetch("/api/screenshots/open-folder", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+    if (!res.ok || !(await res.json()).ok) throw new Error();
+  } catch (error) {
+    showSettingsResult(t("settings.shotsOpenFailed"), false, shotsUI.result);
+  }
+});
+
+shotsUI.clean.addEventListener("click", async () => {
+  const info = shotsUI.info;
+  if (!info || !info.count) return;
+  if (!window.confirm(t("settings.shotsConfirm", { count: info.count, size: shotSize(info.bytes) }))) return;
+  shotsUI.clean.disabled = true;
+  try {
+    const res = await fetch("/api/screenshots/clean", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ confirm: true, as_of: info.as_of }),
+    });
+    if (!res.ok) throw new Error();
+    const done = await res.json();
+    await loadShots(); // 남은 개수로 버튼을 다시 맞춤
+    const size = shotSize(done.bytes);
+    if (done.reason === "busy") showSettingsResult(t("settings.shotsBusy"), false, shotsUI.result);
+    else if (done.reason === "no_recycle" && !done.moved) showSettingsResult(t("settings.shotsNoRecycle"), false, shotsUI.result);
+    else if (done.left) showSettingsResult(t("settings.shotsPartial", { count: done.moved, left: done.left }), false, shotsUI.result);
+    else showSettingsResult(t("settings.shotsDone", { count: done.moved, size }), true, shotsUI.result);
+  } catch (error) {
+    showSettingsResult(t("settings.shotsFailed"), false, shotsUI.result);
+    shotsUI.clean.disabled = !(shotsUI.info && shotsUI.info.count);
   }
 });
 

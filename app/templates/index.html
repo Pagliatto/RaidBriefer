@@ -400,6 +400,16 @@
     </section>
 
     <section class="settings-item" data-stab="records" hidden>
+      <h3>{{ t('settings.shotsTitle') }}</h3>
+      <p class="settings-help">{{ t('settings.shotsHelp')|safe }}</p>
+      <div class="settings-actions">
+        <button type="button" id="settings-shots-open">{{ t('settings.shotsOpen') }}</button>
+        <button type="button" id="settings-shots-clean" disabled>{{ t('settings.shotsClean') }}</button>
+      </div>
+      <p class="settings-result" id="settings-shots-result" role="status"></p>
+    </section>
+
+    <section class="settings-item" data-stab="records" hidden>
       <h3>{{ t('settings.resetTitle') }}</h3>
       <p class="settings-help">{{ t('settings.resetHelp')|safe }}</p>
       <div class="settings-actions">
