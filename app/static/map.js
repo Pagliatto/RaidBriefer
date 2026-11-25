@@ -1835,7 +1835,7 @@ const STORY_PIN_Z = 600; // 스토리 핀 높이 (퀘스트 핀보다 위, 겹�
 // 겹쳤을 때 위에 오는 순서 (2026-11-24 사용자: 중요한 표시일수록 위, 규칙 docs/notes/map-screen.md)
 // 할 일(스토리 600 > 퀘스트 500 > 공략 400) > 나가는 길·위험·열쇠 자리 > 참고(잠긴 문·비트코인·BTR·먹을 것)
 const GUIDE_PIN_Z = 400;
-const MARKER_Z = { extracts: 300, scavExtracts: 300, transits: 280, bossZones: 250, blackDivision: 250, keySpawns: 200, keys: 100, bitcoin: 80, btrStops: 60 };
+const MARKER_Z = { extracts: 300, scavExtracts: 300, transits: 280, bossZones: 250, goonZones: 250, cultistZones: 250, blackDivision: 250, keySpawns: 200, keys: 100, bitcoin: 80, btrStops: 60 };
 // 강조(800)가 풀렸을 때 돌아갈 원래 높이
 function baseZ(marker) { return marker.baseZ || 0; }
 
@@ -2823,11 +2823,20 @@ initializePositionEditor().then(loadMapList);
 
 // ---------- 표시 켜기/끄기 (왼쪽 서랍) ----------
 // 퀘스트·먹을 것·탈출구·트랜짓·열쇠·귀중품. 고른 값은 이 브라우저에 기억 (다음에 켜도 그대로)
-const LAYER_KEYS = ["quests", "extracts", "scavExtracts", "transits", "btrStops", "keys", "bitcoin", "keySpawns", "guide", "story", "blackDivision", "bossZones"];
+const LAYER_KEYS = ["quests", "extracts", "scavExtracts", "transits", "btrStops", "keys", "bitcoin", "keySpawns", "guide", "story", "blackDivision", "bossZones", "goonZones", "cultistZones"];
+// 보스 등장 구역 셋: 서버 kind → [표시 묶음, 색, 아이콘, 겹치지 않게 띄우는 방향(m)] (2026-11-26 사용자: 보스·군즈·컬티스트로 나눔, 기본 끔)
+const BOSS_ZONE_KINDS = {
+  boss: ["bossZones", "boss", "skull", [10, 0]],
+  goons: ["goonZones", "goons", "users", [-10, 0]],
+  cultist: ["cultistZones", "cultist", "moon", [0, 10]],
+};
+const BOSS_ZONE_LAYERS = Object.values(BOSS_ZONE_KINDS).map((k) => k[0]);
 const LAYER_INFO = {
   story: { label: t("map.storyLayer"), mark: "mk:story:book-open", on: true },
   blackDivision: { label: t("map.layerBlackDivision"), mark: "mk:enemy:crosshair", on: true },
-  bossZones: { label: t("map.layerBossZones"), mark: "mk:boss:skull", on: true },
+  bossZones: { label: t("map.layerBossZones"), mark: "mk:boss:skull", on: false },
+  goonZones: { label: t("map.layerGoonZones"), mark: "mk:goons:users", on: false },
+  cultistZones: { label: t("map.layerCultistZones"), mark: "mk:cultist:moon", on: false },
   guide: { label: t("map.guideLayer"), mark: "mk:guide-start:book-open", on: true },
   quests: { label: t("map.layerQuests"), mark: "shape:quest", on: true },
   extracts: { label: t("map.layerExtracts"), mark: "mk:extract-pmc:door-open", on: true },
@@ -2874,7 +2883,7 @@ function renderLayerDrawer() {
     if (key === "guide" && !currentGuide()) return;
     // 편집 모드는 이 맵의 모든 장소, 평소에는 지금 할 단계의 장소 기준 (storyPinEntries 와 같은 기준)
     if (key === "story" && (!mapUI.current || !storyPinEntries().some(({ entry }) => storyPlacesFor(entry.step.id, mapUI.current.key).length))) return;
-    if ((key === "blackDivision" || key === "bossZones") && !layerCount(key)) return;
+    if ((key === "blackDivision" || BOSS_ZONE_LAYERS.includes(key)) && !layerCount(key)) return;
     if (info.always) return;  // 항상 보이는 표시는 서랍에 스위치를 두지 않음
     const on = layerOn(key);
     const btn = el("button", `layer-toggle layer-${key}${on ? " on" : ""}`);
@@ -2900,7 +2909,7 @@ function renderLayerDrawer() {
 // 표시 묶음마다 이 맵에 있는 개수 (지도를 아직 안 그렸으면 null)
 function layerCount(key) {
   if (!mapUI.groups || !mapUI.leaflet) return null;
-  if (key === "bossZones") return mapUI.groups.bossZones?.getLayers().filter((layer) => layer instanceof L.Marker).length || 0;
+  if (BOSS_ZONE_LAYERS.includes(key)) return mapUI.groups[key]?.getLayers().filter((layer) => layer instanceof L.Marker).length || 0;
   if (key === "quests") return (mapUI.pinMarkers || []).length;
   return mapUI.groups[key] ? mapUI.groups[key].getLayers().length : 0;
 }
@@ -3047,12 +3056,15 @@ function drawEnemyFeatures(data, add) {
   });
   (Array.isArray(data.bossZones) ? data.bossZones : []).forEach((zone) => {
     if (!zone || !validPos(zone.pos) || !Array.isArray(zone.bosses)) return;
-    const names = zone.bosses.filter((name) => typeof name === "string" && name);
+    const [layer, color, glyph, shift] = BOSS_ZONE_KINDS[zone.kind] || BOSS_ZONE_KINDS.boss;
+    const text = (list) => (Array.isArray(list) ? list : []).filter((name) => typeof name === "string" && name);
+    // 자리를 다 모르는 보스(pending)는 평소에는 안 보이고, 편집 도구에서만 '빈 구역 남음'을 붙여 보인다
+    const names = text(zone.bosses).concat(mapEditor.active ? text(zone.pending).map((name) => name + " " + t("map.bossZonePending")) : []);
     if (!names.length) return;
-    // 게임 좌표에서 10m 옆으로 띄운다. 지도 회전 후에도 BD와 같은 방식으로 이동한다.
-    const iconPos = mapEditor.active && zone.edit ? zone.pos : [zone.pos[0] + 10, zone.pos[1], zone.pos[2]];
-    const marker = add("bossZones", iconPos, markerIcon("boss", "skull", 22),
-      "<b>" + escapeHtml(t("map.layerBossZones")) + "</b><br>" + names.map(escapeHtml).join("<br>"),
+    // 게임 좌표에서 10m 옆으로 띄운다 (종류마다 다른 쪽: 같은 구역의 보스·군즈·컬티스트가 겹치지 않게). 지도 회전 후에도 BD와 같은 방식으로 이동한다.
+    const iconPos = mapEditor.active && zone.edit ? zone.pos : [zone.pos[0] + shift[0], zone.pos[1] + shift[1], zone.pos[2]];
+    const marker = add(layer, iconPos, markerIcon(color, glyph, 22),
+      "<b>" + escapeHtml(LAYER_INFO[layer].label) + "</b><br>" + names.map(escapeHtml).join("<br>"),
       false, { keyboard: true, title: names.join(", "), alt: names.join(", ") });
     bindPositionEditor(marker, zone, names.join(", ") + " · " + zone.name);
   });

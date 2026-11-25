@@ -1960,8 +1960,8 @@ button.home-map, button.home-story-row, button.choice-option, button.prep-item, 
 .mk-btr { --mk: #8fb7ba; }       /* 참고: 탁한 청록 */
 .mk-lock { --mk: #ebe2cb; }      /* 참고: 크림 (옛 스토리 색과 비슷하게, 2026-11-24 사용자) */
 .mk-enemy { --mk: #542c30; }
-.mk-boss { --mk: #302326; }
-.mk-enemy > span, .mk-boss > span { color: #ffe0d9; border-color: var(--bad); }
+.mk-boss, .mk-goons, .mk-cultist { --mk: #302326; }  /* 위험: 어두운 빨강 하나, 종류는 아이콘으로 구분 (해골·사람들·달) */
+.mk-enemy > span, .mk-boss > span, .mk-goons > span, .mk-cultist > span { color: #ffe0d9; border-color: var(--bad); }
 .enemy-count {
   position: absolute; top: -8px; left: 15px; min-width: 14px; padding: 0 3px;
   border: 1px solid var(--bad); border-radius: 4px; background: var(--bad-bg); color: var(--text);
@@ -1969,7 +1969,7 @@ button.home-map, button.home-story-row, button.choice-option, button.prep-item, 
   font-variant-numeric: tabular-nums; pointer-events: none;
 }
 /* 긴 영어 레이어 이름도 176px 서랍 안에서 줄바꿈한다. 목록 행 정렬은 기존대로 유지. */
-.layer-blackDivision .layer-name, .layer-bossZones .layer-name { white-space: normal; }
+.layer-blackDivision .layer-name, .layer-bossZones .layer-name, .layer-goonZones .layer-name, .layer-cultistZones .layer-name { white-space: normal; }
 .mk-keyspawn { --mk: #ff8a70; }  /* 산호색: BTR 청록·비트코인 주황·먹을 것 분홍과 구분 */
 .mk-bitcoin { --mk: #c9a573; }   /* 참고: 탁한 주황 */
 /* 공략: 종류별 기호, 후보는 옅은 바탕·점선. 층 투명도는 Leaflet이 따로 적용한다. */
