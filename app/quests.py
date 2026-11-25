@@ -66,6 +66,11 @@ MERGED_MAPS = {
 }
 # 낮·밤이 따로 나뉜 맵은 공장뿐 (위키). 다른 맵은 한 맵 안에서 낮·밤이 바뀜 → ☾ 표시는 야간 공장만
 NIGHT_MAPS = {"night-factory"}
+# 트랜짓 도착 맵을 dev 가 변형 맵으로 적은 곳 (시내 → 연구소 트랜짓의 도착이 'the-lab-dark').
+# 위키의 시내 트랜짓은 'Transit to The Lab' 하나라서 목표 글의 "The Lab" 과 같은 곳으로 본다
+TRANSIT_TARGET_MAPS = {**MERGED_MAPS, "the-lab-dark": "the-lab"}
+# "A에서 B로 트랜짓 이용" 목표의 영어 원문 (dev·위키 같은 모양). 언어와 상관없이 영어 원문으로 찾는다
+TRANSIT_OBJECTIVE = re.compile(r"^Use the transit from (.+?) to (.+?)(?: \(In one raid\))?$")
 # 지도에 그리기엔 너무 큰 영역 (맵 거의 전체이거나 데이터가 이상함) → 서랍 목록에만
 MAX_ZONE_METERS = 300
 
@@ -319,12 +324,51 @@ def _extract_zones() -> dict:
     return lookup
 
 
+def _transit_lookup() -> dict:
+    """트랜짓을 도착 맵으로 찾는 표. build마다 한 번 만든다.
+    - names: 영어 맵 이름 → (맵 id, 도착 맵 구분값)
+    - to   : (출발 맵 id, 도착 맵 구분값) → 그 맵의 트랜짓들"""
+    maps = tarkov_api.load("maps")["maps"]
+    english = tarkov_api.Translator("maps", lang="en")
+    target = {m["id"]: TRANSIT_TARGET_MAPS.get(m.get("normalizedName"), m.get("normalizedName"))
+              for m in maps.values()}
+    lookup = {"names": {}, "to": {}}
+    for m in maps.values():
+        lookup["names"].setdefault(english(m["name"]), (m["id"], target[m["id"]]))
+        for transit in m.get("transits") or []:
+            if transit.get("position") and target.get(transit.get("map")):
+                key = (m["id"], target[transit["map"]])
+                lookup["to"].setdefault(key, []).append({**transit, "map": m["id"]})
+    return lookup
+
+
+def _transit_zones(text_en: str, lookup: dict | None, from_maps: list | None = None) -> list[dict]:
+    """'Use the transit from A to B' 목표의 트랜짓 자리 (dev 가 exitName 을 비워 둔 목표·dev 에 없는 퀘스트용).
+    출발 맵의 트랜짓 중 도착 맵이 B 인 것이 딱 하나일 때만. 글 모양이 다르거나 못 찾거나 여럿이면 빈 목록 → 핀 없이.
+    - from_maps: dev 목표의 maps (없으면 글의 A 로 출발 맵을 찾음)"""
+    match = TRANSIT_OBJECTIVE.match((text_en or "").strip())
+    if not (match and lookup):
+        return []
+    start, end = (lookup["names"].get(name.strip()) for name in match.groups())
+    if not end:
+        return []
+    if from_maps is None:
+        from_maps = [start[0]] if start else []
+    zones = []
+    for map_id in from_maps:
+        found = lookup["to"].get((map_id, end[1]), [])
+        if len(found) == 1:
+            zones.extend(found)
+    return zones
+
+
 def _where(objective: dict, map_names: dict, extract_zones: dict | None = None,
-           extra_spots: dict | None = None) -> list[dict]:
+           extra_spots: dict | None = None, transit_zones: list | None = None) -> list[dict]:
     """목표의 지도 위치들. [{"map": "세관", "points": [[x, z]], "outline": [[x, z], ...] 또는 없음}]
     - zones           : 가야 할 곳·설치·표시할 곳 (영역 모양 outline 포함)
     - possibleLocations: 퀘스트 아이템이 있을 수 있는 곳들
     - exitName        : 지정된 맵의 탈출구·Transit
+    - transit_zones   : exitName 이 빈 트랜짓 이용 목표의 트랜짓 자리 (_transit_zones)
     - extra_spots     : 우리가 더한 위치 (corrections.json quest_spots, dev 가 일부만 적은 목표). {목표 id: [{"map": 맵 이름, "pos"}]}"""
     result = []
     zones = list(objective.get("zones") or [])
@@ -332,6 +376,8 @@ def _where(objective: dict, map_names: dict, extract_zones: dict | None = None,
         exit_name = objective["exitName"].strip()
         for map_id in objective.get("maps") or []:
             zones.extend((extract_zones or {}).get((map_id, exit_name), []))
+    elif objective.get("type") == "extract":
+        zones.extend(transit_zones or [])
     for zone in zones:
         name = map_names.get(zone.get("map"), (None, False))[0]
         if not (name and zone.get("position")):
@@ -453,6 +499,7 @@ def build() -> dict:
     map_names = _map_names()
     extract_zones = _extract_zones()
     extra_spots = _extra_spots()
+    transit_lookup = _transit_lookup()
     trader_names = _trader_names()
     item_tr = tarkov_api.Translator("items")
     quest_items = tarkov_api.load("tasks").get("questItems", {})
@@ -525,7 +572,11 @@ def build() -> dict:
                 task, tr, item_tr, quest_items, overrides, map_names)
             # 목표마다 지도 위치 (목표 문장과 같은 순서)
             for objective, raw in zip(entry["objectives"], task.get("objectives", [])):
-                where = _where(raw, map_names, extract_zones, extra_spots)
+                transit_zones = None
+                if raw.get("type") == "extract" and not raw.get("exitName"):
+                    transit_zones = _transit_zones(
+                        tr.en.get(raw.get("description"), ""), transit_lookup, raw.get("maps") or [])
+                where = _where(raw, map_names, extract_zones, extra_spots, transit_zones)
                 if where:
                     objective["where"] = where
             # 레이드 안에서 하는 목표가 있나 (맵 무관 퀘스트를 고른 맵에 같이 보여줄지 판단)
@@ -567,6 +618,12 @@ def build() -> dict:
                     {"optional": o.get("optional", False), "text": o.get("original") or o["text"]} if english
                     else {"optional": False, **o}
                     for o in details["objectives"]]
+                # dev 에 없는 퀘스트의 트랜짓 이용 목표도 트랜짓 자리에 핀 (영어 원문으로 찾음)
+                for objective, source in zip(entry["objectives"], details["objectives"]):
+                    transit_zones = _transit_zones(source.get("original", ""), transit_lookup)
+                    where = _where({"type": "extract"}, map_names, transit_zones=transit_zones)
+                    if where:
+                        objective["where"] = where
             else:
                 text = (details.get("objective_en") if english else None) or details.get("objective")
                 entry["objectives"] = [{"text": text, "optional": False}] if text else []
