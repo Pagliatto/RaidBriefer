@@ -173,6 +173,7 @@ shotsUI.clean.addEventListener("click", async () => {
     await loadShots(); // 남은 개수로 버튼을 다시 맞춤
     const size = shotSize(done.bytes);
     if (done.reason === "busy") showSettingsResult(t("settings.shotsBusy"), false, shotsUI.result);
+    else if (done.unsure) showSettingsResult(t("settings.shotsUnsure", { count: done.unsure }), false, shotsUI.result);
     else if (done.reason === "no_recycle" && !done.moved) showSettingsResult(t("settings.shotsNoRecycle"), false, shotsUI.result);
     else if (done.left) showSettingsResult(t("settings.shotsPartial", { count: done.moved, left: done.left }), false, shotsUI.result);
     else showSettingsResult(t("settings.shotsDone", { count: done.moved, size }), true, shotsUI.result);
