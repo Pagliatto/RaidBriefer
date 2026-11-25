@@ -181,6 +181,50 @@ def check_guides() -> int:
     return len(problems)
 
 
+def check_quest_spots(data, tasks, maps) -> int:
+    """퀘스트 목표에 더한 위치: 목표가 dev 에 있는지, 맵·좌표·출처(from·link·checked)가 맞는지"""
+    section = data.get("quest_spots", {})
+    problems = []
+    if not isinstance(section, dict):
+        problems.append("quest_spots: 객체 필요")
+        section = {}
+    goals = {o.get("id"): quest_id for quest_id, task in tasks.items() if isinstance(task, dict)
+             for o in task.get("objectives") or [] if isinstance(o, dict)}
+    map_keys = {m.get("normalizedName") for m in maps.values() if isinstance(m, dict)}
+    for objective, entry in section.items():
+        if objective.startswith("_"):
+            continue
+        where = f"quest_spots/{objective}"
+        if not isinstance(entry, dict) or not isinstance(entry.get("spots"), list) or not entry["spots"]:
+            problems.append(f"{where}: spots 목록 필요 (비어 있으면 칸을 지움)")
+            continue
+        if objective not in goals:
+            problems.append(f"{where}: tarkov.dev 에 없는 목표 id (퀘스트가 바뀌었으면 지우거나 옮김)")
+        elif entry.get("quest") != goals[objective]:
+            problems.append(f"{where}/quest: 그 목표의 퀘스트 id 와 다름")
+        for index, spot in enumerate(entry["spots"]):
+            at = f"{where}/spots/{index}"
+            if not isinstance(spot, dict):
+                problems.append(f"{at}: 객체 필요")
+                continue
+            if spot.get("map") not in map_keys:
+                problems.append(f"{at}/map: 모르는 맵 구분값")
+            if not all(type(spot.get(k)) in (int, float) and math.isfinite(spot[k]) for k in ("x", "y", "z")):
+                problems.append(f"{at}: x·y·z 숫자 필요")
+            if spot.get("from") not in ("wiki", "game"):
+                problems.append(f"{at}/from: wiki 또는 game")
+            if spot.get("from") == "wiki" and not str(spot.get("link", "")).startswith("https://"):
+                problems.append(f"{at}/link: 위키 출처 주소 필요")
+            try:
+                datetime.strptime(spot.get("checked"), "%Y-%m-%d")
+            except (TypeError, ValueError):
+                problems.append(f"{at}/checked: 실제 날짜 YYYY-MM-DD 필요")
+    print(f"\n퀘스트 목표 위치 보완 데이터: 문제 {len(problems)}개")
+    for problem in problems:
+        print(f"  {problem}")
+    return len(problems)
+
+
 def check_boss_zones(data) -> int:
     """보스 보정 좌표와 dev 우선 비교에 필요한 위치 이름을 확인한다."""
     zones = data.get("boss_zones", {})
@@ -343,6 +387,7 @@ def main() -> int:
                 raise ValueError("corrections.json 항목 형식을 읽을 수 없습니다")
         tasks = tarkov_api.load("tasks")["tasks"]
         maps = tarkov_api.load("maps")["maps"]
+        spot_problems = check_quest_spots(data, tasks, maps)
         names = [tarkov_api.load("tasks_ko"), tarkov_api.load("tasks_en")]
         spt = tarkov_api._read_spt_names()
         if not spt:
@@ -449,7 +494,7 @@ def main() -> int:
                 if flags:
                     warnings.append(f"  {section}/{key}: {', '.join(flags)}")
         print("\n".join(warnings) or "  없음")
-        return int(bool(guide_problems or boss_problems or enemy_problems or supplement_problems))  # 기존 검토 항목은 오류가 아니다.
+        return int(bool(guide_problems or boss_problems or enemy_problems or supplement_problems or spot_problems))  # 기존 검토 항목은 오류가 아니다.
     except (OSError, ValueError, KeyError, TypeError, AttributeError, tarkov_api.DataError) as error:
         print(f"파일/캐시를 읽지 못했습니다: {error}")
         return 1

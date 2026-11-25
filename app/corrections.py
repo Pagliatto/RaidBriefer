@@ -51,6 +51,27 @@ def manual_extracts(map_key: str, dev_extracts: list) -> list[dict]:
     return result
 
 
+def quest_spots() -> dict:
+    """목표에 더하는 위치 (dev 가 일부만 적은 목표). {목표 id: [{"map": 맵 구분값, "pos": [x, z, y]}]}
+    dev 위치를 바꾸지 않고 더하기만 한다. 잘못된 항목은 건너뜀"""
+    result = {}
+    for objective_id, entry in section("quest_spots").items():
+        spots = []
+        rows = entry.get("spots")
+        for row in rows if isinstance(rows, list) else []:
+            if not isinstance(row, dict) or not isinstance(row.get("map"), str):
+                continue
+            try:
+                pos = [float(row["x"]), float(row["z"]), float(row.get("y", 0))]
+            except (KeyError, TypeError, ValueError):
+                continue
+            if all(math.isfinite(n) for n in pos):
+                spots.append({"map": row["map"], "pos": pos})
+        if spots:
+            result[objective_id] = spots
+    return result
+
+
 def section(name: str) -> dict:
     """설명 키와 잘못된 항목은 앱에서 사용하지 않는다."""
     data = load().get(name)

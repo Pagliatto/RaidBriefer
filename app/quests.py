@@ -91,6 +91,26 @@ def _map_names() -> dict:
     return names
 
 
+def _extra_spots() -> dict:
+    """corrections.json quest_spots 를 화면용으로: 맵 구분값 → 한국어 이름(합친 맵은 원래 맵), 뺀 맵·모르는 맵은 버림"""
+    from app import corrections
+
+    maps = tarkov_api.load("maps")["maps"]
+    tr = tarkov_api.Translator("maps")
+    by_key = {m["normalizedName"]: tr(m["name"]) for m in maps.values()}
+    result = {}
+    for objective_id, spots in corrections.quest_spots().items():
+        rows = []
+        for spot in spots:
+            key = spot["map"]
+            name = None if key in HIDDEN_MAPS else by_key.get(MERGED_MAPS.get(key, key))
+            if name:
+                rows.append({"map": name, "pos": spot["pos"]})
+        if rows:
+            result[objective_id] = rows
+    return result
+
+
 def _trader_names() -> dict:
     """상인 id → (한국어 이름, 영어 구분값 예: prapor). 구분값은 화면 색상용."""
     traders = tarkov_api.load("traders")
@@ -299,11 +319,13 @@ def _extract_zones() -> dict:
     return lookup
 
 
-def _where(objective: dict, map_names: dict, extract_zones: dict | None = None) -> list[dict]:
+def _where(objective: dict, map_names: dict, extract_zones: dict | None = None,
+           extra_spots: dict | None = None) -> list[dict]:
     """목표의 지도 위치들. [{"map": "세관", "points": [[x, z]], "outline": [[x, z], ...] 또는 없음}]
     - zones           : 가야 할 곳·설치·표시할 곳 (영역 모양 outline 포함)
     - possibleLocations: 퀘스트 아이템이 있을 수 있는 곳들
-    - exitName        : 지정된 맵의 탈출구·Transit"""
+    - exitName        : 지정된 맵의 탈출구·Transit
+    - extra_spots     : 우리가 더한 위치 (corrections.json quest_spots, dev 가 일부만 적은 목표). {목표 id: [{"map": 맵 이름, "pos"}]}"""
     result = []
     zones = list(objective.get("zones") or [])
     if objective.get("type") == "extract" and objective.get("exitName"):
@@ -330,6 +352,11 @@ def _where(objective: dict, map_names: dict, extract_zones: dict | None = None) 
         name = map_names.get(loc.get("map"), (None, False))[0]
         if name and loc.get("positions"):
             result.append({"map": name, "points": [_xzy(p) for p in loc["positions"]]})
+    added = {}
+    for extra in (extra_spots or {}).get(objective.get("id"), []):
+        added.setdefault(extra["map"], []).append(extra["pos"])
+    for name, points in added.items():
+        result.append({"map": name, "points": points, "source": "manual"})
     # tarkov.dev 데이터에 같은 영역이 두 번 들어 있는 경우가 있어서(30개 퀘스트, 59건) 하나만 남김
     unique, seen = [], set()
     for spot in result:
@@ -425,6 +452,7 @@ def build() -> dict:
     manual = quest_log.load_manual_quests()
     map_names = _map_names()
     extract_zones = _extract_zones()
+    extra_spots = _extra_spots()
     trader_names = _trader_names()
     item_tr = tarkov_api.Translator("items")
     quest_items = tarkov_api.load("tasks").get("questItems", {})
@@ -497,7 +525,7 @@ def build() -> dict:
                 task, tr, item_tr, quest_items, overrides, map_names)
             # 목표마다 지도 위치 (목표 문장과 같은 순서)
             for objective, raw in zip(entry["objectives"], task.get("objectives", [])):
-                where = _where(raw, map_names, extract_zones)
+                where = _where(raw, map_names, extract_zones, extra_spots)
                 if where:
                     objective["where"] = where
             # 레이드 안에서 하는 목표가 있나 (맵 무관 퀘스트를 고른 맵에 같이 보여줄지 판단)
