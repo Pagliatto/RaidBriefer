@@ -405,10 +405,17 @@ def _enemy_features(map_key: str, bosses, translate) -> dict:
 
     moves = corrections.boss_zone_moves(map_key)
 
+    # 사용자가 게임에서 확인해 손본 보스 (dev 구역을 옮겼거나 자리를 직접 찍음): 그 맵의 그 보스 자리는 사용자가 정한 것이 기준
+    # (게임 확인 > dev. 예: 해안선 컬티스트는 dev 구역이 셋인데, 사용자가 둘을 실제 두 곳으로 옮겨 놓음)
+    touched = set(extra)
+    for mob, names in mob_zones.items():
+        if any(f"{name}_{_zone_kind(mob)}" in moves for name in names):
+            touched.add(mob)
+
     def complete(mob):
-        # dev 가 자리를 안 적은 구역 수만큼 직접 찍은 자리가 있어야 그 보스를 지도에 보인다
+        # 손보지 않은 보스는 dev 가 자리를 안 적은 구역이 하나라도 있으면 숨긴다 (일부만 그리면 '거기에만 나온다'로 읽힘)
         missing = [name for name in mob_zones.get(mob, ()) if not dev_zones[name]["positions"] and name not in filled]
-        return len(missing) <= extra.get(mob, 0)
+        return mob in touched or not missing
 
     def label(mob):
         return i18n.t("home.goons") if mob == "bossKnight" else translate(mob)
