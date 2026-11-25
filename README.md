@@ -58,6 +58,8 @@ The goal is that you barely have to touch it.
 - **Prestige** is detected automatically and progress starts fresh.
 - **English and Korean.** It follows your Windows language at first; change it in ⚙ Settings.
 - **My position**: press the in-game screenshot key during a raid and the map shows where you are and which way you're facing for 30 seconds. Only the screenshot's file name is read (the image is never opened or deleted).
+- **Low-time warning**: the edge of the map glows red when 10, 5 and 2 minutes of the raid are left, and the app switches to the map once. It can be turned off in Settings.
+- **Hide an objective for the raid**: the eye icon in the to-do list removes that objective's pins from the map until you return to the lobby. It doesn't mark the objective done.
 - **Game brightness**: the monitor icon in the top bar lets you brighten the game during raids in borderless window mode. It turns on as soon as loading ends and the map appears.
 - **🔔 Alerts menu**: tells you about problems such as unreadable game logs or failed data downloads, with a code. Unexpected errors are logged in `report.txt`, and the Discord / GitHub report buttons fill in the codes for you.
 - **Tells you when a new version is out** and updates with one click. Your records are kept; a What's new popup includes skipped versions, and Settings → About shows recent update history with a [Check for updates] button.
