@@ -300,7 +300,7 @@ async function initializePositionEditor() {
   }
   updatePositionEditor();
   window.addEventListener("beforeunload", (event) => {
-    if (!mapEditor.pending.size && !floorEdit.dirty) return;
+    if (!mapEditor.pending.size && !floorEdit.dirty && !Object.keys(floorEdit.stash).length) return;
     event.preventDefault();
     event.returnValue = ""; // Browsers supply their own localized confirmation text.
   });
@@ -1362,24 +1362,46 @@ function storyWalkPlace(latlng) {
 // ---------- 편집 도구: 건물별 층 보정 (다각형 범위 + 층 표) ----------
 // 범위는 꼭짓점을 끌어 고치고, 새 건물은 모서리를 차례로 찍어 만든다. 층 높이는 그 안에서 찍힌 게임 스크린샷으로 서버가 묶어 준다
 // (사용자는 '어느 높이가 1층인가'만 고름). 저장은 [층 보정 저장] 으로 따로 (다른 편집과 섞지 않음)
-const floorEdit = { info: null, mapKey: null, buildings: [], polys: [], handles: null, selected: null, drawing: null, dirty: false, saving: false };
+const floorEdit = { info: null, mapKey: null, buildings: [], polys: [], handles: null, selected: null, drawing: null, dirty: false, saving: false,
+  base: "[]",      // 고치기 시작할 때 서버에 있던 건물 목록(글자). 그사이 다른 곳에서 바뀌었는지 비교
+  conflict: false, // 저장 안 한 고침이 있는데 서버 쪽 목록이 달라짐 → 저장하면 거절됨
+  stash: {} };     // 다른 맵으로 갔을 때 저장 안 한 고침을 맵별로 보관
 const round1 = (n) => Math.round(n * 10) / 10;
 const floorLatLngs = (points) => points.map((p) => gamePos([p[0], p[1], 0]));
 const floorLevelsText = (levels) => levels.map((l) => floorLabel(l.floor) + (l.from == null ? "" : ` ${l.from}m~`)).join(" · ");
 
 // 지도 데이터를 받을 때마다: 저장 안 한 고침이 있으면(같은 맵) 그대로 두고 표식만 새로 받음
 function loadFloorEdit(info, mapKey) {
-  if (!(floorEdit.dirty && floorEdit.mapKey === mapKey)) {
-    floorEdit.buildings = JSON.parse(JSON.stringify(info?.buildings || []));
-    floorEdit.dirty = false;
+  if (floorEdit.mapKey !== mapKey) {
+    // 다른 맵으로: 저장 안 한 고침은 버리지 않고 맵별로 보관했다가, 그 맵으로 돌아오면 되살림
+    if (floorEdit.mapKey && floorEdit.dirty) {
+      floorEdit.stash[floorEdit.mapKey] = { buildings: floorEdit.buildings, info: floorEdit.info, base: floorEdit.base };
+    }
+    const kept = floorEdit.stash[mapKey];
+    delete floorEdit.stash[mapKey];
+    floorEdit.buildings = kept ? kept.buildings : [];
+    floorEdit.info = kept ? kept.info : null;
+    floorEdit.base = kept ? kept.base : "[]";
+    floorEdit.dirty = !!kept;
     floorEdit.selected = null;
+    floorEdit.mapKey = mapKey;
   }
-  floorEdit.info = info || null;
-  floorEdit.mapKey = mapKey;
+  const fresh = JSON.stringify(info?.buildings || []);
+  if (!floorEdit.dirty) {
+    floorEdit.buildings = JSON.parse(fresh);
+    floorEdit.base = fresh;
+    floorEdit.info = info || null;
+    floorEdit.conflict = false;
+  } else if (info && fresh === floorEdit.base) {
+    floorEdit.info = info; // 층 보정은 그대로이고 파일의 다른 칸만 바뀜 → 새 표식을 받아도 안전
+    floorEdit.conflict = false;
+  } else {
+    floorEdit.conflict = true; // 다른 곳에서 층 보정이 바뀜: 옛 표식을 그대로 둬서 저장이 거절되게 (남의 고침을 덮어쓰지 않음)
+  }
   cancelFloorDrawing();
   drawFloorFixes();
   renderLayerDrawer();
-  updateFloorButtons();
+  updateFloorButtons(floorEdit.conflict ? t("editor.floorConflict") : undefined);
 }
 
 function updateFloorButtons(message) {
@@ -1610,16 +1632,24 @@ async function saveFloorFixes() {
   if (!floorEdit.dirty || floorEdit.saving || !floorEdit.info) return;
   const key = floorEdit.mapKey;
   floorEdit.saving = true;
+  // 저장하는 동안에는 고칠 수 없게: 열린 창·손잡이·그리던 것을 닫음 (보낸 뒤에 고친 것이 '저장됨'으로 사라지지 않게)
+  cancelFloorDrawing();
+  mapUI.leaflet?.closePopup();
+  floorEdit.selected = null;
+  drawFloorFixes();
   updateFloorButtons(t("editor.saving"));
+  const sent = JSON.stringify(floorEdit.buildings);
   let ok = false;
   try {
     const response = await fetch("/api/editor/floors", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ map: key, revision: floorEdit.info.revision, token: floorEdit.info.token, buildings: floorEdit.buildings }),
+      body: JSON.stringify({ map: key, revision: floorEdit.info.revision, token: floorEdit.info.token, buildings: JSON.parse(sent) }),
     });
     ok = response.ok && (await response.json()).ok;
-    if (ok) {
-      floorEdit.dirty = false;
+    if (ok && floorEdit.mapKey === key) {
+      // 보낸 것과 지금 목록이 같을 때만 '저장됨' (그사이 바뀌었으면 저장 안 한 것으로 남김)
+      floorEdit.dirty = JSON.stringify(floorEdit.buildings) !== sent;
+      floorEdit.base = sent;
       floorEdit.selected = null;
       // 층 판정이 새 범위를 쓰도록 지도 설정을 다시 받아 그 맵을 다시 그림
       const maps = await (await fetch("/api/maps")).json();

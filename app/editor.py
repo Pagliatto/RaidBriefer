@@ -801,6 +801,23 @@ def _floor_token(map_key, revision):
     return hmac.new(_secret, f"floors|{map_key}|{revision}".encode("utf-8"), hashlib.sha256).hexdigest()
 
 
+def _floor_rows(data, map_key):
+    """파일에 있는 그 맵의 층 보정 건물 목록. 칸이 없으면 [], 칸은 있는데 모양이 이상하면 None (없음과 깨짐을 구분)"""
+    if "floors" not in data:
+        return []
+    floors = data["floors"]
+    if not isinstance(floors, dict):
+        return None
+    if map_key not in floors:
+        return []
+    entry = floors[map_key]
+    if not isinstance(entry, dict):
+        return None
+    if "buildings" not in entry:
+        return []
+    return entry["buildings"] if isinstance(entry["buildings"], list) else None
+
+
 def _floor_edit_info(map_key, snapshot):
     """편집 화면이 쓸 층 보정 원본 (이름·꼭짓점·층 표·근거 높이) + 저장 때 돌려보낼 표식"""
     names = _floor_names(map_key)
@@ -808,8 +825,9 @@ def _floor_edit_info(map_key, snapshot):
         return None  # 층이 없는 맵은 층 보정도 없음
     raw, data = snapshot
     revision = hashlib.sha256(raw).hexdigest()
-    entry = _entry(data, ["floors", map_key])
-    buildings = entry.get("buildings") if isinstance(entry, dict) and isinstance(entry.get("buildings"), list) else []
+    buildings = _floor_rows(data, map_key)
+    if buildings is None:
+        return None  # 칸이 있는데 모양이 깨져 있음: 편집으로 덮어쓰지 않게 읽기 전용
     from app import corrections
     rows = []
     for building in buildings:
@@ -849,10 +867,13 @@ def _clean_building(building, names):
             rows.append({"floor": floor})
             continue
         start = level.get("from")
-        if not _number(start) or abs(start) > 100000 or (last is not None and start <= last):
+        if not _number(start) or abs(start) > 100000:
+            raise ValueError("from")
+        start = round(float(start), 1)  # 저장하는 값(소수 첫째 자리)으로 비교: 반올림 뒤 같아지면 읽을 때 건물이 통째로 무시됨
+        if last is not None and start <= last:
             raise ValueError("from")
         last = start
-        rows.append({"floor": floor, "from": round(float(start), 1)})
+        rows.append({"floor": floor, "from": start})
     shots = building.get("shots", [])
     if not isinstance(shots, list) or len(shots) > FLOOR_LIMITS["shots"] or any(not _number(n) or abs(n) > 100000 for n in shots):
         raise ValueError("shots")
@@ -918,6 +939,8 @@ def save_floors(map_key, revision, token, buildings):
         raw, data = _read(path)
         if hashlib.sha256(raw).hexdigest() != revision:
             raise ValueError("stale")
+        if _floor_rows(data, map_key) is None:
+            raise ValueError("floors")  # 손으로 고치다 깨진 칸은 덮어쓰지 않음
         floors = data.get("floors")
         entry = floors.get(map_key) if isinstance(floors, dict) else None
         fresh = {"source": "game", "checked": today, "buildings": rows}

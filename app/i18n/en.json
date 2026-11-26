@@ -620,6 +620,7 @@
     "floorName": "Building name",
     "floorDeletePoint": "Delete point",
     "floorDefaultName": "Building {n}",
+    "floorConflict": "The floor fixes for this map were changed elsewhere, so they cannot be saved. Reloading (F5) discards your edits.",
     "floorFixes": "Floor fix areas",
     "unhide": "Show again",
     "new": "New",
