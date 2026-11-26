@@ -40,7 +40,7 @@
 <summary><b>See all features</b></summary>
 
 **Map**
-- Numbered quest objective pins, extracts, transits, locked doors, key and Bitcoin spawns, BTR stops, floor switching
+- Numbered quest objective pins, extracts, transits, locked doors, key and Bitcoin spawns, BTR stops, floor switching (click an objective to jump to its floor, click an empty spot to return to the ground floor)
 - To-do list that shows only the current map's objectives; boss, Goon and cultist spawn zones (optional layers)
 - To-do list beside the map: quests and story steps for the current map. The eye icon hides an objective's pins for that raid only
 - Hover locked doors and key spawns for key details and wiki links
