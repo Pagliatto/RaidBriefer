@@ -225,12 +225,20 @@ function renderHomeStory(list) {
     box.append(el("p", "empty", t("common.loading")));
     return;
   }
-  // 아직 시작 안 한 챕터는 한 줄로만 (스토리 탭에서 첫 단계를 체크하면 여기 나옴)
-  const notStarted = story.data.chapters.length - list.length;
-  if (!list.length) box.append(el("p", "home-none", t("home.noStory")));
-  list.forEach((s) => {
+  // 할 일이 남은 챕터만 보임. 다 끝낸 챕터는 숨기고 아래 한 줄에 개수만 (2026-11-27 사용자: 제목이 '진행 중'인데 완료가 섞여 있음)
+  // 아직 시작 안 한 챕터도 한 줄로만 (스토리 탭에서 첫 단계를 체크하면 여기 나옴)
+  const total = story.data.chapters.length;
+  const active = list.filter((s) => s.next || s.pending);
+  const done = list.length - active.length;
+  const notStarted = total - list.length;
+  if (total > 0 && done === total) {
+    box.append(el("p", "home-none", t("home.storyAllDone"))); // 모든 챕터를 끝냄: 이 한 줄만
+    return;
+  }
+  if (!active.length) box.append(el("p", "home-none", t(list.length ? "home.noActiveStory" : "home.noStory")));
+  active.forEach((s) => {
     // 진행도 없이 이름 + 다음 할 일 + 맵만 짧게
-    const row = el("button", "home-story-row" + (s.next || s.pending ? "" : " finished"));
+    const row = el("button", "home-story-row");
     row.type = "button";
     row.title = t("home.storyRowHint");
     row.append(el("span", "home-story-name", s.ch.name));
@@ -238,17 +246,16 @@ function renderHomeStory(list) {
     if (s.next) {
       next.textContent = s.next.ko;
       if (s.map) next.append(el("span", "tag", s.map));
-    } else if (s.pending) {
-      next.append(el("span", "chapter-choice", t("home.storyChoice", { title: s.pending.title })));
     } else {
-      next.textContent = t("home.storyDone");
+      next.append(el("span", "chapter-choice", t("home.storyChoice", { title: s.pending.title })));
     }
     row.append(next);
     row.addEventListener("click", () => openStoryChapter(s.ch.id));
     box.append(row);
   });
-  if (notStarted > 0) {
-    const more = el("button", "home-story-more", t("home.storyNotStarted", { n: notStarted }));
+  if (notStarted > 0 || done > 0) {
+    const key = notStarted > 0 && done > 0 ? "home.storyRest" : notStarted > 0 ? "home.storyNotStarted" : "home.storyFinished";
+    const more = el("button", "home-story-more", t(key, { n: notStarted, done }));
     more.type = "button";
     more.addEventListener("click", () => goTab("story"));
     box.append(more);

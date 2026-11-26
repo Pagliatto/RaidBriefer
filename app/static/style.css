@@ -417,7 +417,6 @@ main { flex: 1; padding: 16px 20px; }
   color: var(--text-dim);
 }
 .home-story-next .tag { flex-shrink: 0; }
-.home-story-row.finished .home-story-next { color: var(--ok); }
 .home-story-more {
   grid-column: 1 / -1;
   padding: 6px 12px;
@@ -429,7 +428,6 @@ main { flex: 1; padding: 16px 20px; }
   text-align: left;
 }
 .home-story-more:hover { color: var(--text); border-color: var(--text-faint); }
-.home-story-row.finished .chapter-bar span { background: var(--ok); }
 
 /* ---------- 스토리 탭 ---------- */
 .chapter {
