@@ -644,7 +644,11 @@ function bindPositionEditor(marker, item, label, guide = false) {
       if (y === null || y === old[2]) return;
       const before = mapEditor.pending.get(id);
       mapEditor.history.push({ id, before });
-      mapEditor.pending.set(id, { ...before, edit: before?.edit || item.edit, pos: [old[0], old[1], y], base: before?.base || binding.base });
+      const base = before?.base || binding.base;
+      const same = (a, b) => Math.round(a * 10) === Math.round(b * 10);
+      // 자리·높이·숨김이 모두 원래대로면 변경으로 남기지 않음 (필요 없는 보정이 저장되지 않게)
+      if (!before?.fields && !(before && "hide" in before) && y === base[2] && same(old[0], base[0]) && same(old[1], base[1])) mapEditor.pending.delete(id);
+      else mapEditor.pending.set(id, { ...before, edit: before?.edit || item.edit, pos: [old[0], old[1], y], base });
       marker.closePopup();
       refreshPositionEdits();
       goToFloorOf(index);

@@ -262,6 +262,11 @@ def feature_keys(map_key, result):
             if not item.get("dev") or "edit" in item or item.get("kind") not in ("boss", "goons", "cultist"):
                 continue
             try:
+                # 같은 이름의 항목이 이미 있는데 이 구역의 보정이 아니면(블랙 디비전 보정과 이름이 겹침) 읽기 전용으로 둠
+                existing = _entry(data, ["enemy_spawns", map_key, f"{item['name']}_{item['kind']}"])
+                if existing is not None and not (isinstance(existing, dict) and existing.get("zone") == item["name"]
+                                                 and existing.get("kind") == item["kind"]):
+                    continue
                 _attach(item, "corrections.json", ["enemy_spawns", map_key, f"{item['name']}_{item['kind']}"], snapshot,
                         {"y": item["pos"][2], "zone": item["name"], "kind": item["kind"], "note": "position set in editor"})
                 item["hideable"] = "edit" in item
@@ -270,6 +275,10 @@ def feature_keys(map_key, result):
         for item in result.get("bossZones", []):
             item["floorEdit"] = "edit" in item  # 편집할 수 있는 보스 구역은 층(높이)도 바꿀 수 있음
         for item in result.get("blackDivision", []):
+            # 반대쪽도: 같은 이름의 보스 구역 보정이 있으면 블랙 디비전이 그 항목을 고치지 않게
+            existing = _entry(data, ["enemy_spawns", map_key, item.get("name")]) if isinstance(item.get("name"), str) else None
+            if isinstance(existing, dict) and "zone" in existing:
+                continue
             counts = item.get("count")
             seed = None
             if isinstance(counts, list) and len(counts) == 2 and all(type(n) is int and n >= 1 for n in counts) and counts[0] <= counts[1]:

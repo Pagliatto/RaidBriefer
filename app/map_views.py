@@ -376,9 +376,13 @@ def _enemy_features(map_key: str, bosses, translate) -> dict:
     if map_key in NO_BOSS_ZONE_MAPS:
         return result
     zones = []
+    moves = corrections.boss_zone_moves(map_key)
     for name, group in dev_zones.items():
         positions = list(group["positions"])
         if not positions:
+            # dev 좌표가 없어도(처음부터 없거나 나중에 비워짐) 게임에서 확인해 옮겨 둔 자리가 있으면 그 자리로 그림
+            if any(f"{name}_{_zone_kind(mob)}" in moves for mob in group["bosses"]):
+                zones.append(({"name": name, "pos": None, "radius": 0, "dev": True}, group["bosses"]))
             continue
         center = _spawn_center(positions)
         # dev 좌표 전체를 감싸는 반경 (한 지점이면 원 대신 핀만 표시).
@@ -403,8 +407,6 @@ def _enemy_features(map_key: str, bosses, translate) -> dict:
         zones.append(({"name": zone["spawn_location"], "pos": _xzy(zone), "radius": zone["radius"],
                        "source": zone["source"]}, remaining))
 
-    moves = corrections.boss_zone_moves(map_key)
-
     # 사용자가 게임에서 확인해 손본 보스 (dev 구역을 옮겼거나 자리를 직접 찍음): 그 맵의 그 보스 자리는 사용자가 정한 것이 기준
     # (게임 확인 > dev. 예: 해안선 컬티스트는 dev 구역이 셋인데, 사용자가 둘을 실제 두 곳으로 옮겨 놓음)
     touched = set(extra)
@@ -414,7 +416,8 @@ def _enemy_features(map_key: str, bosses, translate) -> dict:
 
     def complete(mob):
         # 손보지 않은 보스는 dev 가 자리를 안 적은 구역이 하나라도 있으면 숨긴다 (일부만 그리면 '거기에만 나온다'로 읽힘)
-        missing = [name for name in mob_zones.get(mob, ()) if not dev_zones[name]["positions"] and name not in filled]
+        missing = [name for name in mob_zones.get(mob, ()) if not dev_zones[name]["positions"] and name not in filled
+                   and f"{name}_{_zone_kind(mob)}" not in moves]
         return mob in touched or not missing
 
     def label(mob):
@@ -430,6 +433,8 @@ def _enemy_features(map_key: str, bosses, translate) -> dict:
             item = {**base, "kind": kind, "bosses": shown, "pending": pending}
             # dev 구역을 게임에서 확인한 자리로 옮겼거나 숨긴 보정 (dev 는 좌표 여러 개의 가운데라 엉뚱한 곳일 수 있음: 삼림 ZoneWoodCutter)
             move = moves.get(f"{base['name']}_{kind}") if base.get("dev") else None
+            if item["pos"] is None and not move:
+                continue  # dev 좌표도 보정도 없는 종류
             if move:
                 item.update(pos=[move["x"], move["z"], move["y"]], moved=True)
                 if move["hidden"]:
