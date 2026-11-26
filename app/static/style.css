@@ -2364,6 +2364,15 @@ body.position-saving #map-view { pointer-events: none; }
 .position-add-actions { display: flex; justify-content: center; gap: 8px; }
 .position-add-form button, body.position-edit .leaflet-popup button { text-align: center; justify-content: center; }
 body.position-edit .position-deleted { display: none; }
+/* 편집 도구: 층 보정 건물 범위의 손잡이 (꼭짓점 네모·변 가운데 동그라미·그리는 중 첫 점) */
+.floor-handle { box-sizing: border-box; background: #ffd84a; border: 2px solid #111; cursor: grab; }
+.floor-handle-corner { border-radius: 2px; }
+.floor-handle-middle { border-radius: 50%; opacity: 0.55; transform-origin: center; }
+.floor-handle-first { border-radius: 50%; background: #fff; border-color: #ffd84a; box-shadow: 0 0 0 2px #111; cursor: pointer; }
+.floor-edit-popup { display: grid; gap: 6px; min-width: 220px; font-size: 12px; }
+.floor-edit-popup label { display: grid; gap: 2px; }
+.floor-edit-popup input, .floor-edit-popup select { font: inherit; padding: 2px 4px; }
+.floor-levels { font-weight: 600; }
 .position-floor { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 12px; }
 body.position-edit .position-hidden { opacity: 0.35; filter: grayscale(1); }  /* 숨긴 dev 표시: 편집 도구에서만 흐리게 보임 */
 

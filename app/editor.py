@@ -274,6 +274,7 @@ def feature_keys(map_key, result):
                 continue  # 구역 이름이 저장할 수 없는 모양이면 그 구역만 읽기 전용
         for item in result.get("bossZones", []):
             item["floorEdit"] = "edit" in item  # 편집할 수 있는 보스 구역은 층(높이)도 바꿀 수 있음
+        result["editorFloors"] = _floor_edit_info(map_key, snapshot)
         for item in result.get("blackDivision", []):
             # 반대쪽도: 같은 이름의 보스 구역 보정이 있으면 블랙 디비전이 그 항목을 고치지 않게
             existing = _entry(data, ["enemy_spawns", map_key, item.get("name")]) if isinstance(item.get("name"), str) else None
@@ -406,8 +407,9 @@ def _add_keys(map_key, result, snapshot):
     return result_keys
 
 
-def _patch(raw, updates):
-    """Replace only JSON value spans; preserve all untouched bytes and key order."""
+def _patch(raw, updates, pretty=()):
+    """Replace only JSON value spans; preserve all untouched bytes and key order.
+    pretty: 통째로 바꾸는 값을 한 줄이 아니라 여러 줄로 적을 길 (층 보정 건물 목록처럼 큰 값)"""
     bom = raw.startswith(b"\xef\xbb\xbf")
     text = raw.decode("utf-8-sig")
     newline = "\r\n" if "\r\n" in text else "\n"
@@ -489,6 +491,9 @@ def _patch(raw, updates):
                 if text[child[0]] not in "{[":
                     raise ValueError("container")
                 visit(route + (key,), value)
+            elif route + (key,) in pretty:
+                line = text[text.rfind("\n", 0, child[0]) + 1:child[0]]
+                patches.append((child[0], child[1], dump(value, re.match(r"[ \t]*", line)[0], True)))
             else:
                 patches.append((child[0], child[1], dump(value, "", False)))
         keys = list(children)
@@ -751,6 +756,202 @@ def _add_change(plan, key, change, today):
                 refs = step.setdefault("points", [])
                 plan["updates"].append((("steps", index, "points", len(refs)), name))
                 refs.append(name)
+
+
+# ---------- 건물별 층 보정 (corrections.json floors/<맵>/buildings) ----------
+FLOOR_MARGIN = 1.8   # 층 시작 높이 = 그 층에서 찍은 스크린샷 높이 − 이 값 (스크린샷 높이는 바닥 + 약 1.5m)
+FLOOR_GROUP = 1.3    # 스크린샷 높이가 이만큼 안에서 이어지면 같은 층으로 묶음
+FLOOR_LIMITS = {"buildings": 300, "points": 200, "levels": 8, "shots": 60, "name": 80}
+
+
+def _floor_rank(name):
+    """층 이름 → 아래에서부터 순서 (map.js floorRank 와 같은 규칙). 0 = 지하 쪽"""
+    m = re.fullmatch(r"(\d+)(st|nd|rd|th) Floor", name or "", re.I)
+    if m:
+        return int(m[1])
+    if name == "Second Level":
+        return 2
+    return 0 if re.search(r"Underground|Basement|Tunnels|Garage|Bunkers|Technical", name or "", re.I) else 1.5
+
+
+def _floor_names(map_key):
+    """이 맵에서 층 보정에 쓸 수 있는 층 이름: {"under": 지하 층 이름 또는 None, "upper": 2층부터 위로}. 화면에서 뺀 층은 제외"""
+    from app import corrections, map_views
+    view = map_views.view_for(map_key)
+    if not view:
+        return None
+    names = [layer["name"] for layer in view["layers"] if isinstance(layer.get("name"), str) and not layer.get("hidden")]
+    under = [n for n in names if _floor_rank(n) == 0]
+    upper = sorted((n for n in names if _floor_rank(n) >= 2), key=_floor_rank)
+    return {"base": corrections.BASE_FLOOR, "under": under[0] if under else None, "upper": upper}
+
+
+def _floor_token(map_key, revision):
+    return hmac.new(_secret, f"floors|{map_key}|{revision}".encode("utf-8"), hashlib.sha256).hexdigest()
+
+
+def _floor_edit_info(map_key, snapshot):
+    """편집 화면이 쓸 층 보정 원본 (이름·꼭짓점·층 표·근거 높이) + 저장 때 돌려보낼 표식"""
+    names = _floor_names(map_key)
+    if names is None or not names["upper"]:
+        return None  # 층이 없는 맵은 층 보정도 없음
+    raw, data = snapshot
+    revision = hashlib.sha256(raw).hexdigest()
+    entry = _entry(data, ["floors", map_key])
+    buildings = entry.get("buildings") if isinstance(entry, dict) and isinstance(entry.get("buildings"), list) else []
+    from app import corrections
+    rows = []
+    for building in buildings:
+        try:
+            rows.append(_clean_building(building, names))
+        except ValueError:
+            return None  # 손으로 고친 파일이 깨져 있으면 편집으로 덮어쓰지 않게 읽기 전용
+    return {"revision": revision, "token": _floor_token(map_key, revision), "names": names,
+            "margin": FLOOR_MARGIN, "buildings": rows}
+
+
+def _clean_building(building, names):
+    """건물 하나를 검사해서 저장할 모양만 남김. 이상하면 ValueError"""
+    from app import corrections
+    if not isinstance(building, dict):
+        raise ValueError("building")
+    name = building.get("name")
+    if not isinstance(name, str) or not name.strip() or len(name) > FLOOR_LIMITS["name"] or re.search(r"[\x00-\x1f]", name):
+        raise ValueError("name")
+    bounds = corrections.floor_polygon(building.get("bounds"))
+    if bounds is None or not 3 <= len(bounds) <= FLOOR_LIMITS["points"] or any(abs(n) > 100000 for p in bounds for n in p):
+        raise ValueError("bounds")
+    bounds = [[round(float(p[0]), 1), round(float(p[1]), 1)] for p in bounds]
+    levels = building.get("levels")
+    if not isinstance(levels, list) or not 1 <= len(levels) <= FLOOR_LIMITS["levels"]:
+        raise ValueError("levels")
+    allowed = [names["under"], names["base"], *names["upper"]]
+    rows, last, order = [], None, -1
+    for index, level in enumerate(levels):
+        floor = level.get("floor") if isinstance(level, dict) else None
+        if floor not in allowed or floor is None or allowed.index(floor) <= order:
+            raise ValueError("floor")  # 아는 층 이름을 아래층부터 차례로
+        order = allowed.index(floor)
+        if index == 0:
+            if level.get("from") is not None:
+                raise ValueError("from")
+            rows.append({"floor": floor})
+            continue
+        start = level.get("from")
+        if not _number(start) or abs(start) > 100000 or (last is not None and start <= last):
+            raise ValueError("from")
+        last = start
+        rows.append({"floor": floor, "from": round(float(start), 1)})
+    shots = building.get("shots", [])
+    if not isinstance(shots, list) or len(shots) > FLOOR_LIMITS["shots"] or any(not _number(n) or abs(n) > 100000 for n in shots):
+        raise ValueError("shots")
+    return {"name": name.strip(), "bounds": bounds, "levels": rows, "shots": [round(float(n), 2) for n in shots]}
+
+
+def floor_shots(map_key, points):
+    """이 다각형 안에서 찍힌 게임 스크린샷의 높이를 층별로 묶어 돌려줌 (파일 이름의 좌표만 읽음, 그림은 열지 않음).
+    파일 이름에는 맵이 없어서 다른 맵의 사진이 섞일 수 있다 → 화면이 목록을 보여 주고 사용자가 확인한다."""
+    if not enabled() or not isinstance(map_key, str) or not _MAP.fullmatch(map_key):
+        raise PermissionError("disabled")
+    from app import corrections, shot_watch
+    polygon = corrections.floor_polygon(points)
+    if polygon is None or len(polygon) < 3 or len(polygon) > FLOOR_LIMITS["points"]:
+        raise ValueError("bounds")
+
+    def inside(x, z):
+        hit = False
+        for i in range(len(polygon)):
+            (xi, zi), (xj, zj) = polygon[i], polygon[i - 1]
+            if (zi > z) != (zj > z) and x < (xj - xi) * (z - zi) / (zj - zi) + xi:
+                hit = not hit
+        return hit
+
+    heights = []
+    for folder in shot_watch.candidates():
+        try:
+            entries = list(os.scandir(folder))
+        except OSError:
+            continue  # 없는 폴더·읽을 수 없는 폴더는 건너뜀
+        for item in entries:
+            shot = shot_watch.parse_name(item.name)
+            if shot and inside(shot["x"], shot["z"]):
+                heights.append(shot["y"])
+    heights.sort()
+    groups = []
+    for y in heights:
+        if groups and y - groups[-1][-1] <= FLOOR_GROUP:
+            groups[-1].append(y)
+        else:
+            groups.append([y])
+    # 묶음마다 가운데 값 하나 (같은 층에서 여러 장 찍은 것)
+    return {"count": len(heights), "heights": [round(sorted(g)[len(g) // 2], 2) for g in groups][:FLOOR_LIMITS["shots"]]}
+
+
+def save_floors(map_key, revision, token, buildings):
+    """한 맵의 층 보정 건물 목록을 통째로 바꿔 저장 (백업 → 임시 파일 → 바꿔치기, save 와 같은 순서)."""
+    if not enabled():
+        raise PermissionError("disabled")
+    if not isinstance(map_key, str) or not _MAP.fullmatch(map_key) or not isinstance(revision, str) or not isinstance(token, str):
+        raise ValueError("request")
+    if not hmac.compare_digest(token, _floor_token(map_key, revision)):
+        raise ValueError("signature")
+    names = _floor_names(map_key)
+    if names is None or not names["upper"]:
+        raise ValueError("map")
+    if not isinstance(buildings, list) or len(buildings) > FLOOR_LIMITS["buildings"]:
+        raise ValueError("buildings")
+    rows = [_clean_building(building, names) for building in buildings]
+    today = date.today().isoformat()
+    with _lock:
+        path = _target("corrections.json", ["enemy_spawns", map_key, "Editor"])
+        raw, data = _read(path)
+        if hashlib.sha256(raw).hexdigest() != revision:
+            raise ValueError("stale")
+        floors = data.get("floors")
+        entry = floors.get(map_key) if isinstance(floors, dict) else None
+        fresh = {"source": "game", "checked": today, "buildings": rows}
+        if not isinstance(floors, dict):
+            if "floors" in data:
+                raise ValueError("floors")
+            updates, pretty = [(("floors",), {map_key: fresh})], ()
+        elif not isinstance(entry, dict):
+            if map_key in floors:
+                raise ValueError("floors")
+            if not rows:
+                return {"ok": True}
+            updates, pretty = [(("floors", map_key), fresh)], ()
+        else:
+            updates = [(("floors", map_key, "source"), "game"), (("floors", map_key, "checked"), today),
+                       (("floors", map_key, "buildings"), rows)]
+            pretty = {("floors", map_key, "buildings")} if "buildings" in entry else ()
+        new = _patch(raw, updates, pretty)
+        backup = paths.USER_DIR / "_edit_backup"
+        backup.mkdir(parents=True, exist_ok=True)
+        try:
+            with _file_lock(backup / ".saving"):
+                if path.read_bytes() != raw:
+                    raise ValueError("stale")
+                with (backup / (path.stem + "-" + secrets.token_hex(12) + ".json")).open("xb") as out:
+                    out.write(raw)
+                    out.flush()
+                    os.fsync(out.fileno())
+                temp = None
+                try:
+                    with tempfile.NamedTemporaryFile(dir=path.parent, prefix=".edit-", suffix=".tmp", delete=False) as out:
+                        temp = Path(out.name)
+                        out.write(new)
+                        out.flush()
+                        os.fsync(out.fileno())
+                    if path.read_bytes() != raw:
+                        raise ValueError("stale")
+                    os.replace(temp, path)
+                finally:
+                    if temp is not None:
+                        temp.unlink(missing_ok=True)
+        except (OSError, ValueError):
+            return {"ok": False}
+        _invalidate()
+        return {"ok": True}
 
 
 def save(changes):

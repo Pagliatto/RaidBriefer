@@ -303,10 +303,10 @@ def check_floors(data) -> int:
                 problems.append(f"{where}: 객체 필요")
                 continue
             bounds = building.get("bounds")
-            if not (isinstance(bounds, list) and len(bounds) == 2 and all(
+            if not (isinstance(bounds, list) and 2 <= len(bounds) <= 200 and all(
                     isinstance(p, list) and len(p) == 2 and all(type(n) in (int, float) and math.isfinite(n) for n in p)
                     for p in bounds)):
-                problems.append(f"{where}/bounds: [[x1, z1], [x2, z2]] 필요")
+                problems.append(f"{where}/bounds: 꼭짓점 [[x, z], …] 3개 이상 (또는 네모의 두 모서리) 필요")
             if not isinstance(building.get("name"), str) or not building["name"].strip():
                 problems.append(f"{where}/name: 건물 설명 필요")
             levels = building.get("levels")

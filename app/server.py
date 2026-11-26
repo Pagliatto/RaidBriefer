@@ -184,7 +184,7 @@ def require_local_page():
 
 @app.before_request
 def require_json_object():
-    if request.path == "/api/editor":
+    if request.path == "/api/editor" or request.path.startswith("/api/editor/"):
         from app import editor
         if not editor.enabled():
             abort(404)
@@ -344,6 +344,33 @@ def api_editor():
         return jsonify(result), 200 if result["ok"] else 409
     except (KeyError, TypeError, ValueError, OSError, RecursionError):
         return jsonify({"ok": False, "saved": [], "error": i18n.t("editor.saveFailed")}), 409
+
+
+@app.route("/api/editor/floor-shots", methods=["POST"])
+def api_editor_floor_shots():
+    """편집 도구: 그린 건물 범위 안에서 찍힌 스크린샷 높이 (층 묶음). 파일 이름·경로는 내보내지 않음"""
+    from app import editor
+
+    try:
+        body = request.get_json()
+        return jsonify({"ok": True, **editor.floor_shots(body["map"], body["points"])})
+    except (KeyError, TypeError, ValueError, OSError, PermissionError):
+        return jsonify({"ok": False, "error": i18n.t("editor.saveFailed")}), 409
+
+
+@app.route("/api/editor/floors", methods=["POST"])
+def api_editor_floors():
+    """편집 도구: 한 맵의 건물별 층 보정을 저장"""
+    from app import editor
+
+    try:
+        body = request.get_json()
+        result = editor.save_floors(body["map"], body["revision"], body["token"], body["buildings"])
+        if not result["ok"]:
+            result["error"] = i18n.t("editor.saveFailed")
+        return jsonify(result), 200 if result["ok"] else 409
+    except (KeyError, TypeError, ValueError, OSError, RecursionError, PermissionError):
+        return jsonify({"ok": False, "error": i18n.t("editor.saveFailed")}), 409
 
 
 @app.route("/map-svg/<name>")
