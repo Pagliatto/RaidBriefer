@@ -262,12 +262,20 @@ async function initializePositionEditor() {
       if (mapEditor.walk) stopStoryWalk(); // 연속 입력 중이면 끝내고 일반 추가로
       setEditorTarget(null); // 대상을 고정해 둔 상태도 끝냄
       cancelMarkerDraft();
+      cancelFloorDrawing();
+      updateFloorButtons();
       mapEditor.placing = key;
       updatePositionEditor(t("editor.clickMap"));
     }, "+ " + editorText("kind_" + key));
   }
+  // 건물별 층 보정: 범위 그리기와 저장은 따로 (다른 편집의 [저장] 과 섞이지 않음)
+  const floors = group("editor.groupFloors");
+  floorEdit.addButton = button(floors, "editor.floorAdd", startFloorDrawing);
+  floorEdit.saveButton = button(floors, "editor.floorSave", saveFloorFixes);
+  updateFloorButtons();
   window.addEventListener("keydown", (event) => {
     if (event.key !== "Escape") return;
+    if (floorEdit.drawing) { cancelFloorDrawing(); updateFloorButtons(""); return; }
     if (mapEditor.form || mapEditor.placing) cancelMarkerDraft(); // 열린 창·추가 대기부터 닫고
     else setEditorTarget(null);                                  // 그다음 Esc 는 고정한 대상 끝내기
   });
@@ -292,7 +300,7 @@ async function initializePositionEditor() {
   }
   updatePositionEditor();
   window.addEventListener("beforeunload", (event) => {
-    if (!mapEditor.pending.size) return;
+    if (!mapEditor.pending.size && !floorEdit.dirty && !Object.keys(floorEdit.stash).length) return;
     event.preventDefault();
     event.returnValue = ""; // Browsers supply their own localized confirmation text.
   });
@@ -1351,6 +1359,317 @@ function storyWalkPlace(latlng) {
 }
 
 // 지금 보고 있는 층의 높이: 그 층에 있는 가장 가까운 표시의 높이, 없으면 그 층 범위의 가운데
+// ---------- 편집 도구: 건물별 층 보정 (다각형 범위 + 층 표) ----------
+// 범위는 꼭짓점을 끌어 고치고, 새 건물은 모서리를 차례로 찍어 만든다. 층 높이는 그 안에서 찍힌 게임 스크린샷으로 서버가 묶어 준다
+// (사용자는 '어느 높이가 1층인가'만 고름). 저장은 [층 보정 저장] 으로 따로 (다른 편집과 섞지 않음)
+const floorEdit = { info: null, mapKey: null, buildings: [], polys: [], handles: null, selected: null, drawing: null, dirty: false, saving: false,
+  base: "[]",      // 고치기 시작할 때 서버에 있던 건물 목록(글자). 그사이 다른 곳에서 바뀌었는지 비교
+  conflict: false, // 저장 안 한 고침이 있는데 서버 쪽 목록이 달라짐 → 저장하면 거절됨
+  stash: {} };     // 다른 맵으로 갔을 때 저장 안 한 고침을 맵별로 보관
+const round1 = (n) => Math.round(n * 10) / 10;
+const floorLatLngs = (points) => points.map((p) => gamePos([p[0], p[1], 0]));
+const floorLevelsText = (levels) => levels.map((l) => floorLabel(l.floor) + (l.from == null ? "" : ` ${l.from}m~`)).join(" · ");
+
+// 지도 데이터를 받을 때마다: 저장 안 한 고침이 있으면(같은 맵) 그대로 두고 표식만 새로 받음
+function loadFloorEdit(info, mapKey) {
+  if (floorEdit.mapKey !== mapKey) {
+    // 다른 맵으로: 저장 안 한 고침은 버리지 않고 맵별로 보관했다가, 그 맵으로 돌아오면 되살림
+    if (floorEdit.mapKey && floorEdit.dirty) {
+      floorEdit.stash[floorEdit.mapKey] = { buildings: floorEdit.buildings, info: floorEdit.info, base: floorEdit.base };
+    }
+    const kept = floorEdit.stash[mapKey];
+    delete floorEdit.stash[mapKey];
+    floorEdit.buildings = kept ? kept.buildings : [];
+    floorEdit.info = kept ? kept.info : null;
+    floorEdit.base = kept ? kept.base : "[]";
+    floorEdit.dirty = !!kept;
+    floorEdit.selected = null;
+    floorEdit.mapKey = mapKey;
+  }
+  const fresh = JSON.stringify(info?.buildings || []);
+  if (!floorEdit.dirty) {
+    floorEdit.buildings = JSON.parse(fresh);
+    floorEdit.base = fresh;
+    floorEdit.info = info || null;
+    floorEdit.conflict = false;
+  } else if (info && fresh === floorEdit.base) {
+    floorEdit.info = info; // 층 보정은 그대로이고 파일의 다른 칸만 바뀜 → 새 표식을 받아도 안전
+    floorEdit.conflict = false;
+  } else {
+    floorEdit.conflict = true; // 다른 곳에서 층 보정이 바뀜: 옛 표식을 그대로 둬서 저장이 거절되게 (남의 고침을 덮어쓰지 않음)
+  }
+  cancelFloorDrawing();
+  drawFloorFixes();
+  renderLayerDrawer();
+  updateFloorButtons(floorEdit.conflict ? t("editor.floorConflict") : undefined);
+}
+
+function updateFloorButtons(message) {
+  if (!floorEdit.addButton) return;
+  floorEdit.addButton.disabled = !floorEdit.info || floorEdit.saving;
+  floorEdit.addButton.classList.toggle("on", !!floorEdit.drawing);
+  floorEdit.saveButton.disabled = !floorEdit.dirty || floorEdit.saving;
+  floorEdit.saveButton.textContent = t("editor.floorSave") + (floorEdit.dirty ? " •" : "");
+  if (message !== undefined && mapEditor.status) mapEditor.status.textContent = message;
+}
+
+function markFloorDirty() {
+  floorEdit.dirty = true;
+  updateFloorButtons();
+}
+
+// 층 보정 범위는 지도 그림보다 항상 위에 (따로 둔 칸). 지도를 다시 그릴 때 그림보다 먼저 그려지면 그림 밑에 깔려 안 보였음
+function floorPane() {
+  const leaf = mapUI.leaflet;
+  if (!leaf.getPane("floorFixes")) leaf.createPane("floorFixes").style.zIndex = 450; // 지도 그림(400) 위, 표시(600) 아래
+  return "floorFixes";
+}
+
+function drawFloorFixes() {
+  const group = mapUI.groups.floorFixes;
+  if (!group || !mapEditor.active) return;
+  group.clearLayers();
+  floorEdit.polys = [];
+  floorEdit.handles = L.layerGroup().addTo(group);
+  if (floorEdit.mapKey !== mapUI.current?.key || !mapUI.leaflet) return;
+  floorPane();
+  floorEdit.buildings.forEach((b, i) => {
+    const on = i === floorEdit.selected;
+    const poly = L.polygon(floorLatLngs(b.bounds), { pane: "floorFixes", color: "#ffd84a", weight: on ? 3 : 2, dashArray: "6 4", fillOpacity: on ? 0.2 : 0.08 });
+    poly.bindTooltip(escapeHtml(b.name) + "<br>" + escapeHtml(floorLevelsText(b.levels)), { sticky: true });
+    poly.on("click", (event) => {
+      L.DomEvent.stopPropagation(event); // 지도 빈 곳 클릭(고르기 풀기)으로 번지지 않게
+      if (!floorEdit.drawing && !floorEdit.saving) selectFloorBuilding(i, event.latlng);
+    });
+    poly.addTo(group);
+    floorEdit.polys.push(poly);
+  });
+  if (floorEdit.selected != null) drawFloorHandles();
+}
+
+// 고른 건물의 꼭짓점(네모)과 변 가운데(동그라미) 손잡이. 가운데 손잡이를 끌면 새 꼭짓점이 생김
+function drawFloorHandles() {
+  const group = floorEdit.handles;
+  const i = floorEdit.selected;
+  const b = floorEdit.buildings[i];
+  if (!group || !b) return;
+  group.clearLayers();
+  const handle = (kind) => L.divIcon({ className: "floor-handle floor-handle-" + kind, iconSize: [12, 12], iconAnchor: [6, 6] });
+  const follow = (marker, at) => {
+    const ll = marker.getLatLng();
+    b.bounds[at] = [round1(ll.lng), round1(ll.lat)]; // Leaflet 의 lng = 게임 x, lat = 게임 z
+    floorEdit.polys[i]?.setLatLngs(floorLatLngs(b.bounds));
+  };
+  b.bounds.forEach((p, j) => {
+    const corner = L.marker(gamePos([p[0], p[1], 0]), { icon: handle("corner"), draggable: true, zIndexOffset: 7000 });
+    corner.on("drag", () => follow(corner, j));
+    corner.on("dragend", () => { markFloorDirty(); drawFloorHandles(); });
+    corner.on("click", () => {
+      if (b.bounds.length <= 3) return; // 세 점보다 줄일 수 없음
+      const remove = el("button", "layer-toggle-btn", t("editor.floorDeletePoint"));
+      remove.type = "button";
+      remove.addEventListener("click", () => {
+        b.bounds.splice(j, 1);
+        mapUI.leaflet.closePopup();
+        markFloorDirty();
+        drawFloorFixes();
+      });
+      L.popup().setLatLng(corner.getLatLng()).setContent(remove).openOn(mapUI.leaflet);
+    });
+    corner.addTo(group);
+    const q = b.bounds[(j + 1) % b.bounds.length];
+    const middle = L.marker(gamePos([(p[0] + q[0]) / 2, (p[1] + q[1]) / 2, 0]), { icon: handle("middle"), draggable: true, zIndexOffset: 6900 });
+    middle.on("dragstart", () => { b.bounds.splice(j + 1, 0, [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2]); });
+    middle.on("drag", () => follow(middle, j + 1));
+    middle.on("dragend", () => { markFloorDirty(); drawFloorHandles(); });
+    middle.addTo(group);
+  });
+}
+
+function selectFloorBuilding(i, latlng) {
+  floorEdit.selected = i;
+  drawFloorFixes();
+  const b = floorEdit.buildings[i];
+  const box = el("div", "floor-edit-popup");
+  const name = el("input");
+  name.type = "text";
+  name.maxLength = 80;
+  name.value = b.name;
+  name.addEventListener("change", () => {
+    const value = name.value.trim();
+    if (!value) { name.value = b.name; return; }
+    b.name = value;
+    markFloorDirty();
+    drawFloorFixes();
+  });
+  const label = el("label", "", t("editor.floorName"));
+  label.append(name);
+  const remove = el("button", "layer-toggle-btn", t("editor.delete"));
+  remove.type = "button";
+  remove.addEventListener("click", () => {
+    floorEdit.buildings.splice(i, 1);
+    floorEdit.selected = null;
+    mapUI.leaflet.closePopup();
+    markFloorDirty();
+    drawFloorFixes();
+    renderLayerDrawer();
+  });
+  box.append(label, el("div", "floor-levels", floorLevelsText(b.levels)), remove);
+  L.popup().setLatLng(latlng).setContent(box).openOn(mapUI.leaflet);
+}
+
+function startFloorDrawing() {
+  if (!floorEdit.info || floorEdit.saving || !mapUI.leaflet) return;
+  if (floorEdit.drawing) { cancelFloorDrawing(); updateFloorButtons(""); return; }
+  if (mapEditor.walk) stopStoryWalk();
+  setEditorTarget(null);
+  cancelMarkerDraft();
+  if (!layerOn("floorFixes")) setLayer("floorFixes", true);
+  floorEdit.selected = null;
+  drawFloorFixes();
+  floorEdit.drawing = { points: [], layer: L.layerGroup().addTo(mapUI.leaflet) };
+  updateFloorButtons(t("editor.floorDrawHint"));
+}
+
+function cancelFloorDrawing() {
+  if (!floorEdit.drawing) return;
+  floorEdit.drawing.layer.remove();
+  floorEdit.drawing = null;
+  mapUI.leaflet?.closePopup();
+}
+
+function floorDrawClick(latlng) {
+  const drawing = floorEdit.drawing;
+  if (!drawing || drawing.done) return;
+  drawing.points.push([round1(latlng.lng), round1(latlng.lat)]);
+  drawing.layer.clearLayers();
+  const line = floorLatLngs(drawing.points);
+  const pane = floorPane();
+  (drawing.points.length >= 3 ? L.polygon(line, { pane, color: "#ffd84a", weight: 2, fillOpacity: 0.12 }) : L.polyline(line, { pane, color: "#ffd84a", weight: 2 }))
+    .addTo(drawing.layer);
+  // 첫 점: 다시 누르면 닫힘 (세 점부터)
+  const first = L.marker(line[0], { icon: L.divIcon({ className: "floor-handle floor-handle-first", iconSize: [16, 16], iconAnchor: [8, 8] }), zIndexOffset: 7100 });
+  first.on("click", finishFloorDrawing);
+  first.addTo(drawing.layer);
+}
+
+async function finishFloorDrawing() {
+  const drawing = floorEdit.drawing;
+  if (!drawing || drawing.done || drawing.points.length < 3) return;
+  drawing.done = true; // 더 찍히지 않게
+  let found = null;
+  try {
+    const response = await fetch("/api/editor/floor-shots", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ map: mapUI.current.key, points: drawing.points }),
+    });
+    found = await response.json();
+  } catch (error) { found = null; }
+  if (floorEdit.drawing !== drawing) return; // 그사이 취소함
+  if (!found || !found.ok || !found.heights.length) {
+    cancelFloorDrawing();
+    updateFloorButtons(t("editor.floorNoShots"));
+    return;
+  }
+  openFloorForm(drawing, found);
+}
+
+// 스크린샷 높이 묶음 → 층 표. base = 1층으로 볼 높이의 순번. 그 아래는 지하(지하 층이 있는 맵만), 위는 2층부터 차례로
+function buildFloorLevels(heights, base) {
+  const { names, margin } = floorEdit.info;
+  const start = (h) => round1(h - margin);
+  const levels = base > 0 && names.under ? [{ floor: names.under }, { floor: names.base, from: start(heights[base]) }] : [{ floor: names.base }];
+  heights.slice(base + 1).forEach((h, k) => { if (names.upper[k]) levels.push({ floor: names.upper[k], from: start(h) }); });
+  return levels;
+}
+
+function openFloorForm(drawing, found) {
+  const heights = found.heights;
+  const box = el("form", "floor-edit-popup");
+  box.append(el("div", "", t("editor.floorShots", { n: found.count, list: heights.map((h) => h + "m").join(" / ") })));
+  const pick = el("select");
+  heights.forEach((h, k) => {
+    const option = el("option", "", h + "m");
+    option.value = String(k);
+    pick.append(option);
+  });
+  const preview = el("div", "floor-levels");
+  const show = () => { preview.textContent = floorLevelsText(buildFloorLevels(heights, Number(pick.value))); };
+  pick.addEventListener("change", show);
+  show();
+  const baseLabel = el("label", "", t("editor.floorBase"));
+  baseLabel.append(pick);
+  const name = el("input");
+  name.type = "text";
+  name.maxLength = 80;
+  name.value = t("editor.floorDefaultName", { n: floorEdit.buildings.length + 1 });
+  const nameLabel = el("label", "", t("editor.floorName"));
+  nameLabel.append(name);
+  const add = el("button", "layer-toggle-btn", t("editor.add"));
+  add.type = "submit";
+  const dismiss = el("button", "layer-toggle-btn", t("editor.dismiss"));
+  dismiss.type = "button";
+  dismiss.addEventListener("click", () => { cancelFloorDrawing(); updateFloorButtons(""); });
+  box.append(baseLabel, preview, nameLabel, add, dismiss);
+  box.addEventListener("submit", (event) => {
+    event.preventDefault();
+    floorEdit.buildings.push({
+      name: name.value.trim() || t("editor.floorDefaultName", { n: floorEdit.buildings.length + 1 }),
+      bounds: drawing.points, levels: buildFloorLevels(heights, Number(pick.value)), shots: heights,
+    });
+    floorEdit.selected = floorEdit.buildings.length - 1;
+    cancelFloorDrawing();
+    markFloorDirty();
+    drawFloorFixes();
+    renderLayerDrawer();
+    updateFloorButtons("");
+  });
+  const center = drawing.points.reduce((sum, p) => [sum[0] + p[0], sum[1] + p[1]], [0, 0]).map((n) => n / drawing.points.length);
+  L.popup({ closeOnClick: false, closeButton: false }).setLatLng(gamePos([center[0], center[1], 0])).setContent(box).openOn(mapUI.leaflet);
+}
+
+async function saveFloorFixes() {
+  if (!floorEdit.dirty || floorEdit.saving || !floorEdit.info) return;
+  const key = floorEdit.mapKey;
+  floorEdit.saving = true;
+  // 저장하는 동안에는 고칠 수 없게: 열린 창·손잡이·그리던 것을 닫음 (보낸 뒤에 고친 것이 '저장됨'으로 사라지지 않게)
+  cancelFloorDrawing();
+  mapUI.leaflet?.closePopup();
+  floorEdit.selected = null;
+  drawFloorFixes();
+  updateFloorButtons(t("editor.saving"));
+  const sent = JSON.stringify(floorEdit.buildings);
+  let ok = false;
+  try {
+    const response = await fetch("/api/editor/floors", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ map: key, revision: floorEdit.info.revision, token: floorEdit.info.token, buildings: JSON.parse(sent) }),
+    });
+    ok = response.ok && (await response.json()).ok;
+    if (ok && floorEdit.mapKey === key) {
+      // 보낸 것과 지금 목록이 같을 때만 '저장됨' (그사이 바뀌었으면 저장 안 한 것으로 남김)
+      floorEdit.dirty = JSON.stringify(floorEdit.buildings) !== sent;
+      floorEdit.base = sent;
+      floorEdit.selected = null;
+      // 층 판정이 새 범위를 쓰도록 지도 설정을 다시 받아 그 맵을 다시 그림
+      const maps = await (await fetch("/api/maps")).json();
+      if (Array.isArray(maps)) {
+        mapUI.maps = maps;
+        if (mapUI.current?.key === key) mapUI.current = maps.find((m) => m.key === key) || mapUI.current;
+      }
+    }
+  } catch (error) { /* 아래에서 실패로 안내 */ }
+  floorEdit.saving = false;
+  updateFloorButtons(t(ok ? "editor.saved" : "editor.saveFailed"));
+  if (ok && mapUI.current?.key === key) {
+    // 다시 그려도 보던 자리·확대는 그대로 (범위를 고치는 중에 전체 보기로 튀지 않게)
+    const center = mapUI.leaflet?.getCenter();
+    const zoom = mapUI.leaflet?.getZoom();
+    await drawMap();
+    if (center && mapUI.leaflet && mapUI.current?.key === key) mapUI.leaflet.setView(center, zoom, { animate: false });
+  }
+}
+
 // 이 자리(x, z)에서 고른 층에 해당하는 높이. 그 층의 가까운 표시 높이 → 없으면 지금 높이에서 가장 가까운 그 층 높이. 못 찾으면 null
 function heightForFloor(x, z, index, fromY) {
   const onFloor = (mapEditor.heights || []).filter((p) => floorOf([x, z, p[2]]) === index);
@@ -2918,7 +3237,7 @@ initializePositionEditor().then(loadMapList);
 
 // ---------- 표시 켜기/끄기 (왼쪽 서랍) ----------
 // 퀘스트·먹을 것·탈출구·트랜짓·열쇠·귀중품. 고른 값은 이 브라우저에 기억 (다음에 켜도 그대로)
-const LAYER_KEYS = ["quests", "extracts", "scavExtracts", "transits", "btrStops", "keys", "bitcoin", "keySpawns", "guide", "story", "blackDivision", "bossZones", "goonZones", "cultistZones"];
+const LAYER_KEYS = ["quests", "extracts", "scavExtracts", "transits", "btrStops", "keys", "bitcoin", "keySpawns", "guide", "story", "blackDivision", "bossZones", "goonZones", "cultistZones", "floorFixes"];
 // 보스 등장 구역 셋: 서버 kind → [표시 묶음, 색, 아이콘, 겹치지 않게 띄우는 방향(m)] (2026-11-26 사용자: 보스·군즈·컬티스트로 나눔, 기본 끔)
 const BOSS_ZONE_KINDS = {
   boss: ["bossZones", "boss", "skull", [10, 0]],
@@ -2929,6 +3248,7 @@ const BOSS_ZONE_LAYERS = Object.values(BOSS_ZONE_KINDS).map((k) => k[0]);
 const LAYER_INFO = {
   story: { label: t("map.storyLayer"), mark: "mk:story:book-open", on: true },
   blackDivision: { label: t("map.layerBlackDivision"), mark: "mk:enemy:crosshair", on: true },
+  floorFixes: { label: t("editor.floorFixes"), mark: "icon:layers", on: false }, // 편집 도구에서만: 층 보정이 걸리는 건물 범위
   bossZones: { label: t("map.layerBossZones"), mark: "mk:boss:skull", on: false },
   goonZones: { label: t("map.layerGoonZones"), mark: "mk:goons:users", on: false },
   cultistZones: { label: t("map.layerCultistZones"), mark: "mk:cultist:moon", on: false },
@@ -2979,6 +3299,7 @@ function renderLayerDrawer() {
     // 편집 모드는 이 맵의 모든 장소, 평소에는 지금 할 단계의 장소 기준 (storyPinEntries 와 같은 기준)
     if (key === "story" && (!mapUI.current || !storyPinEntries().some(({ entry }) => storyPlacesFor(entry.step.id, mapUI.current.key).length))) return;
     if ((key === "blackDivision" || BOSS_ZONE_LAYERS.includes(key)) && !layerCount(key)) return;
+    if (key === "floorFixes" && (!mapEditor.active || !floorEdit.info || floorEdit.mapKey !== mapUI.current?.key)) return;
     if (info.always) return;  // 항상 보이는 표시는 서랍에 스위치를 두지 않음
     const on = layerOn(key);
     const btn = el("button", `layer-toggle layer-${key}${on ? " on" : ""}`);
@@ -3004,6 +3325,7 @@ function renderLayerDrawer() {
 // 표시 묶음마다 이 맵에 있는 개수 (지도를 아직 안 그렸으면 null)
 function layerCount(key) {
   if (!mapUI.groups || !mapUI.leaflet) return null;
+  if (key === "floorFixes") return floorEdit.mapKey === mapUI.current?.key ? floorEdit.buildings.length : 0;
   if (BOSS_ZONE_LAYERS.includes(key)) return mapUI.groups[key]?.getLayers().filter((layer) => layer instanceof L.Marker).length || 0;
   if (key === "quests") return (mapUI.pinMarkers || []).length;
   return mapUI.groups[key] ? mapUI.groups[key].getLayers().length : 0;
@@ -3033,10 +3355,23 @@ async function drawFeatures(leaf, m) {
     return; // 표시물을 못 받아도 지도와 퀘스트는 그대로
   }
   if (mapUI.leaflet !== leaf) return; // 그사이 다른 맵으로 바뀜
+  if (mapEditor.active && data.editorReady === false) {
+    // 서버가 편집 정보를 못 읽음(저장 직후 파일이 잠깐 잠김 등): 지금 보이는 것을 지우지 않고 조금 뒤 다시 받음
+    mapEditor.retry = (mapEditor.retry || 0) + 1;
+    if (mapEditor.retry <= 5) setTimeout(() => { if (mapUI.leaflet === leaf) drawMap(); }, 700);
+    else updateFloorButtons(t("editor.saveFailed"));
+    return;
+  }
   if (mapEditor.active) {
+    mapEditor.retry = 0;
     mapEditor.options = data.editorAdd || null;
     mapEditor.heights = data.editorHeights || [];
     mapEditor.bossNames = data.editorBossNames || {};
+    loadFloorEdit(data.editorFloors, m.key);
+    leaf.on("click", (event) => {
+      if (floorEdit.drawing) floorDrawClick(event.latlng);
+      else if (floorEdit.selected != null) { floorEdit.selected = null; drawFloorFixes(); } // 빈 곳을 누르면 고르기 풀기
+    });
     mapEditor.goals = data.editorQuestGoals || [];
     leaf.on("click", (event) => {
       if (!mapEditor.walk && mapEditor.placing && !mapEditor.saving && mapEditor.options) openMarkerForm(event.latlng);
@@ -3169,11 +3504,30 @@ function drawEnemyFeatures(data, add) {
 
 // ---------- 층 ----------
 // tarkov.dev 지도 설정의 층(layers): 높이 범위 + 건물 범위 안에 있으면 그 층. 아니면 1층(null)
+// 점 (x, z) 가 다각형 [[x, z], …] 안에 있나 (오른쪽으로 쏜 선이 변을 홀수 번 지나면 안)
+function insidePolygon(x, z, points) {
+  let inside = false;
+  for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
+    const [xi, zi] = points[i];
+    const [xj, zj] = points[j];
+    if ((zi > z) !== (zj > z) && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) inside = !inside;
+  }
+  return inside;
+}
+
 function floorOf(p) {
   const view = mapUI.view;
   if (!view || !view.layers || p.length < 3) return null;
   const [x, z, y] = p;
+  // 건물별 층 보정이 먼저 (게임에서 잰 높이). 그 건물 범위 안이면 그 건물의 층 표를 따름: 시작 높이가 y 이하인 가장 높은 층
+  for (const fix of view.floor_fixes || []) {
+    if (!insidePolygon(x, z, fix.bounds)) continue;
+    let floor = fix.levels[0][1];
+    for (const [start, index] of fix.levels) if (start !== null && y >= start) floor = index;
+    return floor;
+  }
   for (let i = 0; i < view.layers.length; i++) {
+    if (view.layers[i].hidden) continue; // 화면에서 뺀 층 (그림이 틀린 것으로 본 dev 층)
     for (const ext of view.layers[i].extents || []) {
       const h = ext.height || [-1e9, 1e9];
       if (y < h[0] || y > h[1]) continue;
@@ -3249,7 +3603,9 @@ const FLOOR_GAP = 18; // 판 사이 간격(px) (CSS .floor-plane 의 -18px 과 �
 function drawFloorControl(box, view) {
   mapUI.floorRows = null;
   if (!view.layers || !view.layers.length) return;
-  const rows = view.layers.map((l, i) => ({ index: i, name: l.name, rank: floorRank(l.name) }));
+  const rows = view.layers.map((l, i) => ({ index: i, name: l.name, rank: floorRank(l.name), hidden: !!l.hidden }))
+    .filter((row) => !row.hidden);
+  if (!rows.length) return;
   rows.push({ index: null, name: "1st Floor", rank: 1 });
   rows.sort((a, b) => a.rank - b.rank); // 아래층부터
   mapUI.floorRows = rows;

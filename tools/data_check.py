@@ -272,6 +272,66 @@ def check_boss_zones(data) -> int:
     return len(problems)
 
 
+def check_floors(data) -> int:
+    """건물별 층 보정: 범위 네모·낮은 층부터 올라가는 시작 높이·출처(game)·날짜."""
+    problems = []
+    floors = data.get("floors", {})
+    if not isinstance(floors, dict):
+        problems.append("floors: 객체 필요")
+        floors = {}
+    for map_key, entry in floors.items():
+        if map_key.startswith("_"):
+            continue
+        where_map = f"floors/{map_key}"
+        if not isinstance(entry, dict):
+            problems.append(f"{where_map}: 객체 필요")
+            continue
+        if entry.get("source") != "game":
+            problems.append(f"{where_map}/source: game 필요 (게임에서 잰 높이만)")
+        if not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", str(entry.get("checked", ""))):
+            problems.append(f"{where_map}/checked: 날짜 YYYY-MM-DD 필요")
+        hidden = entry.get("hidden_layers", [])
+        if not isinstance(hidden, list) or any(not isinstance(name, str) or not name for name in hidden):
+            problems.append(f"{where_map}/hidden_layers: 층 이름 목록 필요")
+        buildings = entry.get("buildings")
+        if not isinstance(buildings, list) or not buildings:
+            problems.append(f"{where_map}/buildings: 비어 있지 않은 목록 필요")
+            continue
+        for index, building in enumerate(buildings):
+            where = f"{where_map}/buildings/{index}"
+            if not isinstance(building, dict):
+                problems.append(f"{where}: 객체 필요")
+                continue
+            bounds = building.get("bounds")
+            if not (isinstance(bounds, list) and 2 <= len(bounds) <= 200 and all(
+                    isinstance(p, list) and len(p) == 2 and all(type(n) in (int, float) and math.isfinite(n) for n in p)
+                    for p in bounds)):
+                problems.append(f"{where}/bounds: 꼭짓점 [[x, z], …] 3개 이상 (또는 네모의 두 모서리) 필요")
+            if not isinstance(building.get("name"), str) or not building["name"].strip():
+                problems.append(f"{where}/name: 건물 설명 필요")
+            levels = building.get("levels")
+            if not isinstance(levels, list) or not levels:
+                problems.append(f"{where}/levels: 층 목록 필요")
+                continue
+            last = None
+            for at, level in enumerate(levels):
+                if not isinstance(level, dict) or not isinstance(level.get("floor"), str) or not level["floor"]:
+                    problems.append(f"{where}/levels/{at}/floor: 층 이름 필요")
+                    continue
+                start = level.get("from")
+                if at == 0:
+                    if start is not None:
+                        problems.append(f"{where}/levels/0/from: 가장 낮은 층은 from 없이")
+                elif type(start) not in (int, float) or not math.isfinite(start) or (last is not None and start <= last):
+                    problems.append(f"{where}/levels/{at}/from: 아래층보다 높은 시작 높이 필요")
+                else:
+                    last = start
+    print(f"\n건물 층 보정 데이터: 문제 {len(problems)}개")
+    for problem in problems:
+        print(f"  {problem}")
+    return len(problems)
+
+
 def check_enemy_spawns(data, maps) -> int:
     """BD 보정의 숫자·출처·날짜와 dev 위치 이름·병합 참조를 검사한다."""
     entries = data.get("enemy_spawns", {})
@@ -401,7 +461,7 @@ def main() -> int:
 
     try:
         data = corrections.load()
-        boss_problems = check_boss_zones(data)
+        boss_problems = check_boss_zones(data) + check_floors(data)
         if not all(isinstance(data.get(key), dict) for key in ("quests", "btr_stops")):
             raise ValueError("corrections.json이 없거나 읽을 수 없습니다")
         for section in ("quests", "btr_stops"):

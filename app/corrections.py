@@ -5,6 +5,7 @@ import math
 import re
 from datetime import date
 import threading
+import time
 
 from app import paths
 
@@ -25,6 +26,16 @@ def load() -> dict:
                 data = {}
             _cached = (mtime, data)
             return data
+        except PermissionError:
+            # 편집 도구가 방금 바꿔치기한 파일이 잠깐 잠긴 경우: 빈 값으로 굳히지 않고 조금 뒤 한 번 더 읽음
+            try:
+                time.sleep(0.2)
+                data = json.loads(FILE.read_text(encoding="utf-8"))
+                _cached = (FILE.stat().st_mtime_ns, data if isinstance(data, dict) else {})
+                return _cached[1]
+            except (OSError, ValueError):
+                _cached = None
+                return {}
         except (OSError, ValueError):
             _cached = None
             return {}
@@ -100,6 +111,65 @@ def manual_boss_zones(map_key: str) -> list[dict]:
         if bosses:
             result.append({**zone, "bosses": bosses, "source": entry.get("source", "manual")})
     return result
+
+
+BASE_FLOOR = "1st Floor"  # dev 층 목록에 없는 기본 층(1층)을 가리키는 이름
+
+
+def floor_fixes(map_key: str) -> list[dict]:
+    """건물별 층 보정: 이 범위(네모) 안에서는 높이를 이 표로 층에 맞춘다. 게임에서 잰 높이만(from game).
+
+    dev 의 층 범위는 맵 전체를 높이로만 나눠서(시내: 10m 미만은 모두 1층) 건물마다 어긋난다.
+    돌려주는 값: [{"bounds": [[x, z], …] 다각형, "levels": [(시작 높이 또는 None, 층 이름), ...]}] (낮은 층부터).
+    모양이 깨진 건물은 그 건물만 건너뛴다."""
+    entry = section("floors").get(map_key, {})
+    if entry.get("source") != "game":
+        return []
+    result = []
+    for building in entry.get("buildings") if isinstance(entry.get("buildings"), list) else []:
+        if not isinstance(building, dict):
+            continue
+        bounds, levels = floor_polygon(building.get("bounds")), building.get("levels")
+        if bounds is None:
+            continue
+        if not isinstance(levels, list) or not levels:
+            continue
+        rows, last, ok = [], None, True
+        for index, level in enumerate(levels):
+            start = level.get("from") if isinstance(level, dict) else None
+            name = level.get("floor") if isinstance(level, dict) else None
+            if not isinstance(name, str) or not name:
+                ok = False
+            elif index == 0:
+                ok = ok and start is None  # 가장 낮은 층은 아래로 열려 있음
+            elif type(start) not in (int, float) or not math.isfinite(start) or (last is not None and start <= last):
+                ok = False
+            if not ok:
+                break
+            rows.append((start, name))
+            last = start if start is not None else last
+        if ok:
+            result.append({"bounds": bounds, "levels": rows,
+                           "name": building["name"] if isinstance(building.get("name"), str) else ""})
+    return result
+
+
+def floor_polygon(bounds) -> list | None:
+    """건물 범위 = 꼭짓점 [[x, z], …] 3개 이상인 다각형. 두 점이면 마주 보는 모서리로 본 네모(옛 모양). 이상하면 None"""
+    if not (isinstance(bounds, list) and 2 <= len(bounds) <= 200 and all(
+            isinstance(p, list) and len(p) == 2 and all(type(n) in (int, float) and math.isfinite(n) for n in p)
+            for p in bounds)):
+        return None
+    if len(bounds) == 2:
+        (x1, z1), (x2, z2) = bounds
+        return [[x1, z1], [x2, z1], [x2, z2], [x1, z2]]
+    return [list(p) for p in bounds]
+
+
+def hidden_floors(map_key: str) -> list[str]:
+    """층 고르기에서 빼는 dev 층 이름 (그림이 틀린 것으로 본 층. 예: 시내 5층 그림은 조각 둘뿐이고 그 높이의 표시가 없음)."""
+    names = section("floors").get(map_key, {}).get("hidden_layers")
+    return [name for name in names if isinstance(name, str) and name] if isinstance(names, list) else []
 
 
 BOSS_ZONE_KINDS = ("boss", "goons", "cultist")
