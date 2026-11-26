@@ -288,9 +288,14 @@ def check_enemy_spawns(data, maps) -> int:
             continue
         dev_maps = [m for m in maps.values() if isinstance(m, dict) and m.get("normalizedName") == map_key]
         dev_names = set()
+        boss_names = set()  # 보스·군즈·컬티스트 등장 구역 이름 (옮기기·숨기기 보정용)
         for m in dev_maps:
             bosses = m.get("bosses")
             for boss in bosses if isinstance(bosses, list) else []:
+                if isinstance(boss, dict) and boss.get("mob") != "blackDivision":
+                    for location in boss.get("spawnLocations") if isinstance(boss.get("spawnLocations"), list) else []:
+                        if isinstance(location, dict) and isinstance(location.get("name"), str):
+                            boss_names.add(location["name"])
                 if not isinstance(boss, dict) or boss.get("mob") != "blackDivision":
                     continue
                 locations = boss.get("spawnLocations")
@@ -304,6 +309,23 @@ def check_enemy_spawns(data, maps) -> int:
             manual = isinstance(entry, dict) and entry.get("manual") is True and re.fullmatch(r"manual_[1-9][0-9]*", name)
             if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*", name) or (name not in dev_names and not manual):
                 problems.append(f"{where}: dev Black Division 등장 구역 이름 필요")
+            if isinstance(entry, dict) and "zone" in entry:
+                # dev 보스 구역을 옮기거나 숨긴 보정 (편집 도구가 만듦): 이름 = <구역>_<종류>, 게임 확인만
+                problems.pop()  if problems and problems[-1].startswith(f"{where}: dev Black Division") else None
+                if (entry.get("kind") not in ("boss", "goons", "cultist") or not isinstance(entry["zone"], str)
+                        or name != f"{entry['zone']}_{entry.get('kind')}" or entry["zone"] not in boss_names):
+                    problems.append(f"{where}: dev 보스 등장 구역 이름과 종류 필요")
+                for field in ("x", "y", "z"):
+                    number = entry.get(field)
+                    if type(number) not in (int, float) or not math.isfinite(number):
+                        problems.append(f"{where}/{field}: 유한한 숫자 좌표 필요")
+                if entry.get("from") != "game":
+                    problems.append(f"{where}/from: game 필요 (dev 값을 고치는 건 게임 확인만)")
+                if not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", str(entry.get("checked", ""))):
+                    problems.append(f"{where}/checked: 날짜 YYYY-MM-DD 필요")
+                if "hidden" in entry and type(entry["hidden"]) is not bool:
+                    problems.append(f"{where}/hidden: 참/거짓 필요")
+                continue
             if not isinstance(entry, dict):
                 problems.append(f"{where}: 객체 필요")
                 continue

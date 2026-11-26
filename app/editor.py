@@ -257,7 +257,28 @@ def feature_keys(map_key, result):
                 _attach(item, "corrections.json", ["quest_spots", objective_id, "spots", index], snapshot)
                 if "edit" in item:
                     result["questSpots"].append(item)
+        for item in result.get("bossZones", []):
+            # dev 가 준 보스 구역: 끌어 옮기거나 숨기면 enemy_spawns/<맵>/<구역>_<종류> 보정이 생김 (블랙 디비전과 같은 방식)
+            if not item.get("dev") or "edit" in item or item.get("kind") not in ("boss", "goons", "cultist"):
+                continue
+            try:
+                # 같은 이름의 항목이 이미 있는데 이 구역의 보정이 아니면(블랙 디비전 보정과 이름이 겹침) 읽기 전용으로 둠
+                existing = _entry(data, ["enemy_spawns", map_key, f"{item['name']}_{item['kind']}"])
+                if existing is not None and not (isinstance(existing, dict) and existing.get("zone") == item["name"]
+                                                 and existing.get("kind") == item["kind"]):
+                    continue
+                _attach(item, "corrections.json", ["enemy_spawns", map_key, f"{item['name']}_{item['kind']}"], snapshot,
+                        {"y": item["pos"][2], "zone": item["name"], "kind": item["kind"], "note": "position set in editor"})
+                item["hideable"] = "edit" in item
+            except ValueError:
+                continue  # 구역 이름이 저장할 수 없는 모양이면 그 구역만 읽기 전용
+        for item in result.get("bossZones", []):
+            item["floorEdit"] = "edit" in item  # 편집할 수 있는 보스 구역은 층(높이)도 바꿀 수 있음
         for item in result.get("blackDivision", []):
+            # 반대쪽도: 같은 이름의 보스 구역 보정이 있으면 블랙 디비전이 그 항목을 고치지 않게
+            existing = _entry(data, ["enemy_spawns", map_key, item.get("name")]) if isinstance(item.get("name"), str) else None
+            if isinstance(existing, dict) and "zone" in existing:
+                continue
             counts = item.get("count")
             seed = None
             if isinstance(counts, list) and len(counts) == 2 and all(type(n) is int and n >= 1 for n in counts) and counts[0] <= counts[1]:
@@ -330,6 +351,13 @@ def _add_keys(map_key, result, snapshot):
         guide = None
     result_keys = {}
     result["editorHeights"] = heights
+    # 보스 선택 목록에 보일 이름 (지도 표시와 같은 이름. 저장은 그대로 내부 이름으로)
+    try:
+        from app import i18n
+        names = tarkov_api.Translator("maps")
+        result["editorBossNames"] = {mob: i18n.t("home.goons") if mob == "bossKnight" else names(mob) for mob in bosses}
+    except Exception:
+        result["editorBossNames"] = {}
     story = None
     try:
         story = _read(_target("story/places.json", ["places", "x", 0]))
@@ -736,8 +764,11 @@ def save(changes):
         seen = set()
         today = date.today().isoformat()
         for change in changes:
-            if not isinstance(change, dict) or set(change) not in ({"edit", "x", "z"}, {"edit", "x", "z", "fields"}, {"edit", "x", "z", "delete"}):
+            # y(높이)는 보스 구역의 층을 바꿀 때만 같이 옴 (옮기기·숨기기에만 붙을 수 있음)
+            if not isinstance(change, dict) or set(change) - {"y"} not in ({"edit", "x", "z"}, {"edit", "x", "z", "fields"}, {"edit", "x", "z", "delete"}, {"edit", "x", "z", "hide"}):
                 raise ValueError("change")
+            if "y" in change and (not _number(change["y"]) or abs(change["y"]) > 100000 or "fields" in change or "delete" in change):
+                raise ValueError("height")
             key = change["edit"]
             if not isinstance(key, dict) or set(key) != {"file", "path", "revision", "seed", "signature"}:
                 raise ValueError("key")
@@ -765,6 +796,25 @@ def save(changes):
             if "fields" in change:
                 raise ValueError("operation")
             entry = _entry(plan["data"], key["path"])
+            if "hide" in change:
+                # dev 보스 구역 숨기기·다시 보이기: 보정 항목의 hidden 만 바꿈 (자리는 지금 자리 그대로 적음)
+                zone = entry if entry is not None else key["seed"]
+                if (type(change["hide"]) is not bool or key["file"] != "corrections.json" or key["path"][0] != "enemy_spawns"
+                        or not isinstance(zone, dict) or not isinstance(zone.get("zone"), str)
+                        or zone.get("kind") not in ("boss", "goons", "cultist")
+                        or key["path"][2] != f"{zone['zone']}_{zone['kind']}"):
+                    raise ValueError("hide")
+                updates = {"x": round(change["x"], 1), "z": round(change["z"], 1), "hidden": change["hide"],
+                           "from": "game", "checked": today}
+                if "y" in change:
+                    updates["y"] = round(change["y"], 2)
+                if entry is None:
+                    updates = {**key["seed"], **updates}
+                elif not all(_number(entry.get(k)) for k in ("x", "y", "z")):
+                    raise ValueError("position")
+                plan["updates"].extend((tuple(key["path"]) + (field,), value) for field, value in updates.items())
+                plan["keys"].append(key)
+                continue
             if "delete" in change:
                 if (change["delete"] is not True or not isinstance(entry, dict) or key["seed"] != {"created": True}
                         or (not _ours(key["file"], key["path"]) and _identity(key["file"], key["path"], entry) not in _created)):
@@ -781,6 +831,13 @@ def save(changes):
                 plan["keys"].append(key)
                 continue
             updates = {"x": round(change["x"], 1), "z": round(change["z"], 1), "from": "game", "checked": today}
+            if "y" in change:
+                # 높이는 보스 구역만: 우리가 넣은 구역(boss_zones) 또는 dev 구역을 옮긴 보정(enemy_spawns 의 zone 항목)
+                zone = entry if entry is not None else key["seed"]
+                if key["file"] != "corrections.json" or not (key["path"][0] == "boss_zones" or (
+                        key["path"][0] == "enemy_spawns" and isinstance(zone, dict) and isinstance(zone.get("zone"), str))):
+                    raise ValueError("height")
+                updates["y"] = round(change["y"], 2)
             if key["path"][:1] == ["quest_spots"]:
                 del updates["from"]  # 위키에서 읽은 자리를 조금 옮겨도 출처(wiki·link)는 그대로
             if entry is None:

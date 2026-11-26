@@ -102,6 +102,35 @@ def manual_boss_zones(map_key: str) -> list[dict]:
     return result
 
 
+BOSS_ZONE_KINDS = ("boss", "goons", "cultist")
+
+
+def boss_zone_moves(map_key: str) -> dict:
+    """dev 가 준 보스 구역을 게임에서 확인한 자리로 옮기거나 숨긴 보정. {"<구역>_<종류>": {x, y, z, hidden}}
+
+    enemy_spawns 칸에 같이 둔다 (이름별 위치 보정이라는 같은 모양). zone·kind 가 있는 항목만 이쪽,
+    count 가 있는 블랙 디비전 보정은 manual_enemy_spawns 가 읽는다. 게임 확인(from game)만 dev 보다 먼저."""
+    entries = section("enemy_spawns").get(map_key, {})
+    result = {}
+    for name, entry in (entries.items() if isinstance(entries, dict) else ()):
+        if not isinstance(entry, dict) or not isinstance(entry.get("zone"), str) or entry.get("kind") not in BOSS_ZONE_KINDS:
+            continue
+        if name != f"{entry['zone']}_{entry['kind']}" or entry.get("from") != "game":
+            continue
+        try:
+            checked = entry.get("checked")
+            if not isinstance(checked, str) or date.fromisoformat(checked).isoformat() != checked:
+                continue
+        except ValueError:
+            continue
+        if not all(type(entry.get(k)) in (int, float) and math.isfinite(entry[k]) for k in ("x", "y", "z")):
+            continue
+        if "hidden" in entry and type(entry["hidden"]) is not bool:
+            continue
+        result[name] = {"x": entry["x"], "y": entry["y"], "z": entry["z"], "hidden": entry.get("hidden", False)}
+    return result
+
+
 def manual_enemy_spawns(map_key: str) -> dict:
     """BD 위치 이름별 보정. 출처·좌표·인원 형식이 깨진 항목만 제외한다."""
     entries = section("enemy_spawns").get(map_key, {})

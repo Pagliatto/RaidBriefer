@@ -276,16 +276,32 @@ def _spawn_center(positions: list) -> list:
     return [round(sum(p[i] for p in positions) / len(positions), 2) for i in range(3)]
 
 
+# 배 안은 지금 지도(타일)로 자리를 확인할 수 없어 보스 구역을 그리지 않는다 (story.md 쇄빙선과 같은 이유)
+NO_BOSS_ZONE_MAPS = {"icebreaker"}
+
+
+def _zone_kind(mob: str) -> str:
+    """지도 표시 묶음: 군즈(Knight 무리) / 컬티스트 / 그 밖의 보스 (2026-11-26 사용자: 셋으로 나눠 켜고 끔)"""
+    return {"bossKnight": "goons", "sectantPriest": "cultist"}.get(mob, "boss")
+
+
+def _is_zone_boss(mob) -> bool:
+    return isinstance(mob, str) and (mob.startswith("boss") or mob == "sectantPriest") and "infected" not in mob.lower()
+
+
 def _enemy_features(map_key: str, bosses, translate) -> dict:
-    """BD 인원은 위치 이름별 합계. Terminal 보스는 확률 없이 위치만 반환."""
+    """BD 인원은 위치 이름별 합계. 보스·군즈·컬티스트는 확률 없이 위치만 반환.
+
+    보스 구역은 그 보스가 나오는 구역의 자리를 모두 알 때만 내보낸다 (bosses). 일부만 알면 pending 으로:
+    세관 레샬라처럼 세 곳 중 한 곳만 그리면 '거기에만 나온다'로 잘못 읽힌다. 편집 도구는 pending 도 보여 준다."""
     bd = {}
     dev_zones = {}
-    terminal_bosses = {"bossGluhar", "bossKilla", "bossBully", "bossSanitar", "bossTagilla"}
+    mob_zones = {}  # 보스 → dev 가 적은 등장 구역 이름들
     for entry in _rows(bosses):
         if not isinstance(entry, dict):
             continue
         mob = entry.get("mob")
-        if mob != "blackDivision" and not (map_key == "terminal" and isinstance(mob, str) and mob in terminal_bosses):
+        if mob != "blackDivision" and not (_is_zone_boss(mob) and map_key not in NO_BOSS_ZONE_MAPS):
             continue  # vsRF / vsRFSniper 등은 표시하지 않음
         low = high = 1
         count_known = isinstance(entry.get("escorts"), list)
@@ -319,6 +335,7 @@ def _enemy_features(map_key: str, bosses, translate) -> dict:
                 group["positions"].update(positions)
                 if mob not in group["bosses"]:
                     group["bosses"].append(mob)
+                mob_zones.setdefault(mob, set()).add(name)
     overrides = corrections.manual_enemy_spawns(map_key)
     applied = {}
     for name, override in overrides.items():
@@ -356,27 +373,73 @@ def _enemy_features(map_key: str, bosses, translate) -> dict:
             "count": [group["low"], group["high"]] if group["known"] else None,
             **{key: group[key] for key in ("source", "inside", "estimated") if key in group},
         })
+    if map_key in NO_BOSS_ZONE_MAPS:
+        return result
+    zones = []
+    moves = corrections.boss_zone_moves(map_key)
     for name, group in dev_zones.items():
         positions = list(group["positions"])
         if not positions:
+            # dev 좌표가 없어도(처음부터 없거나 나중에 비워짐) 게임에서 확인해 옮겨 둔 자리가 있으면 그 자리로 그림
+            if any(f"{name}_{_zone_kind(mob)}" in moves for mob in group["bosses"]):
+                zones.append(({"name": name, "pos": None, "radius": 0, "dev": True}, group["bosses"]))
             continue
         center = _spawn_center(positions)
         # dev 좌표 전체를 감싸는 반경 (한 지점이면 원 대신 핀만 표시).
         radius = max(math.hypot(p[0] - center[0], p[1] - center[1]) for p in positions)
-        result["bossZones"].append({"name": name, "pos": center, "radius": round(radius, 2),
-                                    "bosses": [translate(mob) for mob in group["bosses"]]})
+        zones.append(({"name": name, "pos": center, "radius": round(radius, 2), "dev": True}, group["bosses"]))
+    valid_bosses = {b.get("mob") for b in _rows(bosses) if isinstance(b, dict) and _is_zone_boss(b.get("mob"))}
+    filled = set()   # 우리가 자리를 채운 dev 구역 이름 (위키로 잰 터미널 구역)
+    extra = {}       # 보스 → 직접 찍은 자리 수 (편집 도구의 manual_N)
     for zone in corrections.manual_boss_zones(map_key):
         # 같은 등장 구역에 dev 좌표가 하나라도 있으면 그 구역의 보완 좌표를 쓰지 않는다.
         if dev_zones.get(zone["spawn_location"], {}).get("positions"):
             continue
         manual = zone["spawn_location"].startswith("manual_")
-        valid_bosses = {b.get("mob") for b in _rows(bosses) if isinstance(b, dict)} if manual else terminal_bosses
         remaining = [mob for mob in zone["bosses"] if mob in valid_bosses]
         if (map_key != "terminal" and not manual) or not remaining:
             continue
-        result["bossZones"].append({"name": zone["spawn_location"], "pos": _xzy(zone),
-                                    "radius": zone["radius"], "bosses": [translate(mob) for mob in remaining],
-                                    "source": zone["source"]})
+        if manual:
+            for mob in remaining:
+                extra[mob] = extra.get(mob, 0) + 1
+        else:
+            filled.add(zone["spawn_location"])
+        zones.append(({"name": zone["spawn_location"], "pos": _xzy(zone), "radius": zone["radius"],
+                       "source": zone["source"]}, remaining))
+
+    # 사용자가 게임에서 확인해 손본 보스 (dev 구역을 옮겼거나 자리를 직접 찍음): 그 맵의 그 보스 자리는 사용자가 정한 것이 기준
+    # (게임 확인 > dev. 예: 해안선 컬티스트는 dev 구역이 셋인데, 사용자가 둘을 실제 두 곳으로 옮겨 놓음)
+    touched = set(extra)
+    for mob, names in mob_zones.items():
+        if any(f"{name}_{_zone_kind(mob)}" in moves for name in names):
+            touched.add(mob)
+
+    def complete(mob):
+        # 손보지 않은 보스는 dev 가 자리를 안 적은 구역이 하나라도 있으면 숨긴다 (일부만 그리면 '거기에만 나온다'로 읽힘)
+        missing = [name for name in mob_zones.get(mob, ()) if not dev_zones[name]["positions"] and name not in filled
+                   and f"{name}_{_zone_kind(mob)}" not in moves]
+        return mob in touched or not missing
+
+    def label(mob):
+        return i18n.t("home.goons") if mob == "bossKnight" else translate(mob)
+
+    for base, mobs in zones:
+        for kind in ("boss", "goons", "cultist"):
+            mine = [mob for mob in mobs if _zone_kind(mob) == kind]
+            shown = [label(mob) for mob in mine if complete(mob)]
+            pending = [label(mob) for mob in mine if not complete(mob)]
+            if not (shown or pending):
+                continue
+            item = {**base, "kind": kind, "bosses": shown, "pending": pending}
+            # dev 구역을 게임에서 확인한 자리로 옮겼거나 숨긴 보정 (dev 는 좌표 여러 개의 가운데라 엉뚱한 곳일 수 있음: 삼림 ZoneWoodCutter)
+            move = moves.get(f"{base['name']}_{kind}") if base.get("dev") else None
+            if item["pos"] is None and not move:
+                continue  # dev 좌표도 보정도 없는 종류
+            if move:
+                item.update(pos=[move["x"], move["z"], move["y"]], moved=True)
+                if move["hidden"]:
+                    item["hidden"] = True  # 화면은 편집 도구에서만 보임 (다시 보이게 할 수 있게)
+            result["bossZones"].append(item)
     return result
 
 

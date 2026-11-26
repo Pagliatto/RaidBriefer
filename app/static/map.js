@@ -54,7 +54,10 @@ function refreshNewMarkers() {
     const kind = pending.edit.seed.add;
     if (kind === "noplace" || kind === "maps" || kind === "unnoplace") continue; // 위치 없는 항목 (스토리 연속 입력의 '장소 불필요'·맵 고치기)
     const pin = pending.fields.kind;
-    const icons = { quest: ["quest-spot", "check"], bd: ["enemy", "crosshair"], boss: ["boss", "skull"], extract: [`extract-${pending.fields.faction}`, "door-open"], btr: ["btr", "bus"], story: ["story", "book-open"], guide: [pin === "lock" ? "lock" : "guide-" + pin, GUIDE_ICONS[pin] || "door-open"] };
+    // 저장 전 보스 표시도 저장한 뒤와 같은 모양으로 (군즈 = 사람들, 컬티스트 = 달)
+    const firstBoss = (pending.fields.bosses || [])[0];
+    const bossMark = BOSS_ZONE_KINDS[firstBoss === "bossKnight" ? "goons" : firstBoss === "sectantPriest" ? "cultist" : "boss"];
+    const icons = { quest: ["quest-spot", "check"], bd: ["enemy", "crosshair"], boss: [bossMark[1], bossMark[2]], extract: [`extract-${pending.fields.faction}`, "door-open"], btr: ["btr", "bus"], story: ["story", "book-open"], guide: [pin === "lock" ? "lock" : "guide-" + pin, GUIDE_ICONS[pin] || "door-open"] };
     // 저장 전 핀도 저장된 핀과 같은 겹침 순서로 (Codex 검수 76)
     const z = { quest: QUEST_SPOT_Z, bd: MARKER_Z.blackDivision, boss: MARKER_Z.bossZones, extract: MARKER_Z.extracts, btr: MARKER_Z.btrStops,
       story: STORY_PIN_Z, guide: pin === "lock" ? MARKER_Z.keys : GUIDE_PIN_Z }[kind] || 0;
@@ -120,7 +123,7 @@ function openMarkerForm(latlng) {
     }
     return input;
   };
-  const kind = field(form, "kind", select(Object.keys(options).filter((key) => !["noplace", "maps", "unnoplace", "quest"].includes(key))
+  const kind = field(form, "kind", select(Object.keys(options).filter((key) => !["noplace", "maps", "unnoplace", "quest", "story"].includes(key))
     .map((key) => [key, editorText("kind_" + key)])));
   if (typeof picked === "string" && options[picked]) {
     kind.value = picked;
@@ -147,7 +150,7 @@ function openMarkerForm(latlng) {
       const count = input("count", "count", "number");
       count.min = 1; count.max = 20; count.step = 1; count.value = 1;
     } else if (kind.value === "boss") {
-      choice("bosses", "bosses", options.boss.seed.bosses.map((id) => [id, id]), true);
+      choice("bosses", "bosses", options.boss.seed.bosses.map((id) => [id, mapEditor.bossNames?.[id] || id]), true);
       inputs.bosses.required = true;
     } else if (kind.value === "extract" || kind.value === "btr") {
       input("name", kind.value === "extract" ? "nameEn" : "name");
@@ -252,7 +255,8 @@ async function initializePositionEditor() {
   // 종류별 추가 버튼: 누르고 지도를 클릭하면 그 종류로 바로 (종류 고르기 단계 없음)
   const marks = group("editor.groupMarks");
   mapEditor.addButtons = {};
-  for (const key of ["bd", "boss", "extract", "btr", "guide", "story"]) {
+  // 스토리 장소는 [퀘스트·스토리 자리 찍기]·[스토리 연속 입력]으로만 (같은 일을 하는 버튼이 둘이라 뺌, 2026-11-26 사용자)
+  for (const key of ["bd", "boss", "extract", "btr", "guide"]) {
     mapEditor.addButtons[key] = button(marks, "", () => {
       if (mapEditor.saving || !mapEditor.options?.[key]) return;
       if (mapEditor.walk) stopStoryWalk(); // 연속 입력 중이면 끝내고 일반 추가로
@@ -579,6 +583,76 @@ function bindPositionEditor(marker, item, label, guide = false) {
     });
     content.append(remove);
     marker.bindPopup(content);
+  } else if (item.hideable) {
+    // dev 가 준 보스 구역: 지울 수는 없고 숨기기만 (저장하면 보정으로 기록, 다시 보이게 할 수 있음)
+    const content = el("div");
+    content.append(el("div", "", label));
+    const toggle = el("button", "layer-toggle-btn");
+    toggle.type = "button";
+    const hiddenNow = () => { const p = mapEditor.pending.get(id); return p && "hide" in p ? p.hide : !!item.hidden; };
+    const paint = () => { toggle.textContent = t(hiddenNow() ? "editor.unhide" : "editor.hide"); };
+    toggle.addEventListener("click", () => {
+      if (mapEditor.saving) return;
+      const before = mapEditor.pending.get(id);
+      const next = !hiddenNow();
+      mapEditor.history.push({ id, before });
+      const rest = { ...before, edit: before?.edit || item.edit, pos: position().slice(), base: before?.base || binding.base };
+      delete rest.hide;
+      const base = rest.base;
+      const near = (a, b) => Math.round(a * 10) === Math.round(b * 10);
+      const unmoved = near(rest.pos[0], base[0]) && near(rest.pos[1], base[1]) && rest.pos[2] === base[2];
+      if (next === !!item.hidden && unmoved) mapEditor.pending.delete(id); // 원래대로 돌아옴
+      else mapEditor.pending.set(id, next === !!item.hidden ? rest : { ...rest, hide: next });
+      marker.closePopup();
+      refreshPositionEdits();
+    });
+    marker.on("popupopen", paint);
+    binding.hiddenNow = hiddenNow;
+    content.append(toggle);
+    marker.bindPopup(content);
+  }
+  // 보스 구역: 층 바꾸기 (자리는 그대로, 높이만 그 층 높이로). 층이 여러 개인 맵에서만
+  if (item.floorEdit && !item.draftId && (mapUI.floorRows || []).length > 1) {
+    let content = marker.getPopup()?.getContent();
+    if (!content) {
+      content = el("div");
+      content.append(el("div", "", label));
+      marker.bindPopup(content);
+    }
+    const row = el("label", "position-floor");
+    row.append(el("span", "", t("editor.floor")));
+    const pick = el("select");
+    row.append(pick);
+    content.append(row);
+    const fill = () => {
+      const pos = position();
+      pick.replaceChildren();
+      mapUI.floorRows.forEach((r) => {
+        if (heightForFloor(pos[0], pos[1], r.index, pos[2]) === null) return; // 이 자리에는 없는 층
+        const option = el("option", "", floorLabel(r.name));
+        option.value = String(r.index);
+        option.selected = r.index === floorOf(pos);
+        pick.append(option);
+      });
+    };
+    marker.on("popupopen", fill);
+    pick.addEventListener("change", () => {
+      if (mapEditor.saving) return;
+      const index = pick.value === "null" ? null : Number(pick.value);
+      const old = position();
+      const y = heightForFloor(old[0], old[1], index, old[2]);
+      if (y === null || y === old[2]) return;
+      const before = mapEditor.pending.get(id);
+      mapEditor.history.push({ id, before });
+      const base = before?.base || binding.base;
+      const same = (a, b) => Math.round(a * 10) === Math.round(b * 10);
+      // 자리·높이·숨김이 모두 원래대로면 변경으로 남기지 않음 (필요 없는 보정이 저장되지 않게)
+      if (!before?.fields && !(before && "hide" in before) && y === base[2] && same(old[0], base[0]) && same(old[1], base[1])) mapEditor.pending.delete(id);
+      else mapEditor.pending.set(id, { ...before, edit: before?.edit || item.edit, pos: [old[0], old[1], y], base });
+      marker.closePopup();
+      refreshPositionEdits();
+      goToFloorOf(index);
+    });
   }
   marker.options.draggable = true;
   marker.options.icon.options.className += " position-editable";
@@ -596,6 +670,7 @@ function bindPositionEditor(marker, item, label, guide = false) {
     if (node) {
       node.classList.add("position-editable");
       node.classList.toggle("position-deleted", !!mapEditor.pending.get(id)?.delete);
+      node.classList.toggle("position-hidden", binding.hiddenNow ? binding.hiddenNow() : !!item.hidden);
       let badge = node.querySelector(".position-moved");
       const fresh = item.draftId || item.edit.seed?.created;
       if ((mapEditor.pending.has(id) || fresh) && !badge) {
@@ -621,14 +696,14 @@ function bindPositionEditor(marker, item, label, guide = false) {
     // Leaflet already used tdCRS.unproject, including Terminal's display rotation.
     // lng is game x, lat is game z. Applying another inverse rotation would be wrong.
     const ll = marker.getLatLng();
-    const pos = [Math.round(ll.lng * 10) / 10, Math.round(ll.lat * 10) / 10, binding.base[2]];
+    const pos = [Math.round(ll.lng * 10) / 10, Math.round(ll.lat * 10) / 10, position()[2]];
     if (!pos.every(Number.isFinite)) { binding.refresh(); return; }
     const before = mapEditor.pending.get(id);
     const old = position();
     if (pos[0] === old[0] && pos[1] === old[1]) { binding.refresh(); return; }
     mapEditor.history.push({ id, before });
     const base = before?.base || binding.base;
-    if (!before?.fields && pos[0] === Math.round(base[0] * 10) / 10 && pos[1] === Math.round(base[1] * 10) / 10) mapEditor.pending.delete(id);
+    if (!before?.fields && !(before && "hide" in before) && pos[2] === base[2] && pos[0] === Math.round(base[0] * 10) / 10 && pos[1] === Math.round(base[1] * 10) / 10) mapEditor.pending.delete(id);
     else mapEditor.pending.set(id, { ...before, edit: before?.edit || item.edit, pos, base });
     refreshPositionEdits();
   });
@@ -645,9 +720,11 @@ async function savePositionEdits() {
     // 같은 글 단계(twins)는 같은 장소·같은 열쇠로 한 번씩 더 넣음
     const ordered = [...mapEditor.pending.values()].sort((a, b) =>
       (b.edit?.seed?.add === "maps") - (a.edit?.seed?.add === "maps")); // 맵 고치기 먼저
-    const changes = ordered.flatMap(({ edit, pos, fields, delete: removed, twins }) =>
+    const changes = ordered.flatMap(({ edit, pos, fields, delete: removed, twins, hide, base }) =>
       [fields?.step, ...(fields && twins ? twins : [])].map((step, i) => ({ edit, x: pos[0], z: pos[1],
-        ...(fields ? { fields: i ? { ...fields, step } : fields } : {}), ...(removed ? { delete: true } : {}) })));
+        ...(!fields && !removed && base && pos[2] !== base[2] ? { y: pos[2] } : {}), // 층을 바꾼 보스 구역만 높이를 같이 보냄
+        ...(fields ? { fields: i ? { ...fields, step } : fields } : {}), ...(removed ? { delete: true } : {}),
+        ...(typeof hide === "boolean" ? { hide } : {}) })));
     const response = await fetch("/api/editor", {
       method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ changes }),
     });
@@ -1274,6 +1351,24 @@ function storyWalkPlace(latlng) {
 }
 
 // 지금 보고 있는 층의 높이: 그 층에 있는 가장 가까운 표시의 높이, 없으면 그 층 범위의 가운데
+// 이 자리(x, z)에서 고른 층에 해당하는 높이. 그 층의 가까운 표시 높이 → 없으면 지금 높이에서 가장 가까운 그 층 높이. 못 찾으면 null
+function heightForFloor(x, z, index, fromY) {
+  const onFloor = (mapEditor.heights || []).filter((p) => floorOf([x, z, p[2]]) === index);
+  if (onFloor.length) {
+    return onFloor.reduce((best, p) => (Math.hypot(p[0] - x, p[1] - z) < Math.hypot(best[0] - x, best[1] - z) ? p : best))[2];
+  }
+  const start = Number.isFinite(fromY) ? fromY : 0;
+  for (let step = 0; step <= 240; step++) {
+    for (const sign of step ? [1, -1] : [1]) {
+      const y = start + sign * step * 0.5;
+      if (floorOf([x, z, y]) !== index) continue;
+      const deeper = y + sign * 1.5; // 층 경계에 걸치지 않게 조금 더 안쪽으로
+      return Math.round((floorOf([x, z, deeper]) === index ? deeper : y) * 100) / 100;
+    }
+  }
+  return null;
+}
+
 function floorHeight(x, z) {
   const heights = mapEditor.heights || [];
   const nearest = (list) => list.reduce((best, p) =>
@@ -1835,7 +1930,7 @@ const STORY_PIN_Z = 600; // 스토리 핀 높이 (퀘스트 핀보다 위, 겹�
 // 겹쳤을 때 위에 오는 순서 (2026-11-24 사용자: 중요한 표시일수록 위, 규칙 docs/notes/map-screen.md)
 // 할 일(스토리 600 > 퀘스트 500 > 공략 400) > 나가는 길·위험·열쇠 자리 > 참고(잠긴 문·비트코인·BTR·먹을 것)
 const GUIDE_PIN_Z = 400;
-const MARKER_Z = { extracts: 300, scavExtracts: 300, transits: 280, bossZones: 250, blackDivision: 250, keySpawns: 200, keys: 100, bitcoin: 80, btrStops: 60 };
+const MARKER_Z = { extracts: 300, scavExtracts: 300, transits: 280, bossZones: 250, goonZones: 250, cultistZones: 250, blackDivision: 250, keySpawns: 200, keys: 100, bitcoin: 80, btrStops: 60 };
 // 강조(800)가 풀렸을 때 돌아갈 원래 높이
 function baseZ(marker) { return marker.baseZ || 0; }
 
@@ -2823,11 +2918,20 @@ initializePositionEditor().then(loadMapList);
 
 // ---------- 표시 켜기/끄기 (왼쪽 서랍) ----------
 // 퀘스트·먹을 것·탈출구·트랜짓·열쇠·귀중품. 고른 값은 이 브라우저에 기억 (다음에 켜도 그대로)
-const LAYER_KEYS = ["quests", "extracts", "scavExtracts", "transits", "btrStops", "keys", "bitcoin", "keySpawns", "guide", "story", "blackDivision", "bossZones"];
+const LAYER_KEYS = ["quests", "extracts", "scavExtracts", "transits", "btrStops", "keys", "bitcoin", "keySpawns", "guide", "story", "blackDivision", "bossZones", "goonZones", "cultistZones"];
+// 보스 등장 구역 셋: 서버 kind → [표시 묶음, 색, 아이콘, 겹치지 않게 띄우는 방향(m)] (2026-11-26 사용자: 보스·군즈·컬티스트로 나눔, 기본 끔)
+const BOSS_ZONE_KINDS = {
+  boss: ["bossZones", "boss", "skull", [10, 0]],
+  goons: ["goonZones", "goons", "users", [-10, 0]],
+  cultist: ["cultistZones", "cultist", "moon", [0, 10]],
+};
+const BOSS_ZONE_LAYERS = Object.values(BOSS_ZONE_KINDS).map((k) => k[0]);
 const LAYER_INFO = {
   story: { label: t("map.storyLayer"), mark: "mk:story:book-open", on: true },
   blackDivision: { label: t("map.layerBlackDivision"), mark: "mk:enemy:crosshair", on: true },
-  bossZones: { label: t("map.layerBossZones"), mark: "mk:boss:skull", on: true },
+  bossZones: { label: t("map.layerBossZones"), mark: "mk:boss:skull", on: false },
+  goonZones: { label: t("map.layerGoonZones"), mark: "mk:goons:users", on: false },
+  cultistZones: { label: t("map.layerCultistZones"), mark: "mk:cultist:moon", on: false },
   guide: { label: t("map.guideLayer"), mark: "mk:guide-start:book-open", on: true },
   quests: { label: t("map.layerQuests"), mark: "shape:quest", on: true },
   extracts: { label: t("map.layerExtracts"), mark: "mk:extract-pmc:door-open", on: true },
@@ -2874,7 +2978,7 @@ function renderLayerDrawer() {
     if (key === "guide" && !currentGuide()) return;
     // 편집 모드는 이 맵의 모든 장소, 평소에는 지금 할 단계의 장소 기준 (storyPinEntries 와 같은 기준)
     if (key === "story" && (!mapUI.current || !storyPinEntries().some(({ entry }) => storyPlacesFor(entry.step.id, mapUI.current.key).length))) return;
-    if ((key === "blackDivision" || key === "bossZones") && !layerCount(key)) return;
+    if ((key === "blackDivision" || BOSS_ZONE_LAYERS.includes(key)) && !layerCount(key)) return;
     if (info.always) return;  // 항상 보이는 표시는 서랍에 스위치를 두지 않음
     const on = layerOn(key);
     const btn = el("button", `layer-toggle layer-${key}${on ? " on" : ""}`);
@@ -2900,7 +3004,7 @@ function renderLayerDrawer() {
 // 표시 묶음마다 이 맵에 있는 개수 (지도를 아직 안 그렸으면 null)
 function layerCount(key) {
   if (!mapUI.groups || !mapUI.leaflet) return null;
-  if (key === "bossZones") return mapUI.groups.bossZones?.getLayers().filter((layer) => layer instanceof L.Marker).length || 0;
+  if (BOSS_ZONE_LAYERS.includes(key)) return mapUI.groups[key]?.getLayers().filter((layer) => layer instanceof L.Marker).length || 0;
   if (key === "quests") return (mapUI.pinMarkers || []).length;
   return mapUI.groups[key] ? mapUI.groups[key].getLayers().length : 0;
 }
@@ -2932,6 +3036,7 @@ async function drawFeatures(leaf, m) {
   if (mapEditor.active) {
     mapEditor.options = data.editorAdd || null;
     mapEditor.heights = data.editorHeights || [];
+    mapEditor.bossNames = data.editorBossNames || {};
     mapEditor.goals = data.editorQuestGoals || [];
     leaf.on("click", (event) => {
       if (!mapEditor.walk && mapEditor.placing && !mapEditor.saving && mapEditor.options) openMarkerForm(event.latlng);
@@ -3047,12 +3152,16 @@ function drawEnemyFeatures(data, add) {
   });
   (Array.isArray(data.bossZones) ? data.bossZones : []).forEach((zone) => {
     if (!zone || !validPos(zone.pos) || !Array.isArray(zone.bosses)) return;
-    const names = zone.bosses.filter((name) => typeof name === "string" && name);
+    if (zone.hidden && !mapEditor.active) return; // 숨긴 구역은 편집 도구에서만 (흐리게)
+    const [layer, color, glyph, shift] = BOSS_ZONE_KINDS[zone.kind] || BOSS_ZONE_KINDS.boss;
+    const text = (list) => (Array.isArray(list) ? list : []).filter((name) => typeof name === "string" && name);
+    // 자리를 다 모르는 보스(pending)는 평소에는 안 보이고, 편집 도구에서만 '빈 구역 남음'을 붙여 보인다
+    const names = text(zone.bosses).concat(mapEditor.active ? text(zone.pending).map((name) => name + " " + t("map.bossZonePending")) : []);
     if (!names.length) return;
-    // 게임 좌표에서 10m 옆으로 띄운다. 지도 회전 후에도 BD와 같은 방식으로 이동한다.
-    const iconPos = mapEditor.active && zone.edit ? zone.pos : [zone.pos[0] + 10, zone.pos[1], zone.pos[2]];
-    const marker = add("bossZones", iconPos, markerIcon("boss", "skull", 22),
-      "<b>" + escapeHtml(t("map.layerBossZones")) + "</b><br>" + names.map(escapeHtml).join("<br>"),
+    // 게임 좌표에서 10m 옆으로 띄운다 (종류마다 다른 쪽: 같은 구역의 보스·군즈·컬티스트가 겹치지 않게). 지도 회전 후에도 BD와 같은 방식으로 이동한다.
+    const iconPos = mapEditor.active && zone.edit ? zone.pos : [zone.pos[0] + shift[0], zone.pos[1] + shift[1], zone.pos[2]];
+    const marker = add(layer, iconPos, markerIcon(color, glyph, 22),
+      "<b>" + escapeHtml(LAYER_INFO[layer].label) + "</b><br>" + names.map(escapeHtml).join("<br>"),
       false, { keyboard: true, title: names.join(", "), alt: names.join(", ") });
     bindPositionEditor(marker, zone, names.join(", ") + " · " + zone.name);
   });
