@@ -509,9 +509,12 @@ def api_report_ack():
 
 @app.post("/api/report/js-error")
 def api_report_js_error():
-    """화면 오류 기록 (errors.js): {"file": 화면 파일 이름, "line": 줄, "type": 오류 종류} 만"""
-    body = request.get_json(silent=True) or {}
-    code = report_log.record_js_error(body.get("file"), body.get("line"), body.get("type"))
+    """화면 오류 기록 (errors.js): {"file": 화면 파일 이름, "line": 줄, "type": 오류 종류} 와
+    정해진 목록에 있는 "tab"(열려 있던 탭)·"hint"(미리 정해 둔 문장의 짧은 이름) 만"""
+    body = request.get_json(silent=True)
+    if not isinstance(body, dict):
+        body = {}
+    code = report_log.record_js_error(body.get("file"), body.get("line"), body.get("type"), body.get("tab"), body.get("hint"))
     if code is None:
         return jsonify({"error": i18n.t("server.badRequest")}), 400
     return jsonify({"code": code})
