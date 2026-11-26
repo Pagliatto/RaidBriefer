@@ -1396,16 +1396,24 @@ function markFloorDirty() {
   updateFloorButtons();
 }
 
+// 층 보정 범위는 지도 그림보다 항상 위에 (따로 둔 칸). 지도를 다시 그릴 때 그림보다 먼저 그려지면 그림 밑에 깔려 안 보였음
+function floorPane() {
+  const leaf = mapUI.leaflet;
+  if (!leaf.getPane("floorFixes")) leaf.createPane("floorFixes").style.zIndex = 450; // 지도 그림(400) 위, 표시(600) 아래
+  return "floorFixes";
+}
+
 function drawFloorFixes() {
   const group = mapUI.groups.floorFixes;
   if (!group || !mapEditor.active) return;
   group.clearLayers();
   floorEdit.polys = [];
   floorEdit.handles = L.layerGroup().addTo(group);
-  if (floorEdit.mapKey !== mapUI.current?.key) return;
+  if (floorEdit.mapKey !== mapUI.current?.key || !mapUI.leaflet) return;
+  floorPane();
   floorEdit.buildings.forEach((b, i) => {
     const on = i === floorEdit.selected;
-    const poly = L.polygon(floorLatLngs(b.bounds), { color: "#ffd84a", weight: on ? 3 : 2, dashArray: "6 4", fillOpacity: on ? 0.2 : 0.08 });
+    const poly = L.polygon(floorLatLngs(b.bounds), { pane: "floorFixes", color: "#ffd84a", weight: on ? 3 : 2, dashArray: "6 4", fillOpacity: on ? 0.2 : 0.08 });
     poly.bindTooltip(escapeHtml(b.name) + "<br>" + escapeHtml(floorLevelsText(b.levels)), { sticky: true });
     poly.on("click", (event) => {
       L.DomEvent.stopPropagation(event); // 지도 빈 곳 클릭(고르기 풀기)으로 번지지 않게
@@ -1514,7 +1522,8 @@ function floorDrawClick(latlng) {
   drawing.points.push([round1(latlng.lng), round1(latlng.lat)]);
   drawing.layer.clearLayers();
   const line = floorLatLngs(drawing.points);
-  (drawing.points.length >= 3 ? L.polygon(line, { color: "#ffd84a", weight: 2, fillOpacity: 0.12 }) : L.polyline(line, { color: "#ffd84a", weight: 2 }))
+  const pane = floorPane();
+  (drawing.points.length >= 3 ? L.polygon(line, { pane, color: "#ffd84a", weight: 2, fillOpacity: 0.12 }) : L.polyline(line, { pane, color: "#ffd84a", weight: 2 }))
     .addTo(drawing.layer);
   // 첫 점: 다시 누르면 닫힘 (세 점부터)
   const first = L.marker(line[0], { icon: L.divIcon({ className: "floor-handle floor-handle-first", iconSize: [16, 16], iconAnchor: [8, 8] }), zIndexOffset: 7100 });
@@ -1622,7 +1631,13 @@ async function saveFloorFixes() {
   } catch (error) { /* 아래에서 실패로 안내 */ }
   floorEdit.saving = false;
   updateFloorButtons(t(ok ? "editor.saved" : "editor.saveFailed"));
-  if (ok && mapUI.current?.key === key) drawMap();
+  if (ok && mapUI.current?.key === key) {
+    // 다시 그려도 보던 자리·확대는 그대로 (범위를 고치는 중에 전체 보기로 튀지 않게)
+    const center = mapUI.leaflet?.getCenter();
+    const zoom = mapUI.leaflet?.getZoom();
+    await drawMap();
+    if (center && mapUI.leaflet && mapUI.current?.key === key) mapUI.leaflet.setView(center, zoom, { animate: false });
+  }
 }
 
 // 이 자리(x, z)에서 고른 층에 해당하는 높이. 그 층의 가까운 표시 높이 → 없으면 지금 높이에서 가장 가까운 그 층 높이. 못 찾으면 null
@@ -1899,7 +1914,6 @@ async function drawMap() {
   });
   leaf.setView([0, 0], 0, { animate: false });
   drawGuidePins();
-  drawFloorFixes();
   // 확대·축소하면 겹침이 달라지니 다시 계산
   leaf.on("zoomstart", collapseAll);
   leaf.on("zoomend", findClusters);
