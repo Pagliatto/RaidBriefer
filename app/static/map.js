@@ -859,6 +859,97 @@ function fitFull(leaf, reset) {
   if (!reset && !wasFull) leaf.setView(center, Math.max(zoom, fullZoom), { animate: false });
 }
 
+// 지도가 화면 밖으로 끌려 나가지 않게 막음 (2026-11-27 사용자: 좌우 밖으로 너무 넘어감 → 락).
+// 가로·세로 각각: 지도가 화면보다 작으면 화면 밖으로 MAP_EDGE 만큼까지만 나가고, 크면 가장자리 밖 빈 곳이
+// 화면의 MAP_EDGE 만큼까지만 보이게. 끌기·놓은 뒤 미끄러짐·핀으로 이동·확대 모두 같은 범위.
+// Leaflet maxBounds 는 회전된 지도에서 어긋나므로 쓰지 않고, 네 모서리로 직접 계산
+const MAP_EDGE = 0.1; // 가장자리 밖으로 보여도 되는 빈 곳 (화면 크기에 대한 비율)
+
+// 한 방향: 지도 [low, high], 화면 [0, view] 일 때 지도를 옮겨야 하는 px (범위 안이면 0)
+function mapEdgeShift(low, high, view) {
+  const size = high - low;
+  const edge = view * MAP_EDGE;
+  // 지도가 화면보다 작든 크든 양쪽 끝에 같은 여유 (2026-11-27 사용자: 전체 보기에서 위아래가 벽처럼 딱 막힘)
+  const min = Math.min(0, view - size) - edge;
+  const max = Math.max(0, view - size) + edge;
+  return Math.max(min, Math.min(max, low)) - low;
+}
+
+// 지도 네 모서리를 감싸는 네모. at = 좌표를 px 로 바꾸는 함수
+function mapCornerBox(at) {
+  const b = mapUI.bounds;
+  const points = [b.getSouthWest(), b.getNorthEast(), b.getNorthWest(), b.getSouthEast()].map(at);
+  const xs = points.map((p) => p.x), ys = points.map((p) => p.y);
+  return [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
+}
+
+// 지금 화면에서 지도를 moved 만큼 옮겼다고 칠 때, 범위 안으로 되돌리려면 더 옮겨야 하는 px
+function mapPullBack(leaf, moved = [0, 0]) {
+  if (!mapUI.bounds || mapUI.leaflet !== leaf) return [0, 0];
+  const [x1, x2, y1, y2] = mapCornerBox((ll) => leaf.latLngToContainerPoint(ll));
+  const size = leaf.getSize();
+  const back = [mapEdgeShift(x1 + moved[0], x2 + moved[0], size.x), mapEdgeShift(y1 + moved[1], y2 + moved[1], size.y)];
+  return back.every(Number.isFinite) ? back : [0, 0];
+}
+
+// 그 확대 단계에서 화면 가운데로 둘 수 있는 가장 가까운 자리 (핀으로 이동·확대할 때)
+function mapClampCenter(leaf, center, zoom) {
+  if (!mapUI.bounds || mapUI.leaflet !== leaf) return center;
+  const [x1, x2, y1, y2] = mapCornerBox((ll) => leaf.project(ll, zoom));
+  const size = leaf.getSize();
+  const at = leaf.project(L.latLng(center), zoom);
+  const dx = mapEdgeShift(x1 - at.x + size.x / 2, x2 - at.x + size.x / 2, size.x);
+  const dy = mapEdgeShift(y1 - at.y + size.y / 2, y2 - at.y + size.y / 2, size.y);
+  if (![dx, dy].every(Number.isFinite) || (Math.abs(dx) < 1 && Math.abs(dy) < 1)) return center;
+  return leaf.unproject(L.point(at.x - dx, at.y - dy), zoom);
+}
+
+function lockMapInView(leaf) {
+  // 끄는 동안: 옮기려는 자리를 범위 안으로 (Leaflet 이 maxBounds 에서 하는 것과 같은 자리)
+  const drag = leaf.dragging && leaf.dragging._draggable;
+  if (drag) {
+    drag.on("predrag", () => {
+      if (!drag._newPos) return;
+      const from = L.DomUtil.getPosition(leaf.getPane("mapPane"));
+      const back = mapPullBack(leaf, [drag._newPos.x - from.x, drag._newPos.y - from.y]);
+      drag._newPos = drag._newPos.add(back);
+    });
+  }
+  // 놓은 뒤 미끄러짐: 속도는 그대로 두고, 범위 끝에 닿은 방향만 그 자리에서 멈춤 (다른 방향은 계속 미끄러짐).
+  // 미끄러질 거리를 미리 줄이면 끝에 천천히 다가가 붙는 것처럼 보임 (2026-11-27 사용자: 자석 같다)
+  leaf.on("move", () => {
+    const slide = leaf._panAnim;
+    if (!slide || !slide._inProgress || !slide._startPos || !slide._offset) return;
+    const back = mapPullBack(leaf);
+    const pane = leaf.getPane("mapPane");
+    const at = L.DomUtil.getPosition(pane);
+    const hitX = Math.abs(back[0]) >= 1, hitY = Math.abs(back[1]) >= 1;
+    if (!hitX && !hitY) return;
+    const stop = L.point(at.x + (hitX ? back[0] : 0), at.y + (hitY ? back[1] : 0));
+    if (hitX) { slide._startPos.x = stop.x; slide._offset.x = 0; }
+    if (hitY) { slide._startPos.y = stop.y; slide._offset.y = 0; }
+    L.DomUtil.setPosition(pane, stop);
+  });
+  // 핀으로 이동·확대: 가려는 자리를 미리 범위 안으로
+  // 실제로 가게 될 확대 단계 (Leaflet 안쪽 함수가 없으면 받은 값 그대로)
+  const zoomTo = (zoom) => (zoom === undefined ? leaf.getZoom() : typeof leaf._limitZoom === "function" ? leaf._limitZoom(zoom) : zoom);
+  const setView = leaf.setView.bind(leaf);
+  leaf.setView = (center, zoom, options) => {
+    const z = zoomTo(zoom);
+    return setView(mapClampCenter(leaf, center, z), zoom, options);
+  };
+  const flyTo = leaf.flyTo.bind(leaf);
+  leaf.flyTo = (center, zoom, options) => {
+    const z = zoomTo(zoom);
+    return flyTo(mapClampCenter(leaf, center, z), zoom, options);
+  };
+  // 그 밖의 경로(두 손가락 확대 등)로 벗어났으면 움직임이 끝날 때 바로 맞춤
+  leaf.on("moveend", () => {
+    const back = mapPullBack(leaf);
+    if (Math.abs(back[0]) >= 1 || Math.abs(back[1]) >= 1) leaf.panBy([-back[0], -back[1]], { animate: false });
+  });
+}
+
 // 게임 좌표 [x, z] → 지도 위치
 function gamePos(p) {
   return [p[1], p[0]];
@@ -1930,6 +2021,7 @@ async function drawMap() {
   mapUI.leaflet = leaf;
   const bounds = tdBounds(view.bounds);
   mapUI.bounds = bounds;
+  lockMapInView(leaf); // 지도가 화면 밖으로 끌려 나가지 않게
   mapUI.clusters = [];
   mapUI.view = view;
   mapUI.floor = null;       // null = 1층(기본). 숫자 = view.layers 의 몇 번째 층
