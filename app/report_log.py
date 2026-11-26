@@ -26,6 +26,11 @@ JSON_FILE = USER_DIR / "report.json"
 TEXT_FILE = USER_DIR / "report.txt"
 APP_DIR = Path(__file__).resolve().parent
 JS_FILES = frozenset(p.stem for p in (APP_DIR / "static").glob("*.js"))  # 화면 오류 코드에 쓸 수 있는 우리 화면 파일
+# 우리 화면 파일이 아닌 곳에서 난 화면 오류: 난 곳의 종류만 (errors.js). leaflet 은 줄 대신 '몇 번째 글자'
+JS_OTHER_PLACES = frozenset({"unknown", "leaflet", "browser"})
+JS_TABS = frozenset({"home", "quest", "story", "hideout", "map"})  # 오류가 났을 때 열려 있던 탭
+# 미리 정해 둔 오류 문장의 짧은 이름 (문장 자체는 받지 않음, errors.js HINTS 와 같은 목록)
+JS_HINTS = frozenset({"resize-loop", "invalid-latlng", "map-not-ready", "invalid-bounds", "map-container", "script-error"})
 KINDS = {"start", "stop", "unclean", "game_on", "game_off", "map_in", "map_out", "alert_on", "alert_off", "error"}
 
 # 파일에서 다시 읽을 때 칸마다 허용하는 모양 (손상·손으로 고친 파일의 경로·원문이 report.txt 로 나가지 않게)
@@ -35,6 +40,8 @@ FIELD_RULES = {
     "version": re.compile(r"[\w.+-]{1,30}"),
     "map": re.compile(r"[\w -]{1,40}"),  # normalizedName, 없으면 이름(띄어쓰기 가능)
 }
+# 정해진 목록에 있는 값만 남기는 칸 (목록 밖이면 그 칸만 버리고 줄은 남김)
+FIELD_LISTS = {"tab": JS_TABS, "hint": JS_HINTS}
 
 _lock = threading.Lock()
 _save_lock = threading.Lock()  # 같은 임시 파일을 두 일꾼이 동시에 쓰지 않게
@@ -112,6 +119,10 @@ def _clean_entry(entry) -> dict | None:
         if not (isinstance(value, str) and rule.fullmatch(value)):
             return None
         clean[field] = value
+    for field, allowed in FIELD_LISTS.items():
+        value = entry.get(field)
+        if isinstance(value, str) and value in allowed:
+            clean[field] = value
     if clean["kind"] == "error" and not ("code" in clean and "type" in clean):
         return None
     return clean
@@ -159,6 +170,9 @@ def _line(entry: dict, lang: str) -> str:
     kind = entry["kind"]
     if kind == "error":
         text = f"{entry.get('code', '')} ({entry.get('type', '')})"
+        extra = [entry[k] for k in ("tab", "hint") if entry.get(k)]
+        if extra:
+            text += f" [{', '.join(extra)}]"
     elif kind in ("alert_on", "alert_off"):
         text = i18n.t(f"report.{kind}", lang, code=entry.get("code", ""))
     elif kind == "start":
@@ -236,27 +250,30 @@ def record_error(error: BaseException) -> str:
     return code
 
 
-def record_js_error(file: str, line: int, name: str) -> str | None:
-    """화면(자바스크립트) 오류: 우리 화면 파일 이름·줄·오류 종류만 받는다 (원문·주소는 받지 않음)"""
-    if not (isinstance(file, str) and (file in JS_FILES or file == "unknown")):
+def record_js_error(file: str, line: int, name: str, tab=None, hint=None) -> str | None:
+    """화면(자바스크립트) 오류: 우리 화면 파일 이름·줄·오류 종류만 받는다 (원문·주소는 받지 않음).
+    tab·hint 는 정해진 목록에 있는 값만 적고, 아니면 그 칸만 버린다 (오류 기록 자체는 남김)"""
+    if not (isinstance(file, str) and (file in JS_FILES or file in JS_OTHER_PLACES)):
         return None
     if not (isinstance(line, int) and not isinstance(line, bool) and 0 <= line <= 999999):
         return None
     if not (isinstance(name, str) and FIELD_RULES["type"].fullmatch(name)):
         return None
-    code = f"ERR-js-{file}-{line if file != 'unknown' else 0}"
-    _record(code, name)
+    code = f"ERR-js-{file}-{line if file in JS_FILES or file == 'leaflet' else 0}"
+    _record(code, name,
+            tab=tab if isinstance(tab, str) and tab in JS_TABS else None,
+            hint=hint if isinstance(hint, str) and hint in JS_HINTS else None)
     return code
 
 
-def _record(code: str, name: str) -> None:
+def _record(code: str, name: str, **extra) -> None:
     try:
         # 같은 오류가 계속 나면(1초마다 도는 일꾼 등) 1분에 한 번만 적는다
         with _lock:
             entries = _load()["entries"]
             recent = any(e["kind"] == "error" and e.get("code") == code and e.get("type") == name and 0 <= _now() - e["t"] < 60 for e in entries[-20:])  # 시계가 뒤로 가면 음수 → 새로 적음
         if not recent:
-            add("error", code=code, type=name)
+            add("error", code=code, type=name, **extra)
         print(f"[report] {code} ({name})", file=sys.stderr)  # i18n-ok 개발용 콘솔
     except Exception:
         pass
