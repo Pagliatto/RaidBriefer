@@ -275,5 +275,20 @@
       "Streets of Tarkov: floors are corrected per building. Quest spots, extracts and keys above the ground floor no longer show one floor too low",
       "Fixed the previous raid showing for a moment right after the game starts"
     ]
+  },
+  "1.8.0": {
+    "date": "2026-11-27",
+    "ko": [
+      "지도를 끌어도 화면 밖으로 끝없이 넘어가지 않아요. 가장자리에서 멈춰요",
+      "목표나 표시를 눌러 다른 층으로 바뀌었을 때, 지도 빈 곳을 누르면 1층으로 돌아와요",
+      "홈의 '진행 중인 스토리'에 할 일이 남은 챕터만 보여요. 끝낸 챕터는 아래 한 줄에 개수로만 나와요",
+      "오류 신고 코드가 더 자세해졌어요 (어디서 난 오류인지, 어느 탭이었는지). 원인을 찾기 쉬워져요"
+    ],
+    "en": [
+      "The map no longer slides endlessly off screen when you drag it; it stops at the edge",
+      "When clicking an objective or a marker switched the floor, click an empty spot on the map to go back to the ground floor",
+      "'Active storyline' on the Home tab shows only chapters that still have something to do; finished chapters are counted in the line below",
+      "Error report codes carry more detail (where the error came from and which tab was open), so problems are easier to track down"
+    ]
   }
 }
