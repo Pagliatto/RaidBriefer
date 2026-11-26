@@ -15,7 +15,7 @@ belong to Battlestate Games Limited.
 | 소스 코드 (`app/`, `tools/`, 배치 파일) | **MIT** — `LICENSE` 참고 |
 | 스토리 데이터 (`data/story/`) | **CC BY-NC-SA 3.0** — 공식 위키 내용을 번역·요약한 2차 저작물 (아래 참고). 스토리 장소 위치(`places.json`)는 만든 사람이 게임에서 직접 확인해 찍은 값 |
 | Terminal 공략 (`data/guides/`) | **CC BY-NC-SA 3.0** — 공식 위키 내용을 번역·요약한 2차 저작물 (스토리 데이터와 같은 조건) |
-| 퀘스트·지도 보정 (`data/corrections.json`) | **CC BY-NC-SA 3.0** (위키 기반 내용) — 퀘스트 목표의 번역과 탈출구·BTR 정류장·보스 구역·적 등장 위치. 위치는 공식 위키의 RE3MR / Jindouz 지도에서 읽거나 게임에서 직접 확인한 값 (항목별 출처 기록) |
+| 퀘스트·지도 보정 (`data/corrections.json`) | **CC BY-NC-SA 3.0** (위키 기반 내용) — 퀘스트 목표의 번역과 탈출구·BTR 정류장·보스 구역·적 등장 위치·건물별 층 높이. 위치는 공식 위키의 RE3MR / Jindouz 지도에서 읽거나 게임에서 직접 확인한 값 (항목별 출처 기록) |
 | 로고·아이콘 (`docs/logo/`, `app/static/icons/`) | MIT (이 프로젝트에서 만든 것) |
 
 **비상업 조건**: 위키 기반 스토리·공략·보정 데이터와 지도 그림이 "비상업(NC)" 조건이라, RaidBriefer 를 유료로 팔거나 광고를 붙여 배포하면 안 됩니다.
@@ -40,7 +40,7 @@ belong to Battlestate Games Limited.
 - **Terminal 공략** — https://escapefromtarkov.fandom.com/wiki/The_Ticket
   - `data/guides/` 는 공식 위키의 입장 준비·진행 순서를 번역·요약한 것으로, 스토리 데이터와 같은 **CC BY-NC-SA 3.0** 으로 배포합니다.
 - **지도 위치 보정** — 공식 위키의 RE3MR / Jindouz 지도 또는 게임에서 직접 확인한 자료
-  - `data/corrections.json` 에 탈출구·BTR 정류장·보스 구역·적 등장 위치와 출처를 기록합니다. 위키 지도에서 읽은 위치를 프로그램 지도에 맞추거나, 게임에서 직접 확인해 보완했습니다.
+  - `data/corrections.json` 에 탈출구·BTR 정류장·보스 구역·적 등장 위치·건물별 층 높이(게임에서 직접 잰 값)와 출처를 기록합니다. 위키 지도에서 읽은 위치를 프로그램 지도에 맞추거나, 게임에서 직접 확인해 보완했습니다.
   - https://escapefromtarkov.fandom.com/wiki/Terminal · https://escapefromtarkov.fandom.com/wiki/Lighthouse · https://escapefromtarkov.fandom.com/wiki/BTR_Driver
 
 ### 프로그램에 포함되거나 불러오는 라이브러리·글꼴·아이콘
