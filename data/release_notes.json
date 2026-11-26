@@ -258,5 +258,22 @@
       "Clean up screenshots: in Settings → Records you can send piled-up game screenshots to the Recycle Bin. Only screenshots made by the game are sent, and you can restore them from the Recycle Bin",
       "New button to open the screenshot folder (Settings → Records)"
     ]
+  },
+  "1.7.0": {
+    "date": "2026-11-26",
+    "ko": [
+      "지도 할 일 목록이 짧아졌어요: 지금 맵에서 할 목표만 보이고, 나머지는 퀘스트마다 '다른 목표 N개'로 접혀요 (누르면 펼쳐져요)",
+      "번호 핀이 있는 퀘스트가 위로, 자리 없이 이 맵에서 하는 퀘스트는 '지도에 자리 없음' 칸으로 모여요",
+      "지도 표시에 보스·군즈·컬티스트 등장 구역이 생겼어요 (모든 맵, 기본은 꺼짐. 왼쪽 '표시'에서 켜요)",
+      "타르코프 시내: 건물마다 층을 다시 맞췄어요. 2층 이상에 있는 퀘스트 자리·탈출구·열쇠가 한 층씩 낮게 나오던 문제를 고쳤어요",
+      "게임을 켠 직후 지난번 레이드 화면이 잠깐 뜨던 것을 고쳤어요"
+    ],
+    "en": [
+      "The map to-do list is shorter: it shows only the objectives for the current map, and the rest fold into 'Other objectives (N)' per quest (click to expand)",
+      "Quests with numbered pins come first; quests done on this map without a spot move to a 'No spot on the map' section",
+      "New map layers for boss, Goon and cultist spawn zones on every map (off by default, turn them on under 'Layers')",
+      "Streets of Tarkov: floors are corrected per building. Quest spots, extracts and keys above the ground floor no longer show one floor too low",
+      "Fixed the previous raid showing for a moment right after the game starts"
+    ]
   }
 }
