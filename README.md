@@ -20,10 +20,6 @@
 
 > RaidBriefer is an **unofficial** fan-made tool. It is not affiliated with or endorsed by Battlestate Games (BSG).
 
----
-
-## Screenshots
-
 <p align="center">
   <img src="docs/screenshots/en/map.png" alt="Map screen: quest objectives and guide markers on the map, quests and Terminal guide in the list on the right" width="480">
 </p>
@@ -34,165 +30,78 @@
 
 ## What it does
 
-The goal is that you barely have to touch it.
+- **When you load into a map, it switches to that map automatically**, and goes back to Home after the raid. You barely have to touch it.
+- **Your quest objectives are numbered on the map**, together with extracts, transits, locked doors, key spawns and floors.
+- **Home, before a raid**: what to collect, where to go, what to bring, and boss chances at a glance.
+- **Hideout items, storyline progress with ending paths, and a Terminal guide** — all in one program.
+- **English and Korean**, with one-click updates.
 
-- **When you load into a map, it switches to that map automatically.** After the raid it goes back to Home. It also tracks Transits.
-- **Your quest objectives are numbered on the map**, together with extracts, transits, locked doors, key and Bitcoin spawns, and floors. Other markers use colored icons grouped by meaning (exits, vehicles, locked, items, danger), with names on hover.
-- **To-do list** beside the map: story steps and quests for the current map. Check off story steps right there (even for chapters you haven't started, with where they start); collapse big sections; hover a transit for its destination, or see reachable maps and their quest counts at the bottom.
-- **Map tools**: hover locked doors and key spawns for key details and wiki links; the needed-items row can be collapsed.
-- **BTR**: stops on Streets of Tarkov, Woods and Lighthouse, plus a link to a BTR tracker. Icebreaker has a link to the wiki's deck-by-deck ship map.
-- **Story places on the map**: diamond pins show where the remaining steps of each chapter's current section happen (on the right floor; the next place is highlighted), and the Story tab can jump to them on the map.
-- **Missing extracts** added from the wiki: Lighthouse's Road to Military Base V-Ex and Terminal's Zubr Boat.
-- **Terminal guide**: entry preparation and steps in the map list; click a step to see its places on the map.
-- **Terminal markers**: key, electrical panel, toolset and explosive spots, Black Division spawns with head counts, the boss location and Zubr Boat; the map matches common guide maps, with north on the right.
-- **Checks for quest log changes every 2 seconds.** Updates wait until you return to the lobby; change marks can be cleared by hovering, using Mark all seen, or leaving the Quests tab after viewing them.
-- **Quests**: open the wiki beside a quest name, or click a colored map tag to filter the list.
-- **Home** shows what to prepare before a raid:
-  - What to collect (items for quests and the hideout)
-  - Where to go (tasks per map, current map marked)
-  - What to bring (keys, weapons, gear)
-  - Boss spawn chances for the selected map (Knight, Big Pipe and Birdeye grouped as the Goons)
-- **Hideout**: items and requirements for each station's next level, with a badge for newly buildable stations. Check off collected items to remove them from the collection list.
-- **Storyline (main quests)**: check steps individually or check/uncheck a whole section; section cards show progress and mark the current step.
-- **Ending paths**: The Ticket flowchart shows ending choices, your current position and the steps left until the next fork.
-- **Prestige** is detected automatically and progress starts fresh.
-- **English and Korean.** It follows your Windows language at first; change it in ⚙ Settings.
-- **My position**: press the in-game screenshot key during a raid and the map shows where you are and which way you're facing for 30 seconds. Only the screenshot's file name is read (the image is never opened).
-- **Clean up screenshots**: piled-up game screenshots go to the Recycle Bin only when you press the button in ⚙ Settings → Records. Only screenshots made by the game are sent; the app never deletes them on its own.
-- **Low-time warning**: the edge of the map glows red when 10, 5 and 2 minutes of the raid are left, and the app switches to the map once. It can be turned off in Settings.
-- **Hide an objective for the raid**: the eye icon in the to-do list removes that objective's pins from the map until you return to the lobby. It doesn't mark the objective done.
-- **Game brightness**: the monitor icon in the top bar lets you brighten the game during raids in borderless window mode. It turns on as soon as loading ends and the map appears.
-- **🔔 Alerts menu**: tells you about problems such as unreadable game logs or failed data downloads, with a code. Unexpected errors are logged in `report.txt`, and the Discord / GitHub report buttons fill in the codes for you.
-- **Tells you when a new version is out** and updates with one click. Your records are kept; a What's new popup includes skipped versions, and Settings → About shows recent update history with a [Check for updates] button.
+<details>
+<summary><b>See all features</b></summary>
+
+**Map**
+- Numbered quest objective pins, extracts, transits, locked doors, key and Bitcoin spawns, BTR stops, floor switching
+- To-do list beside the map: quests and story steps for the current map. The eye icon hides an objective's pins for that raid only
+- Hover locked doors and key spawns for key details and wiki links
+- My position: press the in-game screenshot key to see where you are and which way you're facing for 30 seconds (only the file name is read)
+- Low-time warning: the edge of the map glows red at 10, 5 and 2 minutes left (can be turned off)
+- Terminal: entry preparation and steps, key, electrical panel, toolset and explosive spots, Black Division spawns with head counts, the boss location
+
+**Home · Quests**
+- Home: what to collect, where to go (tasks per map), what to bring (keys, weapons), boss spawn chances for the selected map
+- Quests: accepted and completed quests are picked up from the game log automatically; filter by map tag; wiki link beside each name
+- Prestige is detected and progress starts fresh
+
+**Hideout · Storyline**
+- Hideout: items and requirements for each station's next level, with a badge once it can be built. Check off what you've collected
+- Storyline (main quests): check off steps; the remaining places of a chapter are shown on the map
+- Ending paths: The Ticket flowchart shows where you are and the next fork
+
+**More**
+- Game brightness: brighten the game during raids only (borderless window mode)
+- Clean up screenshots: piled-up game screenshots go to the Recycle Bin only when you press the button in Settings
+- 🔔 Alerts menu: problems are shown with a code, and the report buttons fill in the codes for you
+- Updates: your records are kept and only the program changes. A What's new popup shows what changed
+
+**Good to know**
+- **PvE only.**
+- Storyline progress and hideout construction are not in the game logs, so you **check them off yourself**. You set them once on first start.
+- Made for **half** a monitor (960×1080 on FHD). Click the window and press **Win + ←/→** to snap it into place.
+- Boss chances and Terminal's random spawn spots are for reference only.
+</details>
 
 ## Is it safe?
 
 RaidBriefer only uses:
 
-1. **Public data from tarkov.dev**: quests, maps, items, hideout (plus the latest version number of this repository, to check for updates)
-   - For quests not on tarkov.dev yet: quest names, maps and the event list from the public [SPT](https://github.com/SP-Tushonka/server-csharp) data files on GitHub (only the data files are downloaded; no mod is used)
-   - Bundled storyline, Terminal guide and quest corrections use official wiki summaries. Some positions missing from tarkov.dev (extracts, BTR stops, Terminal guide pins and Black Division spawns) come from official wiki maps or in-game checks.
-2. The game's **log files** — **read only**. That's how it knows which map you're on and which quests you accepted or completed.
-3. Whether the game is running — it only checks the **process name** (`EscapeFromTarkov.exe`), like Task Manager.
-4. The **file names of screenshots** the game takes: only the position the game writes into the name is read. You press the screenshot key yourself; the app never sends key presses to the game. Screenshot files are moved to the Recycle Bin only when you press [Send to Recycle Bin] in Settings.
+- **Public data**: quests, maps, items and hideout from [tarkov.dev](https://tarkov.dev), plus the official wiki and [SPT](https://github.com/SP-Tushonka/server-csharp) data files for what is missing there. Update checks only ask this repository for its latest version number
+- The game's **log files** (read only) and the **file names of screenshots** the game takes (the position in the name)
+- The **process name** (`EscapeFromTarkov.exe`), only to see whether the game is running
 
-**It never reads game memory, modifies game files, uses mods, or draws over the game (overlay).**
-That's why it runs in its own window (for example on a second monitor).
+**It never reads game memory, modifies game files, uses mods, draws over the game (overlay), or sends key presses to the game.** That's why it runs in its own window (for example on a second monitor).
 
 ## Install
 
-1. Open the **[latest release](https://github.com/Pagliatto/RaidBriefer/releases/latest)** and download **`RaidBriefer-vX.Y.Z-windows.zip`** (the file name shows the version).
-2. **Extract it** anywhere you like (e.g. `D:\RaidBriefer`).
-   - Don't run it from inside the zip, or your records won't be saved.
-3. Double-click **`RaidBriefer.exe`** in the folder.
-   - Closing the window closes the program completely.
-   - Tip: right-click `RaidBriefer.exe` → Create shortcut, and put it on your desktop.
+1. Open the **[latest release](https://github.com/Pagliatto/RaidBriefer/releases/latest)** and download **`RaidBriefer-vX.Y.Z-windows.zip`**.
+2. **Extract it** anywhere you like. Don't run it from inside the zip, or your records won't be saved.
+3. Run **`RaidBriefer.exe`** in the folder.
 
-> **If "Windows protected your PC" appears**, click **More info → Run anyway**.
-> It's a free program made by an individual without a paid code-signing certificate. You'll only see this once.
+> **If "Windows protected your PC" appears**, click **More info → Run anyway**. It's a free program made by an individual without a paid code-signing certificate.
 
-**Where records are saved**: the `user_data` folder inside the extracted folder. Move the whole folder and your records come with it.
-**Updates**: when a new version is out, a notice appears at the top. Click **Update now** and it updates and restarts by itself.
-(To update manually, extract the new zip over the old folder. Don't delete `user_data`.)
-**Uninstall**: just delete the folder. Nothing is left outside it (no registry entries).
+- **Requirements**: Windows 10/11, an internet connection, Escape from Tarkov (PvE)
+- **Records** are saved in the `user_data` folder inside. **To uninstall**, just delete the whole folder.
+- **Run from source**: Python 3.12+, then `install.bat` → `run.bat`
 
-**Requirements**: Windows 10/11, an internet connection (for quest data, maps and fonts), Escape from Tarkov (PvE).
-The screens are drawn with **WebView2** (the same engine as Microsoft Edge), which is built into Windows.
+## Bugs and questions
 
-<details>
-<summary>Run from source (for developers)</summary>
-
-1. Install **Python 3.12+** (check "Add python.exe to PATH" on the first installer screen)
-2. Download this repository (`<> Code` → `Download ZIP`) and run `install.bat`
-3. Run `run.bat` for the program window, or `run-in-browser.bat` to open it in a browser
-4. Build the exe: `.venv\Scripts\python.exe tools\build_exe.py` → `build\RaidBriefer-vX.Y.Z-windows.zip`
-</details>
-
-## First start
-
-The **first-time setup** opens on your first launch.
-
-1. **Game folder**: found automatically. If you installed it elsewhere, you can pick it.
-2. **Active quests**: checks that the count matches the quest screen in the game.
-   - Click a trader to see which quests are listed.
-   - Add any missing quests yourself — needed if the logs were deleted (e.g. after reinstalling the game).
-3. **Hideout levels**: choose your game edition and current station levels. Building isn't recorded in the logs, so you set this once.
-
-You can open it again any time in ⚙ **Settings → Run first-time setup again**.
-
-## Window size
-
-It's designed for **half of your monitor** (a tall window).
-On a Full HD (1920×1080) monitor, half is **960×1080**.
-
-> 💡 Click the RaidBriefer window and press **Win + ←** or **Win + →** to snap it to exactly half of any monitor.
-
-The window remembers its size and position and opens there next time.
-
-## Good to know
-
-- **PvE only.** Quest, raid and prestige events identified as PvP by the session’s backend gameplay requests are ignored. Events before any known gameplay request are kept to avoid losing progress.
-- **Storyline progress is marked manually.** The game logs don't record storyline progress.
-- **Press [+] on a hideout station when you build it.** Building isn't in the logs either.
-- **If the game log folder is deleted** (e.g. when reinstalling the game), the app may miss quests you accepted earlier. A notice appears at the top of Home when that happens.
-- **Random Terminal guide spawns are shown as candidates**, not guaranteed locations. Black Division head counts come from tarkov.dev plus in-game checks.
-- Boss chances and known locations are guides; the logs don't tell whether a boss is present in your raid or whether you survived or died.
-
-## Files
-
-If you only want to use the program, the [download](#install) zip is all you need. This is for people reading the source.
-
-| File / folder | Purpose |
-|---|---|
-| `app/` | Program code: server (Python), screens (HTML/CSS/JS), log reading, program window, translations (`app/i18n/`) |
-| `data/` | Data shipped with the program: storyline chapters (`story/`), Terminal guide (`guides/`), translation fixes, quest and map corrections |
-| `docs/` | Logo and screenshots for the README |
-| `tools/` | Developer tools: build the exe, take README screenshots, check storyline and translation data |
-| `.github/ISSUE_TEMPLATE/` | GitHub forms for bug reports and feature requests |
-| `RaidBriefer.py` | Entry point when building the exe |
-| `requirements.txt` | Python packages needed |
-| `install.bat` | Run from source, first time: create the Python environment and install packages |
-| `run.bat` | Run from source: open the program window |
-| `run-in-browser.bat` | Run from source: open in a browser instead of the window |
-| `LICENSE`, `NOTICE.md` | License and credits |
-
-`user_data/` (your records and settings) and `cache/` (downloaded data), created when you run it, are never uploaded to the repository.
-
-## Bugs, questions and feature requests
-
-| For | Go to |
-|---|---|
-| Questions, small problems | 💬 **[Discord](https://discord.gg/8MYr8QABYU)** |
-| Bug reports, feature requests | 🐞 **[GitHub Issues](../../issues)** |
-
-The **[Ask or report on Discord]** and **[Report on GitHub]** buttons in the 🔔 (alerts) menu at the top right fill in your version and error codes for you.
-
-### If something went wrong, please attach `report.txt`
-
-`report.txt` is **the most useful file** for finding the cause. It lists, in time order, when the program started and stopped, game and map changes, and any errors (e.g. `ERR-quests-412`).
-
-**Where to find it**
-- If the program opens: 🔔 → **[Show file location]** → drag the selected `report.txt` into your Discord or GitHub post
-- If the program won't open: the folder with `RaidBriefer.exe` → `user_data` → `report.txt`
-
-**It is safe to upload as is.** It only holds times, versions, error codes and map names — never your account, nickname, folder paths or game log contents.
-If you can't attach a file, 🔔 → **[Copy report]** copies the recent lines so you can paste them.
-
-Also helpful
-- Which screen, and what you were doing
-- A screenshot
-
-⚠ **Don't upload game log files (the `Logs` folder in the game folder).** They contain your login information.
+- 💬 **[Discord](https://discord.gg/8MYr8QABYU)**: questions, small problems &nbsp;·&nbsp; 🐞 **[GitHub Issues](../../issues)**: bug reports, feature requests
+- If something went wrong, please attach **`report.txt`**: 🔔 at the top right → **[Show file location]**. It only holds times, versions, error codes and map names, so it is safe to upload as is.
+- ⚠ **Don't upload game log files (the `Logs` folder in the game folder).** They contain your login information.
 
 ## License and credits
 
-- Source code: **MIT** ([LICENSE](LICENSE))
-- Storyline data (`data/story/`) and Terminal guide (`data/guides/`): summarized and translated from the official wiki — **CC BY-NC-SA 3.0**. Story place positions (`data/story/places.json`) were placed by the author from in-game play.
-- Quest and map corrections (`data/corrections.json`): wiki-derived content under **CC BY-NC-SA 3.0**; includes extract, BTR stop, boss zone and enemy spawn positions read from RE3MR / Jindouz maps on the official wiki or checked in game.
-- Map images: tarkov.dev SVG Maps — **CC BY-NC-SA 4.0**
-- Data: [tarkov.dev](https://tarkov.dev) (The Hideout); quest names/maps missing there: [SPT](https://github.com/SP-Tushonka/server-csharp) data files
-
-Because the wiki-derived storyline, guide and correction data and map images are **non-commercial**, RaidBriefer may only be distributed **free and non-commercially**.
-Full credits and licenses are in [NOTICE.md](NOTICE.md).
+- Source code: **MIT** ([LICENSE](LICENSE)).
+- The bundled storyline, guide and correction data (based on the official wiki) and the map images (tarkov.dev) are **non-commercial** (CC BY-NC-SA), so RaidBriefer may only be distributed **free and non-commercially**.
+- Full credits and licenses are in [NOTICE.md](NOTICE.md).
 
 "Escape from Tarkov", in-game names and item images are the property of Battlestate Games Limited.
