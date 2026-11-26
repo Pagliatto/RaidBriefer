@@ -1351,6 +1351,20 @@ function storyWalkPlace(latlng) {
 }
 
 // 지금 보고 있는 층의 높이: 그 층에 있는 가장 가까운 표시의 높이, 없으면 그 층 범위의 가운데
+// 편집 도구: 건물별 층 보정이 걸리는 범위를 노란 점선 네모로 (마우스를 올리면 건물 이름과 층별 시작 높이). 보기만 함
+function drawFloorFixes() {
+  const group = mapUI.groups.floorFixes;
+  if (!group || !mapEditor.active) return;
+  const floorName = (index) => floorLabel(index === null ? "1st Floor" : mapUI.view.layers[index]?.name);
+  (mapUI.view?.floor_fixes || []).forEach((fix) => {
+    const [[x1, z1], [x2, z2]] = fix.bounds;
+    const corners = [[x1, z1], [x2, z1], [x2, z2], [x1, z2]].map((p) => gamePos([p[0], p[1], 0]));
+    const levels = fix.levels.map(([start, index]) => floorName(index) + (start === null ? "" : ` ${start}m~`)).join(" · ");
+    L.polygon(corners, { color: "#ffd84a", weight: 2, dashArray: "6 4", fillOpacity: 0.08 })
+      .bindTooltip(escapeHtml(fix.name) + "<br>" + escapeHtml(levels), { sticky: true }).addTo(group);
+  });
+}
+
 // 이 자리(x, z)에서 고른 층에 해당하는 높이. 그 층의 가까운 표시 높이 → 없으면 지금 높이에서 가장 가까운 그 층 높이. 못 찾으면 null
 function heightForFloor(x, z, index, fromY) {
   const onFloor = (mapEditor.heights || []).filter((p) => floorOf([x, z, p[2]]) === index);
@@ -1625,6 +1639,7 @@ async function drawMap() {
   });
   leaf.setView([0, 0], 0, { animate: false });
   drawGuidePins();
+  drawFloorFixes();
   // 확대·축소하면 겹침이 달라지니 다시 계산
   leaf.on("zoomstart", collapseAll);
   leaf.on("zoomend", findClusters);
@@ -2918,7 +2933,7 @@ initializePositionEditor().then(loadMapList);
 
 // ---------- 표시 켜기/끄기 (왼쪽 서랍) ----------
 // 퀘스트·먹을 것·탈출구·트랜짓·열쇠·귀중품. 고른 값은 이 브라우저에 기억 (다음에 켜도 그대로)
-const LAYER_KEYS = ["quests", "extracts", "scavExtracts", "transits", "btrStops", "keys", "bitcoin", "keySpawns", "guide", "story", "blackDivision", "bossZones", "goonZones", "cultistZones"];
+const LAYER_KEYS = ["quests", "extracts", "scavExtracts", "transits", "btrStops", "keys", "bitcoin", "keySpawns", "guide", "story", "blackDivision", "bossZones", "goonZones", "cultistZones", "floorFixes"];
 // 보스 등장 구역 셋: 서버 kind → [표시 묶음, 색, 아이콘, 겹치지 않게 띄우는 방향(m)] (2026-11-26 사용자: 보스·군즈·컬티스트로 나눔, 기본 끔)
 const BOSS_ZONE_KINDS = {
   boss: ["bossZones", "boss", "skull", [10, 0]],
@@ -2929,6 +2944,7 @@ const BOSS_ZONE_LAYERS = Object.values(BOSS_ZONE_KINDS).map((k) => k[0]);
 const LAYER_INFO = {
   story: { label: t("map.storyLayer"), mark: "mk:story:book-open", on: true },
   blackDivision: { label: t("map.layerBlackDivision"), mark: "mk:enemy:crosshair", on: true },
+  floorFixes: { label: t("editor.floorFixes"), mark: "icon:layers", on: false }, // 편집 도구에서만: 층 보정이 걸리는 건물 범위
   bossZones: { label: t("map.layerBossZones"), mark: "mk:boss:skull", on: false },
   goonZones: { label: t("map.layerGoonZones"), mark: "mk:goons:users", on: false },
   cultistZones: { label: t("map.layerCultistZones"), mark: "mk:cultist:moon", on: false },
@@ -2979,6 +2995,7 @@ function renderLayerDrawer() {
     // 편집 모드는 이 맵의 모든 장소, 평소에는 지금 할 단계의 장소 기준 (storyPinEntries 와 같은 기준)
     if (key === "story" && (!mapUI.current || !storyPinEntries().some(({ entry }) => storyPlacesFor(entry.step.id, mapUI.current.key).length))) return;
     if ((key === "blackDivision" || BOSS_ZONE_LAYERS.includes(key)) && !layerCount(key)) return;
+    if (key === "floorFixes" && (!mapEditor.active || !layerCount(key))) return;
     if (info.always) return;  // 항상 보이는 표시는 서랍에 스위치를 두지 않음
     const on = layerOn(key);
     const btn = el("button", `layer-toggle layer-${key}${on ? " on" : ""}`);
@@ -3182,6 +3199,7 @@ function floorOf(p) {
     return floor;
   }
   for (let i = 0; i < view.layers.length; i++) {
+    if (view.layers[i].hidden) continue; // 화면에서 뺀 층 (그림이 틀린 것으로 본 dev 층)
     for (const ext of view.layers[i].extents || []) {
       const h = ext.height || [-1e9, 1e9];
       if (y < h[0] || y > h[1]) continue;
@@ -3257,7 +3275,9 @@ const FLOOR_GAP = 18; // 판 사이 간격(px) (CSS .floor-plane 의 -18px 과 �
 function drawFloorControl(box, view) {
   mapUI.floorRows = null;
   if (!view.layers || !view.layers.length) return;
-  const rows = view.layers.map((l, i) => ({ index: i, name: l.name, rank: floorRank(l.name) }));
+  const rows = view.layers.map((l, i) => ({ index: i, name: l.name, rank: floorRank(l.name), hidden: !!l.hidden }))
+    .filter((row) => !row.hidden);
+  if (!rows.length) return;
   rows.push({ index: null, name: "1st Floor", rank: 1 });
   rows.sort((a, b) => a.rank - b.rank); // 아래층부터
   mapUI.floorRows = rows;

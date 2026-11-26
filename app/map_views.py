@@ -135,8 +135,9 @@ def view_for(normalized_name: str) -> dict | None:
                 floor_fixes = []
                 for fix in corrections.floor_fixes(normalized_name):
                     if all(name in layer_index for _, name in fix["levels"]):
-                        floor_fixes.append({"bounds": fix["bounds"],
+                        floor_fixes.append({"bounds": fix["bounds"], "name": fix["name"],
                                             "levels": [[start, layer_index[name]] for start, name in fix["levels"]]})
+                hidden = set(corrections.hidden_floors(normalized_name))
                 return {
                     "svg": f"/map-svg/{svg_name}" if svg_name else None,  # 우리 서버를 거쳐 저장본으로
                     "tiles": None if svg_name else m["tilePath"],
@@ -157,6 +158,7 @@ def view_for(normalized_name: str) -> dict | None:
                             "svg_layer": layer.get("svgLayer"),
                             "tiles": layer.get("tilePath"),
                             "extents": layer.get("extents") or [],
+                            "hidden": layer.get("name") in hidden,  # 층 고르기·층 판정에서 뺌
                         }
                         for layer in m.get("layers") or []
                     ],

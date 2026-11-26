@@ -610,6 +610,7 @@
     "delete": "Delete",
     "hide": "Hide",
     "floor": "Floor",
+    "floorFixes": "Floor fix areas",
     "unhide": "Show again",
     "new": "New",
     "pin_key_spawn": "Key spawn",

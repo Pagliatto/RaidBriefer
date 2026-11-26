@@ -1585,6 +1585,10 @@
     "streets-of-tarkov": {
       "source": "game",
       "checked": "2026-11-26",
+      "hidden_layers": [
+        "5th Floor"
+      ],
+      "hidden_note": "The 5th floor drawing has only two small pieces (x 170-176 z 86-90, x 117-134 z 135-148) and no tarkov.dev marker is that high; treated as a drawing error. Recheck when tarkov.dev adds 5th floor data.",
       "buildings": [
         {
           "name": "1 A",

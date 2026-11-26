@@ -290,6 +290,9 @@ def check_floors(data) -> int:
             problems.append(f"{where_map}/source: game 필요 (게임에서 잰 높이만)")
         if not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", str(entry.get("checked", ""))):
             problems.append(f"{where_map}/checked: 날짜 YYYY-MM-DD 필요")
+        hidden = entry.get("hidden_layers", [])
+        if not isinstance(hidden, list) or any(not isinstance(name, str) or not name for name in hidden):
+            problems.append(f"{where_map}/hidden_layers: 층 이름 목록 필요")
         buildings = entry.get("buildings")
         if not isinstance(buildings, list) or not buildings:
             problems.append(f"{where_map}/buildings: 비어 있지 않은 목록 필요")

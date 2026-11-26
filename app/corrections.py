@@ -140,8 +140,15 @@ def floor_fixes(map_key: str) -> list[dict]:
             rows.append((start, name))
             last = start if start is not None else last
         if ok:
-            result.append({"bounds": [list(bounds[0]), list(bounds[1])], "levels": rows})
+            result.append({"bounds": [list(bounds[0]), list(bounds[1])], "levels": rows,
+                           "name": building["name"] if isinstance(building.get("name"), str) else ""})
     return result
+
+
+def hidden_floors(map_key: str) -> list[str]:
+    """층 고르기에서 빼는 dev 층 이름 (그림이 틀린 것으로 본 층. 예: 시내 5층 그림은 조각 둘뿐이고 그 높이의 표시가 없음)."""
+    names = section("floors").get(map_key, {}).get("hidden_layers")
+    return [name for name in names if isinstance(name, str) and name] if isinstance(names, list) else []
 
 
 BOSS_ZONE_KINDS = ("boss", "goons", "cultist")
