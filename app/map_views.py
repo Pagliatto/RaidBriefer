@@ -128,6 +128,15 @@ def view_for(normalized_name: str) -> dict | None:
         for m in group.get("maps", []):
             if m.get("projection") == "interactive" and (m.get("svgPath") or m.get("tilePath")):
                 svg_name = m["svgPath"].rsplit("/", 1)[-1] if m.get("svgPath") else None
+                # 건물별 층 보정: dev 층 이름을 몇 번째 층인지로 바꿔 보냄 (기본 1층은 None).
+                # dev 가 그 층을 없애거나 이름을 바꾸면 그 건물 보정은 통째로 쓰지 않음 (엉뚱한 층에 넣지 않게)
+                layer_index = {layer.get("name"): i for i, layer in enumerate(m.get("layers") or [])}
+                layer_index[corrections.BASE_FLOOR] = None
+                floor_fixes = []
+                for fix in corrections.floor_fixes(normalized_name):
+                    if all(name in layer_index for _, name in fix["levels"]):
+                        floor_fixes.append({"bounds": fix["bounds"],
+                                            "levels": [[start, layer_index[name]] for start, name in fix["levels"]]})
                 return {
                     "svg": f"/map-svg/{svg_name}" if svg_name else None,  # 우리 서버를 거쳐 저장본으로
                     "tiles": None if svg_name else m["tilePath"],
@@ -151,6 +160,7 @@ def view_for(normalized_name: str) -> dict | None:
                         }
                         for layer in m.get("layers") or []
                     ],
+                    "floor_fixes": floor_fixes,
                 }
     return None
 

@@ -3173,6 +3173,14 @@ function floorOf(p) {
   const view = mapUI.view;
   if (!view || !view.layers || p.length < 3) return null;
   const [x, z, y] = p;
+  // 건물별 층 보정이 먼저 (게임에서 잰 높이). 그 건물 범위 안이면 그 건물의 층 표를 따름: 시작 높이가 y 이하인 가장 높은 층
+  for (const fix of view.floor_fixes || []) {
+    const [[x1, z1], [x2, z2]] = fix.bounds;
+    if (x < Math.min(x1, x2) || x > Math.max(x1, x2) || z < Math.min(z1, z2) || z > Math.max(z1, z2)) continue;
+    let floor = fix.levels[0][1];
+    for (const [start, index] of fix.levels) if (start !== null && y >= start) floor = index;
+    return floor;
+  }
   for (let i = 0; i < view.layers.length; i++) {
     for (const ext of view.layers[i].extents || []) {
       const h = ext.height || [-1e9, 1e9];
