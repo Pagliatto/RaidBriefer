@@ -2025,6 +2025,7 @@ async function drawMap() {
   mapUI.clusters = [];
   mapUI.view = view;
   mapUI.floor = null;       // null = 1층(기본). 숫자 = view.layers 의 몇 번째 층
+  mapUI.floorAuto = false;  // 표시를 눌러 층이 바뀐 상태 (지도 빈 곳을 누르면 1층으로)
   mapUI.floorItems = [];    // [{ layer, floor }] 다른 층이면 반투명
   mapUI.svgGroups = {};     // SVG 안의 층 그림 (id → g)
   mapUI.floorTile = null;
@@ -2039,7 +2040,7 @@ async function drawMap() {
   // 확대·축소하면 겹침이 달라지니 다시 계산
   leaf.on("zoomstart", collapseAll);
   leaf.on("zoomend", findClusters);
-  leaf.on("click", collapseAll); // 지도 빈 곳을 누르면 펼친 핀을 다시 모음
+  leaf.on("click", () => { collapseAll(); returnFloor(); }); // 지도 빈 곳을 누르면 펼친 핀을 다시 모으고, 표시를 눌러 바뀐 층을 되돌림
   // 탭이 막 보인 순간에는 칸 크기가 덜 정해졌을 수 있어서, 크기를 다시 재고 맞춤
   // (requestAnimationFrame 은 창이 가려져 있으면 멈춰서 setTimeout 사용)
   setTimeout(() => {
@@ -2156,7 +2157,7 @@ function drawPins() {
         // 혼자 있는 핀·펼친 핀이면 서랍을 열고 그 목표로. 빈 지도를 누르면 다시 모임
         marker.on("click", (e) => {
           L.DomEvent.stopPropagation(e);
-          if (item.floor !== mapUI.floor) setFloor(item.floor); // 다른 층 핀 → 그 층으로
+          goToFloorOf(item.floor); // 다른 층 핀 → 그 층으로
           const c = item.cluster;
           if (c && c.items.length > 1 && !c.open) openCluster(c);
           else showInDrawer(n);
@@ -2888,7 +2889,7 @@ function focusTransit(items) {
   const leaf = mapUI.leaflet;
   if (!leaf || !items.length) return;
   if (!layerOn("transits")) setLayer("transits", true);
-  if (items[0].floor !== mapUI.floor) setFloor(items[0].floor);
+  goToFloorOf(items[0].floor);
   collapseAll();
   const bounds = L.latLngBounds(items.map((x) => x.marker.getLatLng()));
   afterMove(leaf, () => items[0].marker.openTooltip());
@@ -2989,7 +2990,7 @@ function focusPin(n) {
   const group = mapUI.pins[n];
   if (!group || !mapUI.leaflet) return;
   const first = (mapUI.pinMarkers || []).find((x) => x.n === n);
-  if (first && first.floor !== mapUI.floor) setFloor(first.floor); // 그 목표가 있는 층으로
+  if (first) goToFloorOf(first.floor); // 그 목표가 있는 층으로
   if (!layerOn("quests")) setLayer("quests", true);
   collapseAll(); // 펼쳐진 위치가 아니라 원래 위치로 이동
   // 이동이 끝났는데도 다른 핀과 겹쳐 있으면 펼쳐서 보여줌
@@ -3177,7 +3178,7 @@ function drawMe(fresh) {
   });
   mapMe.marker = L.marker(latlng, { icon, interactive: false, keyboard: false, zIndexOffset: ME_PIN_Z }).addTo(leaf);
   mapMe.timer = setTimeout(() => { if (mapMe.pos === pos) mapMe.pos = null; clearMe(); }, ME_SHOW_MS - age);
-  if (fresh) goToFloorOf(floorOf([pos.x, pos.z, pos.y])); // 새로 찍은 위치: 층만 맞춤
+  if (fresh) pickFloor(floorOf([pos.x, pos.z, pos.y])); // 새로 찍은 위치: 층만 맞춤 (내가 실제로 있는 층이라 되돌리지 않음)
 }
 
 function shotHintState() {
@@ -3713,7 +3714,7 @@ function drawFloorControl(box, view) {
     plane.setAttribute("aria-label", floorLabel(row.name));
     plane.addEventListener("click", (e) => {
       e.stopPropagation();
-      setFloor(row.index);
+      pickFloor(row.index);
     });
     stack.append(plane);
   });
@@ -3734,9 +3735,29 @@ function drawFloorControl(box, view) {
   updateFloorNav();
 }
 
-// 표시를 눌렀을 때: 다른 층이면 그 층으로 바꿈
+// 표시·목표를 눌렀을 때: 다른 층이면 그 층으로 바꿈.
+// 이렇게 자동으로 바뀐 층은 지도 빈 곳을 누르면 1층으로 돌아감 (2026-11-27 사용자: 오른쪽 아래에서 다시 1층으로 바꾸기 귀찮음.
+// 그 전에 다른 층을 보고 있었어도 무조건 1층으로)
 function goToFloorOf(floor) {
+  if (floor === mapUI.floor) return;
+  mapUI.floorAuto = true;
+  // 영역(선·면) 표시는 누르기가 지도까지 전해져서, 같은 누르기로 바로 되돌아가지 않게 잠깐 막음
+  mapUI.floorMoved = true;
+  setTimeout(() => { mapUI.floorMoved = false; }, 0);
+  setFloor(floor);
+}
+
+// 층을 직접 고름 (층 판·휠·내 위치): 빈 곳을 눌러도 되돌리지 않음
+function pickFloor(floor) {
+  mapUI.floorAuto = false;
   if (floor !== mapUI.floor) setFloor(floor);
+}
+
+// 지도 빈 곳을 누름: 표시를 눌러 바뀐 층이면 1층으로
+function returnFloor() {
+  if (mapEditor.active || mapUI.floorMoved || !mapUI.floorAuto) return;
+  mapUI.floorAuto = false;
+  if (mapUI.floor !== null) setFloor(null);
 }
 
 function stepFloor(direction) {
@@ -3744,7 +3765,7 @@ function stepFloor(direction) {
   if (!rows) return;
   const at = rows.findIndex((r) => r.index === mapUI.floor);
   const next = rows[Math.max(0, Math.min(rows.length - 1, at + direction))];
-  if (next && next.index !== mapUI.floor) setFloor(next.index);
+  if (next) pickFloor(next.index);
 }
 
 function updateFloorNav() {
