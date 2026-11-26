@@ -13,6 +13,7 @@ import secrets
 import sys
 import tempfile
 import threading
+import time
 
 from app import paths
 
@@ -97,7 +98,15 @@ def _pairs(pairs):
 
 
 def _read(path):
-    raw = path.read_bytes()
+    # 방금 바꿔치기한 파일은 Windows 에서 잠깐 잠길 수 있다(백신·색인). 못 읽으면 편집 정보가 통째로 빠지므로 잠깐 기다렸다 다시
+    for attempt in range(6):
+        try:
+            raw = path.read_bytes()
+            break
+        except PermissionError:
+            if attempt == 5:
+                raise
+            time.sleep(0.05 * (attempt + 1))
     data = json.loads(raw.decode("utf-8-sig"), object_pairs_hook=_pairs,
                       parse_constant=lambda value: (_ for _ in ()).throw(ValueError(value)))
     if not isinstance(data, dict):
@@ -225,6 +234,7 @@ def story_keys(places):
 def feature_keys(map_key, result):
     if not enabled() or not _MAP.fullmatch(map_key):
         return result
+    result["editorReady"] = False  # 아래에서 편집 정보를 다 붙였을 때만 True (화면이 '못 읽음'과 '없음'을 구분)
     try:
         snapshot = _read(_target("corrections.json", ["enemy_spawns", map_key, "Editor"]))
         data = snapshot[1]
@@ -275,6 +285,7 @@ def feature_keys(map_key, result):
         for item in result.get("bossZones", []):
             item["floorEdit"] = "edit" in item  # 편집할 수 있는 보스 구역은 층(높이)도 바꿀 수 있음
         result["editorFloors"] = _floor_edit_info(map_key, snapshot)
+        result["editorReady"] = True
         for item in result.get("blackDivision", []):
             # 반대쪽도: 같은 이름의 보스 구역 보정이 있으면 블랙 디비전이 그 항목을 고치지 않게
             existing = _entry(data, ["enemy_spawns", map_key, item.get("name")]) if isinstance(item.get("name"), str) else None

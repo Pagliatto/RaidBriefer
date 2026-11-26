@@ -3311,7 +3311,15 @@ async function drawFeatures(leaf, m) {
     return; // 표시물을 못 받아도 지도와 퀘스트는 그대로
   }
   if (mapUI.leaflet !== leaf) return; // 그사이 다른 맵으로 바뀜
+  if (mapEditor.active && data.editorReady === false) {
+    // 서버가 편집 정보를 못 읽음(저장 직후 파일이 잠깐 잠김 등): 지금 보이는 것을 지우지 않고 조금 뒤 다시 받음
+    mapEditor.retry = (mapEditor.retry || 0) + 1;
+    if (mapEditor.retry <= 5) setTimeout(() => { if (mapUI.leaflet === leaf) drawMap(); }, 700);
+    else updateFloorButtons(t("editor.saveFailed"));
+    return;
+  }
   if (mapEditor.active) {
+    mapEditor.retry = 0;
     mapEditor.options = data.editorAdd || null;
     mapEditor.heights = data.editorHeights || [];
     mapEditor.bossNames = data.editorBossNames || {};

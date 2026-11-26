@@ -5,6 +5,7 @@ import math
 import re
 from datetime import date
 import threading
+import time
 
 from app import paths
 
@@ -25,6 +26,16 @@ def load() -> dict:
                 data = {}
             _cached = (mtime, data)
             return data
+        except PermissionError:
+            # 편집 도구가 방금 바꿔치기한 파일이 잠깐 잠긴 경우: 빈 값으로 굳히지 않고 조금 뒤 한 번 더 읽음
+            try:
+                time.sleep(0.2)
+                data = json.loads(FILE.read_text(encoding="utf-8"))
+                _cached = (FILE.stat().st_mtime_ns, data if isinstance(data, dict) else {})
+                return _cached[1]
+            except (OSError, ValueError):
+                _cached = None
+                return {}
         except (OSError, ValueError):
             _cached = None
             return {}
