@@ -134,6 +134,14 @@ function byTrader(a, b) {
   return rank(a) - rank(b);
 }
 
+// '할 일' 칸의 묶음 제목: 아이콘 + 이름 + 개수 + 오른쪽 끝까지 가는 선 (다 챙기기·장비 맞추기·바로 출발·스토리 모두 같은 모양)
+function homeHead(iconName, label, count, hint) {
+  const head = el("p", "home-prep-head");
+  head.append(icon(iconName, 14), el("span", "", label), el("span", "home-prep-head-count", String(count)));
+  if (hint) head.title = hint;  // 설명은 마우스를 올리면 (제목 형식을 셋 다 같게)
+  return head;
+}
+
 // 퀘스트·챕터 이름표: 퀘스트 탭·예전 목록과 같은 모양 (왼쪽 상인 색 띠 + 이름 + 상인 이름). 누르면 그 퀘스트·챕터로
 function homePrepSource(from, mapName) {
   const name = el("button", `home-prep-src trader-${from.traderKey || "etc"} go-source`);
@@ -151,7 +159,7 @@ function homePrepSource(from, mapName) {
 // 준비물이 하나도 없는 퀘스트(바로 출발): 예전 퀘스트 목록처럼 2열 (모든 퀘스트가 화면에 한 번씩은 보이게)
 function renderHomeNoPrep(box, sources, mapName) {
   if (!sources.length) return;
-  box.append(el("p", "home-prep-sub", t("home.prepNoneLabel", { n: sources.length })));
+  box.append(homeHead("arrow-right", t("home.prepNoneLabel"), sources.length));
   const names = el("div", "home-prep-names");
   sources.sort(byTrader).forEach((f) => names.append(homePrepSource(f, mapName)));
   box.append(names);
@@ -162,7 +170,9 @@ function renderHomePrep(box, prep, mapName) {
   carry.sort((a, b) => byTrader(a.from, b.from));
   pick.sort((a, b) => byTrader(a.from, b.from));
   if (shared.length || carry.length) {
-    box.append(el("p", "home-prep-sub", t("home.prepCarry")));
+    // 개수 = 이 묶음에 나오는 퀘스트·챕터 수 (공통 줄에만 걸린 것 포함)
+    const ids = new Set([...carry.map((s) => `${s.from.type}:${s.from.id}`), ...shared.flatMap((p) => p.from.map((f) => `${f.type}:${f.id}`))]);
+    box.append(homeHead("backpack", t("home.prepCarry"), ids.size));
     const rows = el("div", "home-prep-rows");
     if (shared.length) {
       const line = el("div", "home-prep-row shared");
@@ -193,7 +203,7 @@ function renderHomePrep(box, prep, mapName) {
     box.append(rows);
   }
   if (pick.length) {
-    box.append(el("p", "home-prep-sub", t("home.prepPick")));
+    box.append(homeHead("shield", t("home.prepPick"), pick.length, t("home.prepPickHint")));
     // '다 챙기기'와 같은 줄 모양, 묶음 전체에만 옅은 배경 (상자 안 상자로 답답해 보이지 않게)
     const rows = el("div", "home-prep-rows pick");
     pick.forEach((s) => {
@@ -272,9 +282,8 @@ function renderHomeDetail(name, info) {
     box.append(line);
   }
 
-  // 챙길 것
+  // 챙길 것 ('준비물' 제목은 없음: 아래 묶음 제목들이 그 역할)
   const prep = gatherPrep(info, name);
-  box.append(el("p", "home-label", t("home.prepLabel")));
   if (prep.length) {
     renderHomePrep(box, prep, name);
   } else {
@@ -288,16 +297,20 @@ function renderHomeDetail(name, info) {
 
   // 스토리 다음 단계
   if (info.stories.length) {
-    box.append(el("p", "home-label", t("home.storyLabel")));
-    const ul = el("ul", "home-list");
+    box.append(homeHead("book-open", t("home.storyLabel"), info.stories.length));
+    // 위 묶음들과 같은 줄 모양: 왼쪽 챕터 이름표, 오른쪽 이 맵에서 할 다음 단계 (둘 다 누르면 스토리 탭의 그 챕터)
+    const rows = el("div", "home-prep-rows");
     info.stories.forEach((s) => {
-      const li = el("li", "go-source");
-      li.title = t("home.storyChapterHint");
-      li.append(el("b", "", s.ch.name), document.createTextNode(` — ${s.next.ko}`));
-      li.addEventListener("click", () => goToSource([{ type: "story", id: s.ch.id }]));
-      ul.append(li);
+      const from = { type: "story", id: s.ch.id, name: s.ch.name };
+      const line = el("div", "home-prep-row");
+      const step = el("button", "home-prep-step go-source", s.next.ko);
+      step.type = "button";
+      step.title = t("home.storyChapterHint");
+      step.addEventListener("click", () => goToSource([from]));
+      line.append(homePrepSource(from, name), step);
+      rows.append(line);
     });
-    box.append(ul);
+    box.append(rows);
   }
 
 }
