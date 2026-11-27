@@ -49,7 +49,7 @@
 - Terminal: entry preparation and steps, key, electrical panel, toolset and explosive spots, Black Division spawns with head counts, the boss location
 
 **Home · Quests**
-- Home: what to collect, where to go (tasks per map), what to bring (keys, weapons), boss spawn chances for the selected map
+- Home: what to collect, where to go (tasks per map), what to bring for each task on the selected map (bring all / gear up / just go), boss spawn chances
 - Quests: accepted and completed quests are picked up from the game log automatically; filter by map tag; wiki link beside each name
 - Prestige is detected and progress starts fresh
 
