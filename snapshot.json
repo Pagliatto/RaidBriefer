@@ -2,6 +2,36 @@
  "maps": {
   "customs": {
    "btr": [],
+   "extract_ids": [
+    "Beyond Fuel Tank",
+    "Factory Shacks",
+    "Old Road Gate",
+    "RUAF Roadblock",
+    "RUAF Roadblock_scav",
+    "Sniper Roadblock",
+    "Warehouse 4",
+    "ex_customs_coop_boiler",
+    "ex_customs_pmc_auto",
+    "ex_customs_pmc_crossroads",
+    "ex_customs_pmc_flare",
+    "ex_customs_pmc_gasstation",
+    "ex_customs_pmc_rail_milbase",
+    "ex_customs_pmc_trailerpark",
+    "ex_customs_pmc_zb1011",
+    "ex_customs_pmc_zb1013",
+    "ex_customs_scav_admin",
+    "ex_customs_scav_crossroads",
+    "ex_customs_scav_gasstation",
+    "ex_customs_scav_medgate",
+    "ex_customs_scav_milbase_cp",
+    "ex_customs_scav_rail_milbase",
+    "ex_customs_scav_rail_port",
+    "ex_customs_scav_rail_tarkov",
+    "ex_customs_scav_trailerpark",
+    "ex_customs_scav_zb1011",
+    "ex_customs_secret_voron_boat",
+    "ex_customs_secret_voron_bunker"
+   ],
    "extracts": [
     "Administration Gate (scav)",
     "Boiler Room Basement (Co-op) (shared)",
@@ -33,6 +63,37 @@
     "ZB-1013 (pmc)"
    ],
    "name": "Customs",
+   "spawns": {
+    "ZoneBlockPost": {
+     "pmcUSEC": 1
+    },
+    "ZoneCustoms": {
+     "pmcUSEC": 8
+    },
+    "ZoneDormitory": {
+     "bossBully": 0,
+     "pmcBEAR": 0
+    },
+    "ZoneFactorySide": {
+     "pmcUSEC": 6
+    },
+    "ZoneGasStation": {
+     "bossBully": 0,
+     "pmcBEAR": 0
+    },
+    "ZoneOldAZS": {
+     "pmcBEAR": 8
+    },
+    "ZoneScavBase": {
+     "bossBully": 5,
+     "bossKnight": 5,
+     "pmcBEAR": 5,
+     "sectantPriest": 5
+    },
+    "ZoneWade": {
+     "pmcUSEC": 4
+    }
+   },
    "transits": [
     "Transit to Factory",
     "Transit to Interchange",
@@ -42,6 +103,17 @@
   },
   "factory": {
    "btr": [],
+   "extract_ids": [
+    "Camera Bunker Door",
+    "Cellars",
+    "Gate 0",
+    "Gate 2",
+    "Gate 3",
+    "Gate m",
+    "Gate_o",
+    "Office Window",
+    "factory_secret_ark"
+   ],
    "extracts": [
     "Camera Bunker Door (scav)",
     "Cellars (pmc)",
@@ -55,6 +127,11 @@
     "Smugglers' Passage (pmc)"
    ],
    "name": "Factory",
+   "spawns": {
+    "BotZone": {
+     "bossTagilla": 3
+    }
+   },
    "transits": [
     "Transit to Customs",
     "Transit to The Lab",
@@ -63,6 +140,17 @@
   },
   "ground-zero": {
    "btr": [],
+   "extract_ids": [
+    "East Gate",
+    "Exit_E10_coop",
+    "Nakatani_stairs_free_exit",
+    "Sandbox_VExit",
+    "Scav_coop_exit",
+    "Sniper_exit",
+    "UN Roadblock",
+    "Unity_free_exit",
+    "groundzero_secret_adaptation"
+   ],
    "extracts": [
     "Emercom Checkpoint (shared)",
     "Mira Ave (Flare) (pmc)",
@@ -75,12 +163,21 @@
     "UN Roadblock (pmc)"
    ],
    "name": "Ground Zero",
+   "spawns": {},
    "transits": [
     "Transit to Streets of Tarkov"
    ]
   },
   "ground-zero-21": {
    "btr": [],
+   "extract_ids": [
+    "Nakatani_stairs_free_exit",
+    "Sandbox_VExit",
+    "Scav_coop_exit",
+    "Sniper_exit",
+    "Unity_free_exit",
+    "groundzero_secret_adaptation"
+   ],
    "extracts": [
     "Emercom Checkpoint (?)",
     "Mira Ave (Flare) (?)",
@@ -90,38 +187,137 @@
     "Tartowers Sales Office (?)"
    ],
    "name": "Ground Zero 21+",
+   "spawns": {
+    "ZoneSandbox": {
+     "sectantPriest": 64
+    }
+   },
    "transits": [
     "Transit to Streets of Tarkov"
    ]
   },
   "ground-zero-tutorial": {
    "btr": [],
+   "extract_ids": [],
    "extracts": [],
    "name": "Ground Zero Tutorial",
+   "spawns": {},
    "transits": []
   },
   "icebreaker": {
    "btr": [],
+   "extract_ids": [
+    "Heli"
+   ],
    "extracts": [
     "Helicopter (pmc)"
    ],
    "name": "Icebreaker",
+   "spawns": {
+    "BotZoneEngineHide": {
+     "bossBullyBlackDiv": 11
+    },
+    "BotZoneFront": {
+     "ExUsec": 0
+    },
+    "BotZoneFront2": {
+     "ExUsec": 3
+    },
+    "BotZoneInside_t4": {
+     "pmcBotBlackDiv": 4
+    },
+    "BotZoneKitchen": {
+     "ExUsec": 0
+    },
+    "BotZoneKorrDown1": {
+     "ExUsec": 7
+    },
+    "BotZoneMash_t1": {
+     "bossKnight": 0
+    },
+    "BotZoneOutside_t3": {
+     "pmcBotBlackDiv": 2
+    },
+    "BotZoneRoom_Eng": {
+     "ExUsec": 4
+    },
+    "BotZoneRoom_Eng2": {
+     "ExUsec": 0
+    },
+    "BotZoneRoomsFour": {
+     "bossWedge": 4
+    },
+    "BotZoneRoomsThird": {
+     "bossWedge": 0
+    },
+    "BotZoneRoomsThirdKitchen": {
+     "bossWedge": 0
+    },
+    "BotZoneStern": {
+     "bossBullyBlackDiv": 5,
+     "pmcBotBlackDiv": 5
+    },
+    "BotZoneSternTop": {
+     "pmcBotBlackDiv": 2
+    }
+   },
    "transits": []
   },
   "infected-factory": {
    "btr": [],
+   "extract_ids": [],
    "extracts": [],
    "name": "Infected Factory",
+   "spawns": {
+    "BotZone": {
+     "infectedAssault": 19,
+     "infectedPmc": 19,
+     "infectedTagilla": 19
+    }
+   },
    "transits": []
   },
   "infected-lab": {
    "btr": [],
+   "extract_ids": [],
    "extracts": [],
    "name": "Infected Lab",
+   "spawns": {
+    "BotZoneBasement": {
+     "infectedAssault": 5,
+     "infectedPmc": 5,
+     "infectedTagilla": 5
+    },
+    "BotZoneFloor1": {
+     "infectedAssault": 19,
+     "infectedPmc": 19,
+     "infectedTagilla": 19,
+     "pmcBEAR": 19,
+     "pmcUSEC": 19
+    },
+    "BotZoneFloor2": {
+     "infectedAssault": 9,
+     "infectedPmc": 9,
+     "infectedTagilla": 9,
+     "pmcBEAR": 9,
+     "pmcUSEC": 9
+    }
+   },
    "transits": []
   },
   "interchange": {
    "btr": [],
+   "extract_ids": [
+    "Hole Exfill",
+    "ex_interchange_coop_basement",
+    "ex_interchange_pmc_auto",
+    "ex_interchange_pmc_emercom",
+    "ex_interchange_pmc_railway",
+    "ex_interchange_pmc_saferoom",
+    "ex_interchange_pmc_sniper",
+    "ex_interchange_scav_emercom",
+    "ex_interchange_scav_railway"
+   ],
    "extracts": [
     "Emercom Checkpoint (pmc)",
     "Emercom Checkpoint (scav)",
@@ -134,6 +330,41 @@
     "Scav Camp (Co-Op) (shared)"
    ],
    "name": "Interchange",
+   "spawns": {
+    "ZoneBearCamp": {
+     "pmcUSEC": 5
+    },
+    "ZoneCenter": {
+     "pmcBEAR": 1
+    },
+    "ZoneCenterBot": {
+     "bossKilla": 2
+    },
+    "ZoneGoshan": {
+     "bossKilla": 1,
+     "pmcUSEC": 1
+    },
+    "ZoneIDEA": {
+     "bossKilla": 10,
+     "pmcUSEC": 10
+    },
+    "ZoneIDEAPark": {
+     "pmcBEAR": 3
+    },
+    "ZoneOLI": {
+     "bossKilla": 1,
+     "pmcBEAR": 1
+    },
+    "ZonePowerStation": {
+     "pmcUSEC": 2
+    },
+    "ZoneTagilla": {
+     "bossTagilla": 7
+    },
+    "ZoneTrucks": {
+     "pmcBEAR": 0
+    }
+   },
    "transits": [
     "Transit to Customs",
     "Transit to Streets of Tarkov"
@@ -141,6 +372,20 @@
   },
   "lighthouse": {
    "btr": [],
+   "extract_ids": [
+    "Alpinist_light",
+    "Coastal_South_Road",
+    "EXFIL_Train",
+    "Nothern_Checkpoint",
+    "Scav_Coastal_South",
+    "Scav_Hideout_at_the_grotto",
+    "Scav_Industrial_zone",
+    "Scav_Underboat_Hideout",
+    "Shorl_free",
+    "Shorl_free_scav",
+    "lighthouse_secret_minefield",
+    "tunnel_shared"
+   ],
    "extracts": [
     "Armored Train (shared)",
     "Hideout Under the Landing Stage (scav)",
@@ -156,6 +401,26 @@
     "Southern Road Landslide (scav)"
    ],
    "name": "Lighthouse",
+   "spawns": {
+    "Zone_Chalet": {
+     "bossKnight": 4,
+     "exUsecFree": 4
+    },
+    "Zone_Helicopter": {
+     "pmcBEAR": 0,
+     "pmcUSEC": 0
+    },
+    "Zone_Island": {
+     "bossZryachiy": 6
+    },
+    "Zone_LongRoad": {
+     "pmcBEAR": 16,
+     "pmcUSEC": 16
+    },
+    "Zone_Rocks": {
+     "exUsecFree": 2
+    }
+   },
    "transits": [
     "Transit to Icebreaker",
     "Transit to Reserve",
@@ -165,6 +430,16 @@
   },
   "night-factory": {
    "btr": [],
+   "extract_ids": [
+    "Camera Bunker Door",
+    "Cellars",
+    "Gate 0",
+    "Gate 3",
+    "Gate m",
+    "Gate_o",
+    "Office Window",
+    "factory_secret_ark"
+   ],
    "extracts": [
     "Camera Bunker Door (?)",
     "Cellars (?)",
@@ -177,6 +452,12 @@
     "Smugglers' Passage (?)"
    ],
    "name": "Night Factory",
+   "spawns": {
+    "BotZone": {
+     "bossTagilla": 5,
+     "sectantPriest": 5
+    }
+   },
    "transits": [
     "Transit to Customs",
     "Transit to The Lab",
@@ -185,6 +466,19 @@
   },
   "reserve": {
    "btr": [],
+   "extract_ids": [
+    "Alpinist",
+    "EXFIL_Bunker",
+    "EXFIL_Bunker_D2",
+    "EXFIL_ScavCooperation",
+    "EXFIL_Train",
+    "EXFIL_vent",
+    "Exit1",
+    "Exit2",
+    "Exit3",
+    "Exit4",
+    "reserve_secret_minefield"
+   ],
    "extracts": [
     "Armored Train (shared)",
     "Bunker Hermetic Door (shared)",
@@ -199,6 +493,33 @@
     "Sewer Manhole (shared)"
    ],
    "name": "Reserve",
+   "spawns": {
+    "ZoneBarrack": {
+     "bossGluhar": 2,
+     "pmcBEAR": 2,
+     "pmcUSEC": 2
+    },
+    "ZonePTOR1": {
+     "pmcUSEC": 1
+    },
+    "ZonePTOR2": {
+     "bossGluhar": 1,
+     "pmcBEAR": 1,
+     "pmcUSEC": 1
+    },
+    "ZoneRailStrorage": {
+     "PmcBot": 13,
+     "bossGluhar": 13
+    },
+    "ZoneSubCommand": {
+     "PmcBot": 13,
+     "pmcBEAR": 13,
+     "pmcUSEC": 13
+    },
+    "ZoneSubStorage": {
+     "bossGluhar": 1
+    }
+   },
    "transits": [
     "Transit to Customs",
     "Transit to Lighthouse",
@@ -207,6 +528,27 @@
   },
   "shoreline": {
    "btr": [],
+   "extract_ids": [
+    "Adm Basement",
+    "Alpinist",
+    "CCP Temporary",
+    "Lighthouse",
+    "Lighthouse_pass",
+    "Pier Boat",
+    "RWing Gym Entrance",
+    "RedRebel_alp",
+    "Road to Customs",
+    "Road_at_railbridge",
+    "Rock Passage",
+    "Ruined House Fence",
+    "Scav Road to Customs",
+    "Shorl_V-Ex",
+    "Smugglers_Trail_coop",
+    "Svetliy Dead End",
+    "Tunnel",
+    "Wrecked Road",
+    "shoreline_secret_heartbeat"
+   ],
    "extracts": [
     "Admin Basement (scav)",
     "CCP Temporary (pmc)",
@@ -229,6 +571,52 @@
     "Tunnel (pmc)"
    ],
    "name": "Shoreline",
+   "spawns": {
+    "ZoneForestSpawn": {
+     "pmcUSEC": 0,
+     "sectantPriest": 0
+    },
+    "ZoneGateTowerLeft": {
+     "Sentry": 6
+    },
+    "ZoneGateTowerRight": {
+     "Sentry": 0
+    },
+    "ZoneGreenHouses": {
+     "bossSanitar": 6
+    },
+    "ZoneMeteoStation": {
+     "bossKnight": 10,
+     "pmcBEAR": 10
+    },
+    "ZonePassClose": {
+     "pmcBEAR": 5,
+     "pmcUSEC": 5
+    },
+    "ZonePort": {
+     "bossSanitar": 0
+    },
+    "ZoneRailWays": {
+     "pmcBEAR": 4,
+     "pmcUSEC": 4
+    },
+    "ZoneSanatorium1": {
+     "pmcBEAR": 2,
+     "pmcUSEC": 2,
+     "sectantPriest": 2
+    },
+    "ZoneSanatorium2": {
+     "pmcBEAR": 10,
+     "pmcUSEC": 10,
+     "sectantPriest": 10
+    },
+    "ZoneSmuglers": {
+     "pmcBEAR": 0
+    },
+    "ZoneStartVillage": {
+     "pmcUSEC": 4
+    }
+   },
    "transits": [
     "Transit to Icebreaker",
     "Transit to Labyrinth?",
@@ -244,6 +632,27 @@
     "Pinewood Hotel",
     "Rodina Cinema",
     "Tram"
+   ],
+   "extract_ids": [
+    "E1",
+    "E2",
+    "E3",
+    "E4",
+    "E5",
+    "E6",
+    "E7",
+    "E7_car",
+    "E8_yard",
+    "E9_sniper",
+    "Exit_E10_coop",
+    "scav_e2",
+    "scav_e3",
+    "scav_e4",
+    "scav_e5",
+    "scav_e6",
+    "scav_e7",
+    "scav_e8",
+    "streets_secret_onyx"
    ],
    "extracts": [
     "Basement Entrance (scav)",
@@ -267,6 +676,17 @@
     "Ventilation Shaft (scav)"
    ],
    "name": "Streets of Tarkov",
+   "spawns": {
+    "ZoneCarShowroom": {
+     "bossBoar": 11
+    },
+    "ZoneClimova": {
+     "bossKolontay": 5
+    },
+    "ZoneMvd": {
+     "bossKolontay": 3
+    }
+   },
    "transits": [
     "Transit to Ground Zero",
     "Transit to Interchange",
@@ -275,12 +695,85 @@
   },
   "terminal": {
    "btr": [],
+   "extract_ids": [],
    "extracts": [],
    "name": "Terminal",
+   "spawns": {
+    "Zone1BD1HangarAmbush11": {
+     "blackDivision": 9
+    },
+    "Zone1BD1HangarBD11": {
+     "blackDivision": 0
+    },
+    "Zone1BD1PortAmbush1": {
+     "blackDivision": 4
+    },
+    "Zone1BDGateAmbush13": {
+     "blackDivision": 0
+    },
+    "Zone1VSRF1Spawn3": {
+     "vsRF": 4
+    },
+    "Zone1VSRFSnipeRoofPort2": {
+     "vsRFSniper": 2
+    },
+    "Zone1VSRFStoreAmbush10": {
+     "vsRF": 2
+    },
+    "Zone2BDColumns23": {
+     "blackDivision": 0
+    },
+    "Zone2BDPort28": {
+     "blackDivision": 6
+    },
+    "Zone2BDPort30": {
+     "blackDivision": 3
+    },
+    "Zone2BDPort31": {
+     "blackDivision": 5
+    },
+    "Zone2BDPort32": {
+     "blackDivision": 3
+    },
+    "Zone2BDWarehouse18": {
+     "blackDivision": 6
+    },
+    "Zone2BDWarehouse19": {
+     "blackDivision": 0
+    },
+    "Zone2ScavPort29": {
+     "bossBully": 0,
+     "bossGluhar": 0,
+     "bossKilla": 0,
+     "bossSanitar": 0,
+     "bossTagilla": 0
+    },
+    "Zone2VSRFColumns22": {
+     "vsRF": 10
+    },
+    "Zone2VSRFContainers24": {
+     "vsRF": 0
+    },
+    "Zone2VSRFExit33": {
+     "vsRF": 6
+    },
+    "Zone2VSRFPassMiddle15": {
+     "vsRF": 2
+    }
+   },
    "transits": []
   },
   "the-lab": {
    "btr": [],
+   "extract_ids": [
+    "lab_Elevator_Cargo",
+    "lab_Elevator_Main",
+    "lab_Elevator_Med",
+    "lab_Hangar_Gate",
+    "lab_Parking_Gate",
+    "lab_Under_Storage_Collector",
+    "lab_Vent"
+   ],
    "extracts": [
     "Cargo Elevator (shared)",
     "Hangar Gate (pmc)",
@@ -291,23 +784,76 @@
     "Ventilation Shaft (pmc)"
    ],
    "name": "The Lab",
+   "spawns": {
+    "BotZoneBasement": {
+     "PmcBot": 18
+    },
+    "BotZoneFloor1": {
+     "PmcBot": 10,
+     "pmcBEAR": 10,
+     "pmcUSEC": 10
+    },
+    "BotZoneFloor2": {
+     "PmcBot": 11,
+     "pmcBEAR": 11,
+     "pmcUSEC": 11
+    },
+    "BotZoneGate1": {
+     "PmcBot": 0
+    },
+    "BotZoneGate2": {
+     "PmcBot": 0
+    }
+   },
    "transits": [
     "Transit to Streets of Tarkov"
    ]
   },
   "the-lab-dark": {
    "btr": [],
+   "extract_ids": [],
    "extracts": [],
    "name": "The Lab (Dark)",
+   "spawns": {
+    "BotZoneArmory": {
+     "bossWedgeLab": 4
+    },
+    "BotZoneFloor1": {
+     "PmcBot": 19,
+     "pmcBEAR": 19,
+     "pmcBotBlackDiv": 19,
+     "pmcUSEC": 19
+    },
+    "BotZoneFloor2": {
+     "PmcBot": 9,
+     "pmcBEAR": 9,
+     "pmcBotBlackDiv": 9,
+     "pmcUSEC": 9
+    },
+    "BotZoneGate1": {
+     "bossWedgeLab": 4
+    },
+    "BotZoneGate2": {
+     "bossWedgeLab": 5
+    },
+    "BotZoneGreenOffice": {
+     "bossWedgeLab": 6
+    }
+   },
    "transits": []
   },
   "the-labyrinth": {
    "btr": [],
+   "extract_ids": [
+    "labir_exit",
+    "labyrinth_secret_tagilla_key"
+   ],
    "extracts": [
     "Ariadne's Path (pmc)",
     "The Way Up (pmc)"
    ],
    "name": "The Labyrinth",
+   "spawns": {},
    "transits": []
   },
   "woods": {
@@ -320,6 +866,26 @@
     "Sunken Village",
     "Train Depot",
     "USEC Checkpoint"
+   ],
+   "extract_ids": [
+    "Dead Man's Place",
+    "East Gate",
+    "Factory Gate",
+    "Mountain Stash",
+    "Old Station",
+    "Outskirts",
+    "RUAF Gate",
+    "RUAF Roadblock",
+    "Scav House",
+    "South V-Ex",
+    "The Boat",
+    "UN Roadblock",
+    "West Border",
+    "ZB-014",
+    "ZB-016",
+    "un-sec",
+    "wood_sniper_exit",
+    "woods_secret_minefield"
    ],
    "extracts": [
     "Boat (scav)",
@@ -344,6 +910,20 @@
     "ZB-016 (pmc)"
    ],
    "name": "Woods",
+   "spawns": {
+    "ZoneBrokenVill": {
+     "sectantPriest": 26
+    },
+    "ZoneMiniHouse": {
+     "sectantPriest": 1
+    },
+    "ZoneScavBase2": {
+     "bossKnight": 4
+    },
+    "ZoneWoodCutter": {
+     "bossKojaniy": 12
+    }
+   },
    "transits": [
     "Transit to Customs",
     "Transit to Factory",
