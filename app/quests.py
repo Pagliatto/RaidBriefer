@@ -225,17 +225,18 @@ def _objectives_and_prep(task: dict, task_tr, item_tr, quest_items: dict, overri
         group_ids = list(dict.fromkeys(_flat(ids)))
         group = tuple(sorted(group_ids))
         if not group:
-            return
+            return None
         maps = map_display_names(map_ids)
         if group not in keys:
             members = [info for key_id in group_ids if (info := key_info(key_id))]
             if not members:
-                return
+                return None
             keys[group] = members
             key_maps[group] = maps or None
         elif key_maps[group] is not None:
             # 같은 묶음의 맵을 합침 (맵 정보 없는 곳에서도 필요하면 어디서나)
             key_maps[group] = (key_maps[group] + [m for m in maps if m not in key_maps[group]]) if maps else None
+        return keys[group]
 
     for o in task.get("objectives", []):
         objective = _objective_text(o["description"], task_tr, overrides)
@@ -270,8 +271,15 @@ def _objectives_and_prep(task: dict, task_tr, item_tr, quest_items: dict, overri
             qi = quest_items.get(o.get("questItem"), {})
             add("가져가기", task_tr(qi.get("name", "")) if qi else "", count)
 
+        # 목표마다 필요한 열쇠도 그 목표에 남김 → 지도 번호 핀·말풍선에 열쇠 표시 (2026-11-28)
+        objective_keys = []
         for group in o.get("requiredKeys") or []:
-            add_keys(group, o.get("maps"))
+            members = add_keys(group, o.get("maps"))
+            if members and members not in objective_keys:
+                objective_keys.append(members)
+        if objective_keys:
+            objective["keys"] = [{"text": " / ".join(k["name"] for k in members), "keys": members, "any_of": len(members) > 1}
+                                 for members in objective_keys]
 
     # neededKeys 는 '이 맵에서 필요한 열쇠 전부'(대체 묶음이 아님) → 하나씩. 목표 쪽에 이미 나온 열쇠는 건너뜀
     covered = {key_id for group in keys for key_id in group}

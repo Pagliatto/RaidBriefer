@@ -863,6 +863,21 @@ body.map-mode .scroll-buttons { display: none; }
   background: var(--pin); color: #111; font-size: 12px; font-weight: 700;
   border: 2px solid #111; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.85), 0 1px 4px 1px rgba(0, 0, 0, 0.6);
 }
+/* 열쇠가 필요한 목표: 번호 오른쪽 위의 작은 열쇠 배지 (번호를 가리지 않게 핀 밖으로 살짝) */
+.quest-pin span { position: relative; }
+.pin-key {
+  position: absolute; top: -6px; right: -7px; display: grid; place-items: center;
+  width: 14px; height: 14px; border-radius: 50%; background: #111; color: var(--accent);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.85);
+}
+.pin-key .icon { display: block; }
+.pin-tip-key { display: inline-flex; align-items: center; gap: 4px; color: var(--accent); }
+/* 서랍 퀘스트 이름 아래 '열쇠 필요' 한 줄 */
+.drawer-keys { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; margin: 2px 0 0; font-size: 12px; color: var(--text); }
+.drawer-keys > .icon { flex-shrink: 0; color: var(--accent); }
+.drawer-keys-label { font-weight: 700; color: var(--accent); }
+.drawer-keys-sep { color: var(--text-faint); }
+.drawer-key-group { min-width: 0; overflow-wrap: anywhere; }
 /* 다른 핀과 겹쳐 있음: 밝은 링 (마우스를 올리면 펼쳐짐) */
 .quest-pin.stacked span { box-shadow: 0 0 0 2px #111, 0 0 0 4px rgba(232, 228, 216, 0.85); }
 
