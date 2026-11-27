@@ -1001,6 +1001,34 @@ function openHoverCard(marker, html) {
   });
   box.addEventListener("mouseleave", closeHoverCardSoon);
 }
+// 번호 핀 말풍선의 열쇠 줄: 그 목표에 필요한 열쇠 (묶음마다 한 줄, 둘 중 하나면 '택1')
+function goalKeysHtml(objective) {
+  return (objective.keys || []).map((group) =>
+    `<br><span class="pin-tip-key">${iconSvg("key", 11)} ${escapeHtml(group.text)}${group.any_of ? ` (${escapeHtml(t("quest.keyAnyOf"))})` : ""}</span>`).join("");
+}
+
+// 서랍 퀘스트 줄의 '열쇠 필요' 한 줄: 이 맵에서 쓰는 열쇠만 (맵 정보 없는 열쇠는 어느 맵에서나), 이름마다 위키
+function drawerKeyLine(quest, mapName) {
+  const groups = (quest.prep || []).filter((p) => p.kind === "열쇠" && (!p.maps || !p.maps.length || p.maps.includes(mapName)));
+  if (!groups.length) return null;
+  const line = el("div", "drawer-keys");
+  line.append(icon("key", 12), el("span", "drawer-keys-label", t("map.keyNeeded")));
+  groups.forEach((p, gi) => {
+    if (gi) line.append(el("span", "drawer-keys-sep", "·"));
+    const group = el("span", "drawer-key-group");
+    (p.keys || []).forEach((key, i) => {
+      if (i) group.append(" / ");
+      group.append(key.name);
+      const link = keyWikiLink(key, true);
+      if (link) group.append(link);
+    });
+    if (!(p.keys || []).length) group.append(p.text);
+    if (p.any_of) group.append(el("span", "key-any-of", ` (${t("quest.keyAnyOf")})`));
+    line.append(group);
+  });
+  return line;
+}
+
 // 열쇠 이름 + 위키 📖 (퀘스트 열쇠 링크와 같은 모양)
 function keyWithWiki(name, wiki) {
   if (!wiki) return escapeHtml(name);
@@ -2143,13 +2171,14 @@ function drawPins() {
         const marker = L.marker(gamePos(p), {
           icon: L.divIcon({
             className: "quest-pin",
-            html: `<span style="--pin:${color}">${n}</span>`,
+            // 열쇠가 필요한 목표: 번호 오른쪽 위에 작은 열쇠 (가서야 열쇠가 필요한 걸 아는 일 막기, 2026-11-28 사용자)
+            html: `<span style="--pin:${color}">${n}${objective.keys?.length ? `<i class="pin-key">${iconSvg("key", 9, 2.6)}</i>` : ""}</span>`,
             iconSize: [24, 24],
             iconAnchor: [12, 12],
           }),
           zIndexOffset: QUEST_PIN_Z, // 퀘스트 핀은 탈출구·열쇠 같은 표시보다 항상 위
         });
-        marker.bindTooltip(`<b>${escapeHtml(quest.name)}</b><br>${escapeHtml(objective.text)}`, { direction: "top", offset: [0, -10] });
+        marker.bindTooltip(`<b>${escapeHtml(quest.name)}</b><br>${escapeHtml(objective.text)}${goalKeysHtml(objective)}`, { direction: "top", offset: [0, -10] });
         const item = { marker, home: L.latLng(gamePos(p)), n, cluster: null, floor: floorOf(p) };
         mapUI.pinMarkers.push(item);
         mapUI.floorItems.push({ layer: marker, floor: item.floor, quest: true });
@@ -2713,6 +2742,8 @@ function renderDrawer() {
     const wiki = questWikiLink(q);
     if (wiki) heading.append(wiki);
     li.append(heading);
+    const keyLine = drawerKeyLine(q, m.name);
+    if (keyLine) li.append(keyLine);
     const goals = el("ul", "drawer-goals");
     const away = [];
     q.objectives.forEach((o) => {

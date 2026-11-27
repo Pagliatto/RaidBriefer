@@ -238,6 +238,7 @@
     "newBadge": "새로 가능"
   },
   "map": {
+    "keyNeeded": "열쇠 필요",
     "storyLayer": "스토리",
     "layerBlackDivision": "블랙 디비전",
     "layerBossZones": "보스 구역",
