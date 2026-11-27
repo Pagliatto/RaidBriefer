@@ -61,20 +61,150 @@ function gatherPrep(info, mapName) {
     // 열쇠는 그 맵에서 필요한 것만 (여러 맵에 걸친 퀘스트의 다른 맵 열쇠는 빼기)
     if (p.kind === "열쇠" && mapName && p.maps && p.maps.length && !p.maps.includes(mapName)) return;
     const key = `${p.kind}|${p.text}`;
+    const src = `${from.type}:${from.id}`;
     const cur = merged.get(key);
     if (cur) {
       if (p.count) cur.count = (cur.count || 1) + p.count;
-      if (!cur.from.some((f) => f.id === from.id)) cur.from.push(from);
+      if (!cur.from.some((f) => f.type === from.type && f.id === from.id)) cur.from.push(from);
     } else {
-      merged.set(key, { ...p, from: [from] });
+      merged.set(key, { ...p, from: [from], per: new Map() });
     }
+    // per: 퀘스트·챕터마다 몇 개 필요한지 (퀘스트별 줄에 그 퀘스트 몫만 보여 주려고)
+    const per = merged.get(key).per;
+    per.set(src, (per.get(src) || 0) + (p.count || 1));
   };
-  const fromQuest = (q) => ({ type: "quest", id: q.id, name: q.name });
+  // nightMaps: 밤에만 되는 맵 표시를 이름 옆에 붙이려고 (예전 퀘스트 목록에 있던 것)
+  const fromQuest = (q) => questSource(q);
   info.quests.forEach((q) => (q.prep || []).forEach((p) => add(p, fromQuest(q))));
-  anywhereQuests(activeQuests()).forEach((q) => (q.prep || []).forEach((p) => add(p, fromQuest(q))));  // 어느 맵에서나 퀘스트 준비물도
+  // 실제 맵과 '모든 맵'에 같이 걸린 퀘스트는 위에서 이미 더했으니 빼기 (개수 두 번 세지 않게)
+  anywhereQuests(activeQuests()).filter((q) => !info.quests.includes(q))
+    .forEach((q) => (q.prep || []).forEach((p) => add(p, questSource(q, true))));  // 어느 맵에서나 퀘스트 준비물도
   info.stories.forEach((s) => (s.section ? visiblePrep(s.section) : []).forEach((p) => add(p, { type: "story", id: s.ch.id, name: s.ch.name })));
   const order = { "열쇠": 0, "가져가기": 1, "무기": 2, "착용": 3 };
   return [...merged.values()].sort((a, b) => order[a.kind] - order[b.kind]);
+}
+
+// 준비물을 '퀘스트(챕터)별 줄'로 나누기
+//  - shared: 여러 곳에 필요한 물건 (합계를 한 줄에, 무기·착용은 빼고)
+//  - carry: 그냥 들고 가면 되는 퀘스트 (열쇠·지참만)
+//  - pick: 무기·착용 조건이 있는 퀘스트 → 그 퀘스트 준비물 전부를 한 줄에 (장비 맞추기)
+const GEAR_KINDS = ["무기", "착용"];
+function planPrep(prep) {
+  const sources = new Map();  // "quest:id" → { from, items: [{ p, count }] }
+  prep.forEach((p) => p.from.forEach((f) => {
+    const key = `${f.type}:${f.id}`;
+    if (!sources.has(key)) sources.set(key, { from: f, items: [] });
+    sources.get(key).items.push({ p, count: p.per.get(key) || 1 });
+  }));
+  const pick = [...sources.values()].filter((s) => s.items.some((it) => GEAR_KINDS.includes(it.p.kind)));
+  const isShared = (p) => p.from.length > 1 && !GEAR_KINDS.includes(p.kind);
+  const shared = prep.filter(isShared);
+  const carry = [...sources.values()]
+    .filter((s) => !pick.includes(s))
+    .map((s) => ({ ...s, items: s.items.filter((it) => !isShared(it.p)) }))
+    .filter((s) => s.items.length);
+  return { shared, carry, pick };
+}
+
+// 준비물 칩 하나: 분류 이름(색) + 이름 + 개수. 누르면 필요한 퀘스트·챕터로
+function homePrepChip(parent, p, count, from, note) {
+  const cls = PREP_CLASS[p.kind] || "etc";
+  const chip = el("button", `prep-item kind-${cls} go-source`);
+  chip.type = "button";
+  chip.title = t("home.prepNeededBy", { list: from.map((f) => f.name).join(", ") });
+  chip.append(el("b", "", t(`prepKind.${cls}`)), document.createTextNode(" " + p.text + (count > 1 ? ` ×${count.toLocaleString()}` : "")));
+  if (p.any_of) chip.append(el("span", "key-any-of", ` (${t("quest.keyAnyOf")})`));
+  if (note) chip.append(note);
+  chip.addEventListener("click", () => goToSource(from));
+  appendPrepWithWiki(parent, chip, p.keys, true);
+}
+
+// 퀘스트 → 이름표 정보 (상인 색 띠·밤 표시·'모든 맵' 표시에 씀)
+function questSource(q, anywhere = false) {
+  return { type: "quest", id: q.id, name: q.name, trader: q.trader, traderKey: q.trader_key, nightMaps: q.night_maps, anywhere };
+}
+
+// 상인 순서 (게임 상인 화면 순서): 같은 색 띠끼리 붙어 보이게. 스토리·모르는 상인은 맨 뒤
+const TRADER_ORDER = ["prapor", "therapist", "fence", "skier", "peacekeeper", "mechanic", "ragman", "jaeger", "ref", "lightkeeper", "btr-driver"];
+function byTrader(a, b) {
+  const rank = (f) => {
+    const i = f.type === "quest" ? TRADER_ORDER.indexOf(f.traderKey) : -1;
+    return i < 0 ? TRADER_ORDER.length + (f.type === "story" ? 1 : 0) : i;
+  };
+  return rank(a) - rank(b);
+}
+
+// 퀘스트·챕터 이름표: 퀘스트 탭·예전 목록과 같은 모양 (왼쪽 상인 색 띠 + 이름 + 상인 이름). 누르면 그 퀘스트·챕터로
+function homePrepSource(from, mapName) {
+  const name = el("button", `home-prep-src trader-${from.traderKey || "etc"} go-source`);
+  name.type = "button";
+  name.title = t(from.type === "story" ? "home.storyChapterHint" : "home.questDetailHint");
+  name.append(el("span", "home-quest-name", from.name));
+  if (from.type === "story") name.append(el("span", "home-prep-story", t("home.storyLabel")));
+  else if (from.trader) name.append(el("span", "quest-trader", from.trader));
+  if (from.nightMaps && from.nightMaps.includes(mapName)) name.append(mapTag(mapName, from.nightMaps));
+  if (from.anywhere) name.append(el("span", "home-prep-any", mapLabel(ALL_MAPS)));  // 어느 맵에서나 하는 퀘스트
+  name.addEventListener("click", () => goToSource([from]));
+  return name;
+}
+
+// 준비물이 하나도 없는 퀘스트(바로 출발): 예전 퀘스트 목록처럼 2열 (모든 퀘스트가 화면에 한 번씩은 보이게)
+function renderHomeNoPrep(box, sources, mapName) {
+  if (!sources.length) return;
+  box.append(el("p", "home-prep-sub", t("home.prepNoneLabel", { n: sources.length })));
+  const names = el("div", "home-prep-names");
+  sources.sort(byTrader).forEach((f) => names.append(homePrepSource(f, mapName)));
+  box.append(names);
+}
+
+function renderHomePrep(box, prep, mapName) {
+  const { shared, carry, pick } = planPrep(prep);
+  carry.sort((a, b) => byTrader(a.from, b.from));
+  pick.sort((a, b) => byTrader(a.from, b.from));
+  if (shared.length || carry.length) {
+    box.append(el("p", "home-prep-sub", t("home.prepCarry")));
+    const rows = el("div", "home-prep-rows");
+    if (shared.length) {
+      const line = el("div", "home-prep-row shared");
+      line.append(el("span", "home-prep-label", t("home.prepShared")));
+      const chips = el("div", "prep");
+      shared.forEach((p) => {
+        const total = [...p.per.values()].reduce((a, b) => a + b, 0);
+        // 어느 퀘스트들 몫인지 이름을 칩 안에 (이 퀘스트들은 아래 줄에 따로 안 나올 수 있어서 밤·모든 맵 표시도 같이)
+        const note = el("span", "home-prep-note");
+        p.from.forEach((f, i) => {
+          if (i) note.append(" · ");
+          note.append(f.name);
+          if (f.nightMaps && f.nightMaps.includes(mapName)) note.append(" ", mapTag(mapName, f.nightMaps));
+          if (f.anywhere) note.append(el("span", "home-prep-any", mapLabel(ALL_MAPS)));
+        });
+        homePrepChip(chips, p, total, p.from, note);
+      });
+      line.append(chips);
+      rows.append(line);
+    }
+    carry.forEach((s) => {
+      const line = el("div", "home-prep-row");
+      const chips = el("div", "prep");
+      s.items.forEach((it) => homePrepChip(chips, it.p, it.count, [s.from]));
+      line.append(homePrepSource(s.from, mapName), chips);
+      rows.append(line);
+    });
+    box.append(rows);
+  }
+  if (pick.length) {
+    box.append(el("p", "home-prep-sub", t("home.prepPick")));
+    // '다 챙기기'와 같은 줄 모양, 묶음 전체에만 옅은 배경 (상자 안 상자로 답답해 보이지 않게)
+    const rows = el("div", "home-prep-rows pick");
+    pick.forEach((s) => {
+      const line = el("div", "home-prep-row");
+      const chips = el("div", "prep");
+      s.items.forEach((it) => homePrepChip(chips, it.p, it.count, [s.from]));
+      line.append(homePrepSource(s.from, mapName), chips);
+      rows.append(line);
+    });
+    box.append(rows);
+  }
 }
 
 function renderHomeMaps(entries) {
@@ -146,34 +276,15 @@ function renderHomeDetail(name, info) {
   const prep = gatherPrep(info, name);
   box.append(el("p", "home-label", t("home.prepLabel")));
   if (prep.length) {
-    // 분류별로 한 줄씩 (열쇠 / 가져가기 / 무기 / 착용): 분류 이름은 줄 앞에 한 번만
-    const groups = new Map();
-    prep.forEach((p) => {
-      if (!groups.has(p.kind)) groups.set(p.kind, []);
-      groups.get(p.kind).push(p);
-    });
-    const rows = el("div", "prep-groups");
-    groups.forEach((list, kind) => {
-    const line = el("div", "prep-group");
-    line.append(el("span", `prep-group-label kind-${PREP_CLASS[kind] || "etc"}`, t(`prepKind.${PREP_CLASS[kind] || "etc"}`)));
-    const row = el("div", "prep");
-    list.forEach((p) => {
-      // 누르면 이 준비물이 필요한 퀘스트(여러 개면 모두 반짝임)·챕터로 이동
-      const chip = el("button", `prep-item kind-${PREP_CLASS[p.kind] || "etc"} go-source`);
-      chip.type = "button";
-      chip.title = t("home.prepNeededBy", { list: p.from.map((f) => f.name).join(", ") });
-      chip.append(document.createTextNode(p.text + (p.count ? ` ×${p.count.toLocaleString()}` : "")));
-      if (p.any_of) chip.append(el("span", "key-any-of", ` (${t("quest.keyAnyOf")})`));
-      chip.addEventListener("click", () => goToSource(p.from));
-      appendPrepWithWiki(row, chip, p.keys, true);
-    });
-    line.append(row);
-    rows.append(line);
-    });
-    box.append(rows);
+    renderHomePrep(box, prep, name);
   } else {
     box.append(el("p", "home-none", t("home.prepNone")));
   }
+  // 위 줄·카드에 한 번도 안 나온 퀘스트 (= 이 맵에서 챙길 게 없는 퀘스트)
+  const shown = new Set(prep.flatMap((p) => p.from).filter((f) => f.type === "quest").map((f) => f.id));
+  const anywhere = anywhereQuests(activeQuests()).filter((q) => !info.quests.includes(q));
+  const noPrep = [...info.quests.map((q) => questSource(q)), ...anywhere.map((q) => questSource(q, true))].filter((f) => !shown.has(f.id));
+  renderHomeNoPrep(box, noPrep, name);
 
   // 스토리 다음 단계
   if (info.stories.length) {
@@ -189,33 +300,6 @@ function renderHomeDetail(name, info) {
     box.append(ul);
   }
 
-  // 퀘스트
-  box.append(el("p", "home-label", t("home.questCount", { n: info.quests.length })));
-  const ul = el("ul", "home-list home-quests"); // 퀘스트 목록만 2열
-  info.quests.forEach((q) => {
-    const li = el("li", `trader-${q.trader_key || "etc"} go-source`);
-    li.title = t("home.questDetailHint");
-    li.addEventListener("click", () => goToQuests([q.id]));
-    li.append(el("span", "home-quest-name", q.name), ...(q.name_en ? [el("span", "quest-name-en", q.name_en)] : []), el("span", "quest-trader", q.trader));
-    if (q.night_maps && q.night_maps.includes(name)) li.append(mapTag(name, q.night_maps));
-    ul.append(li);
-  });
-  box.append(ul);
-
-  // 어느 맵에서나 할 수 있는 레이드 퀘스트 (준비물은 위 "챙길 것"에 같이 들어감)
-  const anywhere = anywhereQuests(activeQuests());
-  if (anywhere.length) {
-    box.append(el("p", "home-label", t("home.anywhereCount", { label: mapLabel(ALL_MAPS), n: anywhere.length })));
-    const ul2 = el("ul", "home-list home-quests");
-    anywhere.forEach((q) => {
-      const li = el("li", `trader-${q.trader_key || "etc"} go-source`);
-      li.title = t("home.questDetailHint");
-      li.addEventListener("click", () => goToQuests([q.id]));
-      li.append(el("span", "home-quest-name", q.name), ...(q.name_en ? [el("span", "quest-name-en", q.name_en)] : []), el("span", "quest-trader", q.trader));
-      ul2.append(li);
-    });
-    box.append(ul2);
-  }
 }
 
 function renderHomeStory(list) {
