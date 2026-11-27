@@ -290,5 +290,20 @@
       "'Active storyline' on the Home tab shows only chapters that still have something to do; finished chapters are counted in the line below",
       "Error report codes carry more detail (where the error came from and which tab was open), so problems are easier to track down"
     ]
+  },
+  "1.9.0": {
+    "date": "2026-11-27",
+    "ko": [
+      "홈: 고른 맵의 준비물이 퀘스트마다 한 줄로 나와요. 어떤 퀘스트에 무엇을 챙길지 바로 보여요",
+      "홈: 다 챙기기(열쇠·지참) · 장비 맞추기(무기·착용 조건) · 바로 출발(챙길 것 없음)로 나눠요. 퀘스트 이름은 상인 색으로 표시하고 상인 순서로 정렬해요",
+      "홈: 여러 퀘스트가 같은 물건을 쓰면 맨 위에 합계와 퀘스트 이름을 한 번에 보여요",
+      "홈: 같은 물건 합계에서 개수가 적히지 않은 퀘스트를 빠뜨리던 것을 고쳤어요"
+    ],
+    "en": [
+      "Home: supplies for the selected map are listed per quest, so you can see which quest needs what",
+      "Home: quests are split into Bring all (keys and items), Gear up (set weapon or gear) and Just go (nothing to bring), with trader colors and sorted by trader",
+      "Home: items needed by several quests show once at the top with the total and the quest names",
+      "Home: fixed item totals that left out quests without a stated count"
+    ]
   }
 }
