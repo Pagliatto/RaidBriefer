@@ -322,5 +322,14 @@
       "Map: during a transit the map stays until you reach the new map, and story markers now match quest pin size",
       "Quests: fixed wrong objective details on some quests, based on the wiki"
     ]
+  },
+  "1.10.1": {
+    "date": "2026-11-29",
+    "ko": [
+      "지도 탭에서 화면에 문제가 없는데도 '예상 못 한 오류' 알림이 뜨던 것을 고쳤어요"
+    ],
+    "en": [
+      "Fixed an 'unexpected error' alert that could appear on the Map tab even though nothing was wrong"
+    ]
   }
 }
