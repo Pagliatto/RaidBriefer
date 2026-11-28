@@ -2675,9 +2675,8 @@ button.goal-check:hover { border-color: var(--ok); }
 .home-pick-clear { flex: none; padding: 3px 10px; font-size: 12px; text-align: center; }
 .home-pick-hint { margin: 4px 0 8px; font-size: 12px; color: var(--text-faint); }
 .home-pick-hint.on { color: var(--accent); }
-/* 고르지 않은 퀘스트: 맨 아래 접기 제목 + 흐린 줄 */
-.home-unpicked-head { width: 100%; padding: 0; border: 0; background: none; font: inherit; font-size: 13px; font-weight: 700; color: var(--text-dim); text-align: left; cursor: pointer; }
-.home-unpicked-head:hover > span:first-of-type { color: var(--text); }
-.home-unpicked > .home-prep-row > :not(.pick-toggle) { opacity: 0.6; }
+/* 고르지 않은 퀘스트: 제자리에서 흐리게 (버튼은 또렷하게 → 바로 더 고를 수 있게) */
+.home-prep-row.inactive > :not(.pick-toggle), .home-prep-name.inactive > .home-prep-src { opacity: 0.45; }
+.prep-item.inactive { opacity: 0.45; }
 /* 맵 카드: 이 맵에서 고른 수 */
 .home-map-picked { display: inline-flex; align-items: center; gap: 2px; margin-left: 6px; padding: 0 5px; border-radius: 999px; background: var(--accent); color: #111; font-size: 11px; font-weight: 700; }
