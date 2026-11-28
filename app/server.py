@@ -706,7 +706,7 @@ def api_story():
         return _failed("server.storyFailed", error)
 
 
-# 체크 저장: kind = handed(제출) 또는 story(스토리 단계)
+# 체크 저장: kind = handed(제출)·goals(해낸 목표)·story(스토리 단계) 등 progress.KINDS
 @app.route("/api/check/<kind>", methods=["GET"])
 def api_check_get(kind):
     if kind not in progress.KINDS:
