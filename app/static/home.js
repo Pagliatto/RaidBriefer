@@ -46,7 +46,8 @@ function collectByMap() {
   };
   if (state.data) {
     activeQuests().forEach((q) => q.maps.forEach((m) => {  // 숨긴(안 할) 퀘스트는 빼고
-      if (!NOT_A_MAP.includes(m)) slot(m).quests.push(q);  // "모든 맵"·"레이드 밖"은 맵 카드에서 뺌
+      // "모든 맵"·"레이드 밖"은 맵 카드에서 뺌. 그 맵 목표를 모두 체크한 퀘스트도 그 맵에서는 뺌 (2026-11-28)
+      if (!NOT_A_MAP.includes(m) && !questDoneOnMap(q, m)) slot(m).quests.push(q);
     }));
   }
   storyNext().forEach((s) => s.maps.forEach((m) => {
@@ -56,6 +57,11 @@ function collectByMap() {
   // 할 일이 많은 맵이 앞으로
   return [...byMap.entries()].sort((a, b) =>
     (b[1].quests.length + b[1].stories.length) - (a[1].quests.length + a[1].stories.length));
+}
+
+// 이 맵 카드에 같이 보일 '어느 맵에서나' 퀘스트: 이미 맵 퀘스트로 나온 것, 이 맵 목표를 다 체크한 것은 빼고
+function homeAnywhere(info, mapName) {
+  return anywhereQuests(activeQuests()).filter((q) => !info.quests.includes(q) && !questDoneOnMap(q, mapName));
 }
 
 // 고른 맵에서 챙길 것: 퀘스트 준비물 + 스토리 구간 준비물 (제출은 빼고 레이드에 들고 갈 것만)
@@ -81,10 +87,21 @@ function gatherPrep(info, mapName) {
   };
   // nightMaps: 밤에만 되는 맵 표시를 이름 옆에 붙이려고 (예전 퀘스트 목록에 있던 것)
   const fromQuest = (q) => questSource(q);
-  info.quests.forEach((q) => (q.prep || []).forEach((p) => add(p, fromQuest(q))));
+  // 목표별 개수(p.goals: [목표 순서, 개수])가 있으면 체크한 목표·다른 맵 목표 몫은 빼고 셈 (2026-11-28)
+  // 예: 떡밥 뿌리기 금목걸이 3+3 → 세관에서는 세관 목표 3개만, 세관 목표를 체크하면 세관에서는 안 보임
+  const left = (q, p) => {
+    if (!p.goals || !mapName) return p;
+    const n = p.goals.reduce((sum, [index, count]) => {
+      const o = q.objectives[index];
+      return sum + (!o || (!goalDone(q, o) && (!o.maps || o.maps.includes(mapName))) ? count : 0);
+    }, 0);
+    return n ? { ...p, count: n > 1 ? n : null } : null;
+  };
+  const addQuest = (q, from) => (q.prep || []).forEach((p) => { const rest = left(q, p); if (rest) add(rest, from); });
+  info.quests.forEach((q) => addQuest(q, fromQuest(q)));
   // 실제 맵과 '모든 맵'에 같이 걸린 퀘스트는 위에서 이미 더했으니 빼기 (개수 두 번 세지 않게)
-  anywhereQuests(activeQuests()).filter((q) => !info.quests.includes(q))
-    .forEach((q) => (q.prep || []).forEach((p) => add(p, questSource(q, true))));  // 어느 맵에서나 퀘스트 준비물도
+  homeAnywhere(info, mapName)
+    .forEach((q) => addQuest(q, questSource(q, true)));  // 어느 맵에서나 퀘스트 준비물도
   info.stories.forEach((s) => (s.section ? visiblePrep(s.section) : []).forEach((p) => add(p, { type: "story", id: s.ch.id, name: s.ch.name })));
   const order = { "열쇠": 0, "가져가기": 1, "무기": 2, "착용": 3 };
   return [...merged.values()].sort((a, b) => order[a.kind] - order[b.kind]);
@@ -288,7 +305,7 @@ function renderHomeDetail(name, info) {
 
   // '이번 판' 고르기: 이 맵의 퀘스트를 하나라도 골랐으면 고른 것만 (어느 맵에서나 퀘스트만 고른 건 세지 않음,
   // 다른 맵에 들어가 지도가 텅 비지 않게 하는 규칙과 같음). 안 골랐으면 지금과 같고 줄마다 버튼만 붙음
-  const anywhere = anywhereQuests(activeQuests()).filter((q) => !info.quests.includes(q));
+  const anywhere = homeAnywhere(info, name);
   const mapQuests = [...info.quests, ...anywhere];
   const pickMode = info.quests.some((q) => isPicked(q.id));
   const only = pickMode ? new Set(mapQuests.filter((q) => isPicked(q.id)).map((q) => q.id)) : null;
