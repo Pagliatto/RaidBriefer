@@ -198,6 +198,7 @@ def _objectives_and_prep(task: dict, task_tr, item_tr, quest_items: dict, overri
     item_ids = {}  # (종류, 이름, 인레이드) → 아이템 id들 (지도에 바닥 생성 위치를 찍을 때 씀)
 
     give_goals = []  # (건네주기 목표, 준비물 키) → 목표 체크가 '제출' 체크를 따라가게 (hand)
+    prep_goals = {}  # 준비물 키 → {목표 순서: 개수} → 홈이 해낸 목표·다른 맵 목표 몫을 빼고 셈 (2026-11-28)
 
     def add(kind, text, count=None, fir=False, ids=None):
         if text:
@@ -205,6 +206,8 @@ def _objectives_and_prep(task: dict, task_tr, item_tr, quest_items: dict, overri
             k = (kind, identity, fir)
             prep_text[k] = text
             prep[k] = prep.get(k, 0) + (count or 1)
+            goal_counts = prep_goals.setdefault(k, {})
+            goal_counts[len(objectives) - 1] = goal_counts.get(len(objectives) - 1, 0) + (count or 1)
             if ids:
                 item_ids.setdefault(k, [])
                 item_ids[k] += [i for i in _flat(ids) if i not in item_ids[k]]
@@ -308,6 +311,8 @@ def _objectives_and_prep(task: dict, task_tr, item_tr, quest_items: dict, overri
         kind, _, fir = k
         text = prep_text[k]
         entry = {"kind": kind, "text": text, "count": total if total > 1 else None, "fir": fir}
+        if kind != "제출":
+            entry["goals"] = [[index, n] for index, n in prep_goals[k].items()]  # [목표 순서, 개수]
         if k in item_ids:
             entry["ids"] = item_ids[k]
             if kind == "제출":
@@ -660,6 +665,9 @@ def build() -> dict:
             else:
                 text = (details.get("objective_en") if english else None) or details.get("objective")
                 entry["objectives"] = [{"text": text, "optional": False}] if text else []
+            # 목표를 직접 적은 것으로 바꿨으면 준비물의 '목표 순서'가 안 맞음 → 목표별 셈을 안 함 (전체 개수 그대로)
+            for p in entry["prep"]:
+                p.pop("goals", None)
         if details.get("prep") is not None:
             entry["prep"] = [{"count": None, "fir": False, **p, "text": (p.get("text_en") if english else None) or p["text"]}
                              for p in details["prep"]]

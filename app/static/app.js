@@ -907,6 +907,13 @@ function goalKey(q, o) { return `${q.id}|${o.id || "#" + q.objectives.indexOf(o)
 function goalDone(q, o) {
   return o.hand ? !!state.handed[q.id + "|" + o.hand] : !!state.goals[goalKey(q, o)];
 }
+// 이 맵에서 하는 목표: 맵이 적혀 있으면 그 맵, 맵이 없고 레이드 밖 일(away)도 아니면 어느 맵에서나
+function goalOnMap(o, mapName) { return !o.away && (!o.maps || o.maps.includes(mapName)); }
+// 이 맵에서 할 목표를 모두 체크한 퀘스트 → 홈 '할 일'·맵 카드에서 그 맵 몫을 뺌 (목표가 없으면 그대로)
+function questDoneOnMap(q, mapName) {
+  const goals = (q.objectives || []).filter((o) => goalOnMap(o, mapName));
+  return goals.length > 0 && goals.every((o) => goalDone(q, o));
+}
 function goalCheck(q, o) {
   const done = goalDone(q, o);
   if (o.hand) {
