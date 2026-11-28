@@ -18,7 +18,7 @@ from pathlib import Path
 from flask import Flask, abort, jsonify, render_template, request, send_file
 from werkzeug.exceptions import HTTPException
 
-from app import alerts, brightness, cleanup, game_state, hideout, i18n, updater, map_views, paths, progress, quest_log, quests, report_log, settings, shot_clean, shot_watch, story, story_places, tarkov_api
+from app import alerts, brightness, cleanup, game_state, hideout, i18n, updater, map_views, paths, progress, quest_log, raid_pick, quests, report_log, settings, shot_clean, shot_watch, story, story_places, tarkov_api
 
 from app.version import VERSION
 
@@ -406,6 +406,7 @@ def api_reset():
     # 손상 파일(broken 백업 있음)은 새로 씀, 잠김·백업 실패는 지금처럼 503.
     settings.can_reset()
     progress.reset_all()
+    raid_pick.change(clear=True)
     settings.reset()
     _invalidate_quests_cache()
     return jsonify({"ok": True})
@@ -478,6 +479,7 @@ def api_state():
     state["quest_rev"] = quest_log.poll_log_rev()  # 디스크 조회는 별도 스레드에서만
     state["log_reading"] = quest_log.log_reading()
     state["position"] = shot_watch.latest()  # 스크린샷 파일 이름의 내 위치 (레이드 중, 최근 30초 것만)
+    state["pick"] = raid_pick.current()  # '이번 판' 고른 퀘스트 (레이드가 끝나면 여기서 풀림)
     # 알림함: 코드만 (alerts.py). 개발용 정보는 소스 실행일 때만
     state["alerts"] = alerts.collect(state.get("log_problem"), state.get("status") != game_state.GAME_OFF)
     report_log.note_alerts(state["alerts"])
@@ -744,6 +746,35 @@ def api_check_set(kind):
     if kind == "added":  # 직접 추가한 퀘스트는 퀘스트 목록 자체가 바뀌므로 다시 계산
         _invalidate_quests_cache()
     return jsonify(result)
+
+
+# '이번 판' 퀘스트 고르기 (raid_pick.py). 지금 상태는 /api/state 의 pick 으로도 2초마다 감
+@app.route("/api/raid-pick", methods=["GET"])
+def api_raid_pick_get():
+    return jsonify(raid_pick.current())
+
+
+@app.route("/api/raid-pick", methods=["POST"])
+def api_raid_pick_set():
+    """{quest, on} 고르기·풀기 / {show_all} 전체 보기 / {clear: true} 모두 풀기 (하나만)"""
+    body = request.get_json(silent=True)
+    if not isinstance(body, dict) or len(body) == 0:
+        return jsonify({"error": i18n.t("server.badRequest")}), 400
+    if set(body) == {"quest", "on"}:
+        quest, on = body["quest"], body["on"]
+        if not isinstance(quest, str) or not 0 < len(quest) <= 100 or not isinstance(on, bool):
+            return jsonify({"error": i18n.t("server.badRequest")}), 400
+        args = {"quest": quest, "on": on}
+    elif set(body) == {"show_all"} and isinstance(body["show_all"], bool):
+        args = {"show_all": body["show_all"]}
+    elif body == {"clear": True}:
+        args = {"clear": True}
+    else:
+        return jsonify({"error": i18n.t("server.badRequest")}), 400
+    try:
+        return jsonify(raid_pick.change(**args))
+    except ValueError:
+        return jsonify({"error": i18n.t("server.badRequest")}), 400
 
 
 def serve(port: int = PORT) -> None:
