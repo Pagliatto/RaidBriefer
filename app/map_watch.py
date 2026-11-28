@@ -40,12 +40,15 @@ TRANSIT_HOP = "PVE transit hop"
 SCENE_FALLBACK = 40  # 초. 보통 끝 → 새 레이드 매칭은 이보다 훨씬 길다
 _raid_end_lock = threading.Lock()
 _raid_end = {"last": None, "prev": None, "open": False, "transits": set()}
+_quiet = threading.local()  # 앞 폴더 훑기(raid_ended_since) 중에는 위 기록을 건드리지 않음
 
 
 def _note_raid_end(when: datetime) -> None:
+    if getattr(_quiet, "on", False):
+        return
     with _raid_end_lock:
-        if _raid_end["last"] is None or when >= _raid_end["last"]:  # 옛 폴더를 다시 읽어도(시험 도구) 뒤로 가지 않게
-            _raid_end["prev"], _raid_end["last"], _raid_end["open"] = _raid_end["last"], when, True
+        # 읽은 순서대로 (시각이 앞이어도: PC 시계를 뒤로 돌린 뒤의 끝도 새 끝, Codex 106 #3)
+        _raid_end["prev"], _raid_end["last"], _raid_end["open"] = _raid_end["last"], when, True
 
 
 def _was_transit() -> None:
@@ -55,12 +58,16 @@ def _was_transit() -> None:
 
 
 def _note_transit(when: datetime) -> None:
+    if getattr(_quiet, "on", False):
+        return
     with _raid_end_lock:
         if _raid_end["open"] and _raid_end["last"] is not None and when >= _raid_end["last"]:
             _was_transit()
 
 
 def _note_scene(when: datetime) -> None:
+    if getattr(_quiet, "on", False):
+        return
     with _raid_end_lock:
         if not _raid_end["open"]:
             return
@@ -81,6 +88,52 @@ def was_transit(end: datetime) -> bool:
     """그 '레이드 끝'이 나중에 트랜짓으로 밝혀졌는지"""
     with _raid_end_lock:
         return end in _raid_end["transits"]
+
+
+def raid_ended_since(when: datetime) -> bool:
+    """when 뒤에 (트랜짓이 아닌) 레이드 끝이 있었는지, 그 뒤에 바뀐 로그 폴더를 모두 훑어서.
+    프로그램이 꺼진 사이 게임을 다시 켜면 그 레이드 끝은 앞 폴더에 있어서 감시(최신 폴더만)가 못 봄 → 처음 한 번만 부름.
+    같은 규칙(apply_line)으로 읽되 위 기록(_raid_end)은 건드리지 않는다. 읽기 실패는 '모름' = False (기록을 지우지 않는 쪽)"""
+    try:
+        root = settings.logs_dir()
+        since = when.timestamp() - 60
+        folders = sorted((f for f in root.iterdir() if f.is_dir() and f.name.lower().startswith("log_")
+                          and f.stat().st_mtime >= since), key=lambda f: f.stat().st_mtime)
+    except (OSError, ValueError, settings.DataReadError):
+        return False
+    # 지금 폴더는 감시가 처음부터 읽으며 트랜짓 되살림까지 처리 → 여기서는 앞 폴더만 (막 끝난 트랜짓을 끝으로 보지 않게)
+    current = latest_log_folder()
+    folders = [f for f in folders if f != current]
+    lookup = MapLookup()
+    _quiet.on = True
+    try:
+        for folder in folders:
+            state, pending = MapState(), None
+            for line in LogTail(folder).new_lines():
+                before = state.status
+                apply_line(state, line, lookup)
+                stamp = TIME_RE.match(line)
+                if not stamp:
+                    continue
+                try:
+                    at = datetime.strptime(stamp[1], "%Y-%m-%d %H:%M:%S")
+                except ValueError:
+                    continue
+                if before == IN_RAID and state.status == LOBBY and at > when:
+                    pending = at
+                elif pending and "|application|" in line and TRANSIT_HOP in line:
+                    pending = None  # 트랜짓이었음
+                elif pending and SCENE_RE.search(line):
+                    if (at - pending).total_seconds() > SCENE_FALLBACK:
+                        return True  # 로비를 거쳐 다음 판 → 진짜 끝
+                    pending = None
+            if pending:
+                return True  # 끝난 채로 폴더가 끝남 (게임 종료)
+    except OSError:
+        return False
+    finally:
+        _quiet.on = False
+    return False
 
 
 @dataclass
