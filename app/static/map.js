@@ -18,7 +18,9 @@ const mapUI = {
 };
 const MAP_KEY_STORAGE = "tarkovhelper.map";
 const TRANSITION_MS = 1600;   // 전환 안내를 최소한 보여주는 시간
-const LOBBY_WAIT_MS = 30000;  // 레이드가 끝나고 이만큼 새 맵이 안 나오면 로비로 (트랜짓은 실제 로그에서 16~18초, 넉넉하게)
+// 레이드가 끝나고 이만큼 새 맵도 트랜짓 표시(s.transit)도 없으면 로비로. 트랜짓은 서버가 로그의 'PVE transit hop'
+// 줄(끝난 뒤 11~17초)로 알려 주므로 그때부터는 시간과 상관없이 새 맵을 기다림. 이 시간은 그 줄까지 늦을 때만 쓰는 여유
+const LOBBY_WAIT_MS = 60000;
 
 // SVG 지도의 표시 방향만 바꾸는 시계 방향 각도 (90도 단위). dev 원본 좌표는 유지한다.
 const DISPLAY_ROTATION = { terminal: 90 };
@@ -3070,7 +3072,13 @@ function onGameState(s) {
     });
     return;
   }
-  // 레이드가 끝남: 트랜짓이면 곧 새 맵이 나오니 잠깐 기다렸다가 로비로
+  // 트랜짓(로그에 'PVE transit hop')이면 서버가 느려도 새 맵이 나올 때까지 지도 그대로
+  if (s.transit) {
+    clearTimeout(mapUI.lobbyTimer);
+    mapUI.lobbyTimer = null;
+    return;
+  }
+  // 레이드가 끝남: 트랜짓 줄이 늦게 올 수도 있으니 잠깐 기다렸다가 로비로
   // 매칭 취소는 트랜짓이 아니니 기다리지 않고 바로 로비로
   if (s.cancelled && mapUI.lobbyTimer) clearTimeout(mapUI.lobbyTimer), (mapUI.lobbyTimer = null);
   if (mapUI.autoMapId && !mapUI.lobbyTimer) {
