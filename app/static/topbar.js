@@ -228,6 +228,7 @@ function pollState() {
         }
         topbar.state = next;
         logReadingNotice.update(next.log_reading);
+        applyRaidPick(next.pick);  // '이번 판' 고르기 (레이드가 끝나 풀린 것도 여기서 반영)
         if (questLog) window.dispatchEvent(new CustomEvent("quest-log-changed", { detail: next }));
         // 다른 화면(나중에: 맵에 들어가면 자동 전환)이 쓸 수 있게 알림
         if (changed) window.dispatchEvent(new CustomEvent("game-state", { detail: next }));
