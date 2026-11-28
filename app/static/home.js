@@ -4,7 +4,13 @@
 // - 진행 중인 스토리 : 챕터별 진행률과 다음 맵
 // state(app.js), story / visibleItems / 체크 판정(story.js), el / PREP_CLASS(app.js) 를 같이 씀
 
-const home = { map: null };  // 고른 맵 이름 (null = 접힘, 처음에는 접혀 있음)
+const home = { map: null, pickMode: false };  // map: 고른 맵 이름 (null = 접힘, 처음에는 접혀 있음)
+// pickMode: 지금 '할 일' 칸의 맵에서 '이번 판' 퀘스트를 하나라도 골랐는지 → 고르지 않은 줄은 제자리에서 흐리게
+
+// 이 퀘스트·챕터 줄이 이번 판에 안 쓰이는지 (스토리는 고르지 않으므로 늘 쓰임)
+function homeInactive(from) {
+  return home.pickMode && from.type === "quest" && !isPicked(from.id);
+}
 
 // 챕터별 첫 미완료 필수 단계 (홈에는 단계 체크나 갈림길 선택으로 시작한 챕터만)
 function storyNext(includeNotStarted = false) {
@@ -101,8 +107,8 @@ function planPrep(prep) {
   const shared = prep.filter(isShared);
   const carry = [...sources.values()]
     .filter((s) => !pick.includes(s))
-    .map((s) => ({ ...s, items: s.items.filter((it) => !isShared(it.p)) }))
-    .filter((s) => s.items.length);
+    .map((s) => ({ ...s, items: s.items.filter((it) => !isShared(it.p)) }));
+  // 준비물이 모두 '여러 퀘스트 공통' 줄에 있는 퀘스트도 이름 줄은 남김 ('이번 판' 버튼을 누를 곳, 2026-11-28)
   return { shared, carry, pick };
 }
 
@@ -161,8 +167,27 @@ function renderHomeNoPrep(box, sources, mapName) {
   if (!sources.length) return;
   box.append(homeHead("arrow-right", t("home.prepNoneLabel"), sources.length));
   const names = el("div", "home-prep-names");
-  sources.sort(byTrader).forEach((f) => names.append(homePrepSource(f, mapName)));
+  sources.sort(byTrader).forEach((f) => {
+    const item = el("div", "home-prep-name" + (isPicked(f.id) ? " picked" : "") + (homeInactive(f) ? " inactive" : ""));
+    item.append(homePrepSource(f, mapName), pickButton(f.id));
+    names.append(item);
+  });
   box.append(names);
+}
+
+// 퀘스트(챕터) 줄 하나: 이름표 + 그 몫의 준비물 칩 + (퀘스트면) '이번 판' 버튼. 고른 줄은 옅은 배경
+function homePrepRow(s, mapName) {
+  const line = el("div", "home-prep-row");
+  const chips = el("div", "prep");
+  s.items.forEach((it) => homePrepChip(chips, it.p, it.count, [s.from]));
+  if (!s.items.length && !s.none) chips.append(el("span", "home-prep-shared-only", t("home.prepSharedOnly")));
+  line.append(homePrepSource(s.from, mapName), chips);
+  if (s.from.type === "quest") {
+    line.append(pickButton(s.from.id));
+    line.classList.toggle("picked", isPicked(s.from.id));
+    line.classList.toggle("inactive", homeInactive(s.from));
+  }
+  return line;
 }
 
 function renderHomePrep(box, prep, mapName) {
@@ -179,7 +204,10 @@ function renderHomePrep(box, prep, mapName) {
       line.append(el("span", "home-prep-label", t("home.prepShared")));
       const chips = el("div", "prep");
       shared.forEach((p) => {
-        const total = [...p.per.values()].reduce((a, b) => a + b, 0);
+        // 이번 판으로 고른 게 있으면 개수는 고른 퀘스트(와 스토리) 몫만, 하나도 안 쓰면 칩을 흐리게 (전체 개수 그대로)
+        const active = p.from.filter((f) => !homeInactive(f));
+        const counted = active.length ? active : p.from;
+        const total = counted.reduce((sum, f) => sum + (p.per.get(`${f.type}:${f.id}`) || 0), 0);
         // 어느 퀘스트들 몫인지 이름을 칩 안에 (이 퀘스트들은 아래 줄에 따로 안 나올 수 있어서 밤·모든 맵 표시도 같이)
         const note = el("span", "home-prep-note");
         p.from.forEach((f, i) => {
@@ -189,30 +217,19 @@ function renderHomePrep(box, prep, mapName) {
           if (f.anywhere) note.append(el("span", "home-prep-any", mapLabel(ALL_MAPS)));
         });
         homePrepChip(chips, p, total, p.from, note);
+        if (!active.length) [...chips.querySelectorAll(".prep-item")].pop().classList.add("inactive");
       });
       line.append(chips);
       rows.append(line);
     }
-    carry.forEach((s) => {
-      const line = el("div", "home-prep-row");
-      const chips = el("div", "prep");
-      s.items.forEach((it) => homePrepChip(chips, it.p, it.count, [s.from]));
-      line.append(homePrepSource(s.from, mapName), chips);
-      rows.append(line);
-    });
+    carry.forEach((s) => rows.append(homePrepRow(s, mapName)));
     box.append(rows);
   }
   if (pick.length) {
     box.append(homeHead("shield", t("home.prepPick"), pick.length, t("home.prepPickHint")));
     // '다 챙기기'와 같은 줄 모양, 묶음 전체에만 옅은 배경 (상자 안 상자로 답답해 보이지 않게)
     const rows = el("div", "home-prep-rows pick");
-    pick.forEach((s) => {
-      const line = el("div", "home-prep-row");
-      const chips = el("div", "prep");
-      s.items.forEach((it) => homePrepChip(chips, it.p, it.count, [s.from]));
-      line.append(homePrepSource(s.from, mapName), chips);
-      rows.append(line);
-    });
+    pick.forEach((s) => rows.append(homePrepRow(s, mapName)));
     box.append(rows);
   }
 }
@@ -242,6 +259,14 @@ function renderHomeMaps(entries) {
     const counts = el("span", "home-map-count");
     counts.textContent = t("home.mapQuestCount", { n: info.quests.length }) + (info.stories.length ? t("home.mapStoryCount", { n: info.stories.length }) : "");
     card.append(counts);
+    // 이 맵에서 '이번 판'으로 고른 퀘스트 수 (맵 카드를 바꿔 가며 골라도 어디에 골랐는지 보이게)
+    const picked = info.quests.filter((q) => isPicked(q.id)).length;
+    if (picked) {
+      const badge = el("span", "home-map-picked");
+      badge.title = t("pick.cardHint", { n: picked });
+      badge.append(icon("check", 11), document.createTextNode(String(picked)));
+      counts.append(badge);  // 이름 옆에 두면 좁은 카드에서 맵 이름이 잘려서 (영어 Interchange) 개수 줄 끝에
+    }
     card.setAttribute("aria-expanded", home.map === name);
     // 같은 맵을 한 번 더 누르면 접기
     card.addEventListener("click", () => {
@@ -261,7 +286,30 @@ function renderHomeDetail(name, info) {
   box.replaceChildren();
   if (!name) return;
 
-  box.append(el("h3", "home-detail-title", t("home.mapTodo", { name })));
+  // '이번 판' 고르기: 이 맵의 퀘스트를 하나라도 골랐으면 고른 것만 (어느 맵에서나 퀘스트만 고른 건 세지 않음,
+  // 다른 맵에 들어가 지도가 텅 비지 않게 하는 규칙과 같음). 안 골랐으면 지금과 같고 줄마다 버튼만 붙음
+  const anywhere = anywhereQuests(activeQuests()).filter((q) => !info.quests.includes(q));
+  const mapQuests = [...info.quests, ...anywhere];
+  const pickMode = info.quests.some((q) => isPicked(q.id));
+  const only = pickMode ? new Set(mapQuests.filter((q) => isPicked(q.id)).map((q) => q.id)) : null;
+  home.pickMode = pickMode;  // 줄을 지우지 않고 제자리에서 흐리게 (2026-11-28 사용자: 아래 칸으로 빼는 것보다 낫다)
+
+  const head = el("div", "home-detail-head");
+  head.append(el("h3", "home-detail-title", t("home.mapTodo", { name })));
+  if (raidPick.quests.length) {
+    const clear = el("button", "home-pick-clear", t("pick.clearAll"));
+    clear.type = "button";
+    clear.addEventListener("click", () => saveRaidPick({ clear: true }));
+    head.append(clear);
+  }
+  box.append(head);
+  // 안내 줄: 레이드가 끝나 풀렸으면 그 말을 (다음에 고를 때까지), 아니면 지금 상태
+  const others = raidPick.quests.length - (only ? only.size : 0);
+  const hint = raidPick.cleared && !raidPick.quests.length ? t("pick.hintCleared")
+    : pickMode ? t("pick.hintPicked", { n: only.size })
+    : raidPick.quests.length ? t("pick.hintOtherMap", { n: others })
+    : t("pick.hintNone");
+  box.append(el("p", "home-pick-hint" + (pickMode ? " on" : ""), hint));
 
   // 보스 등장 확률: 들어가기 전에 챙길 것과 같이 보도록 '할 일' 칸에만 (카드는 좁아서 잘림)
   const map = typeof mapUI !== "undefined" && mapUI.maps.find((m) => m.name === name);
@@ -291,8 +339,8 @@ function renderHomeDetail(name, info) {
   }
   // 위 줄·카드에 한 번도 안 나온 퀘스트 (= 이 맵에서 챙길 게 없는 퀘스트)
   const shown = new Set(prep.flatMap((p) => p.from).filter((f) => f.type === "quest").map((f) => f.id));
-  const anywhere = anywhereQuests(activeQuests()).filter((q) => !info.quests.includes(q));
-  const noPrep = [...info.quests.map((q) => questSource(q)), ...anywhere.map((q) => questSource(q, true))].filter((f) => !shown.has(f.id));
+  const noPrep = [...info.quests.map((q) => questSource(q)), ...anywhere.map((q) => questSource(q, true))]
+    .filter((f) => !shown.has(f.id));
   renderHomeNoPrep(box, noPrep, name);
 
   // 스토리 다음 단계
@@ -312,7 +360,6 @@ function renderHomeDetail(name, info) {
     });
     box.append(rows);
   }
-
 }
 
 function renderHomeStory(list) {
@@ -474,6 +521,7 @@ function renderHome() {
 document.addEventListener("quests-changed", renderHome);
 document.addEventListener("hideout-changed", renderHome); // 은신처 체크·건설 완료하면 '뭘 모아 올까?'도 다시
 document.addEventListener("story-changed", renderHome);
+document.addEventListener("raid-pick-changed", renderHome); // '이번 판' 고르기 (지도 서랍에서 고르거나 레이드가 끝나 풀려도)
 
 function updateHomeRaidMarks() {
   const s = typeof topbar !== "undefined" ? topbar.state : {};

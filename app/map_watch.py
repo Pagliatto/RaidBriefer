@@ -31,6 +31,110 @@ TIME_RE = re.compile(r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})")
 
 LOBBY, LOADING, IN_RAID = "lobby", "loading", "raid"  # 게임 상태 코드 (화면 글자는 사전 topbar.state*)
 
+# 마지막 '레이드 끝' 시각 (로그 시각, 이 PC 의 시간대). '이번 판 퀘스트 고르기'를 레이드가 끝나면 풀 때 씀 (raid_pick.py)
+# 트랜짓도 레이드 끝 줄이 똑같이 먼저 찍힌다 (끝 순간의 로그는 보통 끝과 같음, 2026-11-28 로그 6번 비교).
+# 다른 점은 11~17초 뒤 application 로그의 `PVE transit hop ... location:<다음 맵>` 줄 하나뿐 → 이 줄이 오면
+# 그 끝은 트랜짓이었던 것으로 보고 되돌린다. 로딩 시간으로 나누지 않음 (서버가 느리면 늦게 올 수 있어서, 사용자 지적).
+# 줄 이름이 바뀌어 안 올 때를 대비해, 끝 바로 뒤(SCENE_FALLBACK 안)에 새 맵 줄이 오면 그것도 트랜짓으로 본다.
+TRANSIT_HOP = "PVE transit hop"
+SCENE_FALLBACK = 40  # 초. 보통 끝 → 새 레이드 매칭은 이보다 훨씬 길다
+_raid_end_lock = threading.Lock()
+_raid_end = {"last": None, "prev": None, "open": False, "transits": set()}
+_quiet = threading.local()  # 앞 폴더 훑기(raid_ended_since) 중에는 위 기록을 건드리지 않음
+
+
+def _note_raid_end(when: datetime) -> None:
+    if getattr(_quiet, "on", False):
+        return
+    with _raid_end_lock:
+        # 읽은 순서대로 (시각이 앞이어도: PC 시계를 뒤로 돌린 뒤의 끝도 새 끝, Codex 106 #3)
+        _raid_end["prev"], _raid_end["last"], _raid_end["open"] = _raid_end["last"], when, True
+
+
+def _was_transit() -> None:
+    """방금 끝(last)은 트랜짓이었음 → 기록하고 그 앞 끝으로 되돌림 (잠금 안에서 부름)"""
+    _raid_end["transits"].add(_raid_end["last"])
+    _raid_end["last"], _raid_end["prev"], _raid_end["open"] = _raid_end["prev"], None, False
+
+
+def _note_transit(when: datetime) -> None:
+    if getattr(_quiet, "on", False):
+        return
+    with _raid_end_lock:
+        if _raid_end["open"] and _raid_end["last"] is not None and when >= _raid_end["last"]:
+            _was_transit()
+
+
+def _note_scene(when: datetime) -> None:
+    if getattr(_quiet, "on", False):
+        return
+    with _raid_end_lock:
+        if not _raid_end["open"]:
+            return
+        last = _raid_end["last"]
+        if last is not None and 0 <= (when - last).total_seconds() <= SCENE_FALLBACK:
+            _was_transit()  # transit hop 줄 없이 바로 새 맵 (줄 이름이 바뀐 경우 대비)
+        else:
+            _raid_end["open"] = False  # 로비를 거쳐 새 레이드 → 그 끝은 진짜 끝으로 확정
+
+
+def last_raid_end() -> datetime | None:
+    """가장 최근에 끝난 레이드의 끝 시각 (트랜짓은 빼고). 프로그램이 켜진 뒤 읽은 로그 기준"""
+    with _raid_end_lock:
+        return _raid_end["last"]
+
+
+def was_transit(end: datetime) -> bool:
+    """그 '레이드 끝'이 나중에 트랜짓으로 밝혀졌는지"""
+    with _raid_end_lock:
+        return end in _raid_end["transits"]
+
+
+def raid_ended_since(when: datetime) -> bool:
+    """when 뒤에 (트랜짓이 아닌) 레이드 끝이 있었는지, 그 뒤에 바뀐 로그 폴더를 모두 훑어서.
+    프로그램이 꺼진 사이 게임을 다시 켜면 그 레이드 끝은 앞 폴더에 있어서 감시(최신 폴더만)가 못 봄 → 처음 한 번만 부름.
+    같은 규칙(apply_line)으로 읽되 위 기록(_raid_end)은 건드리지 않는다. 읽기 실패는 '모름' = False (기록을 지우지 않는 쪽)"""
+    try:
+        root = settings.logs_dir()
+        since = when.timestamp() - 60
+        folders = sorted((f for f in root.iterdir() if f.is_dir() and f.name.lower().startswith("log_")
+                          and f.stat().st_mtime >= since), key=lambda f: f.stat().st_mtime)
+    except (OSError, ValueError, settings.DataReadError):
+        return False
+    # 지금 폴더는 감시가 처음부터 읽으며 트랜짓 되살림까지 처리 → 여기서는 앞 폴더만 (막 끝난 트랜짓을 끝으로 보지 않게)
+    current = latest_log_folder()
+    folders = [f for f in folders if f != current]
+    lookup = MapLookup()
+    _quiet.on = True
+    try:
+        for folder in folders:
+            state, pending = MapState(), None
+            for line in LogTail(folder).new_lines():
+                before = state.status
+                apply_line(state, line, lookup)
+                stamp = TIME_RE.match(line)
+                if not stamp:
+                    continue
+                try:
+                    at = datetime.strptime(stamp[1], "%Y-%m-%d %H:%M:%S")
+                except ValueError:
+                    continue
+                if before == IN_RAID and state.status == LOBBY and at > when:
+                    pending = at
+                elif pending and "|application|" in line and TRANSIT_HOP in line:
+                    pending = None  # 트랜짓이었음
+                elif pending and SCENE_RE.search(line):
+                    if (at - pending).total_seconds() > SCENE_FALLBACK:
+                        return True  # 로비를 거쳐 다음 판 → 진짜 끝
+                    pending = None
+            if pending:
+                return True  # 끝난 채로 폴더가 끝남 (게임 종료)
+    except OSError:
+        return False
+    finally:
+        _quiet.on = False
+    return False
+
 
 @dataclass
 class MapState:
@@ -163,9 +267,20 @@ def apply_line(state: MapState, line: str, lookup: MapLookup) -> bool:
             _bad_date_reported = True
         return False
 
+    # 트랜짓: 레이드가 끝난 줄은 보통 끝과 똑같고, 11~17초 뒤 이 줄이 나온 다음 2초 뒤 다음 맵 로딩 줄이 나온다
+    # (2026-11-28 사용자 로그 트랜짓 6번 비교). 보통 끝에는 이 줄이 없음 → 시간 대신 이 줄로 트랜짓을 안다.
+    # 두 곳에 씀: ① 화면이 홈으로 가지 않게 state.transit ② '이번 판' 고르기를 되살리게 _note_transit
+    if TRANSIT_HOP in line and "|application|" in line:
+        _note_transit(when)
+        if state.status == LOBBY and not state.transit:
+            state.transit = True
+            return True
+        return False
+
     scene = SCENE_RE.search(line)
     if scene:
         map_id, map_name = lookup.find(scene[1])
+        _note_scene(when)  # 레이드 끝 바로 뒤의 새 맵 = 트랜짓
         # 매칭을 다시 잡으면 같은 줄이 또 나옴 → 같은 맵 로딩 중이면 무시
         if state.status == LOADING and state.map_id == map_id:
             was_pooled, state.pooled = state.pooled, False  # 다시 로딩이면 카운트다운 표시만 지움
@@ -185,6 +300,8 @@ def apply_line(state: MapState, line: str, lookup: MapLookup) -> bool:
         return True
 
     if "Request HTTPS" in line and "/client/match/local/end" in line and state.status != LOBBY:
+        if state.status == IN_RAID:
+            _note_raid_end(when)
         state.status, state.map_id, state.map_name, state.since = LOBBY, None, None, when
         state.cancelled = state.pooled = state.transit = False
         return True
@@ -193,6 +310,7 @@ def apply_line(state: MapState, line: str, lookup: MapLookup) -> bool:
     # → 레이드 중(GameStarted 뒤)에 나오는 메모리 정리 줄을 레이드 끝으로 본다.
     #   이 줄은 맵 로딩 중·로비에서도 나오므로 레이드 중일 때만. 혼자 레이드는 local/end 2~9초 뒤라 이미 로비 → 무시됨
     if "|application|totalMemoryBeforeCleanUp" in line and state.status == IN_RAID:
+        _note_raid_end(when)
         state.status, state.map_id, state.map_name, state.since = LOBBY, None, None, when
         state.cancelled = state.transit = False
         return True
@@ -201,6 +319,7 @@ def apply_line(state: MapState, line: str, lookup: MapLookup) -> bool:
     # 시내 탈출 뒤 화면이 안 바뀜). 대신 레이드 동안 꺼 두었던 GC 를 다시 켜는 줄이 레이드가 끝날 때 나온다.
     # 패치 전 로그 716판에서 레이드 도중에 이 줄이 나온 적 없음. 혼자 레이드는 local/end 1~6초 뒤라 이미 로비 → 무시됨
     if "|application|GC mode switched to Enabled" in line and state.status == IN_RAID:
+        _note_raid_end(when)
         state.status, state.map_id, state.map_name, state.since = LOBBY, None, None, when
         state.cancelled = state.transit = False
         return True
@@ -212,12 +331,6 @@ def apply_line(state: MapState, line: str, lookup: MapLookup) -> bool:
             state.status == LOADING or state.status == LOBBY and state.transit):
         state.status, state.map_id, state.map_name, state.since = LOBBY, None, None, when
         state.cancelled, state.pooled, state.transit = True, False, False
-        return True
-
-    # 트랜짓: 레이드가 끝난 줄은 보통 끝과 똑같고, 11~17초 뒤 이 줄이 나온 다음 2초 뒤 다음 맵 로딩 줄이 나온다
-    # (2026-11-28 사용자 로그 트랜짓 6번 비교). 보통 끝에는 이 줄이 없음 → 화면이 시간 대신 이 줄로 트랜짓을 안다
-    if "|application|PVE transit hop" in line and state.status == LOBBY and not state.transit:
-        state.transit = True
         return True
 
     return False

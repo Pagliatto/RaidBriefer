@@ -1147,6 +1147,52 @@ function mapQuests(name) {
   return active.filter((q) => q.maps.includes(name));
 }
 
+// ---------- '이번 판' 퀘스트 고르기 (2026-11-28 사용자, raidPick 은 app.js) ----------
+// 이 맵 퀘스트(모든 맵 퀘스트는 빼고)를 하나라도 골랐을 때만 걸림 → 고른 퀘스트가 없는 맵에 들어가면 지금처럼 전체
+function mapPickMode(m = mapUI.current) {
+  return !!m && mapQuests(m.name).some((q) => isPicked(q.id));
+}
+// 지도 핀을 숨길 퀘스트: 고르기가 걸렸고 '전체 보기'가 아니고 고르지 않은 것
+function pickHidden(q) {
+  return !raidPick.show_all && mapPickMode() && !isPicked(q.id);
+}
+// 이 맵의 퀘스트 순서 (번호·서랍 같은 순서): 이 맵 → 모든 맵. 고르기가 걸렸으면 고른 퀘스트를 고른 순서로 맨 앞에
+// → 고른 퀘스트가 1, 2, 3… '전체 보기'로 바꿔도 번호는 그대로, 레이드 중에 더 고르면 다음 번호
+function orderedMapQuests(m) {
+  const here = mapQuests(m.name);
+  const all = [...here, ...anywhereQuests(activeQuests()).filter((q) => !here.includes(q))];
+  if (!mapPickMode(m)) return all;
+  const picked = raidPick.quests.map((id) => all.find((q) => q.id === id)).filter(Boolean);
+  return [...picked, ...all.filter((q) => !picked.includes(q))];
+}
+
+// 지도 위 띠 한 줄: '이번 판 퀘스트 N개만 보는 중 · 전체 보기' ↔ '전체 보는 중 · 이번 판만 보기'.
+// 이 맵에 고른 퀘스트가 있을 때만 보임 (고른 걸 잊고 퀘스트가 사라진 줄 아는 일 막기)
+function renderPickStrip() {
+  const strip = document.getElementById("pick-strip");
+  if (!strip) return;
+  const m = mapUI.current;
+  const on = mapPickMode(m);
+  strip.hidden = !on;
+  strip.replaceChildren();
+  if (!on) return;
+  const n = mapQuests(m.name).filter((q) => isPicked(q.id)).length
+    + anywhereQuests(activeQuests()).filter((q) => !q.maps.includes(m.name) && isPicked(q.id)).length;
+  strip.classList.toggle("all", raidPick.show_all);
+  strip.append(icon("check", 13), el("span", "pick-strip-text", t(raidPick.show_all ? "map.pickShowingAll" : "map.pickShowingOnly", { n })));
+  const toggle = el("button", "pick-strip-toggle", t(raidPick.show_all ? "map.pickOnlyButton" : "map.pickAllButton"));
+  toggle.type = "button";
+  toggle.addEventListener("click", () => saveRaidPick({ show_all: !raidPick.show_all }));
+  strip.append(toggle);
+}
+
+// 고르기가 바뀌면(홈·서랍에서 누름, 레이드가 끝나 풀림, 전체 보기) 핀·서랍·띠를 다시
+document.addEventListener("raid-pick-changed", () => {
+  if (!mapUI.current) return;
+  if (mapUI.leaflet) drawPins();
+  renderDrawer();
+});
+
 // ---------- 지도 그리기 ----------
 const mapStory = { focused: null, explicit: null, markers: [] };
 
@@ -2156,7 +2202,8 @@ function drawPins() {
   syncFocusedPin(numbered);
   numbered.forEach(({ n, quest, objective, spots }) => {
     // 해낸 목표(체크): 핀·구역을 그리지 않음. 번호는 그대로 (남은 핀 번호가 바뀌지 않게)
-    if (goalDone(quest, objective)) {
+    // '이번 판'으로 고르지 않은 퀘스트도 핀을 그리지 않음 ('전체 보기'면 그림). 번호는 그대로
+    if (goalDone(quest, objective) || pickHidden(quest)) {
       delete mapUI.pins[n];
       return;
     }
@@ -2397,9 +2444,8 @@ function numberedObjectives() {
   let n = 0;
   // '모든 맵' 퀘스트도 이 맵에 자리가 있는 목표는 번호 핀 (서랍과 같은 순서: 이 맵 퀘스트 → 모든 맵).
   // 예: dev 에 없는 퀘스트의 트랜짓 이용 목표
-  const here = mapQuests(m.name);
-  const anywhere = anywhereQuests(activeQuests()).filter((q) => !here.includes(q));
-  [...here, ...anywhere].forEach((quest) => {
+  // 고른 퀘스트가 있으면 고른 순서가 먼저 (orderedMapQuests)
+  orderedMapQuests(m).forEach((quest) => {
     quest.objectives.forEach((objective) => {
       const spots = (objective.where || []).filter((w) => w.map === m.name);
       if (spots.length) result.push({ n: ++n, quest, objective, spots });
@@ -2670,22 +2716,30 @@ function renderDrawer() {
   const pinned = here.filter((q) => q.objectives.some((o) => numbers.has(o)));
   const unpinned = here.filter((q) => !pinned.includes(q));
   const anywhere = anywhereQuests(activeQuests()).filter((q) => !here.includes(q));
-  const todo = here.filter((q) => !hereDone(q)).length + anywhere.filter((q) => !hereDone(q)).length;
+  // '이번 판' 고르기가 걸렸으면 '할 일' 숫자는 고른 퀘스트만 (2026-11-28 사용자)
+  const pickMode = mapPickMode(m);
+  const counts = (q) => !hereDone(q) && (!pickMode || isPicked(q.id));
+  const todo = here.filter(counts).length + anywhere.filter(counts).length;
   document.getElementById("drawer-count").textContent = todo;
   renderLootBar();
+  renderPickStrip();
 
-  const addQuest = (q) => {
+  // tag: 고른 칸에서는 소제목이 없으니 '자리 없음'·'모든 맵'을 이름 옆에 작게
+  const addQuest = (q, tag = null) => {
     const li = el("li", `drawer-quest trader-${q.trader_key || "etc"}`);
+    li.classList.toggle("picked", pickMode && isPicked(q.id));
     // 퀘스트 이름: 누르면 퀘스트 탭에서 자세히 (마우스 뒤로 버튼으로 지도로 돌아옴)
     const name = el("button", "drawer-quest-name");
     name.type = "button";
     name.title = t("map.questDetailHint");
     name.append(el("span", "", q.name), el("span", "drawer-more", "›"));
     name.addEventListener("click", () => goToQuests([q.id]));
+    if (tag) name.append(el("span", "drawer-quest-tag", tag));
     const heading = el("div", "drawer-quest-heading");
     heading.append(name);
     const wiki = questWikiLink(q);
     if (wiki) heading.append(wiki);
+    heading.append(pickButton(q.id));  // '＋ 이번 판' / '✓ 이번 판' (레이드 중에도 더 고르기)
     li.append(heading);
     const keyLine = drawerKeyLine(q, m.name);
     if (keyLine) li.append(keyLine);
@@ -2742,17 +2796,40 @@ function renderDrawer() {
   // '할 일' 버튼 숫자 = 퀘스트 + 서랍에 보이는 스토리 단계
   document.getElementById("drawer-count").textContent = todo + storyCount;
   // 큰 칸은 내용이 있으면 항상 제목 줄 + 접기 (다른 칸이 있든 없든). 퀘스트가 하나도 없으면 제목 없이 안내 문구만 (2026-11-23 사용자)
-  if (pinned.length) list.append(foldKey(el("li", "drawer-divider drawer-section-title", t("map.drawerQuests")), "quests"));
-  if (!here.length && !anywhere.length) list.append(el("li", "empty", t("map.noQuests")));
-  pinned.forEach(addQuest);
-  if (unpinned.length) {
-    list.append(foldKey(el("li", "drawer-divider" + (pinned.length ? "" : " drawer-section-title"),
-      t("map.drawerNoSpot", { n: unpinned.length })), "nospot"));
-    unpinned.forEach(addQuest);
-  }
-  if (anywhere.length) {
-    list.append(foldKey(el("li", "drawer-divider", `${mapLabel(ALL_MAPS)} (${anywhere.length})`), "anywhere"));
-    anywhere.forEach(addQuest);
+  if (pickMode) {
+    // 고르기가 걸린 맵: 위 '이번 판 퀘스트' 칸(고른 순서 = 번호 순서, 소제목 없음) + 아래 '고르지 않은 퀘스트' 칸(처음엔 접힘)
+    // 아래 칸 안은 지금처럼 퀘스트 / 자리 없음 / 모든 맵 작은 소제목 (접기 없음)
+    const ordered = orderedMapQuests(m);
+    const picked = ordered.filter((q) => isPicked(q.id));
+    const tagOf = (q) => anywhere.includes(q) ? mapLabel(ALL_MAPS) : unpinned.includes(q) ? t("map.noSpotTag") : null;
+    list.append(foldKey(el("li", "drawer-divider drawer-section-title", t("map.pickedQuests", { n: picked.length })), "picked"));
+    picked.forEach((q) => addQuest(q, tagOf(q)));
+    const rest = { pinned: pinned.filter((q) => !isPicked(q.id)), unpinned: unpinned.filter((q) => !isPicked(q.id)), anywhere: anywhere.filter((q) => !isPicked(q.id)) };
+    const restCount = rest.pinned.length + rest.unpinned.length + rest.anywhere.length;
+    if (restCount) {
+      list.append(foldKey(el("li", "drawer-divider drawer-section-title", t("map.unpickedQuests", { n: restCount })), "unpicked"));
+      const sub = (label, qs) => {
+        if (!qs.length) return;
+        list.append(el("li", "drawer-subdivider", label));
+        qs.forEach((q) => addQuest(q));
+      };
+      sub(t("map.drawerQuests"), rest.pinned);
+      sub(t("map.drawerNoSpot", { n: rest.unpinned.length }), rest.unpinned);
+      sub(`${mapLabel(ALL_MAPS)} (${rest.anywhere.length})`, rest.anywhere);
+    }
+  } else {
+    if (pinned.length) list.append(foldKey(el("li", "drawer-divider drawer-section-title", t("map.drawerQuests")), "quests"));
+    if (!here.length && !anywhere.length) list.append(el("li", "empty", t("map.noQuests")));
+    pinned.forEach((q) => addQuest(q));
+    if (unpinned.length) {
+      list.append(foldKey(el("li", "drawer-divider" + (pinned.length ? "" : " drawer-section-title"),
+        t("map.drawerNoSpot", { n: unpinned.length })), "nospot"));
+      unpinned.forEach((q) => addQuest(q));
+    }
+    if (anywhere.length) {
+      list.append(foldKey(el("li", "drawer-divider", `${mapLabel(ALL_MAPS)} (${anywhere.length})`), "anywhere"));
+      anywhere.forEach((q) => addQuest(q));
+    }
   }
   renderDrawerTransits(list);
   foldDrawerSections(list);
@@ -2766,6 +2843,12 @@ const drawerFolded = (() => {
   try { return new Set(JSON.parse(localStorage.getItem(DRAWER_FOLD_STORAGE) || "[]")); } catch (e) { return new Set(); }
 })();
 
+// '고르지 않은 퀘스트' 칸은 처음엔 접힘: 이 칸만 '펼침'을 기억 (다른 칸은 '접음'을 기억)
+const UNPICKED_OPEN = "unpicked-open";
+function isFolded(key) {
+  return key === "unpicked" ? !drawerFolded.has(UNPICKED_OPEN) : drawerFolded.has(key);
+}
+
 function foldKey(li, key) {
   li.dataset.fold = key;
   return li;
@@ -2776,7 +2859,7 @@ function foldDrawerSections(list) {
   [...list.children].forEach((li) => {
     if (li.dataset.fold) {
       key = li.dataset.fold;
-      const open = !drawerFolded.has(key);
+      const open = !isFolded(key);
       const button = el("button", "drawer-fold");
       button.type = "button";
       button.setAttribute("aria-expanded", String(open));
@@ -2786,16 +2869,18 @@ function foldDrawerSections(list) {
       button.append(" " + button.dataset.label);
       li.replaceChildren(button);
       li.classList.toggle("folded", !open);
-      button.addEventListener("click", () => setDrawerFold(li.dataset.fold, drawerFolded.has(li.dataset.fold)));
+      button.addEventListener("click", () => setDrawerFold(li.dataset.fold, isFolded(li.dataset.fold)));
     } else if (key) {
       li.dataset.foldIn = key;
-      li.classList.toggle("drawer-folded", drawerFolded.has(key));
+      li.classList.toggle("drawer-folded", isFolded(key));
     }
   });
 }
 
 function setDrawerFold(key, open) {
-  if (open) drawerFolded.delete(key); else drawerFolded.add(key);
+  if (key === "unpicked") {
+    if (open) drawerFolded.add(UNPICKED_OPEN); else drawerFolded.delete(UNPICKED_OPEN);
+  } else if (open) drawerFolded.delete(key); else drawerFolded.add(key);
   try { localStorage.setItem(DRAWER_FOLD_STORAGE, JSON.stringify([...drawerFolded])); } catch (e) { /* 저장소를 못 쓰는 창 */ }
   const list = document.getElementById("drawer-list");
   list.querySelectorAll(`:scope > li[data-fold-in="${key}"]`).forEach((li) => li.classList.toggle("drawer-folded", !open));
@@ -2813,7 +2898,7 @@ function setDrawerFold(key, open) {
 // 지도 핀을 눌러 서랍의 줄로 갈 때, 그 줄이 접힌 칸에 있으면 펼침
 function unfoldDrawerFor(node) {
   const key = node?.closest("#drawer-list > li")?.dataset.foldIn;
-  if (key && drawerFolded.has(key)) setDrawerFold(key, true);
+  if (key && isFolded(key)) setDrawerFold(key, true);
 }
 
 // 트랜짓 도착 맵 → 맵 목록의 맵 (변형 맵은 이름 앞부분으로: '연구소 (Dark)' → 연구소)

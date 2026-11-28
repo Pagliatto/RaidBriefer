@@ -857,6 +857,48 @@ function saveCheck(kind, key, value) {
 function toggleHidden(key, value) { return saveCheck("hidden", key, value); }
 function toggleHanded(key, value) { return saveCheck("handed", key, value); }
 
+// ---------- '이번 판' 퀘스트 고르기 (2026-11-28 사용자, 서버 raid_pick.py) ----------
+// 홈 '할 일'·지도 서랍에서 고른 퀘스트만 지도 핀·준비물에 보임. 아무것도 안 고르면 지금과 같음.
+// quests 는 고른 순서 = 지도 번호 순서. 레이드가 끝나면 서버가 비움(cleared = 방금 풀림 안내).
+// 상태는 /api/state 의 pick 으로 2초마다 받고(topbar.js), 바뀌면 'raid-pick-changed' 를 알림
+const raidPick = { quests: [], show_all: false, cleared: false };
+function isPicked(id) { return raidPick.quests.includes(id); }
+function applyRaidPick(next) {
+  if (!next || !Array.isArray(next.quests)) return;
+  const same = next.quests.join("|") === raidPick.quests.join("|") && !!next.show_all === raidPick.show_all && !!next.cleared === raidPick.cleared;
+  if (same) return;
+  raidPick.quests = next.quests.slice();
+  raidPick.show_all = !!next.show_all;
+  raidPick.cleared = !!next.cleared;
+  document.dispatchEvent(new Event("raid-pick-changed"));
+}
+// body: {quest, on} / {show_all} / {clear: true}. 저장 순서를 지키려고 체크와 같은 대기열
+function saveRaidPick(body) {
+  return queueChecks(async () => {
+    try {
+      const res = await fetch("/api/raid-pick", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      if (!res.ok) throw new Error();
+      applyRaidPick(await res.json());
+    } catch (error) {
+      showCheckError("pick.saveFailed");
+    }
+  });
+}
+// '＋ 이번 판' / '✓ 이번 판' 버튼 (홈 줄·지도 서랍 줄 오른쪽 끝)
+function pickButton(questId) {
+  const on = isPicked(questId);
+  const button = el("button", "pick-toggle" + (on ? " on" : ""));
+  button.type = "button";
+  button.setAttribute("aria-pressed", on);
+  button.title = t(on ? "pick.removeHint" : "pick.addHint");
+  button.append(icon(on ? "check" : "plus", 12), el("span", "", t("pick.label")));
+  button.addEventListener("click", (event) => {
+    event.stopPropagation();
+    saveRaidPick({ quest: questId, on: !on });
+  });
+  return button;
+}
+
 // ---------- 해낸 목표 체크 (2026-11-28 사용자: 레이드 중 임시 숨기기를 대신함) ----------
 // 퀘스트 탭 목표 줄·지도 서랍 목표 줄의 동그라미. 같은 기록 하나(progress goals)라 어디서 눌러도 둘 다 바뀜.
 // 체크한 목표: 취소선 + 지도 핀·구역 빠짐(번호는 그대로). 로그로는 목표 하나하나를 알 수 없어서 직접 누름.
