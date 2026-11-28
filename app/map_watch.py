@@ -7,6 +7,7 @@
 - backend 로그   `/client/match/local/end` 요청                    → 레이드 끝 (로비로 돌아옴)
 - application 로그 `totalMemoryBeforeCleanUp` (레이드 중일 때만)    → 다인큐 레이드 끝 (local/end 가 없음)
 - application 로그 `GC mode switched to Enabled` (레이드 중일 때만) → 온라인 레이드 끝 (1.3.5 부터 위 줄도 없음)
+- application 로그 `PVE transit hop` (레이드가 끝난 로비에서)       → 트랜짓, 곧 다음 맵 로딩 (2026-11-28 확인)
 
 맵 이름은 tarkov.dev 지도 정보의 scenePath(예: maps/customs_preset.bundle)와
 로그의 경로가 똑같아서 그대로 연결한다. → 새 맵이 나와도 따로 고칠 필요 없음
@@ -39,6 +40,7 @@ class MapState:
     since: datetime | None = None  # 이 상태가 시작된 시각
     cancelled: bool = False  # 매칭을 취소해서 로비로 온 것 (레이드를 하지 않았음)
     pooled: bool = False  # 로딩이 끝나 시작 카운트다운 중 (GamePooled 뒤, GameStarted 전). 밝기만 씀
+    transit: bool = False  # 레이드가 끝나고 트랜짓으로 다음 맵을 기다리는 중 (PVE transit hop 뒤, 다음 맵 로딩 전)
 
     def __str__(self) -> str:
         when = f" ({self.since:%m-%d %H:%M:%S}부터)" if self.since else ""  # i18n-ok: 개발용 콘솔
@@ -169,7 +171,7 @@ def apply_line(state: MapState, line: str, lookup: MapLookup) -> bool:
             was_pooled, state.pooled = state.pooled, False  # 다시 로딩이면 카운트다운 표시만 지움
             return was_pooled
         state.status, state.map_id, state.map_name, state.since = LOADING, map_id, map_name, when
-        state.cancelled = state.pooled = False
+        state.cancelled = state.pooled = state.transit = False
         return True
 
     # 로딩 끝 → 화면에 맵이 보이고 시작 카운트다운 (GameStarted 보다 14~18초 먼저, 2026-11-24 로그 확인).
@@ -179,12 +181,12 @@ def apply_line(state: MapState, line: str, lookup: MapLookup) -> bool:
         return True
 
     if "|application|GameStarted:" in line and state.status == LOADING:
-        state.status, state.since, state.pooled = IN_RAID, when, False
+        state.status, state.since, state.pooled, state.transit = IN_RAID, when, False, False
         return True
 
     if "Request HTTPS" in line and "/client/match/local/end" in line and state.status != LOBBY:
         state.status, state.map_id, state.map_name, state.since = LOBBY, None, None, when
-        state.cancelled = state.pooled = False
+        state.cancelled = state.pooled = state.transit = False
         return True
 
     # 다인큐(그룹) 레이드는 서버에서 돌아가서 local/end 를 보내지 않음 (2026-11-23 로그 확인: 그룹 86판 모두 없음)
@@ -192,7 +194,7 @@ def apply_line(state: MapState, line: str, lookup: MapLookup) -> bool:
     #   이 줄은 맵 로딩 중·로비에서도 나오므로 레이드 중일 때만. 혼자 레이드는 local/end 2~9초 뒤라 이미 로비 → 무시됨
     if "|application|totalMemoryBeforeCleanUp" in line and state.status == IN_RAID:
         state.status, state.map_id, state.map_name, state.since = LOBBY, None, None, when
-        state.cancelled = False
+        state.cancelled = state.transit = False
         return True
 
     # 온라인 레이드(RaidMode: Online)는 1.3.5 부터 레이드 끝에 위 메모리 정리 줄도 없음 (2026-11-25 사용자 로그:
@@ -200,14 +202,22 @@ def apply_line(state: MapState, line: str, lookup: MapLookup) -> bool:
     # 패치 전 로그 716판에서 레이드 도중에 이 줄이 나온 적 없음. 혼자 레이드는 local/end 1~6초 뒤라 이미 로비 → 무시됨
     if "|application|GC mode switched to Enabled" in line and state.status == IN_RAID:
         state.status, state.map_id, state.map_name, state.since = LOBBY, None, None, when
-        state.cancelled = False
+        state.cancelled = state.transit = False
         return True
 
     # 매칭 중 취소 → 바로 로비 (2026-11-18 인게임 확인: 이 줄이 없으면 '맵 로딩 중'에 멈춰 있었음)
     # 혼자: 'Local game matching cancelled.' / 온라인: 'Network game matching cancelled.' (2026-11-25 로그 확인)
-    if "|application|" in line and " game matching cancelled" in line and state.status == LOADING:
+    # 트랜짓 줄 뒤 맵 로딩 줄 전에 취소돼도 (로비 + transit) 같은 취소로 본다
+    if "|application|" in line and " game matching cancelled" in line and (
+            state.status == LOADING or state.status == LOBBY and state.transit):
         state.status, state.map_id, state.map_name, state.since = LOBBY, None, None, when
-        state.cancelled, state.pooled = True, False
+        state.cancelled, state.pooled, state.transit = True, False, False
+        return True
+
+    # 트랜짓: 레이드가 끝난 줄은 보통 끝과 똑같고, 11~17초 뒤 이 줄이 나온 다음 2초 뒤 다음 맵 로딩 줄이 나온다
+    # (2026-11-28 사용자 로그 트랜짓 6번 비교). 보통 끝에는 이 줄이 없음 → 화면이 시간 대신 이 줄로 트랜짓을 안다
+    if "|application|PVE transit hop" in line and state.status == LOBBY and not state.transit:
+        state.transit = True
         return True
 
     return False

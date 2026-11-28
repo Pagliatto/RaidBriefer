@@ -218,7 +218,8 @@ function pollState() {
         const next = await res.json();
         if (sequence !== statePollSequence || controller.signal.aborted) return false;
         const changed = next.status !== topbar.state.status || next.map_id !== topbar.state.map_id ||
-          next.since !== topbar.state.since || !!next.cancelled !== !!topbar.state.cancelled;
+          next.since !== topbar.state.since || !!next.cancelled !== !!topbar.state.cancelled ||
+          !!next.transit !== !!topbar.state.transit;
         const questLog = next.quest_rev !== topbar.state.quest_rev; // 퀘스트 알림 로그가 늘어남
         if (next.status !== "lobby" || next.cancelled) {
           topbar.endedUntil = 0;
