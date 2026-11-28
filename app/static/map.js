@@ -1921,7 +1921,7 @@ function drawStoryPins() {
     storyPinEntries().forEach(({ s, entry, current }) => {
       storyPlacesFor(entry.step.id, mapUI.current.key).forEach((point) => {
         const pos = [point.x, point.z, point.y];
-        const icon = markerIcon("story", "book-open", 20);
+        const icon = markerIcon("story", "book-open", 24); // 퀘스트 번호 핀과 같은 24px (2026-11-28 사용자)
         if (point.candidate) icon.options.className += " guide-candidate";
         if (current === false) icon.options.className += " story-later"; // 현재 단계가 아닌 단계: 조금 흐리게
         const label = [s.ch.name, entry.step.ko, point.note,
