@@ -304,9 +304,10 @@ def feature_keys(map_key, result):
 def _quest_goals(map_key):
     """이 맵에서 하는 퀘스트 목표 전부 (진행 여부와 무관). [{id, quest, name, label, points: dev 가 적은 자리}]
     label = 퀘스트 이름(게임 그대로) · 목표 글. 합친 맵(야간 공장 등)의 목표는 원래 맵에 같이 나옴"""
-    from app import quests, tarkov_api
+    from app import quest_log, quests, tarkov_api
     try:
         tasks, tr = tarkov_api.get_tasks()
+        manual = quest_log.load_manual_quests()
         maps = tarkov_api.load("maps").get("maps", {})
         map_names = quests._map_names()
         extract_zones = quests._extract_zones()
@@ -323,15 +324,21 @@ def _quest_goals(map_key):
     for quest_id, task in tasks.items():
         if not isinstance(task, dict) or not isinstance(task.get("objectives"), list):
             continue
+        try:  # 게임 확인으로 고친 목표(corrections.json objective_patch·add)를 화면과 같게
+            task = quests.patched_task(task, manual.get(quest_id) or {})
+        except Exception:
+            pass
         for o in task["objectives"]:
             try:  # 모양이 이상한 목표 하나 때문에 지도 데이터 전체가 죽지 않게 그 목표만 건너뜀
-                if not isinstance(o, dict) or not re.fullmatch(r"[0-9a-f]{24}", str(o.get("id", ""))):
+                if not isinstance(o, dict) or not re.fullmatch(r"[0-9a-f]{24}(-add\d+)?", str(o.get("id", ""))):
                     continue
                 on_maps = {key_of.get(m) for m in o.get("maps") or [] if isinstance(m, str)}
                 if o.get("type") not in quests.RAID_OBJECTIVES or map_key not in on_maps:
                     continue
                 name = tr(task.get("name", "")) or quest_id
-                text = quests._objective_text(o.get("description", ""), tr, overrides).get("text", "")
+                fixed = o.get("_fix_text")
+                text = ((fixed["text"] if tr.lang == "ko" else fixed["original"]) if fixed
+                        else quests._objective_text(o.get("description", ""), tr, overrides).get("text", ""))
                 points = [p for spot in quests._where(o, map_names, extract_zones) if spot["map"] == here for p in spot["points"]]
                 goals.append({"id": o["id"], "quest": quest_id, "name": name, "text": text,
                               "label": name + " · " + text, "points": points})
