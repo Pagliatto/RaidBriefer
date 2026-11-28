@@ -71,6 +71,9 @@
       if (type === "AbortError") return; // 지도 전환 등에서 일부러 취소한 요청
       // 프로그램이 꺼지거나 다시 켜지는 중의 연결 실패는 오류가 아님 (문장은 여기서만 보고 보내지 않음)
       if (type === "TypeError" && NETWORK_FAIL.test(String(error && error.message))) return;
+      const hint = hintOf(error && typeof error.message === "string" ? error.message : message);
+      // 'ResizeObserver loop' 는 알림을 다음 화면으로 미뤘다는 브라우저 경고일 뿐 화면은 정상 (이슈 43) → 알림함에 띄우지 않음
+      if (hint === "resize-loop") return;
       const [name, row] = place(error, file, line, column, noObject);
       const key = `${name}:${row}:${type}`;
       if (sent.has(key) || sent.size >= 20) return; // 같은 오류는 화면을 새로 열 때까지 한 번만
@@ -78,7 +81,6 @@
       const body = { file: name, line: row, type };
       const tab = openTab();
       if (tab) body.tab = tab;
-      const hint = hintOf(error && typeof error.message === "string" ? error.message : message);
       if (hint) body.hint = hint;
       fetch("/api/report/js-error", {
         method: "POST",
