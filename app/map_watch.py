@@ -267,8 +267,14 @@ def apply_line(state: MapState, line: str, lookup: MapLookup) -> bool:
             _bad_date_reported = True
         return False
 
+    # 트랜짓: 레이드가 끝난 줄은 보통 끝과 똑같고, 11~17초 뒤 이 줄이 나온 다음 2초 뒤 다음 맵 로딩 줄이 나온다
+    # (2026-11-28 사용자 로그 트랜짓 6번 비교). 보통 끝에는 이 줄이 없음 → 시간 대신 이 줄로 트랜짓을 안다.
+    # 두 곳에 씀: ① 화면이 홈으로 가지 않게 state.transit ② '이번 판' 고르기를 되살리게 _note_transit
     if TRANSIT_HOP in line and "|application|" in line:
         _note_transit(when)
+        if state.status == LOBBY and not state.transit:
+            state.transit = True
+            return True
         return False
 
     scene = SCENE_RE.search(line)
@@ -325,12 +331,6 @@ def apply_line(state: MapState, line: str, lookup: MapLookup) -> bool:
             state.status == LOADING or state.status == LOBBY and state.transit):
         state.status, state.map_id, state.map_name, state.since = LOBBY, None, None, when
         state.cancelled, state.pooled, state.transit = True, False, False
-        return True
-
-    # 트랜짓: 레이드가 끝난 줄은 보통 끝과 똑같고, 11~17초 뒤 이 줄이 나온 다음 2초 뒤 다음 맵 로딩 줄이 나온다
-    # (2026-11-28 사용자 로그 트랜짓 6번 비교). 보통 끝에는 이 줄이 없음 → 화면이 시간 대신 이 줄로 트랜짓을 안다
-    if "|application|PVE transit hop" in line and state.status == LOBBY and not state.transit:
-        state.transit = True
         return True
 
     return False
