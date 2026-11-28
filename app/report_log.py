@@ -269,9 +269,11 @@ def record_js_error(file: str, line: int, name: str, tab=None, hint=None) -> str
 def _record(code: str, name: str, **extra) -> None:
     try:
         # 같은 오류가 계속 나면(1초마다 도는 일꾼 등) 1분에 한 번만 적는다
+        # 확인한 오류(직접 확인·새 버전 첫 실행)는 세지 않음 → 그 뒤 다시 나면 바로 다시 적고 알림함에 뜬다
         with _lock:
-            entries = _load()["entries"]
-            recent = any(e["kind"] == "error" and e.get("code") == code and e.get("type") == name and 0 <= _now() - e["t"] < 60 for e in entries[-20:])  # 시계가 뒤로 가면 음수 → 새로 적음
+            data = _load()
+            recent = any(e["kind"] == "error" and e["n"] > data["acked"] and e.get("code") == code and e.get("type") == name
+                         and 0 <= _now() - e["t"] < 60 for e in data["entries"][-20:])  # 시계가 뒤로 가면 음수 → 새로 적음
         if not recent:
             add("error", code=code, type=name, **extra)
         print(f"[report] {code} ({name})", file=sys.stderr)  # i18n-ok 개발용 콘솔
@@ -289,15 +291,21 @@ def unacked_errors() -> list[dict]:
             key = (entry.get("code"), entry.get("type"))
             if entry["kind"] == "error" and entry["n"] > data["acked"] and key not in seen:
                 seen.add(key)
-                result.append({"code": entry.get("code", ""), "type": entry.get("type", ""), "t": int(entry["t"] * 1000)})
+                result.append({"n": entry["n"], "code": entry.get("code", ""), "type": entry.get("type", ""), "t": int(entry["t"] * 1000)})
         return result
 
 
-def ack() -> None:
+def ack(upto: int | None = None) -> int:
+    """[확인했어요]: 화면이 본 마지막 순번(upto)까지만 확인 처리 (그 사이 새로 생긴 오류는 남김).
+    upto 가 없으면 지금까지 전부. 확인한 마지막 순번을 돌려준다"""
     with _lock:
         data = _load()
-        data["acked"] = data["next"] - 1
+        last = data["next"] - 1
+        target = last if upto is None else min(upto, last)
+        data["acked"] = max(data["acked"], target)
+        acked = data["acked"]
     _save()
+    return acked
 
 
 # ---------- 흐름 기록 ----------
@@ -320,12 +328,20 @@ def note_alerts(codes: list[str]) -> None:
 
 def started() -> None:
     """서버 시작: 지난번이 '종료'로 끝나지 않았으면 정상 종료 안 됨을 먼저 적는다"""
+    from app.version import VERSION
     with _lock:
-        entries = _load()["entries"]
+        data = _load()
+        entries = data["entries"]
         unclean = bool(entries) and entries[-1]["kind"] != "stop"
+        # 버전이 바뀐 첫 실행: 그 전 버전에서 난 오류는 알림함에서 뺀다 ([확인했어요]와 같음, report.txt 에는 남음).
+        # 고쳐진 오류가 계속 보이는 오해를 막고, 안 고쳐졌으면 새 버전에서 다시 생겨 다시 뜬다 (2026-11-29 사용자)
+        # 지난 시작 줄이 없으면(처음 실행·기록이 밀려남) 버전을 모르므로 그대로 둔다
+        last_start = next((e for e in reversed(entries) if e["kind"] == "start"), None)
+        new_version = last_start is not None and last_start.get("version") not in (None, VERSION)
+        if new_version:
+            data["acked"] = data["next"] - 1
     if unclean:
         add("unclean")
-    from app.version import VERSION
     add("start", version=VERSION)
 
 
