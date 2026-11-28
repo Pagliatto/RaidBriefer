@@ -424,12 +424,18 @@ def check_enemy_spawns(data, maps) -> int:
     return len(problems)
 
 
+def _link(entry):
+    """same_as 가 문자열 id 일 때만 돌려준다. 잘못된 값([]·{} 등)은 same_as_mismatches 가 따로 보고한다."""
+    link = entry.get("same_as")
+    return link if isinstance(link, str) else None
+
+
 def sources(quest_id, tasks, manual, maps, names):
     """화면과 같은 필드별 우선순위로 이름·맵의 출처를 센다."""
     from app import tarkov_api
 
     entry = manual.get(quest_id, {})
-    task = tasks.get(quest_id) or tasks.get(entry.get("same_as"))
+    task = tasks.get(quest_id) or tasks.get(_link(entry))
     game = entry.get("from") == "game"
     name = entry.get("name") or entry.get("name_en")
     if game and name:
@@ -451,6 +457,38 @@ def sources(quest_id, tasks, manual, maps, names):
     else:
         map_source = "corrections" if entry.get("maps") else "unknown"
     return name_source, map_source
+
+
+def same_as_mismatches(manual, tasks, names_en) -> list[str]:
+    """same_as 연결마다 SPT 영어 이름(로그 id)과 dev 영어 이름(연결한 id)을 비교한다.
+    이름이 다르면 다른 퀘스트를 이어 붙였을 수 있다 (2026-11-28: Halloween: Rumors 를 Dangerous Props 로 이은 일).
+    비교는 띄어쓰기 겹침과 대소문자만 무시한다. 캐시에 이름이 없으면 그렇다고 적는다."""
+    from app import tarkov_api
+
+    def norm(text):
+        return re.sub(r"\s+", " ", text).strip().casefold()
+
+    rows = []
+    for quest_id, entry in manual.items():
+        if "same_as" not in entry:
+            continue
+        target = entry["same_as"]
+        if not isinstance(target, str) or not target.strip():
+            rows.append(f"  {quest_id}: same_as 값이 문자열 id 가 아님 ({target!r})")
+            continue
+        spt_name = tarkov_api.spt_quest_name(quest_id, "en")
+        task = tasks.get(target)
+        dev_name = names_en.get(task.get("name")) if isinstance(task, dict) else None
+        dev_name = dev_name if isinstance(dev_name, str) and dev_name.strip() else None
+        if task is None:
+            rows.append(f"  {quest_id}: same_as {target} 가 dev 에 없음 (SPT 이름={spt_name or '없음'})")
+        elif not spt_name:
+            rows.append(f"  {quest_id}: same_as → {dev_name or target} — SPT 에 이 id 의 이름이 없어 맞는지 비교 못 함")
+        elif not dev_name:
+            rows.append(f"  {quest_id}: same_as {target} — dev 영어 이름이 없어 비교 못 함 (SPT 이름={spt_name})")
+        elif norm(spt_name) != norm(dev_name):
+            rows.append(f"  {quest_id}: same_as 이름이 다름 — SPT={spt_name} / dev({target})={dev_name} → 같은 퀘스트인지 위키로 확인")
+    return rows
 
 
 def main() -> int:
@@ -502,7 +540,7 @@ def main() -> int:
         supplements = []
         supplement_problems = []
         for quest_id, entry in manual.items():
-            task = tasks.get(quest_id) or tasks.get(entry.get("same_as"))
+            task = tasks.get(quest_id) or tasks.get(_link(entry))
             # prep_add: dev 준비물에 덧붙이기만 하는 칸 (dev 가 모르는 필수 준비물). dev 가 따라잡는 칸이 아니라 은퇴 대상이 아니다.
             adds = entry.get("prep_add")
             if adds is not None:
@@ -586,7 +624,10 @@ def main() -> int:
             location = tarkov_api.spt_quest_location(quest_id)
             map_name = maps.get(location, {}).get("normalizedName") or location or "없음"
             print(f"  {quest_id}: SPT 이름={name} / 맵={map_name}")
-        if not pending:
+        link_rows = same_as_mismatches(manual, tasks, names[1])
+        for row in link_rows:
+            print(row)
+        if not pending and not link_rows:
             print("  없음")
 
         print("\n출처 주의")
