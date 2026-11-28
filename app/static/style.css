@@ -2604,18 +2604,26 @@ html[data-raid-border="off"][data-raid-low] .map-view::after { display: none; }
 /* 설정 창의 켬/끔 스위치 (은신처 스위치 모양을 같이 씀) */
 .settings-switch { margin-left: 0; margin-bottom: 12px; font-size: 14px; }
 
-/* ---------- 레이드 중 목표 임시 숨기기 (2026-11-25 사용자): 서랍 목표 줄 오른쪽 끝의 눈 아이콘 ---------- */
+/* ---------- 해낸 목표 체크 (2026-11-28 사용자, 레이드 중 임시 숨기기를 대신함): 퀘스트 탭·지도 서랍 목표 줄 맨 앞 동그라미 ----------
+   동그라미 = 해낸 목표, 네모 = 제출 칩 (모양으로 구분). 건네주기 목표는 점선 동그라미(누르지 않음, 제출 체크를 따라감) */
 .goal-text { flex: 1; min-width: 0; }
-.goal-hide {
-  flex: none; display: grid; place-items: center; width: 26px; height: 26px; padding: 0;
-  border: 1px solid var(--border); border-radius: var(--radius-sm); background: transparent; color: var(--text-faint);
+.goal-check {
+  flex: none; display: grid; place-items: center; width: 16px; height: 16px; margin-top: 2px; padding: 0;
+  border: 1.5px solid var(--text-faint); border-radius: 50%; background: transparent;
+  color: var(--bg); font-size: 11px; font-weight: 700; line-height: 1; cursor: pointer;
 }
-.goal-hide:hover { color: var(--text); border-color: var(--border-strong); }
-/* 숨긴 목표: 자리는 그대로, 글자 흐리게 + 번호는 점선 빈 동그라미 + 눈에 사선(색) — 색만이 아니라 모양으로도 구분 */
-.drawer-goals li.goal-hidden { cursor: default; color: var(--text-faint); }
-.drawer-goals li.goal-hidden:hover { background: transparent; }
-.drawer-goals li.goal-hidden .goal-num { background: transparent; border: 1px dashed var(--text-faint); color: var(--text-faint); }
-.drawer-goals li.goal-hidden .goal-hide { color: var(--accent); border-color: var(--accent); }
+button.goal-check:hover { border-color: var(--ok); }
+.goal-check.on { background: var(--ok); border-color: var(--ok); }
+.goal-check.follow { border-style: dashed; cursor: default; }
+.goal-check.follow.on { border-style: solid; }
+/* 체크한 목표: 취소선 + 흐리게 (줄은 그대로 남음) */
+.goal-done .goal-text, .goal-done .obj-text { text-decoration: line-through; color: var(--text-faint); }
+.objectives li.has-check { list-style: none; display: flex; gap: 8px; align-items: flex-start; margin-left: -18px; }
+.objectives li.has-check .goal-check { margin-top: 3px; }
+.obj-text { min-width: 0; }
+.drawer-goals li.goal-done { cursor: default; }
+.drawer-goals li.goal-done:hover { background: transparent; }
+.drawer-goals li.goal-done .goal-num { background: transparent; border: 1px dashed var(--text-faint); color: var(--text-faint); }
 /* 고른 목표의 번호 핀: 겹친 핀 표시(.stacked)보다 강조 테두리가 먼저 보이게 */
 .quest-pin.guide-highlight span { box-shadow: 0 0 0 2px #111, 0 0 0 4px var(--accent); }
 

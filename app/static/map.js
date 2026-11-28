@@ -2153,8 +2153,8 @@ function drawPins() {
   const numbered = numberedObjectives();
   syncFocusedPin(numbered);
   numbered.forEach(({ n, quest, objective, spots }) => {
-    // 레이드 중 임시로 숨긴 목표: 핀·구역을 그리지 않음. 번호는 그대로 (남은 핀 번호가 바뀌지 않게)
-    if (isGoalHidden(quest, objective)) {
+    // 해낸 목표(체크): 핀·구역을 그리지 않음. 번호는 그대로 (남은 핀 번호가 바뀌지 않게)
+    if (goalDone(quest, objective)) {
       delete mapUI.pins[n];
       return;
     }
@@ -2206,7 +2206,8 @@ function drawPins() {
 // 새 번호를 찾아 줌. 그 목표가 없어졌으면 고른 상태를 풂 (엉뚱한 목표에 강조가 붙지 않게)
 function syncFocusedPin(numbered) {
   if (mapUI.focusedPin == null) return;
-  const found = mapUI.focusedGoal && numbered.find((x) => goalHideKey(x.quest, x.objective) === mapUI.focusedGoal);
+  // 고른 목표를 체크(해냄)하면 고른 상태도 풂 → 핀 고리·서랍 줄 테두리가 같이 사라짐 (Codex 103, 2026-11-28 사용자)
+  const found = mapUI.focusedGoal && numbered.find((x) => goalKey(x.quest, x.objective) === mapUI.focusedGoal && !goalDone(x.quest, x.objective));
   mapUI.focusedPin = found ? found.n : null;
   if (!found) mapUI.focusedGoal = null;
 }
@@ -2221,69 +2222,8 @@ function highlightQuestPin() {
   });
 }
 
-// ---------- 레이드 중 목표 임시 숨기기 (2026-11-25 사용자) ----------
-// 주운 퀘스트 아이템 등 '이번 레이드에서 해 둔' 목표의 핀을 잠깐 치운다 (핀이 커서 한곳에 겹침).
-// 완료 표시가 아님: 진행 기록에는 아무것도 쓰지 않고 화면에만 둔다. 진짜 완료는 게임 로그가 알려 줌
-// 열쇠 = 퀘스트 id + 목표 순서 (목표에는 따로 id 가 없음. 레이드 중에는 퀘스트 목록을 다시 읽지 않아 순서가 안 바뀜)
-// 풀리는 때 (2026-11-25 사용자): 로비로 돌아오면 모두 풀림 (죽어서 잃었을 수 있음). 트랜짓(다른 맵으로 바로 이어지는 레이드)은 유지.
-// 레이드 중에 프로그램을 껐다 켜도 같은 레이드면 유지 → 이 PC 의 화면 저장소에 '레이드 시작 시각 + 열쇠'만 적어 둠
-const GOAL_HIDE_STORAGE = "tarkovhelper.goalHides";
-const mapHide = { keys: new Set(), raid: null, mapId: null, restored: false };
-function saveGoalHides() {
-  try {
-    if (mapHide.keys.size) localStorage.setItem(GOAL_HIDE_STORAGE, JSON.stringify({ raid: mapHide.raid, keys: [...mapHide.keys] }));
-    else localStorage.removeItem(GOAL_HIDE_STORAGE);
-  } catch (e) { /* 저장소를 못 써도 이번 실행 동안은 동작 */ }
-}
-function redrawGoalHides() {
-  if (!mapUI.leaflet || mapEditor.active) return;
-  drawPins();
-  renderDrawer();
-}
-function clearGoalHides() {
-  const had = mapHide.keys.size > 0;
-  mapHide.keys.clear();
-  saveGoalHides();
-  if (had) redrawGoalHides();
-}
-// 게임 상태가 바뀔 때마다: 새 레이드가 트랜짓인지(유지) 같은 맵 재입장인지(풂) 가르고, 껐다 켠 뒤 첫 레이드 상태에서 되살림
-function updateGoalHidesForState(s) {
-  if (s.status !== "raid" || !s.since) return; // 로비로 돌아온 것은 onGameState 의 로비 대기(LOBBY_WAIT_MS)가 끝날 때 clearGoalHides
-  if (!mapHide.restored) {
-    mapHide.restored = true;
-    try {
-      const saved = JSON.parse(localStorage.getItem(GOAL_HIDE_STORAGE) || "null");
-      if (saved && saved.raid === s.since && Array.isArray(saved.keys)) {
-        saved.keys.forEach((key) => { if (typeof key === "string") mapHide.keys.add(key); });
-        if (mapHide.keys.size) redrawGoalHides();
-      }
-    } catch (e) { /* 깨진 저장 값은 버림 (아래에서 지워짐) */ }
-  } else if (mapHide.raid !== s.since && mapHide.mapId === s.map_id) {
-    // 직전 레이드와 같은 맵에 새로 들어옴 = 트랜짓이 아니라 죽거나 나온 뒤 재입장 (로비 대기가 끝나기 전에 들어온 경우) → 풂
-    clearGoalHides();
-  }
-  mapHide.raid = s.since;
-  mapHide.mapId = s.map_id;
-  saveGoalHides();
-}
-function goalHideKey(quest, objective) { return `${quest.id}:${quest.objectives.indexOf(objective)}`; }
-function isGoalHidden(quest, objective) { return mapHide.keys.has(goalHideKey(quest, objective)); }
-// 숨기기 버튼은 레이드 중에, 지금 보는 지도가 그 레이드 맵일 때만
-function canHideGoals() {
-  const s = topbar.state;
-  return s.status === "raid" && !!mapUI.current && mapUI.current.ids.includes(s.map_id);
-}
-function toggleGoalHidden(quest, objective, n) {
-  const key = goalHideKey(quest, objective);
-  if (mapHide.keys.has(key)) mapHide.keys.delete(key);
-  else {
-    mapHide.keys.add(key);
-    if (mapUI.focusedPin === n) mapUI.focusedPin = null; // 숨긴 목표는 고른 상태도 풂
-  }
-  saveGoalHides();
-  drawPins();
-  renderDrawer();
-}
+// 옛 '레이드 중 목표 임시 숨기기'(v1.5.0~v1.9.0)가 이 PC 화면 저장소에 남긴 값 지우기 → 해낸 목표 체크(app.js goalCheck)로 바뀜
+try { localStorage.removeItem("tarkovhelper.goalHides"); } catch (e) { /* 저장소를 못 써도 상관없음 */ }
 
 // ---------- 먹을 것 (지도 위쪽 줄에 아이콘 + 바닥 생성 위치가 있으면 지도에 ◆) ----------
 const ICON_URL = (id) => `https://assets.tarkov.dev/${id}-icon.webp`; // tarkov.dev 아이템 아이콘
@@ -2715,18 +2655,21 @@ function renderDrawer() {
     if (scroller) scroller.scrollTop = scrollTop;
   };
   const numbers = new Map(numberedObjectives().map((x) => [x.objective, x.n]));
-  const hideable = canHideGoals();
   const here = mapQuests(m.name);
   // 펼쳐 둔 '다른 목표'는 그 맵을 보는 동안만 (맵을 바꾸거나 다시 켜면 접힌 채로 시작)
   if (mapUI.awayOpenMap !== m.key) { mapUI.awayOpen.clear(); mapUI.awayOpenMap = m.key; }
   // 이 맵에서 할 줄: 번호 핀이 있거나, 이 맵(또는 아무 맵)에서 하는 일.
   // 서버가 종류를 모르는 목표(직접 적은 퀘스트)는 가리지 않고 보인다
   const isHere = (o) => numbers.has(o) || (!o.away && (!o.maps || o.maps.includes(m.name)));
+  // 이 맵에서 할 줄을 모두 체크한 퀘스트 = 여기서 할 일 끝 → '할 일' 숫자에서만 뺌.
+  // 자리는 그대로 (2026-11-28 사용자: 아래로 내려가면 사라진 것처럼 보이고, 레이드 중 잘못 눌렀을 때 풀러 찾아가야 함)
+  const hereDone = (q) => { const goals = q.objectives.filter(isHere); return goals.length > 0 && goals.every((o) => goalDone(q, o)); };
   // 번호 핀이 있는 퀘스트를 위로, 자리 없는 퀘스트는 아래 칸으로 (받은 순서는 칸 안에서 그대로 → 번호는 여전히 위에서부터)
   const pinned = here.filter((q) => q.objectives.some((o) => numbers.has(o)));
   const unpinned = here.filter((q) => !pinned.includes(q));
   const anywhere = anywhereQuests(activeQuests()).filter((q) => !here.includes(q));
-  document.getElementById("drawer-count").textContent = here.length + anywhere.length;
+  const todo = here.filter((q) => !hereDone(q)).length + anywhere.filter((q) => !hereDone(q)).length;
+  document.getElementById("drawer-count").textContent = todo;
   renderLootBar();
 
   const addQuest = (q) => {
@@ -2750,30 +2693,18 @@ function renderDrawer() {
       const n = numbers.get(o);
       const goal = el("li", o.optional ? "optional" : "");
       if (!isHere(o)) { goal.classList.add("goal-away"); away.push(goal); }
-      const hidden = n && isGoalHidden(q, o);
+      // 해낸 목표 체크 (퀘스트 탭과 같은 기록): 줄 맨 앞 동그라미 → 취소선 + 지도 핀 빠짐
+      const done = goalDone(q, o);
+      goal.classList.toggle("goal-done", done);
+      goal.append(goalCheck(q, o));
       if (n) {
-        // 위치가 있는 목표: 지도와 같은 번호, 누르면 지도에서 그 위치로 (숨긴 목표는 핀이 없으니 그대로)
+        // 위치가 있는 목표: 지도와 같은 번호, 누르면 지도에서 그 위치로 (체크한 목표는 핀이 없으니 그대로)
         goal.append(el("span", "goal-num", String(n)));
         goal.classList.add("has-pin");
-        goal.classList.toggle("goal-hidden", hidden);
         goal.dataset.pin = n;
-        goal.addEventListener("click", () => { if (!isGoalHidden(q, o)) focusPin(n); });
+        goal.addEventListener("click", () => { if (!goalDone(q, o)) focusPin(n); });
       }
       goal.append(el("span", "goal-text", o.text + (o.optional ? t("map.optional") : "")));
-      // 레이드 중 임시 숨기기: 줄 오른쪽 끝의 눈 아이콘 (체크가 아님 — 완료 표시로 오해하지 않게)
-      if (n && (hideable || hidden)) {
-        const eye = el("button", "goal-hide");
-        eye.type = "button";
-        eye.innerHTML = iconSvg(hidden ? "eye-off" : "eye", 15);
-        eye.title = t(hidden ? "map.goalShow" : "map.goalHide");
-        eye.setAttribute("aria-label", eye.title);
-        eye.setAttribute("aria-pressed", String(hidden));
-        eye.addEventListener("click", (e) => {
-          e.stopPropagation(); // 줄 누르기(지도 이동)로 번지지 않게
-          toggleGoalHidden(q, o, n);
-        });
-        goal.append(eye);
-      }
       if (!away.includes(goal)) goals.append(goal);
     });
     // 이 맵에서 할 줄이 아닌 목표는 '다른 목표 N개' 한 줄로 접음 (누르면 그 아래에 펼침)
@@ -2807,7 +2738,7 @@ function renderDrawer() {
   renderDrawerGuide(list, m);
   const storyCount = renderDrawerStories(list, m);
   // '할 일' 버튼 숫자 = 퀘스트 + 서랍에 보이는 스토리 단계
-  document.getElementById("drawer-count").textContent = here.length + anywhere.length + storyCount;
+  document.getElementById("drawer-count").textContent = todo + storyCount;
   // 큰 칸은 내용이 있으면 항상 제목 줄 + 접기 (다른 칸이 있든 없든). 퀘스트가 하나도 없으면 제목 없이 안내 문구만 (2026-11-23 사용자)
   if (pinned.length) list.append(foldKey(el("li", "drawer-divider drawer-section-title", t("map.drawerQuests")), "quests"));
   if (!here.length && !anywhere.length) list.append(el("li", "empty", t("map.noQuests")));
@@ -3044,7 +2975,7 @@ function highlightDrawer(n, flash = false) {
   mapUI.focusedPin = n;
   mapUI.focusedPinMap = mapUI.current?.key; // 다른 맵으로 가면 고른 번호를 잊음 (drawMap)
   const picked = numberedObjectives().find((x) => x.n === n);
-  mapUI.focusedGoal = picked ? goalHideKey(picked.quest, picked.objective) : null; // 번호가 바뀌어도 따라가게 (syncFocusedPin)
+  mapUI.focusedGoal = picked ? goalKey(picked.quest, picked.objective) : null; // 번호가 바뀌어도 따라가게 (syncFocusedPin)
   highlightQuestPin();
   document.querySelectorAll("#drawer-list .has-pin").forEach((g) => g.classList.toggle("focused", g.dataset.pin === String(n)));
   const target = document.querySelector(`#drawer-list .has-pin[data-pin="${n}"]`);
@@ -3146,18 +3077,12 @@ function onGameState(s) {
     mapUI.lobbyTimer = setTimeout(() => {
       mapUI.lobbyTimer = null;
       mapUI.autoMapId = null;
-      clearGoalHides(); // 로비로 돌아옴 (트랜짓이 아님) → 임시로 숨긴 목표를 모두 다시 보이게
       if (currentTab() !== "map") return; // 사용자가 다른 화면을 보고 있으면 그대로
       showTransition(t("map.lobby"), t("map.returning"), async () => goTab("home"));
     }, s.cancelled ? 0 : LOBBY_WAIT_MS);
   }
 }
-window.addEventListener("game-state", (e) => {
-  updateGoalHidesForState(e.detail);
-  onGameState(e.detail);
-  // 레이드에 들어가거나 나오면 서랍의 숨기기 버튼이 생기거나 없어짐 (지도를 새로 그리는 경우는 drawMap 이 다시 그림)
-  if (mapUI.leaflet && !mapEditor.active) renderDrawer();
-});
+window.addEventListener("game-state", (e) => onGameState(e.detail));
 
 // ---------- 내 위치 (게임 스크린샷 파일 이름의 좌표, 2026-11-24 사용자) ----------
 // 사용자가 게임에서 스크린샷 키를 누르면 서버(shot_watch.py)가 파일 이름의 좌표를 읽어 준다.

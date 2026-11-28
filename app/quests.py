@@ -197,6 +197,8 @@ def _objectives_and_prep(task: dict, task_tr, item_tr, quest_items: dict, overri
     legacy_tr = [tarkov_api.Translator("items", lang=lang) for lang in ("ko", "en")]
     item_ids = {}  # (종류, 이름, 인레이드) → 아이템 id들 (지도에 바닥 생성 위치를 찍을 때 씀)
 
+    give_goals = []  # (건네주기 목표, 준비물 키) → 목표 체크가 '제출' 체크를 따라가게 (hand)
+
     def add(kind, text, count=None, fir=False, ids=None):
         if text:
             identity = tuple(sorted(_flat(ids))) if kind == "제출" and ids else text
@@ -207,6 +209,8 @@ def _objectives_and_prep(task: dict, task_tr, item_tr, quest_items: dict, overri
                 item_ids.setdefault(k, [])
                 item_ids[k] += [i for i in _flat(ids) if i not in item_ids[k]]
                 legacy_names.setdefault(k, set()).update(_item_names(ids, tr) for tr in legacy_tr)
+            return k
+        return None
 
     def map_display_names(map_ids):
         names = []
@@ -241,6 +245,8 @@ def _objectives_and_prep(task: dict, task_tr, item_tr, quest_items: dict, overri
     for o in task.get("objectives", []):
         objective = _objective_text(o["description"], task_tr, overrides)
         objective["optional"] = o.get("optional", False)
+        if o.get("id"):
+            objective["id"] = o["id"]  # 목표 체크 열쇠 (순서가 바뀌어도 같은 목표, 2026-11-28)
         objectives.append(objective)
         kind = o["type"]
         # 지도 서랍이 '지금 맵에서 할 줄'만 보이게 (v1.7.0):
@@ -266,7 +272,9 @@ def _objectives_and_prep(task: dict, task_tr, item_tr, quest_items: dict, overri
         elif kind == "buildWeapon":
             add("무기", _item_names([o.get("item")], item_tr))
         elif kind == "giveItem":
-            add("제출", _item_names(o.get("items"), item_tr), count, o.get("foundInRaid", False), o.get("items"))
+            k = add("제출", _item_names(o.get("items"), item_tr), count, o.get("foundInRaid", False), o.get("items"))
+            if k:
+                give_goals.append((objective, k))
         elif kind == "plantQuestItem":
             qi = quest_items.get(o.get("questItem"), {})
             add("가져가기", task_tr(qi.get("name", "")) if qi else "", count)
@@ -295,6 +303,7 @@ def _objectives_and_prep(task: dict, task_tr, item_tr, quest_items: dict, overri
                "keys": members, "any_of": len(members) > 1, "maps": key_maps[group] or [],
                "count": None, "fir": False}
               for group, members in keys.items()]
+    hand_ids = {}
     for k, total in sorted(prep.items(), key=lambda x: order[x[0][0]]):
         kind, _, fir = k
         text = prep_text[k]
@@ -306,12 +315,17 @@ def _objectives_and_prep(task: dict, task_tr, item_tr, quest_items: dict, overri
                 if len(identity) > 200:
                     identity = hashlib.sha256(identity.encode("utf-8")).hexdigest()
                 entry["hand_id"] = "item:" + identity + (":fir" if fir else ":any")
+                hand_ids[k] = entry["hand_id"]
                 entry["legacy_texts"] = sorted(legacy_names[k] | {text})
                 key_items = [info for item_id in entry["ids"]
                              if tarkov_api.is_key(item_id) and (info := key_info(item_id))]
                 if key_items:
                     entry["keys"] = key_items
         result.append(entry)
+    # 건네주기 목표: 아래 '제출' 칩과 같은 체크를 씀 (목표 줄의 동그라미는 직접 누르지 않음)
+    for objective, k in give_goals:
+        if k in hand_ids:
+            objective["hand"] = hand_ids[k]
     return objectives, result
 
 
@@ -662,6 +676,11 @@ def build() -> dict:
                 prep["hand_id"] = "manual:" + str(index)
                 original = (details.get("prep") or [])[index]
                 prep["legacy_texts"] = list(dict.fromkeys(filter(None, [original.get("text"), original.get("text_en")])))
+        # 직접 적은 준비물이 dev 준비물을 바꿨으면, 없어진 '제출' 칩을 따라가던 목표는 직접 체크로 되돌림
+        hand_ids = {p.get("hand_id") for p in entry["prep"] if p["kind"] == "제출"}
+        for objective in entry["objectives"]:
+            if objective.get("hand") not in hand_ids:
+                objective.pop("hand", None)
         # raid는 기존 사용자 확인값 우선 규칙을 유지한다.
         if "raid" in m:
             entry["raid"] = m["raid"]

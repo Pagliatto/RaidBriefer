@@ -1,6 +1,7 @@
 """사용자가 직접 체크한 내용을 저장하는 파일.
 
 - handed : 제출한 아이템            {"퀘스트id|아이템": true}
+- goals  : 해낸 목표 (직접 체크)     {"퀘스트id|목표id": true} (목표 id 없는 직접 적은 목표는 "#순서")
 - story  : 단계별 완료 {"단계id!": "done"}, 갈림길 {"챕터id@갈림길id": "선택지id"}
 - 저장 위치: user_data/progress.json  (사람마다 다르니 Git에는 올리지 않음)
 - 프레스티지를 새로 하면 퀘스트와 스토리가 모두 초기화되므로 체크도 전부 비운다.
@@ -15,7 +16,7 @@ from app import paths, quest_log, settings
 
 USER_DIR = paths.USER_DIR
 PROGRESS_FILE = USER_DIR / "progress.json"
-KINDS = ("handed", "story", "hidden", "added", "gap_ok", "hideout", "hideout_got")
+KINDS = ("handed", "story", "hidden", "added", "gap_ok", "hideout", "hideout_got", "goals")
 # hideout    : 은신처 시설 레벨 {"시설id": 레벨(숫자)} (없으면 기본: 창고 1·약해 보이는 벽 1, 나머지 0)
 # hideout_got: 은신처 재료 '모았음' {"시설id|레벨|아이템id": true}
 # hidden: 안 할 퀘스트 {"퀘스트id": true}
@@ -111,7 +112,7 @@ def set_checks(kind: str, changes: dict) -> dict:
 
 
 def reset_all() -> None:
-    """전체 초기화: 사용자가 체크한 모든 기록을 비움 (숨김·제출·스토리·직접 추가·은신처 등)"""
+    """전체 초기화: 사용자가 체크한 모든 기록을 비움 (숨김·제출·목표·스토리·직접 추가·은신처 등)"""
     with _lock:
         # 손상 파일은 broken 백업이 있을 때만 새로 쓴다. 잠김·백업 실패는 지금처럼 덮지 않는다.
         # 손상(백업 있음)이면 None → 이전 기록 없이. 정상이면 그대로 읽은 값 (_read 는 로그 조회까지 해서 쓰지 않음)

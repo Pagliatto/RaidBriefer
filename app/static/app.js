@@ -15,6 +15,7 @@ const FILTER_ALL = "*";  // 맵 거르기에서 '전체'를 뜻하는 값 (화�
 const state = {
   data: null,           // 서버에서 받은 퀘스트 정보
   handed: {},           // 제출 체크: { "퀘스트id|아이템": true }
+  goals: {},            // 해낸 목표 체크: { "퀘스트id|목표id": true } (건네주기 목표는 제출 체크를 따라감)
   hidden: {},           // 안 할 퀘스트: { "퀘스트id": true }
   list: "in_progress",  // 진행 중 / 완료 / 실패 / 숨김
   map: FILTER_ALL,      // 맵 거르기 (FILTER_ALL = 전체)
@@ -595,11 +596,20 @@ function renderQuest(q) {
   // 목표: 무엇을 해야 하는지
   if (q.objectives && q.objectives.length) {
     const ol = el("ul", "objectives");
+    const checkable = state.list === "in_progress";
     q.objectives.forEach((o) => {
-      const item = el("li", o.optional ? "optional" : "", o.text);
-      if (o.optional) item.append(el("span", "opt-mark", t("quest.optional")));
+      const item = el("li", o.optional ? "optional" : "");
+      // 진행 중 목록에서는 앞에 동그라미 체크 (해낸 목표 → 지도 핀 빠짐, 2026-11-28 사용자)
+      if (checkable) {
+        item.classList.add("has-check");
+        item.classList.toggle("goal-done", goalDone(q, o));
+        item.append(goalCheck(q, o));
+      }
+      const body = el("span", "obj-text", o.text);
+      if (o.optional) body.append(el("span", "opt-mark", t("quest.optional")));
       // 우리가 번역한 문장이면 영어 원문을 아래에 작게
-      if (o.original) item.append(el("span", "original", o.original));
+      if (o.original) body.append(el("span", "original", o.original));
+      item.append(body);
       ol.append(item);
     });
     li.append(ol);
@@ -808,10 +818,11 @@ function showCheckError(key) {
 // 불러오기와 저장도 같은 대기열을 사용한다.
 function loadHanded() {
   return queueChecks(async () => {
-    const [handed, hidden] = await Promise.all([fetch("/api/check/handed"), fetch("/api/check/hidden")]);
-    if (!handed.ok || !hidden.ok) throw new Error(t("quest.saveCheckFailed"));
+    const [handed, hidden, goals] = await Promise.all(["handed", "hidden", "goals"].map((kind) => fetch("/api/check/" + kind)));
+    if (!handed.ok || !hidden.ok || !goals.ok) throw new Error(t("quest.saveCheckFailed"));
     state.handed = await handed.json();
     state.hidden = await hidden.json();
+    state.goals = await goals.json();
     checksLoaded = true;
   });
 }
@@ -845,6 +856,35 @@ function saveCheck(kind, key, value) {
 }
 function toggleHidden(key, value) { return saveCheck("hidden", key, value); }
 function toggleHanded(key, value) { return saveCheck("handed", key, value); }
+
+// ---------- 해낸 목표 체크 (2026-11-28 사용자: 레이드 중 임시 숨기기를 대신함) ----------
+// 퀘스트 탭 목표 줄·지도 서랍 목표 줄의 동그라미. 같은 기록 하나(progress goals)라 어디서 눌러도 둘 다 바뀜.
+// 체크한 목표: 취소선 + 지도 핀·구역 빠짐(번호는 그대로). 로그로는 목표 하나하나를 알 수 없어서 직접 누름.
+// 건네주기 목표(o.hand)는 아래 '제출' 칩 체크를 따라감 → 누를 곳은 늘 하나
+function goalKey(q, o) { return `${q.id}|${o.id || "#" + q.objectives.indexOf(o)}`; }
+function goalDone(q, o) {
+  return o.hand ? !!state.handed[q.id + "|" + o.hand] : !!state.goals[goalKey(q, o)];
+}
+function goalCheck(q, o) {
+  const done = goalDone(q, o);
+  if (o.hand) {
+    const mark = el("span", "goal-check follow", done ? "✓" : "");
+    mark.classList.toggle("on", done);
+    mark.title = t("quest.goalFollowsHand");
+    return mark;
+  }
+  const btn = el("button", "goal-check", done ? "✓" : "");
+  btn.type = "button";
+  btn.classList.toggle("on", done);
+  btn.title = t(done ? "quest.goalUndo" : "quest.goalDo");
+  btn.setAttribute("aria-label", btn.title);
+  btn.setAttribute("aria-pressed", String(done));
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation(); // 서랍 줄 누르기(지도 이동)로 번지지 않게
+    saveCheck("goals", goalKey(q, o), !done);
+  });
+  return btn;
+}
 
 // ---------- 맨 위로 / 맨 아래로 ----------
 document.getElementById("to-top").addEventListener("click", () => {
