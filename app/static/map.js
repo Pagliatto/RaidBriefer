@@ -3320,12 +3320,18 @@ document.addEventListener("tab-shown", (e) => {
 });
 
 // 필요템 줄 수가 바뀌거나 사라져도 남은 지도 크기에 맞춘다.
+// 접기/펼치기가 이 줄의 크기를 다시 바꾸므로 다음 화면에서 한 번만 한다 (같은 화면에서 바꾸면 'ResizeObserver loop' 경고, 이슈 43)
+let lootBarFrame = 0;
 const lootBarObserver = new ResizeObserver(() => {
-  updateLootToggle();
-  if (mapUI.leaflet && currentTab() === "map") {
-    fitFull(mapUI.leaflet, false);
-    if (mapStory.focused) focusStoryStep(mapStory.focused, false);
-  }
+  if (lootBarFrame) return;
+  lootBarFrame = requestAnimationFrame(() => {
+    lootBarFrame = 0;
+    updateLootToggle();
+    if (mapUI.leaflet && currentTab() === "map") {
+      fitFull(mapUI.leaflet, false);
+      if (mapStory.focused) focusStoryStep(mapStory.focused, false);
+    }
+  });
 });
 lootBarObserver.observe(document.getElementById("loot-bar"));
 
