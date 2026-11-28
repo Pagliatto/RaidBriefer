@@ -188,8 +188,10 @@ def check_quest_spots(data, tasks, maps) -> int:
     if not isinstance(section, dict):
         problems.append("quest_spots: 객체 필요")
         section = {}
+    from app import quest_log, quests
+    manual = quest_log.load_manual_quests()  # 게임 확인으로 고친 목표(objective_patch·add)까지 포함
     goals = {o.get("id"): quest_id for quest_id, task in tasks.items() if isinstance(task, dict)
-             for o in task.get("objectives") or [] if isinstance(o, dict)}
+             for o in quests.patched_task(task, manual.get(quest_id) or {}).get("objectives") or [] if isinstance(o, dict)}
     map_keys = {m.get("normalizedName") for m in maps.values() if isinstance(m, dict)}
     for objective, entry in section.items():
         if objective.startswith("_"):
@@ -525,7 +527,34 @@ def main() -> int:
                     fields.append("maps")
                 if quests._has_manual_objectives(entry) and task.get("objectives"):
                     fields.append("objectives")
-            row = f"  {quest_id}: {entry.get('name_en') or entry.get('name') or quest_id} — dev 공통 필드: {', '.join(fields) or '없음'}"
+                # objective_patch·add: dev 목표에서 틀린 칸만 덮어씀. 목표 id 가 dev 에서 사라지면 보정이 말없이 안 먹으므로 여기서 잡는다
+                patch, add = entry.get("objective_patch") or {}, entry.get("objective_add") or []
+                if patch or add:
+                    dev_objectives = {o.get("id"): o for o in task.get("objectives", [])}
+                    map_keys = {m.get("normalizedName") for m in maps.values() if isinstance(m, dict)}
+                    map_ids = {m.get("normalizedName"): m.get("id") for m in maps.values() if isinstance(m, dict)}
+                    caught_up = []
+                    for objective_id, change in patch.items():
+                        dev_objective = dev_objectives.get(objective_id)
+                        if dev_objective is None:
+                            supplement_problems.append(f"  quests/{quest_id}/objective_patch/{objective_id}: dev 에 이 목표 id 가 없음 (dev 가 바뀜 → 다시 확인)")
+                            continue
+                        bad = [k for k in change.get("maps") or [] if k not in map_keys]
+                        if bad:
+                            supplement_problems.append(f"  quests/{quest_id}/objective_patch/{objective_id}: 모르는 맵 {bad}")
+                        same = (not change.get("remove") and not (change.get("text") or change.get("original"))
+                                and all(dev_objective.get(f) == change[f] for f in quests.PATCH_FIELDS if f in change)
+                                and ("maps" not in change or set(dev_objective.get("maps") or []) == {map_ids.get(k) for k in change["maps"]}))
+                        if same:
+                            caught_up.append(objective_id)
+                    for index, extra in enumerate(add):
+                        if not isinstance(extra, dict) or not extra.get("id") or not (extra.get("text") or extra.get("original")):
+                            supplement_problems.append(f"  quests/{quest_id}/objective_add/{index}: id 와 text·original 필요")
+                    fields.append(f"objective_patch {len(patch)}개" + (f" (dev 가 따라잡은 것 {caught_up})" if caught_up else "")
+                                  + (f", objective_add {len(add)}개" if add else ""))
+            label = entry.get("name_en") or entry.get("name") or next(
+                (bundle[task["name"]] for bundle in reversed(names) if task and isinstance(bundle.get(task.get("name")), str)), quest_id)
+            row = f"  {quest_id}: {label} — dev 공통 필드: {', '.join(fields) or '없음'}"
             if adds is not None:
                 row += " (prep_add 는 남김)"
             if set(entry) <= {"same_as", "checked"}:

@@ -246,7 +246,12 @@ def _objectives_and_prep(task: dict, task_tr, item_tr, quest_items: dict, overri
         return keys[group]
 
     for o in task.get("objectives", []):
-        objective = _objective_text(o["description"], task_tr, overrides)
+        fixed = o.get("_fix_text")  # 게임 확인으로 고친 목표 문장 (corrections.json objective_patch·add)
+        if fixed:
+            objective = ({"text": fixed["text"], "original": fixed["original"]} if task_tr.lang == "ko"
+                         else {"text": fixed["original"]})
+        else:
+            objective = _objective_text(o["description"], task_tr, overrides)
         objective["optional"] = o.get("optional", False)
         if o.get("id"):
             objective["id"] = o["id"]  # 목표 체크 열쇠 (순서가 바뀌어도 같은 목표, 2026-11-28)
@@ -473,6 +478,50 @@ def infer_completed(status: dict, tasks: dict) -> dict:
     return inferred
 
 
+PATCH_FIELDS = ("count", "optional", "targetNames", "timeFromHour", "timeUntilHour")
+
+
+def patched_task(task: dict, fix: dict) -> dict:
+    """dev 목표에서 틀린 칸만 게임 확인값으로 덮어쓴 퀘스트 (원본 dev 사전은 그대로 둠).
+
+    corrections.json 의 from: game 항목에서
+      objective_patch: {목표 id: {count·optional·targetNames·timeFromHour·timeUntilHour, maps(맵 구분값), text, original}}
+                       또는 {"remove": true} (위키·게임에 없는 목표 빼기)
+      objective_add:   [{id, type, count, optional, maps, text, original}] (dev 에 빠진 목표 더하기, 끝에 붙임)
+    목표를 통째로 다시 적는 objectives 와 달리 dev 의 목표 id·자리(zones)·준비물 계산이 그대로 남는다.
+    """
+    patch, add = fix.get("objective_patch") or {}, fix.get("objective_add") or []
+    if fix.get("from") != "game" or not (patch or add):
+        return task
+    map_ids = {}
+    for m in tarkov_api.load("maps")["maps"].values():
+        map_ids.setdefault(m["normalizedName"], m["id"])
+
+    def apply(objective: dict, change: dict) -> dict:
+        objective = dict(objective)
+        for field in PATCH_FIELDS:
+            if field in change:
+                objective[field] = change[field]
+        if "maps" in change:
+            objective["maps"] = [map_ids[k] for k in change["maps"] if k in map_ids]
+        if change.get("text") or change.get("original"):
+            objective["_fix_text"] = {"text": change.get("text") or change.get("original"),
+                                      "original": change.get("original") or change.get("text")}
+        return objective
+
+    objectives = []
+    for objective in task.get("objectives", []):
+        change = patch.get(objective.get("id"))
+        if change and change.get("remove"):
+            continue
+        objectives.append(apply(objective, change) if change else objective)
+    for extra in add:
+        base = {"id": extra.get("id"), "type": extra.get("type", "visit"), "description": "",
+                "count": extra.get("count", 1), "optional": extra.get("optional", False)}
+        objectives.append(apply(base, extra))
+    return {**task, "objectives": objectives}
+
+
 def _has_manual_objectives(entry: dict) -> bool:
     """빈 목표 목록도 명시적인 수정값으로 인정한다."""
     return any(entry.get(key) is not None for key in ("objectives", "objective", "objective_en"))
@@ -573,6 +622,8 @@ def build() -> dict:
         # tarkov.dev 정보 찾기 (옛 id로 있는 경우 same_as 사용)
         m = manual.get(quest_id, {})
         task = tasks.get(quest_id) or tasks.get(m.get("same_as"))
+        if task:
+            task = patched_task(task, m)
         # 게임 직접 확인값만 dev를 덮는다. 위키·블로그는 dev가 없을 때만 사용한다.
         details = m if m.get("from") == "game" or not task else {}
         if _has_manual_objectives(details) and details.get("from") == "game":
@@ -613,7 +664,8 @@ def build() -> dict:
                 transit_zones = None
                 if raw.get("type") == "extract" and not raw.get("exitName"):
                     transit_zones = _transit_zones(
-                        tr.en.get(raw.get("description"), ""), transit_lookup, raw.get("maps") or [])
+                        (raw.get("_fix_text") or {}).get("original") or tr.en.get(raw.get("description"), ""),
+                        transit_lookup, raw.get("maps") or [])
                 where = _where(raw, map_names, extract_zones, extra_spots, transit_zones)
                 if where:
                     objective["where"] = where

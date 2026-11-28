@@ -1,6 +1,109 @@
 {
-  "_about": "퀘스트 id를 키로 적는 보완·수정 이름표이며, 필드별 우선순위는 수동(game: 다른 출처에 없거나 오류를 바로잡는 특수한 경우의 게임 직접 확인값) > tarkov.dev(same_as 포함) > SPT(이름·맵만) > 위키·블로그 > 미확인이다. same_as = 같은 퀘스트인데 tarkov.dev에는 다른 id로 있는 경우 그 id. 선택 항목: maps(맵 구분값 목록), objectives([{text, original, optional?}]), prep([{kind, text, count, fir}]), prep_add([{kind, text, text_en, count}] = tarkov.dev 준비물에 '더하는' 항목: dev 퀘스트에도 적용되며 dev 값을 바꾸지 않는다. 예: 신호탄을 쏴야 열리는 탈출구), level. from = 정보 출처(wiki: 공식 위키, blog: 공략 블로그, game: 게임 화면 직접 확인). link_blog = 위키로 출처를 변경하기 전의 블로그 주소. check = 사용자 검토 대기 표시(wiki/blog); 검토 완료 후 제거하며 from은 유지한다. replaced_by / replaced_by_en = 삭제·대체된 퀘스트의 후속 퀘스트 안내(한국어/영어). raid(true/false) = 레이드 안에서 하는 퀘스트인지 직접 지정 (tarkov.dev에 있는 퀘스트에도 쓸 수 있음). 영어 화면용(선택): name_en, objective_en, prep[].text_en (objectives 는 original 이 영어 문장). 필드별 우선순위: game > dev > SPT > wiki > blog > unknown. checked = 마지막 확인 날짜(YYYY-MM-DD). BTR 정류장 보완값은 btr_stops에 기록한다.",
+  "_about": "퀘스트 id를 키로 적는 보완·수정 이름표이며, 필드별 우선순위는 수동(game: 다른 출처에 없거나 오류를 바로잡는 특수한 경우의 게임 직접 확인값) > tarkov.dev(same_as 포함) > SPT(이름·맵만) > 위키·블로그 > 미확인이다. same_as = 같은 퀘스트인데 tarkov.dev에는 다른 id로 있는 경우 그 id. 선택 항목: maps(맵 구분값 목록), objectives([{text, original, optional?}]), prep([{kind, text, count, fir}]), prep_add([{kind, text, text_en, count}] = tarkov.dev 준비물에 '더하는' 항목: dev 퀘스트에도 적용되며 dev 값을 바꾸지 않는다. 예: 신호탄을 쏴야 열리는 탈출구), objective_patch({dev 목표 id: {count·optional·targetNames·timeFromHour·timeUntilHour·maps·text·original 중 틀린 칸만, 또는 remove: true}} = game 일 때 dev 목표의 틀린 칸만 덮어써 목표 id·지도 자리·준비물 계산을 살림), objective_add([{id, type, count, optional, maps, text, original}] = game 일 때 dev 에 빠진 목표를 끝에 더함), level. from = 정보 출처(wiki: 공식 위키, blog: 공략 블로그, game: 게임 화면 직접 확인). link_blog = 위키로 출처를 변경하기 전의 블로그 주소. check = 사용자 검토 대기 표시(wiki/blog); 검토 완료 후 제거하며 from은 유지한다. replaced_by / replaced_by_en = 삭제·대체된 퀘스트의 후속 퀘스트 안내(한국어/영어). raid(true/false) = 레이드 안에서 하는 퀘스트인지 직접 지정 (tarkov.dev에 있는 퀘스트에도 쓸 수 있음). 영어 화면용(선택): name_en, objective_en, prep[].text_en (objectives 는 original 이 영어 문장). 필드별 우선순위: game > dev > SPT > wiki > blog > unknown. checked = 마지막 확인 날짜(YYYY-MM-DD). BTR 정류장 보완값은 btr_stops에 기록한다.",
   "quests": {
+    "64f5deac39e45b527a7c4232": {
+      "objective_patch": {
+        "64f5deac39e45b527a7c4235": {
+          "maps": ["streets-of-tarkov", "shoreline", "ground-zero", "ground-zero-21"],
+          "text": "타르코프 시내(Streets of Tarkov) 혹은 해안선(Shoreline), 그라운드 제로(Ground Zero)에서 독자규격 소음기와 PS-320 스코프가 장착된 AK-12 돌격소총으로 PMC 사살하기",
+          "original": "Eliminate PMCs with AK-12 with the proprietary suppressor and PS-320 scope on Streets of Tarkov, Shoreline, or Ground Zero"
+        }
+      },
+      "link": "https://escapefromtarkov.fandom.com/wiki/Job_for_a_Patriot",
+      "from": "game",
+      "checked": "2026-11-28"
+    },
+    "6179b5eabca27a099552e052": {
+      "objective_patch": {
+        "61a61c085d06a344766f3a29": {
+          "maps": ["lighthouse", "ground-zero", "ground-zero-21", "reserve", "shoreline", "streets-of-tarkov"]
+        }
+      },
+      "link": "https://escapefromtarkov.fandom.com/wiki/Counteraction",
+      "from": "game",
+      "checked": "2026-11-28"
+    },
+    "5bc4826c86f774106d22d88b": {
+      "maps": [],
+      "objective_patch": {
+        "5bc84f7a86f774294c2f6862": {
+          "count": 5,
+          "targetNames": ["Marksman"],
+          "timeFromHour": 0,
+          "timeUntilHour": 0,
+          "maps": [],
+          "text": "볼트액션 소총을 사용해 저격 스캐브 사살하기",
+          "original": "Eliminate Sniper Scavs while using a bolt-action rifle"
+        }
+      },
+      "link": "https://escapefromtarkov.fandom.com/wiki/The_Tarkov_Shooter_-_Part_5",
+      "from": "game",
+      "checked": "2026-11-28"
+    },
+    "5a0327ba86f77456b9154236": {
+      "objective_patch": {
+        "5a0328cb86f77456b91543b8": {
+          "count": 5
+        }
+      },
+      "link": "https://escapefromtarkov.fandom.com/wiki/Fuel_Shortage",
+      "from": "game",
+      "checked": "2026-11-28"
+    },
+    "5d25e44386f77409453bce7b": {
+      "objective_patch": {
+        "5d2733c586f7741dea4f3072": {
+          "count": 5
+        }
+      },
+      "link": "https://escapefromtarkov.fandom.com/wiki/The_Huntsman_Path_-_Angry_Watchman",
+      "from": "game",
+      "checked": "2026-11-28"
+    },
+    "639135e0fa894f0a866afde6": {
+      "objective_patch": {
+        "6a5675112830d55110e00a8f": {
+          "remove": true
+        }
+      },
+      "link": "https://escapefromtarkov.fandom.com/wiki/Urban_Medicine",
+      "from": "game",
+      "checked": "2026-11-28"
+    },
+    "67a0967c003a9986cb0f5ac1": {
+      "objective_patch": {
+        "67dc393c6089aa48050efa02": {
+          "maps": ["woods", "lighthouse", "streets-of-tarkov"],
+          "text": "삼림, 등대 혹은 타르코프 시내로 가기",
+          "original": "Go to Woods, Lighthouse or Streets of Tarkov"
+        }
+      },
+      "link": "https://escapefromtarkov.fandom.com/wiki/Sensory_Analysis_-_Part_1",
+      "from": "game",
+      "checked": "2026-11-28"
+    },
+    "66aa58245ab22944110db6e9": {
+      "objective_add": [
+        {
+          "id": "66aa58245ab22944110db6e9-add1",
+          "type": "extract",
+          "maps": ["streets-of-tarkov"],
+          "text": "타르코프 시내(Streets of Tarkov)에서 생존하여 탈출하기 (또는 다음 지역으로 트랜짓)",
+          "original": "Survive and extract from Streets of Tarkov (or transit to the next location)"
+        },
+        {
+          "id": "66aa58245ab22944110db6e9-add2",
+          "type": "visit",
+          "optional": true,
+          "maps": ["streets-of-tarkov"],
+          "text": "타르코프 시내(Streets of Tarkov)의 로디나 영화관 주변 정찰하기 (한 레이드 내에)",
+          "original": "Scout the area around the Rodina cinema on Streets of Tarkov (In one raid)"
+        }
+      ],
+      "link": "https://escapefromtarkov.fandom.com/wiki/New_Paths",
+      "from": "game",
+      "checked": "2026-11-28"
+    },
     "6aba40a15ef26da1360746b8": {
       "same_as": "671a59e43d73dac1360765cc",
       "checked": "2026-11-22"
