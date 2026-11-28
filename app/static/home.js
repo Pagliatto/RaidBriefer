@@ -265,7 +265,7 @@ function renderHomeMaps(entries) {
       const badge = el("span", "home-map-picked");
       badge.title = t("pick.cardHint", { n: picked });
       badge.append(icon("check", 11), document.createTextNode(String(picked)));
-      title.append(badge);
+      counts.append(badge);  // 이름 옆에 두면 좁은 카드에서 맵 이름이 잘려서 (영어 Interchange) 개수 줄 끝에
     }
     card.setAttribute("aria-expanded", home.map === name);
     // 같은 맵을 한 번 더 누르면 접기
