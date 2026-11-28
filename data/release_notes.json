@@ -305,5 +305,22 @@
       "Home: items needed by several quests show once at the top with the total and the quest names",
       "Home: fixed item totals that left out quests without a stated count"
     ]
+  },
+  "1.10.0": {
+    "date": "2026-11-29",
+    "ko": [
+      "이번 판 퀘스트 고르기: 홈·지도 서랍에서 이번 판에 할 퀘스트를 고르면 지도에는 고른 것만 보이고, 레이드가 끝나면 풀려요",
+      "해낸 목표 체크: 퀘스트 탭·지도 서랍에서 목표 앞 동그라미를 누르면 지도 핀이 빠지고, 홈 '할 일'과 준비물도 남은 목표만 보여요",
+      "지도: 열쇠가 필요한 퀘스트 목표에 열쇠 표시가 붙고, 말풍선·서랍에 '열쇠 필요' 줄이 나와요",
+      "지도: 트랜짓할 때 새 맵에 도착할 때까지 지도를 유지하고, 스토리 표시를 퀘스트 핀과 같은 크기로 맞췄어요",
+      "퀘스트: 일부 퀘스트 목표의 잘못된 정보를 위키 기준으로 고쳤어요"
+    ],
+    "en": [
+      "Pick quests for this raid on Home or the map drawer: the map shows only picked quests, and picks clear when the raid ends",
+      "Check off done objectives in the Quests tab or map drawer: their pins leave the map, and Home's to-do and supplies follow what's left",
+      "Map: quest objectives that need a key show a key badge, with a 'Key needed' line in the tooltip and drawer",
+      "Map: during a transit the map stays until you reach the new map, and story markers now match quest pin size",
+      "Quests: fixed wrong objective details on some quests, based on the wiki"
+    ]
   }
 }

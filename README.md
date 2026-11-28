@@ -42,14 +42,14 @@
 **Map**
 - Numbered quest objective pins, extracts, transits, locked doors, key and Bitcoin spawns, BTR stops, floor switching (click an objective to jump to its floor, click an empty spot to return to the ground floor)
 - To-do list that shows only the current map's objectives; boss, Goon and cultist spawn zones (optional layers)
-- To-do list beside the map: quests and story steps for the current map. The eye icon hides an objective's pins for that raid only
-- Hover locked doors and key spawns for key details and wiki links
+- To-do list beside the map: quests and story steps for the current map. Check off a done objective to take its pins off the map
+- Hover locked doors and key spawns for key details and wiki links; quest objectives that need a key show a key badge
 - My position: press the in-game screenshot key to see where you are and which way you're facing for 30 seconds (only the file name is read)
 - Low-time warning: the edge of the map glows red at 10, 5 and 2 minutes left (can be turned off)
 - Terminal: entry preparation and steps, key, electrical panel, toolset and explosive spots, Black Division spawns with head counts, the boss location
 
 **Home · Quests**
-- Home: what to collect, where to go (tasks per map), what to bring for each task on the selected map (bring all / gear up / just go), boss spawn chances
+- Home: what to collect, where to go (tasks per map), what to bring for each task on the selected map (bring all / gear up / just go), boss spawn chances. Pick quests for this raid and the map shows only those
 - Quests: accepted and completed quests are picked up from the game log automatically; filter by map tag; wiki link beside each name
 - Prestige is detected and progress starts fresh
 
