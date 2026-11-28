@@ -19,6 +19,9 @@ const alertsBox = (() => {
   const badge = get("alerts-badge");
   let drawnKey = null;
   let current = { codes: [], errors: [], dev: null };
+  // [확인했어요]로 지운 마지막 기록 순번. 누르기 전에 받아 둔 상태가 늦게 그려져도 다시 나타나지 않게 (깜빡임, 2026-11-29)
+  // 순번은 서버 기록마다 하나씩 늘어나서, 그 뒤에 생긴 오류는 같은 코드라도 다시 보인다
+  let ackedUpTo = 0;
 
   function codesOf(s) {
     return (Array.isArray(s.alerts) ? s.alerts : []).filter((code) => ALERT_LEVEL[code]);
@@ -28,7 +31,8 @@ const alertsBox = (() => {
   function errorsOf(s) {
     return (Array.isArray(s.errors) ? s.errors : [])
       .filter((e) => e && typeof e.code === "string" && /^ERR-(js-)?\w+-\d+$/.test(e.code))
-      .map((e) => ({ code: e.code, type: /^[A-Za-z_]\w*$/.test(e.type || "") ? e.type : "", t: Number(e.t) || 0 }));
+      .map((e) => ({ n: Number.isInteger(e.n) ? e.n : 0, code: e.code, type: /^[A-Za-z_]\w*$/.test(e.type || "") ? e.type : "", t: Number(e.t) || 0 }))
+      .filter((e) => !(e.n > 0 && e.n <= ackedUpTo)); // 순번이 없는 오류는 숨기지 않음
   }
 
   // 신고에 넣을 코드: 예상 못 한 오류 먼저, 그다음 정해 둔 문제
@@ -56,13 +60,16 @@ const alertsBox = (() => {
   }
 
   async function acknowledge() {
+    // 누른 순간 보이던 오류까지만 (응답을 기다리는 사이 새로 생긴 오류는 남긴다)
+    const upto = Math.max(0, ...current.errors.map((e) => e.n));
     try {
-      const res = await fetch("/api/report/ack", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+      const res = await fetch("/api/report/ack", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ upto }) });
       if (!res.ok) return;
     } catch (error) {
       return; // 서버가 잠깐 안 되면 다음에 다시 누르면 됨
     }
-    draw({ alerts: current.codes, errors: [], dev: current.dev });
+    ackedUpTo = Math.max(ackedUpTo, upto);
+    draw({ alerts: current.codes, errors: current.errors.filter((e) => !(e.n > 0 && e.n <= upto)), dev: current.dev });
   }
 
   function alertRow(code) {

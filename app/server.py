@@ -504,9 +504,12 @@ RECENT_LINES = 30  # [내용 복사]에 붙이는 최근 기록 줄 수 (파일�
 
 @app.post("/api/report/ack")
 def api_report_ack():
-    """알림함 [확인했어요]: 지금까지의 예상 못 한 오류를 알림함에서 지움 (report.txt 기록은 남김)"""
-    report_log.ack()
-    return jsonify({"ok": True})
+    """알림함 [확인했어요]: 화면이 본 오류(순번 upto 까지)를 알림함에서 지움 (report.txt 기록은 남김)"""
+    body = request.get_json(silent=True)
+    upto = body.get("upto") if isinstance(body, dict) else None
+    if not (isinstance(upto, int) and not isinstance(upto, bool) and upto >= 0):
+        upto = None  # 옛 화면·이상한 값: 예전처럼 전부
+    return jsonify({"ok": True, "acked": report_log.ack(upto)})
 
 
 @app.post("/api/report/js-error")
